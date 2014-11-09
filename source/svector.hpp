@@ -58,11 +58,13 @@ namespace bryte
                return false;
           }
 
-          auto last_element = m_element_count - 2;
+          if ( m_element_count > 1 ) {
+               auto last_element = m_element_count - 2;
 
-          // move each element closer to the origin, overwriting the removed element
-          for ( auto i = index; i <= last_element; i++ ) {
-               m_array [ i ] = m_array [ i + 1 ];
+               // move each element closer to the origin, overwriting the removed element
+               for ( auto i = index; i <= last_element; i++ ) {
+                    m_array [ i ] = m_array [ i + 1 ];
+               }
           }
 
           m_element_count--;

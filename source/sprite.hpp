@@ -1,3 +1,6 @@
+/* sprite: Holds info for drawing a surface onto another.
+ */
+
 #ifndef BRYTE_SPRITE_HPP
 #define BRYTE_SPRITE_HPP
 

@@ -1,3 +1,6 @@
+/* clipped_sprite: Holds info for drawing a clip of surface onto another.
+ */
+
 #ifndef BRYTE_CLIPPED_SPRITE_HPP
 #define BRYTE_CLIPPED_SPRITE_HPP
 

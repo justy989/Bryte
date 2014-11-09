@@ -1,3 +1,7 @@
+/* animated_sprite: Holds info for drawing a clipped surface onto another that 
+ *                  updates over time to draw different frames.
+ */
+
 #ifndef BRYTE_ANIMATED_SPRITE_HPP
 #define BRYTE_ANIMATED_SPRITE_HPP
 

@@ -29,8 +29,8 @@ namespace bryte
      using bounding_box = rect_type;
 
      // explicit instantiation
-     template class point_type;
-     template class rect_type;
+     template class point<coordinate_type>;
+     template class rect<coordinate_type>;
 }
 
 #endif

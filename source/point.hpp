@@ -67,15 +67,15 @@ namespace bryte
      }
 
      template < typename T >
-     inline point point<T>::operator+ ( const point& p ) const
+     inline point<T> point<T>::operator+ ( const point& p ) const
      {
-          return point ( m_x + p.m_x, m_y + p.m_y );
+          return point<T> ( m_x + p.m_x, m_y + p.m_y );
      }
 
      template < typename T >
-     inline point point<T>::operator- ( const point& p ) const
+     inline point<T> point<T>::operator- ( const point& p ) const
      {
-          return point ( m_x - p.m_x, m_y - p.m_y );
+          return point<T> ( m_x - p.m_x, m_y - p.m_y );
      }
 
      template < typename T >
@@ -104,7 +104,7 @@ namespace bryte
      }
 
      template < typename T >
-     inline void point<T>::set ( T dx, T dy )
+     inline void point<T>::set ( T x, T y )
      {
           m_x = x;
           m_y = y;
@@ -135,7 +135,7 @@ namespace bryte
           T dx = abs ( m_x - p.m_x );
           T dy = abs ( m_y - p.m_y );
 
-          return sqrt ( dx * dx + dy * dy );
+          return static_cast<T>( sqrt ( dx * dx + dy * dy ) );
      }
 
      template < typename T >

@@ -64,31 +64,35 @@ namespace bryte
           m_top_left ( top_left ),
           m_bottom_right ( bottom_right )
      {
-
+          validate ();
      }
 
      template < typename T >
-     inline rect& rect<T>::operator+= ( const point<T>& p )
+     inline rect<T>& rect<T>::operator+= ( const point<T>& p )
      {
           m_top_left += p;
           m_bottom_right += p;
+
+          return *this;
      }
 
      template < typename T >
-     inline rect& rect<T>::operator-= ( const point<T>& p )
+     inline rect<T>& rect<T>::operator-= ( const point<T>& p )
      {
           m_top_left -= p;
           m_bottom_right -= p;
+
+          return *this;
      }
 
      template < typename T >
-     inline rect rect<T>::operator+ ( const point<T>& p ) const
+     inline rect<T> rect<T>::operator+ ( const point<T>& p ) const
      {
           return rect ( m_top_left + p, m_bottom_right + p );
      }
 
      template < typename T >
-     inline rect rect<T>::operator- ( const point<T>& p ) const
+     inline rect<T> rect<T>::operator- ( const point<T>& p ) const
      {
           return rect ( m_top_left - p, m_bottom_right - p );
      }
@@ -216,13 +220,13 @@ namespace bryte
      template < typename T >
      inline point<T> rect<T>::top_right () const
      {
-          return point ( m_bottom_right.x (), m_top_left.y () );
+          return point<T> ( m_bottom_right.x ( ), m_top_left.y ( ) );
      }
 
      template < typename T >
      inline point<T> rect<T>::bottom_left () const
      {
-          return point ( m_top_left.x (), m_bottom_right.y () );
+          return point<T> ( m_top_left.x (), m_bottom_right.y () );
      }
 
      template < typename T >

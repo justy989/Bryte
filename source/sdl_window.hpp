@@ -1,5 +1,7 @@
-/* sdl_window: interface to sdl to fit our exact needs. 
-*/
+/* sdl_window: Interface to sdl to fit our exact needs. We want to draw to a
+ *             fixed size backbuffer surface. Then use a renderer to stretch it
+ *             to be however large the window is.
+ */
 
 #ifndef BRYTE_SDL_WINDOW_HPP
 #define BRYTE_SDL_WINDOW_HPP
@@ -15,22 +17,30 @@ namespace bryte
           sdl_window ( const char* title, int width, int height );
           ~sdl_window ( );
 
-          void render_backbuffer ( const SDL_Surface* surface );
+          void render ( );
 
-          inline SDL_Window* window ( );
+          inline SDL_Surface* back_buffer ( );
 
-     private:
+          inline int width ( ) const;
+          inline int height ( ) const;
 
-          void setup_open_gl ( );
+          static const int k_back_buffer_width = 256;
+          static const int k_back_buffer_height = 240;
 
      private:
 
           SDL_Window* m_window;
+          SDL_Renderer* m_renderer;
+          SDL_Surface* m_back_buffer_surface;
+          SDL_Texture* m_back_buffer_texture;
 
-          SDL_GLContext m_gl_context;
+          int m_width;
+          int m_height;
      };
 
-     inline SDL_Window* sdl_window::window ( ) { return m_window; }
+     inline SDL_Surface* sdl_window::back_buffer ( ) { return m_back_buffer_surface; }
+     inline int sdl_window::width ( ) const { return m_width; }
+     inline int sdl_window::height ( ) const { return m_height; }
 }
 
 #endif

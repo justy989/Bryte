@@ -6,69 +6,64 @@ using namespace bryte;
 
 sdl_window::sdl_window ( const char* title, int width, int height ) :
      m_window ( nullptr ),
-     m_gl_context ( 0 )
+     m_renderer ( nullptr ),
+     m_back_buffer_surface ( nullptr ),
+     m_width ( width ),
+     m_height ( height )
+
 {
      // create the window
      m_window = SDL_CreateWindow ( title,
                                    SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                    width, height,
-                                   SDL_WINDOW_OPENGL );
+                                   SDL_WINDOW_SHOWN );
 
      if ( !m_window ) {
           throw std::runtime_error ( std::string ( "SDL_CreateWindow() failed: " ) + SDL_GetError ( ) );
      }
 
-     // create the opengl context for the window
-     m_gl_context = SDL_GL_CreateContext ( m_window );
+     // create the hardware accelerated renderer
+     m_renderer = SDL_CreateRenderer ( m_window, -1,
+                                       SDL_RENDERER_ACCELERATED );
 
-     if ( !m_gl_context ) {
-          throw std::runtime_error ( std::string ( "SDL_GL_CreateContext() failed: " ) + SDL_GetError ( ) );
+     if ( !m_renderer ) {
+          throw std::runtime_error ( std::string ( "SDL_CreateRenderer() failed: " ) + SDL_GetError ( ) );
      }
 
-     // finish by setting up openGL the way we want it
-     setup_open_gl ( );
+     // create a back buffer surface with out specified width and height
+     m_back_buffer_surface = SDL_CreateRGBSurface ( 0, k_back_buffer_width, k_back_buffer_height,
+                                                    32, 0, 0, 0, 0 );
+
+     if ( !m_back_buffer_surface ) {
+          throw std::runtime_error ( std::string ( "SDL_CreateRGBSurface() failed: " ) + SDL_GetError ( ) );
+     }
+
+     // create a back buffer texture based on our surface
+     m_back_buffer_texture = SDL_CreateTextureFromSurface ( m_renderer, m_back_buffer_surface );
+
+     if ( !m_back_buffer_texture ) {
+          throw std::runtime_error ( std::string ( "SDL_CreateTextureFromSurface() failed: " ) + SDL_GetError ( ) );
+     }
 }
 
 sdl_window::~sdl_window ( )
 {
-     SDL_GL_DeleteContext ( m_gl_context );
+     // free everything we have created
+     SDL_DestroyTexture ( m_back_buffer_texture );
+     SDL_FreeSurface ( m_back_buffer_surface );
+     SDL_DestroyRenderer ( m_renderer );
      SDL_DestroyWindow ( m_window );
 }
 
-void sdl_window::setup_open_gl ( )
+void sdl_window::render ( )
 {
-     // set the opengl version
-     SDL_GL_SetAttribute ( SDL_GL_CONTEXT_MAJOR_VERSION, 2 );
-     SDL_GL_SetAttribute ( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
+     // update the texture
+     SDL_UpdateTexture ( m_back_buffer_texture, nullptr, m_back_buffer_surface->pixels, m_back_buffer_surface->pitch );
 
-     // turn off vsync, literally the worst 'feature' ever invented
-     SDL_GL_SetSwapInterval ( 0 );
+     // copy the texture to the back buffer
+     SDL_RenderClear ( m_renderer );
+     SDL_RenderCopy ( m_renderer, m_back_buffer_texture, nullptr, nullptr );
 
-     // set the clear color
-     glClearColor ( 0.0f, 0.0f, 0.0f, 1.0f );
-
-     // clear matrices
-     glMatrixMode ( GL_PROJECTION );
-     glLoadIdentity ( );
-
-     glMatrixMode ( GL_MODELVIEW );
-     glLoadIdentity ( );
-
-     // set our viewport
-     glOrtho ( -1.0, 1.0, -1.0, 1.0, -0.05, 0.05 );
-}
-
-void sdl_window::render_backbuffer ( const SDL_Surface* surface )
-{
-     glClear ( GL_COLOR_BUFFER_BIT );
-
-     // temporary just to see that opengl works
-     glBegin ( GL_QUADS );
-     glVertex2f ( -0.5f, -0.5f );
-     glVertex2f ( 0.5f, -0.5f );
-     glVertex2f ( 0.5f, 0.5f );
-     glVertex2f ( -0.5f, 0.5f );
-     glEnd ( );
-
-     SDL_GL_SwapWindow ( m_window );
+     // present the back buffer
+     SDL_RenderPresent ( m_renderer );
 }

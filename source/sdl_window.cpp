@@ -8,6 +8,7 @@ sdl_window::sdl_window ( const char* title, int width, int height ) :
      m_window ( nullptr ),
      m_renderer ( nullptr ),
      m_back_buffer_surface ( nullptr ),
+     m_back_buffer_texture ( nullptr ),
      m_width ( width ),
      m_height ( height )
 

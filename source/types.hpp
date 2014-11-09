@@ -14,11 +14,15 @@ namespace bryte
      using uword = unsigned short;
 
      // base coordinate system type
-     using coordinate_type = short;
+     using coordinate_base_type = short;
+
+     // explicit instantiation of types used in this project
+     template class point<coordinate_base_type>;
+     template class rect<coordinate_base_type>;
 
      // base point and rect types
-     using point_type = point<coordinate_type>;
-     using rect_type  = rect<coordinate_type>;
+     using point_type = point<coordinate_base_type>;
+     using rect_type  = rect<coordinate_base_type>;
 
      // aliases for points
      using position = point_type;
@@ -27,10 +31,6 @@ namespace bryte
      // aliases for rects
      using rectangle    = rect_type;
      using bounding_box = rect_type;
-
-     // explicit instantiation
-     template class point<coordinate_type>;
-     template class rect<coordinate_type>;
 }
 
 #endif

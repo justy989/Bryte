@@ -6,9 +6,9 @@
 #ifndef BRYTE_RECT_HPP
 #define BRYTE_RECT_HPP
 
-#include "point.hpp"
-
 #include <cassert>
+
+#include "vector2d.hpp"
 
 namespace bryte
 {
@@ -16,16 +16,16 @@ namespace bryte
      class rect {
      public:
 
-          inline rect ( const point<T>& top_left,
-                        const point<T>& bottom_right );
+          inline rect ( const vector2d<T>& top_left,
+                        const vector2d<T>& bottom_right );
 
-          inline rect& operator+= ( const point<T>& p );
-          inline rect& operator-= ( const point<T>& p );
+          inline rect& operator+= ( const vector2d<T>& p );
+          inline rect& operator-= ( const vector2d<T>& p );
 
-          inline rect operator+ ( const point<T>& p ) const;
-          inline rect operator- ( const point<T>& p ) const;
+          inline rect operator+ ( const vector2d<T>& p ) const;
+          inline rect operator- ( const vector2d<T>& p ) const;
 
-          inline bool contains ( const point<T>& p ) const;
+          inline bool contains ( const vector2d<T>& p ) const;
           inline bool intersects ( const rect<T>& r ) const;
 
           inline void move ( T dx, T dy );
@@ -43,10 +43,10 @@ namespace bryte
           inline T right () const;
           inline T bottom () const;
 
-          inline point<T> top_left () const;
-          inline point<T> top_right () const;
-          inline point<T> bottom_left () const;
-          inline point<T> bottom_right () const;
+          inline vector2d<T> top_left () const;
+          inline vector2d<T> top_right () const;
+          inline vector2d<T> bottom_left () const;
+          inline vector2d<T> bottom_right () const;
 
      private:
 
@@ -54,13 +54,13 @@ namespace bryte
 
      private:
 
-          point<T> m_top_left;
-          point<T> m_bottom_right;
+          vector2d<T> m_top_left;
+          vector2d<T> m_bottom_right;
      };
 
      template < typename T >
-     inline rect<T>::rect ( const point<T>& top_left,
-                            const point<T>& bottom_right ) :
+     inline rect<T>::rect ( const vector2d<T>& top_left,
+                            const vector2d<T>& bottom_right ) :
           m_top_left ( top_left ),
           m_bottom_right ( bottom_right )
      {
@@ -68,7 +68,7 @@ namespace bryte
      }
 
      template < typename T >
-     inline rect<T>& rect<T>::operator+= ( const point<T>& p )
+     inline rect<T>& rect<T>::operator+= ( const vector2d<T>& p )
      {
           m_top_left += p;
           m_bottom_right += p;
@@ -77,7 +77,7 @@ namespace bryte
      }
 
      template < typename T >
-     inline rect<T>& rect<T>::operator-= ( const point<T>& p )
+     inline rect<T>& rect<T>::operator-= ( const vector2d<T>& p )
      {
           m_top_left -= p;
           m_bottom_right -= p;
@@ -86,19 +86,19 @@ namespace bryte
      }
 
      template < typename T >
-     inline rect<T> rect<T>::operator+ ( const point<T>& p ) const
+     inline rect<T> rect<T>::operator+ ( const vector2d<T>& p ) const
      {
           return rect ( m_top_left + p, m_bottom_right + p );
      }
 
      template < typename T >
-     inline rect<T> rect<T>::operator- ( const point<T>& p ) const
+     inline rect<T> rect<T>::operator- ( const vector2d<T>& p ) const
      {
           return rect ( m_top_left - p, m_bottom_right - p );
      }
 
      template < typename T >
-     inline bool rect<T>::contains ( const point<T>& p ) const
+     inline bool rect<T>::contains ( const vector2d<T>& p ) const
      {
           return ( p.x ( ) >= m_top_left.x () && p.x ( ) <= m_bottom_right.x ( ) &&
                    p.y ( ) >= m_top_left.y () && p.y ( ) <= m_bottom_right.y ( ) );
@@ -212,25 +212,25 @@ namespace bryte
      }
 
      template < typename T >
-     inline point<T> rect<T>::top_left () const
+     inline vector2d<T> rect<T>::top_left () const
      {
           return m_top_left;
      }
 
      template < typename T >
-     inline point<T> rect<T>::top_right () const
+     inline vector2d<T> rect<T>::top_right () const
      {
-          return point<T> ( m_bottom_right.x ( ), m_top_left.y ( ) );
+          return vector2d<T> ( m_bottom_right.x ( ), m_top_left.y ( ) );
      }
 
      template < typename T >
-     inline point<T> rect<T>::bottom_left () const
+     inline vector2d<T> rect<T>::bottom_left () const
      {
-          return point<T> ( m_top_left.x (), m_bottom_right.y () );
+          return vector2d<T> ( m_top_left.x (), m_bottom_right.y () );
      }
 
      template < typename T >
-     inline point<T> rect<T>::bottom_right () const
+     inline vector2d<T> rect<T>::bottom_right () const
      {
           return m_bottom_right;
      }

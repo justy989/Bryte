@@ -1,27 +1,27 @@
-/* point: Hold information about a 2d point and support operations around
- *        moving it, setting it and checking the distance between points.
+/* vector2d: Hold information about a 2d vector2d and support operations around
+ *        moving it, setting it and checking the distance between vector2ds.
  */
 
-#ifndef BRYTE_POINT_HPP
-#define BRYTE_POINT_HPP
+#ifndef BRYTE_VECTOR2D_HPP
+#define BRYTE_VECTOR2D_HPP
 
 #include <cmath>
 
 namespace bryte
 {
      template < typename T >
-     class point {
+     class vector2d {
      public:
 
-          inline point ( T x = 0, T y = 0 );
+          inline vector2d ( T x = 0, T y = 0 );
 
-          inline void operator+= ( const point& p );
-          inline void operator-= ( const point& p );
+          inline void operator+= ( const vector2d& p );
+          inline void operator-= ( const vector2d& p );
 
-          inline point operator+ ( const point& p ) const;
-          inline point operator- ( const point& p ) const;
+          inline vector2d operator+ ( const vector2d& p ) const;
+          inline vector2d operator- ( const vector2d& p ) const;
 
-          inline bool operator== ( const point& p ) const;
+          inline bool operator== ( const vector2d& p ) const;
 
           inline void move ( T dx, T dy );
           inline void move_x ( T dx );
@@ -33,8 +33,8 @@ namespace bryte
 
           inline void negate ( );
 
-          inline T distance_to ( const point& p ) const;
-          inline T manhattan_distance_to ( const point& p ) const;
+          inline T distance_to ( const vector2d& p ) const;
+          inline T manhattan_distance_to ( const vector2d& p ) const;
 
           inline T x ( ) const;
           inline T y ( ) const;
@@ -45,7 +45,7 @@ namespace bryte
      };
 
      template < typename T >
-     inline point<T>::point ( T x = 0, T y = 0 ) :
+     inline vector2d<T>::vector2d ( T x = 0, T y = 0 ) :
           m_x ( x ),
           m_y ( y )
      {
@@ -53,84 +53,84 @@ namespace bryte
      }
 
      template < typename T >
-     inline void point<T>::operator+= ( const point& p )
+     inline void vector2d<T>::operator+= ( const vector2d& p )
      {
           m_x += p.m_x;
           m_y += p.m_y;
      }
 
      template < typename T >
-     inline void point<T>::operator-= ( const point& p )
+     inline void vector2d<T>::operator-= ( const vector2d& p )
      {
           m_x -= p.m_x;
           m_y -= p.m_y;
      }
 
      template < typename T >
-     inline point<T> point<T>::operator+ ( const point& p ) const
+     inline vector2d<T> vector2d<T>::operator+ ( const vector2d& p ) const
      {
-          return point<T> ( m_x + p.m_x, m_y + p.m_y );
+          return vector2d<T> ( m_x + p.m_x, m_y + p.m_y );
      }
 
      template < typename T >
-     inline point<T> point<T>::operator- ( const point& p ) const
+     inline vector2d<T> vector2d<T>::operator- ( const vector2d& p ) const
      {
-          return point<T> ( m_x - p.m_x, m_y - p.m_y );
+          return vector2d<T> ( m_x - p.m_x, m_y - p.m_y );
      }
 
      template < typename T >
-     inline bool point<T>::operator== ( const point& p ) const
+     inline bool vector2d<T>::operator== ( const vector2d& p ) const
      {
           return ( m_x == p.m_x && m_y == p.m_y );
      }
 
      template < typename T >
-     inline void point<T>::move ( T dx, T dy )
+     inline void vector2d<T>::move ( T dx, T dy )
      {
           m_x += dx;
           m_y += dy;
      }
 
      template < typename T >
-     inline void point<T>::move_x ( T dx )
+     inline void vector2d<T>::move_x ( T dx )
      {
           m_x += dx;
      }
 
      template < typename T >
-     inline void point<T>::move_y ( T dy )
+     inline void vector2d<T>::move_y ( T dy )
      {
           m_y += dy;
      }
 
      template < typename T >
-     inline void point<T>::set ( T x, T y )
+     inline void vector2d<T>::set ( T x, T y )
      {
           m_x = x;
           m_y = y;
      }
 
      template < typename T >
-     inline void point<T>::set_x ( T x )
+     inline void vector2d<T>::set_x ( T x )
      {
           m_x = x;
      }
 
      template < typename T >
-     inline void point<T>::set_y ( T y )
+     inline void vector2d<T>::set_y ( T y )
      {
           m_y = y;
      }
 
      template < typename T >
-     inline void point<T>::negate ( )
+     inline void vector2d<T>::negate ( )
      {
           m_x = -m_x;
           m_y = -m_y;
      }
 
      template < typename T >
-     inline T point<T>::distance_to ( const point& p ) const
+     inline T vector2d<T>::distance_to ( const vector2d& p ) const
      {
           T dx = abs ( m_x - p.m_x );
           T dy = abs ( m_y - p.m_y );
@@ -139,7 +139,7 @@ namespace bryte
      }
 
      template < typename T >
-     inline T point<T>::manhattan_distance_to ( const point& p ) const
+     inline T vector2d<T>::manhattan_distance_to ( const vector2d& p ) const
      {
           T dx = abs ( m_x - p.m_x );
           T dy = abs ( m_y - p.m_y );
@@ -148,13 +148,13 @@ namespace bryte
      }
 
      template < typename T >
-     inline T point<T>::x ( ) const
+     inline T vector2d<T>::x ( ) const
      {
           return m_x;
      }
 
      template < typename T >
-     inline T point<T>::y ( ) const
+     inline T vector2d<T>::y ( ) const
      {
           return m_y;
      }

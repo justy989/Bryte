@@ -4,12 +4,12 @@
 
 using namespace bryte;
 
-room::room ( coordinate_base_type width, coordinate_base_type height )
+room::room ( vector_base_type width, vector_base_type height )
 {
      reset ( width, height );
 }
 
-void room::reset ( coordinate_base_type width, coordinate_base_type height )
+void room::reset ( vector_base_type width, vector_base_type height )
 {
      m_width = width;
      m_height = height;
@@ -23,7 +23,7 @@ void room::reset ( coordinate_base_type width, coordinate_base_type height )
      }
 }
 
-coordinate_base_type room::location_to_index ( const location& loc )
+vector_base_type room::location_to_index ( const vector& loc )
 {
      // validate input location
      assert ( loc.x ( ) >= 0 );

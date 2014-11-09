@@ -14,19 +14,18 @@ namespace bryte
      using uword = unsigned short;
 
      // base coordinate system type
-     using coordinate_base_type = short;
+     using vector_base_type = short;
 
      // explicit instantiation of types used in this project
-     template class point<coordinate_base_type>;
-     template class rect<coordinate_base_type>;
+     template class vector2d<vector_base_type>;
+     template class rect<vector_base_type>;
 
      // base point and rect types
-     using point_type = point<coordinate_base_type>;
-     using rect_type  = rect<coordinate_base_type>;
+     using vector_type = vector2d<vector_base_type>;
+     using rect_type   = rect<vector_base_type>;
 
-     // aliases for points
-     using position = point_type;
-     using location = point_type;
+     // standard x-y quantity
+     using vector = vector_type;
 
      // aliases for rects
      using rectangle    = rect_type;

@@ -8,7 +8,7 @@
  *              loaded, then it will be freed completely from memory.
  */
 
-#include <SDL2\SDL.h>
+#include <SDL2/SDL.h>
 
 #include <string>
 #include <unordered_map>

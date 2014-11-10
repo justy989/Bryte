@@ -6,8 +6,7 @@
 #ifndef BRYTE_SDL_WINDOW_HPP
 #define BRYTE_SDL_WINDOW_HPP
 
-#include <SDL2\SDL.h>
-#include <SDL2\SDL_opengl.h>
+#include <SDL2/SDL.h>
 
 namespace bryte
 {

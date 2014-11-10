@@ -5,7 +5,10 @@
 #ifndef BRYTE_VECTOR2D_HPP
 #define BRYTE_VECTOR2D_HPP
 
+#include <type_traits>
+
 #include <cmath>
+#include <cstdlib>
 
 namespace bryte
 {
@@ -45,7 +48,7 @@ namespace bryte
      };
 
      template < typename T >
-     inline vector2d<T>::vector2d ( T x = 0, T y = 0 ) :
+     inline vector2d<T>::vector2d ( T x, T y ) :
           m_x ( x ),
           m_y ( y )
      {
@@ -135,7 +138,17 @@ namespace bryte
           T dx = abs ( m_x - p.m_x );
           T dy = abs ( m_y - p.m_y );
 
-          return static_cast<T>( sqrt ( dx * dx + dy * dy ) );
+          if ( std::is_integral<T>::value ) {
+               dx = static_cast<T>( abs ( static_cast<int>( dx ) ) );
+               dy = static_cast<T>( abs ( static_cast<int>( dy ) ) );
+          } else {
+               dx = static_cast<T>( fabs ( static_cast<double>( dx ) ) );
+               dy = static_cast<T>( fabs ( static_cast<double>( dy ) ) );
+          }
+
+          double py = static_cast<double>( dx * dx + dy * dy );
+
+          return static_cast<T>( sqrt ( py ) );
      }
 
      template < typename T >

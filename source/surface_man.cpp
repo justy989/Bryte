@@ -4,7 +4,7 @@ using namespace bryte;
 
 surface_man::~surface_man ( )
 {
-     for ( int i = 0; i < m_string_resource_map.bucket_count ( ); ++i ) {
+     for ( std::size_t i = 0; i < m_string_resource_map.bucket_count ( ); ++i ) {
           while ( m_string_resource_map.begin ( i ) != m_string_resource_map.end ( i ) ) {
 
                auto it = m_string_resource_map.begin ( i );

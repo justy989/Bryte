@@ -5,7 +5,7 @@
 #ifndef BRYTE_ANIMATED_SPRITE_HPP
 #define BRYTE_ANIMATED_SPRITE_HPP
 
-#include <SDL2\SDL.h>
+#include <SDL2/SDL.h>
 
 #include "sprite.hpp"
 

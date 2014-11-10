@@ -4,7 +4,7 @@
 #ifndef BRYTE_SPRITE_HPP
 #define BRYTE_SPRITE_HPP
 
-#include <SDL2\SDL.h>
+#include <SDL2/SDL.h>
 
 #include "types.hpp"
 

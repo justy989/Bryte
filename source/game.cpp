@@ -10,7 +10,9 @@ game::game ( int argc, char** argv ) :
                     m_configuration.window_width ( ),
                     m_configuration.window_height ( ) ),
      m_state ( state::editor ),
-     m_editor_state ( m_surface_man )
+     m_editor_state ( m_surface_man,
+                      m_sdl_window.width ( ),
+                      m_sdl_window.height ( ) )
 {
 
 }

@@ -31,6 +31,7 @@ namespace bryte
           inline void move_y ( T dy );
 
           inline void set ( T x, T y );
+          inline void set ( const vector2d& p );
           inline void set_x ( T x );
           inline void set_y ( T y );
 
@@ -111,6 +112,13 @@ namespace bryte
      {
           m_x = x;
           m_y = y;
+     }
+
+     template < typename T >
+     inline void vector2d<T>::set ( const vector2d& p )
+     {
+          m_x = p.m_x;
+          m_y = p.m_y;
      }
 
      template < typename T >

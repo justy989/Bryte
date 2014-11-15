@@ -33,11 +33,19 @@ namespace bryte
      private:
 
           void handle_scroll ( const SDL_Event& sdl_event );
+          void handle_tile_change ( const SDL_Event& sdl_event );
           void handle_click ( const SDL_Event& sdl_event );
 
           void change_tile_at_screen_position ( int x, int y );
 
+          void update_tile_sprite_clip ( );
+
      private:
+
+          int m_window_width;
+          int m_window_height;
+
+          vector m_mouse;
 
           room m_room;
 
@@ -47,10 +55,8 @@ namespace bryte
 
           mode m_mode;
 
-          ubyte m_tile_to_place;
-
-          int m_window_width;
-          int m_window_height;
+          ubyte m_tile_index_to_place;
+          clipped_sprite m_tile_sprite_to_place;
      };
 }
 

@@ -36,10 +36,10 @@ void room_display::display_tiles ( const room& room, const camera& camera,
                
                // build the clip using the tile id
                auto& tile_clip = m_tilesheet.clip ( );
-               tile_clip.set_left ( tile_id * room::k_tile_width );
-               tile_clip.set_right ( tile_clip.left ( ) + room::k_tile_width );
-               tile_clip.set_bottom ( 0 );
-               tile_clip.set_top ( room::k_tile_height );
+               tile_clip.set ( tile_id * room::k_tile_width,
+                               0,
+                               tile_id * room::k_tile_width + room::k_tile_width,
+                               room::k_tile_height );
 
                // set the position rect and move it by the camera
                m_tilesheet.position ( ).set ( x * room::k_tile_width,

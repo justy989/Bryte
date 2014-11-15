@@ -189,7 +189,7 @@ namespace bryte
      }
 
      template < typename T >
-     inline void rect<T>::set ( T left, T top, T right, T bottom )
+     inline void rect<T>::set ( T left, T bottom, T right, T top )
      {
           m_bottom_left.set ( left, bottom );
           m_top_right.set ( right, top );

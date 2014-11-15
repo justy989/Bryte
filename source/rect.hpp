@@ -29,6 +29,9 @@ namespace bryte
 
           inline bool contains ( const vector2d<T>& p ) const;
           inline bool intersects ( const rect<T>& r ) const;
+          inline bool encompasses ( const rect<T>& r ) const;
+
+          inline void restrict_to ( const rect<T>& bounds );
 
           inline void move ( T dx, T dy );
           inline void move_x ( T dx );
@@ -114,7 +117,7 @@ namespace bryte
      inline bool rect<T>::contains ( const vector2d<T>& p ) const
      {
           return ( p.x ( ) >= m_top_left.x ( ) && p.x ( ) <= m_bottom_right.x ( ) &&
-                   p.y ( ) >= m_top_left.y ( ) && p.y ( ) <= m_bottom_right.y ( ) );
+                   p.y ( ) <= m_top_left.y ( ) && p.y ( ) >= m_bottom_right.y ( ) );
      }
 
      template < typename T >
@@ -133,6 +136,33 @@ namespace bryte
                    r.contains ( top_right ( ) ) ||
                    r.contains ( bottom_left ( ) ) ||
                    r.contains ( bottom_right ( ) ) );
+     }
+
+     template < typename T >
+     inline bool rect<T>::encompasses ( const rect<T>& r ) const
+     {
+          return ( contains ( r.top_left ( ) ) &&
+                   contains ( r.bottom_right ( ) ) );
+     }
+
+     template < typename T >
+     inline void rect<T>::restrict_to ( const rect<T>& bounds )
+     {
+          if ( top ( ) > bounds.top ( ) ) {
+               set_top ( bounds.top ( ) );
+          }
+
+          if ( bottom ( ) < bounds.bottom ( ) ) {
+               set_bottom ( bounds.bottom ( ) );
+          }
+
+          if ( right ( ) > bounds.right ( ) ) {
+               set_right ( bounds.right ( ) );
+          }
+
+          if ( left ( ) < bounds.left ( ) ) {
+               set_left ( bounds.left ( ) );
+          }
      }
 
      template < typename T >
@@ -188,7 +218,7 @@ namespace bryte
      template < typename T >
      inline void rect<T>::set_bottom ( T bottom )
      {
-          m_bottom_right.set_x ( bottom );
+          m_bottom_right.set_y ( bottom );
           validate ( );
      }
 

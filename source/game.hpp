@@ -4,6 +4,8 @@
 #ifndef BRYTE_GAME_HPP
 #define BRYTE_GAME_CPP
 
+#include "configuration.hpp"
+
 #include "sdl.hpp"
 #include "sdl_window.hpp"
 
@@ -32,6 +34,8 @@ namespace bryte
           static const int k_fps_delay = 1000 / 30;
 
      private:
+
+          configuration m_configuration;
 
           sdl m_sdl;
           sdl_window m_sdl_window;

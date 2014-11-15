@@ -5,7 +5,10 @@
 using namespace bryte;
 
 game::game ( int argc, char** argv ) :
-     m_sdl_window ( "bryte 0.01a", 1024, 768 ),
+     m_configuration ( std::string ( "bryte.cfg" ) ),
+     m_sdl_window ( "bryte 0.01a", 
+                    m_configuration.window_width ( ),
+                    m_configuration.window_height ( ) ),
      m_state ( state::title )
 {
 

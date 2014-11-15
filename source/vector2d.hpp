@@ -1,5 +1,5 @@
 /* vector2d: Hold information about a 2d vector2d and support operations around
- *        moving it, setting it and checking the distance between vector2ds.
+ *           moving it, setting it and checking the distance between vector2ds.
  */
 
 #ifndef BRYTE_VECTOR2D_HPP

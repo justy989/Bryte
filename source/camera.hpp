@@ -27,7 +27,7 @@ namespace bryte
 
      private:
 
-          void set_center_from_viewport ( );
+          void calculate_center ( );
 
      private:
 

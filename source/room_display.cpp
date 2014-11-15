@@ -44,7 +44,7 @@ void room_display::display_tiles ( const room& room, const camera& camera,
                m_tilesheet.position ( ).set ( x * room::k_tile_width,
                                               y * room::k_tile_height );
 
-               m_tilesheet.position ( ) += camera.viewport ( ).bottom_left ( );
+               m_tilesheet.position ( ) -= camera.viewport ( ).bottom_left ( );
 
                // draw onto the back buffer
                m_tilesheet.blit_onto ( back_buffer );

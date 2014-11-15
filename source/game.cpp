@@ -9,7 +9,8 @@ game::game ( int argc, char** argv ) :
      m_sdl_window ( "bryte 0.01a", 
                     m_configuration.window_width ( ),
                     m_configuration.window_height ( ) ),
-     m_state ( state::title )
+     m_state ( state::editor ),
+     m_editor_state ( m_surface_man )
 {
 
 }
@@ -28,6 +29,8 @@ int game::run ( )
                     quit = true;
                     break;
                }
+
+               handle_sdl_event ( sdl_event );
           }
 
           // update and draw the frame
@@ -47,6 +50,7 @@ void game::update ( )
      case state::title:
           break;
      case state::editor:
+          m_editor_state.update ( );
           break;
      case state::world:
           break;
@@ -61,6 +65,7 @@ void game::draw ( )
      case state::title:
           break;
      case state::editor:
+          m_editor_state.draw ( m_sdl_window.back_buffer ( ) );
           break;
      case state::world:
           break;
@@ -69,4 +74,19 @@ void game::draw ( )
      }
 
      m_sdl_window.render ( );
+}
+
+void game::handle_sdl_event ( const SDL_Event& sdl_event )
+{
+     switch ( m_state ) {
+     case state::title:
+          break;
+     case state::editor:
+          m_editor_state.handle_sdl_event ( sdl_event );
+          break;
+     case state::world:
+          break;
+     default:
+          throw std::out_of_range ( "Tried to execute unknown game state." );
+     }
 }

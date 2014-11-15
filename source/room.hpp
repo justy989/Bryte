@@ -13,6 +13,9 @@ namespace bryte
      class room {
      public:
 
+          static const vector_base_type k_tile_width = 16;
+          static const vector_base_type k_tile_height = 16;
+
           static const vector_base_type k_max_width = 32;
           static const vector_base_type k_max_height = 32;
           static const vector_base_type k_max_tiles = k_max_width * k_max_height;
@@ -28,16 +31,19 @@ namespace bryte
           void reset ( vector_base_type width, vector_base_type height );
 
           inline void set_tile ( const vector& location, ubyte tile );
-          inline ubyte get_tile ( const vector& location );
+          inline ubyte get_tile ( const vector& location ) const;
 
           inline void set_solid ( const vector& location, bool solid );
-          inline bool get_solid ( const vector& location );
+          inline bool get_solid ( const vector& location ) const;
 
           inline doorvector& doors ( );
 
+          inline vector_base_type width ( ) const;
+          inline vector_base_type height ( ) const;
+
      private:
 
-          vector_base_type location_to_index ( const vector& location );
+          vector_base_type location_to_index ( const vector& location ) const;
 
      private:
 
@@ -57,7 +63,7 @@ namespace bryte
           m_tiles [ index ] = tile;
      }
 
-     inline ubyte room::get_tile ( const vector& location )
+     inline ubyte room::get_tile ( const vector& location ) const
      {
           auto index = location_to_index ( location );
 
@@ -71,7 +77,7 @@ namespace bryte
           m_solids [ index ] = solid;
      }
 
-     inline bool room::get_solid ( const vector& location )
+     inline bool room::get_solid ( const vector& location ) const
      {
           auto index = location_to_index ( location );
 
@@ -82,6 +88,9 @@ namespace bryte
      {
           return m_doors;
      }
+
+     inline vector_base_type room::width ( ) const { return m_width; }
+     inline vector_base_type room::height ( ) const { return m_height; }
 }
 
 #endif

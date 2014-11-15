@@ -9,9 +9,7 @@ camera::camera ( const rectangle& viewport,
      m_viewport ( viewport ),
      m_bounds ( bounds )
 {
-     assert ( m_bounds.encompasses ( m_viewport ) );
-
-     set_center_from_viewport ( );
+     reset ( viewport, bounds );
 }
 
 void camera::reset ( const rectangle& viewport,
@@ -21,6 +19,8 @@ void camera::reset ( const rectangle& viewport,
      m_bounds = bounds;
 
      assert ( m_bounds.encompasses ( m_viewport ) );
+
+     calculate_center ( );
 }
 
 void camera::move ( const vector& delta )
@@ -29,7 +29,7 @@ void camera::move ( const vector& delta )
 
      m_viewport.restrict_to ( m_bounds );
 
-     set_center_from_viewport ( );
+     calculate_center ( );
 }
 
 void camera::look_at ( const vector& location )
@@ -44,10 +44,10 @@ void camera::look_at ( const vector& location )
                       m_center.x ( ) + half_width,
                       m_center.y ( ) - half_height );
 
-     assert ( m_bounds.encompasses ( m_viewport ) );
+     m_viewport.restrict_to ( m_bounds );
 }
 
-void camera::set_center_from_viewport ( )
+void camera::calculate_center ( )
 {
      m_center.set ( m_viewport.left ( ) + ( m_viewport.width ( ) / 2 ),
                     m_viewport.bottom ( ) + ( m_viewport.height ( ) / 2 ) );

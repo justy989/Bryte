@@ -9,6 +9,10 @@
 #include "sdl.hpp"
 #include "sdl_window.hpp"
 
+#include "surface_man.hpp"
+
+#include "editor_state.hpp"
+
 namespace bryte
 {
      class game {
@@ -22,6 +26,7 @@ namespace bryte
 
           void update ( );
           void draw ( );
+          void handle_sdl_event ( const SDL_Event& sdl_event );
 
      private:
 
@@ -40,7 +45,11 @@ namespace bryte
           sdl m_sdl;
           sdl_window m_sdl_window;
 
+          surface_man m_surface_man;
+
           state m_state;
+
+          editor_state m_editor_state;
      };
 }
 

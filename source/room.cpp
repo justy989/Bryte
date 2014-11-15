@@ -23,7 +23,7 @@ void room::reset ( vector_base_type width, vector_base_type height )
      }
 }
 
-vector_base_type room::location_to_index ( const vector& loc )
+vector_base_type room::location_to_index ( const vector& loc ) const
 {
      // validate input location
      assert ( loc.x ( ) >= 0 );

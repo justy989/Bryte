@@ -29,6 +29,8 @@ namespace bryte
 
           void calculate_center ( );
 
+          void restrict_viewport_to_bounds ( );
+
      private:
 
           rectangle m_viewport;

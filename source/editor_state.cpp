@@ -3,10 +3,11 @@
 using namespace bryte;
 
 editor_state::editor_state ( surface_man& sman ) :
-m_room ( 20, 20 ),
-m_camera ( rectangle ( 0, 240, 256, 0 ),
-           rectangle ( 0, m_room.height ( ) * room::k_tile_height,
-                       m_room.width ( ) * room::k_tile_width, 0 ) )
+     m_room ( 20, 20 ),
+     m_camera ( rectangle ( 0, 0, 256, 240 ),
+                rectangle ( 0, 0,
+                            m_room.width ( ) * room::k_tile_width, 
+			             m_room.height ( ) * room::k_tile_height ) )
 {
      auto* surface = sman.load ( "castle_tilesheet.bmp" );
 

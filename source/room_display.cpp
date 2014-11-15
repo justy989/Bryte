@@ -4,8 +4,8 @@ using namespace bryte;
 
 room_display::room_display ( ) :
      m_tilesheet ( nullptr, vector ( ),
-                   rectangle ( 0, room::k_tile_height,
-                               room::k_tile_width, 0 ) )
+                   rectangle ( 0, 0,
+                               room::k_tile_width, room::k_tile_height ) )
 {
 
 }
@@ -14,8 +14,9 @@ void room_display::change_tilesheet ( SDL_Surface* surface )
 {
      m_tilesheet = clipped_sprite ( surface,
                                     vector ( ),
-                                    rectangle ( 0, room::k_tile_height,
-                                                room::k_tile_width, 0 ) );
+                                    rectangle ( 0, 0,
+                                                room::k_tile_width,
+                                                room::k_tile_height ) );
 }
 
 void room_display::display ( const room& room, const camera& camera,

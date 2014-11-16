@@ -1,3 +1,8 @@
+/* editor_state: allows editting rooms and their various layers. It is it's own
+ *               game state separate from the game itself and utilizes a lot of
+ *               gui.
+ */
+
 #ifndef BRYTE_EDITOR_STATE_HPP
 #define BRYTE_EDITOR_STATE_HPP
 

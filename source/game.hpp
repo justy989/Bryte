@@ -11,6 +11,8 @@
 
 #include "surface_man.hpp"
 
+#include "text_raii.hpp"
+
 #include "editor_state.hpp"
 
 namespace bryte
@@ -46,6 +48,8 @@ namespace bryte
           sdl_window m_sdl_window;
 
           surface_man m_surface_man;
+
+          text_raii m_text_raii;
 
           state m_state;
 

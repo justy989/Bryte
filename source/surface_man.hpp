@@ -1,12 +1,12 @@
+/* surface_man: Manages surface resources by loading and freeing surfaces. If
+*              a path is given that has already been loaded, then it will
+*              return an existing surface pointer rather than double loading.
+*              When the surface is freed the same number of times it was
+*              loaded, then it will be freed completely from memory.
+*/
+
 #ifndef BRYTE_SURFACE_MAN_HPP
 #define BRYTE_SURFACE_MAN_HPP
-
-/* surface_man: Manages surface resources by loading and freeing surfaces. If
- *              a path is given that has already been loaded, then it will
- *              return an existing surface pointer rather than double loading.
- *              When the surface is freed the same number of times it was
- *              loaded, then it will be freed completely from memory.
- */
 
 #include <SDL2/SDL.h>
 

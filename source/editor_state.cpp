@@ -87,7 +87,7 @@ void editor_state::handle_tile_change ( const SDL_Event& sdl_event )
                update_tile_sprite_clip ( );
           }
           else if ( sdl_event.key.keysym.sym == SDLK_e ) {
-               if ( m_tile_index_to_place > 1 ) {
+               if ( m_tile_index_to_place >= 1 ) {
                     m_tile_index_to_place--;
                     update_tile_sprite_clip ( );
                }

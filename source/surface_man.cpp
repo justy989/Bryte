@@ -34,6 +34,12 @@ SDL_Surface* surface_man::load ( const std::string& path )
           return nullptr;
      }
 
+     // try to set the color key
+     if ( SDL_SetColorKey ( surface, SDL_TRUE, 0xFF00FF ) ) {
+          SDL_FreeSurface ( surface );
+          return nullptr;
+     }
+
      auto ptr = std::make_shared<surface_resource> ( path, surface );
 
      // add the shared ptr to both maps

@@ -19,6 +19,8 @@ namespace bryte
                             vector_base_type row_frame_count,
                             vector_base_type updates_per_frame );
 
+          ~animated_sprite ( );
+
           void update ( );
 
           void blit_onto ( SDL_Surface* destination ) final;

@@ -14,6 +14,7 @@ namespace bryte
      public:
 
           sprite ( SDL_Surface* surface, vector position );
+          virtual ~sprite ( );
 
           virtual void blit_onto ( SDL_Surface* destination );
 

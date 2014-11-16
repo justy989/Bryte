@@ -30,7 +30,7 @@ namespace bryte
           static void create_sprite ( );
           static void destroy_sprite ( );
 
-          static void draw ( SDL_Surface* back_buffer, std::string& message,
+          static void draw ( SDL_Surface* back_buffer, const std::string& message,
                              vector position, color color = color::black );
 
      private:

@@ -16,6 +16,11 @@ animated_sprite::animated_sprite ( SDL_Surface* surface, vector position,
 
 }
 
+animated_sprite::~animated_sprite ( )
+{
+
+}
+
 void animated_sprite::update ( )
 {
      m_updates_since_frame++;

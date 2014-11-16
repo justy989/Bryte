@@ -20,10 +20,10 @@ void text::destroy_sprite ( )
      delete ms_sprite;
 }
 
-void text::draw ( SDL_Surface* back_buffer, std::string& message,
+void text::draw ( SDL_Surface* back_buffer, const std::string& message,
                   vector position, color color )
 {
-     for ( auto character : message ) {
+     for ( const auto& character : message ) {
           draw_character ( back_buffer, character, position, color );
           position += vector ( 6, 0 );
      }

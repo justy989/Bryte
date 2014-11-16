@@ -13,6 +13,7 @@ namespace bryte
 
           clipped_sprite ( SDL_Surface* surface, vector position,
                            const rectangle& clip );
+          virtual ~clipped_sprite ( );
 
           void blit_onto ( SDL_Surface* destination ) final;
 

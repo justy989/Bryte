@@ -10,6 +10,11 @@ clipped_sprite::clipped_sprite ( SDL_Surface* surface, vector position,
 
 }
 
+clipped_sprite::~clipped_sprite ( )
+{
+
+}
+
 void clipped_sprite::blit_onto ( SDL_Surface* destination )
 {
      SDL_Rect src_rect { m_clip.left ( ), m_clip.bottom ( ),

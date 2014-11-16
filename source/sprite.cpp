@@ -9,6 +9,11 @@ sprite::sprite ( SDL_Surface* surface, vector position ) :
 
 }
 
+sprite::~sprite ( )
+{
+
+}
+
 void sprite::blit_onto ( SDL_Surface* destination )
 {
      SDL_Rect src_rect { 0, 0, m_surface->w, m_surface->h };

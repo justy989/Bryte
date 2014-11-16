@@ -1,5 +1,7 @@
 #include "ui_button.hpp"
 
+#include "draw_utils.hpp"
+
 using namespace bryte;
 
 const Uint32 ui_button::k_state_colors [ 3 ] = {
@@ -46,33 +48,11 @@ void ui_button::draw ( SDL_Surface* back_buffer )
 {
      m_icon_sprite.blit_onto ( back_buffer );
 
-     SDL_Rect rect;
-
-     // top bar
-     rect = SDL_Rect { m_icon_sprite.position ( ).x ( ) - 1,
-                       m_icon_sprite.position ( ).y ( ) - 1,
-                       m_icon_sprite.clip ( ).width ( ) + 2,
-                       1 };
-     SDL_FillRect ( back_buffer, &rect, k_state_colors [ static_cast<int>( m_state ) ] );
-
-     // bottom bar
-     rect = SDL_Rect { m_icon_sprite.position ( ).x ( ) - 1,
-                       m_icon_sprite.position ( ).y ( ) + m_icon_sprite.clip ( ).height ( ),
-                       m_icon_sprite.clip ( ).width ( ) + 2,
-                       1 };
-     SDL_FillRect ( back_buffer, &rect, k_state_colors [ static_cast<int>( m_state ) ] );
-
-     // left bar
-     rect = SDL_Rect { m_icon_sprite.position ( ).x ( ) - 1,
-                       m_icon_sprite.position ( ).y ( ) - 1,
-                       1,
-                       m_icon_sprite.clip ( ).height ( ) + 2 };
-     SDL_FillRect ( back_buffer, &rect, k_state_colors [ static_cast<int>( m_state ) ] );
-
-     // right bar
-     rect = SDL_Rect { m_icon_sprite.position ( ).x ( ) + m_icon_sprite.clip ( ).width ( ),
-                       m_icon_sprite.position ( ).y ( ) - 1,
-                       1,
-                       m_icon_sprite.clip ( ).height ( ) + 2 };
-     SDL_FillRect ( back_buffer, &rect, k_state_colors [ static_cast<int>( m_state ) ] );
+     
+     draw_utils::draw_border ( rectangle ( m_icon_sprite.position ( ),
+                                           m_icon_sprite.position ( ) +
+                                           vector ( m_icon_sprite.clip ( ).width ( ),
+                                                    m_icon_sprite.clip ( ).height ( ) ) ),
+                               k_state_colors [ static_cast< int >( m_state ) ],
+                               back_buffer );
 }

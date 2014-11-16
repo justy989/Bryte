@@ -42,10 +42,16 @@ namespace bryte
 
           void handle_scroll ( const SDL_Event& sdl_event );
           void handle_click ( const SDL_Event& sdl_event );
+          void handle_change_selected ( const SDL_Event& sdl_event );
 
           void change_tile_at_screen_position ( int x, int y );
 
           void update_tile_sprite_clip ( );
+
+          void draw_tile_strip ( SDL_Surface* back_buffer );
+
+          void increment_tile_index ( );
+          void decrement_tile_index ( );
 
      private:
 
@@ -60,10 +66,14 @@ namespace bryte
 
           room_display m_room_display;
 
+          SDL_Surface* m_tilesheet;
+
           mode m_mode;
 
           ubyte m_tile_index_to_place;
           clipped_sprite m_tile_sprite_to_place;
+
+          ubyte m_max_tile_index;
 
           SDL_Surface* m_ui_buttons_surface;
           ui_button m_tile_index_inc_btn;

@@ -13,6 +13,22 @@ namespace bryte
      class room {
      public:
 
+          struct tile {
+
+               enum rotation : ubyte {
+                    zero,
+                    ninety,
+                    one_eighty,
+                    two_seventy,
+               };
+
+               ubyte id;
+               rotation orientation;
+               bool solid;
+          };
+
+     public:
+
           static const vector_base_type k_tile_width = 16;
           static const vector_base_type k_tile_height = 16;
 
@@ -30,11 +46,8 @@ namespace bryte
 
           void reset ( vector_base_type width, vector_base_type height );
 
-          inline void set_tile ( const vector& location, ubyte tile );
-          inline ubyte get_tile ( const vector& location ) const;
-
-          inline void set_solid ( const vector& location, bool solid );
-          inline bool get_solid ( const vector& location ) const;
+          inline tile& get_tile ( const vector& location );
+          inline const tile& get_tile ( const vector& location ) const;
 
           inline doorvector& doors ( );
 
@@ -50,38 +63,23 @@ namespace bryte
           vector_base_type m_width;
           vector_base_type m_height;
 
-          ubyte m_tiles [ k_max_tiles ];
-          bool m_solids [ k_max_tiles ];
+          tile m_tiles [ k_max_tiles ];
 
           svector<door, k_max_doors> m_doors;
      };
 
-     inline void room::set_tile ( const vector& location, ubyte tile )
-     {
-          auto index = location_to_index ( location );
-
-          m_tiles [ index ] = tile;
-     }
-
-     inline ubyte room::get_tile ( const vector& location ) const
+     inline room::tile& room::get_tile ( const vector& location )
      {
           auto index = location_to_index ( location );
 
           return m_tiles [ index ];
      }
 
-     inline void room::set_solid ( const vector& location, bool solid )
+     inline const room::tile& room::get_tile ( const vector& location ) const
      {
           auto index = location_to_index ( location );
 
-          m_solids [ index ] = solid;
-     }
-
-     inline bool room::get_solid ( const vector& location ) const
-     {
-          auto index = location_to_index ( location );
-
-          return m_solids [ index ];
+          return m_tiles [ index ];
      }
 
      inline room::doorvector& room::doors ( )

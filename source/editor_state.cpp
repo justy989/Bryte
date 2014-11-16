@@ -147,10 +147,10 @@ void editor_state::change_tile_at_screen_position ( int x, int y )
      world_pos -= vector ( 0, k_top_border );
 
      // find the tile index we need to set
-     vector tile_index ( world_pos.x ( ) / room::k_tile_width,
-                         world_pos.y ( ) / room::k_tile_width );
+     vector tile_location ( world_pos.x ( ) / room::k_tile_width,
+                            world_pos.y ( ) / room::k_tile_width );
 
-     m_room.set_tile ( tile_index, m_tile_index_to_place );
+     m_room.get_tile ( tile_location ).id = m_tile_index_to_place;
 }
 
 void editor_state::update_tile_sprite_clip ( )

@@ -32,7 +32,7 @@ void room_display::display_tiles ( const room& room, const camera& camera,
      for ( vector_base_type x = 0; x < room.width ( ); ++x ) {
           for ( vector_base_type y = 0; y < room.height ( ); ++y ) {
 
-               auto tile_id = room.get_tile ( vector ( x, y ) );
+               auto tile_id = room.get_tile ( vector ( x, y ) ).id;
                
                // build the clip using the tile id
                auto& tile_clip = m_tilesheet.clip ( );

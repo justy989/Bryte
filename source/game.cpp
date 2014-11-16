@@ -75,7 +75,7 @@ void game::draw ( )
           throw std::out_of_range ( "Tried to execute unknown game state." );
      }
 
-     text::draw ( m_sdl_window.back_buffer ( ),  std::string( "HELLO WORLD" ), vector ( 15, 15 ) );
+     text::draw ( m_sdl_window.back_buffer ( ),  std::string( "BRYTE" ), vector ( 30, 30 ) );
 
      m_sdl_window.render ( );
 }

@@ -13,11 +13,16 @@ editor_state::editor_state ( surface_man& sman,
                             sdl_window::k_back_buffer_height ),
                 rectangle ( 0, 0,
                             m_room.width ( ) * room::k_tile_width,
-                            m_room.height ( ) * room::k_tile_height ) ),
+                            m_room.height ( ) * room::k_tile_height + 
+                            ( 60 ) ) ),
      m_mode ( mode::tile ),
      m_tile_index_to_place ( 1 ),
      m_tile_sprite_to_place ( nullptr, vector ( ),
-                              rectangle ( 0, 0, 0, 0 ) )
+                              rectangle ( 0, 0, 0, 0 ) ),
+     m_ui_buttons_surface ( sman.load ( "editor_button_icons.bmp" ) ),
+     m_tile_index_inc_btn ( m_ui_buttons_surface, vector ( 240, 223 ), rectangle ( 77, 0, 86, 10 ) ),
+     m_tile_index_dec_btn ( m_ui_buttons_surface, vector ( 5, 223 ), rectangle ( 66, 0, 76, 10 ) ),
+     m_map_area ( 0, k_top_border, sdl_window::k_back_buffer_width, k_bottom_border )
 {
      auto* surface = sman.load ( "castle_tilesheet.bmp" );
 
@@ -33,7 +38,7 @@ void editor_state::update ( )
 {
      int mousex, mousey;
 
-     SDL_GetMouseState ( &mousex, &mousey );
+     auto mouse_state = SDL_GetMouseState ( &mousex, &mousey );
 
      // calculate the coordinate ratio on the window: 320 / 640 would be 0.5
      float window_x_pct = static_cast< float >( mousex ) / static_cast< float >( m_window_width );
@@ -48,19 +53,43 @@ void editor_state::update ( )
                    static_cast< vector_base_type >( screen_y ) );
 
      m_tile_sprite_to_place.position ( ).set ( m_mouse );
+
+     m_tile_index_inc_btn.update ( m_mouse, mouse_state & SDL_BUTTON ( SDL_BUTTON_LEFT ) );
+     m_tile_index_dec_btn.update ( m_mouse, mouse_state & SDL_BUTTON ( SDL_BUTTON_LEFT ) );
+
+     if ( m_tile_index_inc_btn.get_state ( ) == ui_button::state::pressed ) {
+          m_tile_index_to_place++;
+     }
+
+     if ( m_tile_index_dec_btn.get_state ( ) == ui_button::state::pressed ) {
+          if ( m_tile_index_to_place >= 1 ) {
+               m_tile_index_to_place--;
+          }
+     }
+
+     update_tile_sprite_clip ( );
 }
 
 void editor_state::draw ( SDL_Surface* back_buffer )
 {
-     m_room_display.display ( m_room, m_camera, back_buffer );
-
+     m_room_display.display ( m_room, m_camera, vector ( 0, k_top_border ), back_buffer );
      m_tile_sprite_to_place.blit_onto ( back_buffer );
+
+     SDL_Rect rect { 0, 0, sdl_window::k_back_buffer_width, k_top_border };
+     SDL_FillRect ( back_buffer, &rect, 0x000000 );
+
+     rect = SDL_Rect { 0, k_bottom_border, 
+                       sdl_window::k_back_buffer_width,
+                       sdl_window::k_back_buffer_height - k_bottom_border };
+     SDL_FillRect ( back_buffer, &rect, 0x000000 );
+
+     m_tile_index_inc_btn.draw ( back_buffer );
+     m_tile_index_dec_btn.draw ( back_buffer );
 }
 
 void editor_state::handle_sdl_event ( const SDL_Event& sdl_event )
 {
      handle_scroll ( sdl_event );
-     handle_tile_change ( sdl_event );
      handle_click ( sdl_event );
 }
 
@@ -79,22 +108,6 @@ void editor_state::handle_scroll ( const SDL_Event& sdl_event )
      }
 }
 
-void editor_state::handle_tile_change ( const SDL_Event& sdl_event )
-{
-     if ( sdl_event.type == SDL_KEYDOWN ) {
-          if ( sdl_event.key.keysym.sym == SDLK_q ) {
-               m_tile_index_to_place++;
-               update_tile_sprite_clip ( );
-          }
-          else if ( sdl_event.key.keysym.sym == SDLK_e ) {
-               if ( m_tile_index_to_place >= 1 ) {
-                    m_tile_index_to_place--;
-                    update_tile_sprite_clip ( );
-               }
-          }
-     }
-}
-
 void editor_state::handle_click ( const SDL_Event& sdl_event )
 {
      if ( sdl_event.type == SDL_MOUSEBUTTONDOWN ) {
@@ -106,11 +119,16 @@ void editor_state::handle_click ( const SDL_Event& sdl_event )
 
 void editor_state::change_tile_at_screen_position ( int x, int y )
 {
+     if ( !m_map_area.contains ( m_mouse ) ) {
+          return;
+     }
+
      // find the world position
      vector world_pos ( m_mouse );
 
      // offset by the camera
      world_pos += m_camera.viewport ( ).bottom_left ( );
+     world_pos -= vector ( 0, k_top_border );
 
      // find the tile index we need to set
      vector tile_index ( world_pos.x ( ) / room::k_tile_width,

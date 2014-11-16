@@ -19,12 +19,12 @@ namespace bryte
           void change_tilesheet ( SDL_Surface* surface );
 
           void display ( const room& room, const camera& camera,
-                         SDL_Surface* back_buffer );
+                         vector view_offset, SDL_Surface* back_buffer );
 
      private:
 
           void display_tiles ( const room& room, const camera& camera,
-                               SDL_Surface* back_buffer );
+                               vector view_offset, SDL_Surface* back_buffer );
 
      private:
           

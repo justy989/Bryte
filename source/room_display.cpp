@@ -20,13 +20,13 @@ void room_display::change_tilesheet ( SDL_Surface* surface )
 }
 
 void room_display::display ( const room& room, const camera& camera,
-                             SDL_Surface* back_buffer )
+                             vector view_offset, SDL_Surface* back_buffer )
 {
-     display_tiles ( room, camera, back_buffer );
+     display_tiles ( room, camera, view_offset, back_buffer );
 }
 
 void room_display::display_tiles ( const room& room, const camera& camera,
-                                   SDL_Surface* back_buffer )
+                                   vector view_offset, SDL_Surface* back_buffer )
 {
      // loop over the entire room, optimize later!
      for ( vector_base_type x = 0; x < room.width ( ); ++x ) {
@@ -46,6 +46,7 @@ void room_display::display_tiles ( const room& room, const camera& camera,
                                               y * room::k_tile_height );
 
                m_tilesheet.position ( ) -= camera.viewport ( ).bottom_left ( );
+               m_tilesheet.position ( ) += view_offset;
 
                // draw onto the back buffer
                m_tilesheet.blit_onto ( back_buffer );

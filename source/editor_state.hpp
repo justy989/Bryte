@@ -9,6 +9,7 @@
 #include "surface_man.hpp"
 #include "room_display.hpp"
 #include "sdl_window.hpp"
+#include "ui_button.hpp"
 
 namespace bryte
 {
@@ -34,11 +35,12 @@ namespace bryte
      private:
 
           static const int k_scroll_speed = 3;
+          static const vector_base_type k_top_border = 20;
+          static const vector_base_type k_bottom_border = 200;
 
      private:
 
           void handle_scroll ( const SDL_Event& sdl_event );
-          void handle_tile_change ( const SDL_Event& sdl_event );
           void handle_click ( const SDL_Event& sdl_event );
 
           void change_tile_at_screen_position ( int x, int y );
@@ -62,6 +64,12 @@ namespace bryte
 
           ubyte m_tile_index_to_place;
           clipped_sprite m_tile_sprite_to_place;
+
+          SDL_Surface* m_ui_buttons_surface;
+          ui_button m_tile_index_inc_btn;
+          ui_button m_tile_index_dec_btn;
+
+          rectangle m_map_area;
      };
 }
 

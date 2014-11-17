@@ -30,8 +30,8 @@ editor_state::editor_state ( surface_man& sman,
 {
      m_room_display.change_tilesheet ( m_tilesheet );
 
-     m_tile_sprite_to_place = clipped_sprite ( m_tilesheet, vector ( ),
-                                               rectangle ( 0, 0, 0, 0 ) );
+     m_tile_sprite_to_place = clipped_sprite ( m_room_display.orientation_tilesheet_surface ( ),
+                                               vector ( ), rectangle ( 0, 0, 0, 0 ) );
 
      update_tile_sprite_clip ( );
 }
@@ -128,13 +128,16 @@ void editor_state::handle_change_selected ( const SDL_Event& sdl_event )
      if ( sdl_event.type == SDL_KEYDOWN ) {
           if ( sdl_event.key.keysym.sym == SDLK_q ) {
                decrement_tile_index ( );
+               update_tile_sprite_clip ( );
           }
           else if ( sdl_event.key.keysym.sym == SDLK_e ) {
                increment_tile_index ( );
+               update_tile_sprite_clip ( );
           }
           else if ( sdl_event.key.keysym.sym == SDLK_r ) {
                m_tile_orientation_to_place++;
                m_tile_orientation_to_place %= rotation::count;
+               update_tile_sprite_clip ( );
           }
      }
 }
@@ -165,9 +168,11 @@ void editor_state::update_tile_sprite_clip ( )
 {
      auto& clip = m_tile_sprite_to_place.clip ( );
 
-     clip.set ( m_tile_index_to_place * room::k_tile_width, 0,
+     vector_base_type height = m_tile_orientation_to_place * room::k_tile_height;
+
+     clip.set ( m_tile_index_to_place * room::k_tile_width, height,
                 m_tile_index_to_place * room::k_tile_width + room::k_tile_width,
-                room::k_tile_height );
+                height + room::k_tile_height );
 }
 
 void editor_state::draw_tile_strip ( SDL_Surface* back_buffer )

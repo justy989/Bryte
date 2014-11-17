@@ -22,6 +22,8 @@ namespace bryte
           void display ( const room& room, const camera& camera,
                          vector view_offset, SDL_Surface* back_buffer );
 
+          inline SDL_Surface* orientation_tilesheet_surface ( );
+
      private:
 
           void display_tiles ( const room& room, const camera& camera,
@@ -40,6 +42,11 @@ namespace bryte
 
           SDL_Surface* m_orientation_tilesheet_surface;
      };
+
+     inline SDL_Surface* room_display::orientation_tilesheet_surface ( )
+     {
+          return m_orientation_tilesheet_surface;
+     }
 }
 
 #endif

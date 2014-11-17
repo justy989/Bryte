@@ -1,4 +1,5 @@
 #include "room_display.hpp"
+#include "draw_utils.hpp"
 
 #include <stdexcept>
 
@@ -17,6 +18,14 @@ room_display::room_display ( ) :
                                room::k_tile_width, room::k_tile_height ) )
 {
 
+}
+
+room_display::~room_display ( )
+{
+     if ( m_orientation_tilesheet_surface ) {
+          SDL_FreeSurface ( m_orientation_tilesheet_surface );
+          m_orientation_tilesheet_surface = nullptr;
+     }
 }
 
 void room_display::change_tilesheet ( SDL_Surface* surface )
@@ -106,5 +115,26 @@ void room_display::build_orientations ( SDL_Surface* tilesheet )
           dst.y += tilesheet->h;
      }
 
+     vector_base_type tile_count = tilesheet->w / room::k_tile_width;
+
+     for ( vector_base_type i = 0; i < tile_count; ++i ) {
+          rectangle tile ( i * room::k_tile_width,
+                           room::k_tile_height,
+                           i * room::k_tile_width + room::k_tile_width,
+                           room::k_tile_height + room::k_tile_height );
+
+          draw_utils::rotate_square_clockwise ( m_orientation_tilesheet_surface, tile );
+
+          tile += vector ( 0, room::k_tile_height );
+
+          draw_utils::rotate_square_clockwise ( m_orientation_tilesheet_surface, tile );
+          draw_utils::rotate_square_clockwise ( m_orientation_tilesheet_surface, tile );
+
+          tile += vector ( 0, room::k_tile_height );
+
+          draw_utils::rotate_square_clockwise ( m_orientation_tilesheet_surface, tile );
+          draw_utils::rotate_square_clockwise ( m_orientation_tilesheet_surface, tile );
+          draw_utils::rotate_square_clockwise ( m_orientation_tilesheet_surface, tile );
+     }
 }
 

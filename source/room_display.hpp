@@ -15,6 +15,7 @@ namespace bryte
      public:
 
           room_display ( );
+          ~room_display ( );
 
           void change_tilesheet ( SDL_Surface* surface );
 

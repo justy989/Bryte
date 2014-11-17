@@ -23,8 +23,8 @@ editor_state::editor_state ( surface_man& sman,
                               rectangle ( 0, 0, 0, 0 ) ),
      m_max_tile_index ( ( m_tilesheet->w / room::k_tile_width ) - 1 ),
      m_ui_buttons_surface ( sman.load ( "editor_button_icons.bmp" ) ),
-     m_tile_index_inc_btn ( m_ui_buttons_surface, vector ( 240, 223 ), rectangle ( 77, 0, 86, 10 ) ),
-     m_tile_index_dec_btn ( m_ui_buttons_surface, vector ( 5, 223 ), rectangle ( 66, 0, 76, 10 ) ),
+     m_tile_index_inc_btn ( m_ui_buttons_surface, vector ( 223, 222 ), rectangle ( 77, 0, 86, 10 ) ),
+     m_tile_index_dec_btn ( m_ui_buttons_surface, vector ( 25, 222 ), rectangle ( 66, 0, 76, 10 ) ),
      m_map_area ( 0, k_top_border, sdl_window::k_back_buffer_width, k_bottom_border )
 {
      m_room_display.change_tilesheet ( m_tilesheet );

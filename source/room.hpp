@@ -7,6 +7,7 @@
 
 #include "door.hpp"
 #include "svector.hpp"
+#include "rotation.hpp"
 
 namespace bryte
 {
@@ -14,14 +15,6 @@ namespace bryte
      public:
 
           struct tile {
-
-               enum rotation : ubyte {
-                    zero,
-                    ninety,
-                    one_eighty,
-                    two_seventy,
-               };
-
                ubyte id;
                rotation orientation;
                bool solid;

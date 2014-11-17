@@ -26,9 +26,18 @@ namespace bryte
           void display_tiles ( const room& room, const camera& camera,
                                vector view_offset, SDL_Surface* back_buffer );
 
+          void gen_orientation_tilesheet ( SDL_Surface* tilesheet );
+          void build_orientations ( SDL_Surface* tilesheet );
+
      private:
-          
+
+          static const vector_base_type k_orientation_clip_y[ rotation::count ];
+
+     private:
+
           clipped_sprite m_tilesheet;
+
+          SDL_Surface* m_orientation_tilesheet_surface;
      };
 }
 

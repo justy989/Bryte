@@ -19,7 +19,7 @@ void room::reset ( vector_base_type width, vector_base_type height )
      // clear everything
      for ( int i = 0; i < size; ++i ) {
           m_tiles [ i ].id = 0;
-          m_tiles [ i ].orientation = tile::rotation::zero;
+          m_tiles [ i ].orientation = rotation::ninety;
           m_tiles [ i ].solid = false;
      }
 }

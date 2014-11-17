@@ -71,6 +71,7 @@ namespace bryte
           mode m_mode;
 
           ubyte m_tile_index_to_place;
+          ubyte m_tile_orientation_to_place;
           clipped_sprite m_tile_sprite_to_place;
 
           ubyte m_max_tile_index;

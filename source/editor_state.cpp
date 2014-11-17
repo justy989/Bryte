@@ -19,6 +19,7 @@ editor_state::editor_state ( surface_man& sman,
      m_tilesheet ( sman.load ( "castle_tilesheet.bmp" ) ),
      m_mode ( mode::tile ),
      m_tile_index_to_place ( 0 ),
+     m_tile_orientation_to_place ( rotation::zero ),
      m_tile_sprite_to_place ( nullptr, vector ( ),
                               rectangle ( 0, 0, 0, 0 ) ),
      m_max_tile_index ( ( m_tilesheet->w / room::k_tile_width ) - 1 ),
@@ -77,7 +78,7 @@ void editor_state::draw ( SDL_Surface* back_buffer )
      SDL_Rect rect { 0, 0, sdl_window::k_back_buffer_width, k_top_border };
      SDL_FillRect ( back_buffer, &rect, 0x000000 );
 
-     rect = SDL_Rect { 0, k_bottom_border, 
+     rect = SDL_Rect { 0, k_bottom_border,
                        sdl_window::k_back_buffer_width,
                        sdl_window::k_back_buffer_height - k_bottom_border };
      SDL_FillRect ( back_buffer, &rect, 0x000000 );
@@ -127,8 +128,13 @@ void editor_state::handle_change_selected ( const SDL_Event& sdl_event )
      if ( sdl_event.type == SDL_KEYDOWN ) {
           if ( sdl_event.key.keysym.sym == SDLK_q ) {
                decrement_tile_index ( );
-          } else if ( sdl_event.key.keysym.sym == SDLK_e ) {
+          }
+          else if ( sdl_event.key.keysym.sym == SDLK_e ) {
                increment_tile_index ( );
+          }
+          else if ( sdl_event.key.keysym.sym == SDLK_r ) {
+               m_tile_orientation_to_place++;
+               m_tile_orientation_to_place %= rotation::count;
           }
      }
 }
@@ -150,7 +156,9 @@ void editor_state::change_tile_at_screen_position ( int x, int y )
      vector tile_location ( world_pos.x ( ) / room::k_tile_width,
                             world_pos.y ( ) / room::k_tile_width );
 
-     m_room.get_tile ( tile_location ).id = m_tile_index_to_place;
+     auto& tile = m_room.get_tile ( tile_location );
+     tile.id = m_tile_index_to_place;
+     tile.orientation = static_cast<rotation>( m_tile_orientation_to_place );
 }
 
 void editor_state::update_tile_sprite_clip ( )

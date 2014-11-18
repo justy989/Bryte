@@ -13,6 +13,7 @@
 
 #include "text_raii.hpp"
 
+#include "title_state.hpp"
 #include "editor_state.hpp"
 
 namespace bryte
@@ -53,6 +54,7 @@ namespace bryte
 
           state m_state;
 
+          title_state m_title_state;
           editor_state m_editor_state;
      };
 }

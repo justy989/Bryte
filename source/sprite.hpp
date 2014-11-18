@@ -19,6 +19,7 @@ namespace bryte
           virtual void blit_onto ( SDL_Surface* destination );
 
           inline vector& position ( );
+          inline SDL_Surface* surface ( );
 
      protected:
 
@@ -30,6 +31,11 @@ namespace bryte
      inline vector& sprite::position ( )
      {
           return m_position;
+     }
+
+     inline SDL_Surface* sprite::surface ( )
+     {
+          return m_surface;
      }
 }
 

@@ -1,5 +1,7 @@
 #include "surface_man.hpp"
 
+#include <stdexcept>
+
 using namespace bryte;
 
 surface_man::~surface_man ( )
@@ -20,7 +22,7 @@ SDL_Surface* surface_man::load ( const std::string& path )
 {
      // see if the surface has already been loaded
      auto it = m_string_resource_map.find ( path );
- 
+
      if ( it != m_string_resource_map.end ( ) ) {
           it->second->owner_count++;
           return it->second->surface;
@@ -31,13 +33,15 @@ SDL_Surface* surface_man::load ( const std::string& path )
 
      // if we failed to load it, return nullptr
      if ( !surface ) {
-          return nullptr;
+          throw std::runtime_error ( std::string ( "SDL_LoadBMP(): " ) +
+                                     SDL_GetError ( ) );
      }
 
      // try to set the color key
      if ( SDL_SetColorKey ( surface, SDL_TRUE, 0xFF00FF ) ) {
           SDL_FreeSurface ( surface );
-          return nullptr;
+          throw std::runtime_error ( std::string ( "SDL_SetColorKey(): " ) +
+                                     SDL_GetError ( ) );
      }
 
      auto ptr = std::make_shared<surface_resource> ( path, surface );

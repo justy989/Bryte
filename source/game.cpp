@@ -6,10 +6,11 @@ using namespace bryte;
 
 game::game ( int argc, char** argv ) :
      m_configuration ( std::string ( "bryte.cfg" ) ),
-     m_sdl_window ( "bryte 0.01a", 
+     m_sdl_window ( "bryte 0.01a",
                     m_configuration.window_width ( ),
                     m_configuration.window_height ( ) ),
-     m_state ( state::editor ),
+     m_state ( state::title ),
+     m_title_state ( m_surface_man ),
      m_editor_state ( m_surface_man,
                       m_sdl_window.width ( ),
                       m_sdl_window.height ( ) )
@@ -50,6 +51,7 @@ void game::update ( )
 {
      switch ( m_state ) {
      case state::title:
+          m_title_state.update ( );
           break;
      case state::editor:
           m_editor_state.update ( );
@@ -65,6 +67,7 @@ void game::draw ( )
 {
      switch ( m_state ) {
      case state::title:
+          m_title_state.draw ( m_sdl_window.back_buffer ( ) );
           break;
      case state::editor:
           m_editor_state.draw ( m_sdl_window.back_buffer ( ) );
@@ -84,6 +87,7 @@ void game::handle_sdl_event ( const SDL_Event& sdl_event )
 {
      switch ( m_state ) {
      case state::title:
+          m_title_state.handle_sdl_event ( sdl_event );
           break;
      case state::editor:
           m_editor_state.handle_sdl_event ( sdl_event );
@@ -94,3 +98,4 @@ void game::handle_sdl_event ( const SDL_Event& sdl_event )
           throw std::out_of_range ( "Tried to execute unknown game state." );
      }
 }
+

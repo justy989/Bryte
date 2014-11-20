@@ -1,3 +1,6 @@
+/* ui_text_button: button with text inside it
+ */
+
 #ifndef BRYTE_UI_TEXT_BUTTON_HPP
 #define BRYTE_UI_TEXT_BUTTON_HPP
 

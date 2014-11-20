@@ -21,13 +21,15 @@ namespace bryte
 
      private:
 
-     private:
-
           mouse m_mouse;
 
           SDL_Surface* m_background;
 
           ui_text_button m_new_game_text;
+          ui_text_button m_load_game_text;
+          ui_text_button m_editor_text;
+          ui_text_button m_options_text;
+          ui_text_button m_quit_text;
      };
 }
 

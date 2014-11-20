@@ -1,4 +1,4 @@
-/* ui_icon_button: button using an icon
+/* ui_icon_button: button with icon inside
  */
 
 #ifndef BRYTE_UI_ICON_BUTTON_HPP

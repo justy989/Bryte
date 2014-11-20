@@ -30,5 +30,10 @@ void mouse::update ( )
      // find the world position by casting down to our vector type
      m_position.set ( static_cast< vector_base_type >( screen_x ),
                       static_cast< vector_base_type >( screen_y ) );
+
+     if ( left_clicked ( ) ) {
+          int blah = 5;
+          blah++;
+     }
 }
 

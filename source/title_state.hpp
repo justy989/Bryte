@@ -5,6 +5,7 @@
 #ifndef BRYTE_TITLE_STATE_HPP
 #define BRYTE_TITLE_STATE_HPP
 
+#include "game_state.hpp"
 #include "mouse.hpp"
 #include "surface_man.hpp"
 #include "ui_text_button.hpp"
@@ -15,7 +16,7 @@ namespace bryte
      public:
           title_state ( surface_man& sman, int window_width, int window_height );
 
-          void update ( );
+          game_state update ( );
           void draw ( SDL_Surface* back_buffer );
           void handle_sdl_event ( const SDL_Event& sdl_event );
 

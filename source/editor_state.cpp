@@ -29,6 +29,7 @@ editor_state::editor_state ( surface_man& sman,
      m_ui_buttons_surface ( sman.load ( "editor_button_icons.bmp" ) ),
      m_tile_index_inc_btn ( m_ui_buttons_surface, vector ( 223, 222 ), rectangle ( 77, 0, 86, 10 ) ),
      m_tile_index_dec_btn ( m_ui_buttons_surface, vector ( 25, 222 ), rectangle ( 66, 0, 76, 10 ) ),
+     m_quit_btn ( m_ui_buttons_surface, vector ( 238, 2 ), rectangle ( 55, 0, 65, 10 ) ),
      m_map_area ( 0, k_top_border, sdl_window::k_back_buffer_width, k_bottom_border )
 {
      m_room_display.change_tilesheet ( m_tilesheet );
@@ -39,7 +40,7 @@ editor_state::editor_state ( surface_man& sman,
      update_tile_sprite_clip ( );
 }
 
-void editor_state::update ( )
+game_state editor_state::update ( )
 {
      m_mouse.update ( );
 
@@ -47,16 +48,23 @@ void editor_state::update ( )
 
      m_tile_index_inc_btn.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
      m_tile_index_dec_btn.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
+     m_quit_btn.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
 
-     if ( m_tile_index_inc_btn.get_state ( ) == ui_button::state::pressed ) {
+     if ( m_tile_index_inc_btn.pressed ( ) ) {
           increment_tile_index ( );
      }
 
-     if ( m_tile_index_dec_btn.get_state ( ) == ui_button::state::pressed ) {
+     if ( m_tile_index_dec_btn.pressed ( ) ) {
           decrement_tile_index ( );
      }
 
+     if ( m_quit_btn.pressed ( ) ) {
+          return game_state::title;
+     }
+
      update_tile_sprite_clip ( );
+
+     return game_state::editor;
 }
 
 void editor_state::draw ( SDL_Surface* back_buffer )
@@ -79,6 +87,7 @@ void editor_state::draw ( SDL_Surface* back_buffer )
 
      m_tile_index_inc_btn.draw ( back_buffer );
      m_tile_index_dec_btn.draw ( back_buffer );
+     m_quit_btn.draw ( back_buffer );
 }
 
 void editor_state::handle_sdl_event ( const SDL_Event& sdl_event )

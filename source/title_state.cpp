@@ -8,16 +8,16 @@ title_state::title_state ( surface_man& sman, int window_width, int window_heigh
                sdl_window::k_back_buffer_width,
                sdl_window::k_back_buffer_height ),
      m_background ( sman.load ( "title_menu_bg.bmp" ) ),
-     m_new_game_text ( "NEW GAME", vector ( 152, 105 ) ),
-     m_load_game_text ( "LOAD GAME", vector ( 149, 120 ) ),
-     m_editor_text ( "EDITOR", vector ( 158, 135 ) ),
-     m_options_text ( "OPTIONS", vector ( 155, 150 ) ),
-     m_quit_text ( "QUIT", vector ( 164, 165 ) )
+     m_new_game_text ( "NEW GAME", vector ( 152, 106 ) ),
+     m_load_game_text ( "LOAD GAME", vector ( 149, 121 ) ),
+     m_editor_text ( "EDITOR", vector ( 158, 136 ) ),
+     m_options_text ( "OPTIONS", vector ( 155, 151 ) ),
+     m_quit_text ( "QUIT", vector ( 164, 166 ) )
 {
 
 }
 
-void title_state::update ( )
+game_state title_state::update ( )
 {
      m_mouse.update ( );
 
@@ -26,6 +26,16 @@ void title_state::update ( )
      m_editor_text.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
      m_options_text.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
      m_quit_text.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
+
+     if ( m_editor_text.pressed ( ) ) {
+          return game_state::editor;
+     }
+
+     if ( m_quit_text.pressed ( ) ) {
+          return game_state::quit;
+     }
+
+     return game_state::title;
 }
 
 void title_state::draw ( SDL_Surface* back_buffer )

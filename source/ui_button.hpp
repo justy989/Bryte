@@ -29,6 +29,7 @@ namespace bryte
           void draw_border ( SDL_Surface* back_buffer );
 
           inline state get_state ( ) const;
+          inline bool pressed ( ) const;
 
      private:
 
@@ -48,6 +49,7 @@ namespace bryte
      };
 
      inline ui_button::state ui_button::get_state ( ) const { return m_state; }
+     inline bool ui_button::pressed ( ) const { return m_state == state::pressed; }
 }
 
 #endif

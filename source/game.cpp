@@ -5,11 +5,12 @@
 using namespace bryte;
 
 game::game ( int argc, char** argv ) :
+     m_quit ( false ),
      m_configuration ( std::string ( "bryte.cfg" ) ),
      m_sdl_window ( "bryte 0.01a",
                     m_configuration.window_width ( ),
                     m_configuration.window_height ( ) ),
-     m_state ( state::title ),
+     m_state ( game_state::title ),
      m_title_state ( m_surface_man,
                      m_sdl_window.width ( ),
                      m_sdl_window.height ( ) ),
@@ -23,15 +24,14 @@ game::game ( int argc, char** argv ) :
 int game::run ( )
 {
      SDL_Event sdl_event;
-     bool quit = false;
 
      // loop forever
-     while ( !quit ) {
+     while ( !m_quit ) {
 
           // grab events of the sdl event queue
           while ( SDL_PollEvent ( &sdl_event ) ) {
                if ( sdl_event.type == SDL_QUIT ) {
-                    quit = true;
+                    m_quit = true;
                     break;
                }
 
@@ -52,29 +52,38 @@ int game::run ( )
 void game::update ( )
 {
      switch ( m_state ) {
-     case state::title:
-          m_title_state.update ( );
+     case game_state::title:
+          m_state = m_title_state.update ( );
           break;
-     case state::editor:
-          m_editor_state.update ( );
+     case game_state::editor:
+          m_state = m_editor_state.update ( );
           break;
-     case state::world:
+     case game_state::world:
           break;
-     default:
+     case game_state::quit:
+          break;
+      default:
           throw std::out_of_range ( "Tried to execute unknown game state." );
+     }
+
+     // quit if the game state changes to the quit state
+     if ( m_state == game_state::quit ) {
+          m_quit = true;
      }
 }
 
 void game::draw ( )
 {
      switch ( m_state ) {
-     case state::title:
+     case game_state::title:
           m_title_state.draw ( m_sdl_window.back_buffer ( ) );
           break;
-     case state::editor:
+     case game_state::editor:
           m_editor_state.draw ( m_sdl_window.back_buffer ( ) );
           break;
-     case state::world:
+     case game_state::world:
+          break;
+     case game_state::quit:
           break;
      default:
           throw std::out_of_range ( "Tried to execute unknown game state." );
@@ -86,13 +95,15 @@ void game::draw ( )
 void game::handle_sdl_event ( const SDL_Event& sdl_event )
 {
      switch ( m_state ) {
-     case state::title:
+     case game_state::title:
           m_title_state.handle_sdl_event ( sdl_event );
           break;
-     case state::editor:
+     case game_state::editor:
           m_editor_state.handle_sdl_event ( sdl_event );
           break;
-     case state::world:
+     case game_state::world:
+          break;
+     case game_state::quit:
           break;
      default:
           throw std::out_of_range ( "Tried to execute unknown game state." );

@@ -6,6 +6,7 @@
 #ifndef BRYTE_EDITOR_STATE_HPP
 #define BRYTE_EDITOR_STATE_HPP
 
+#include "game_state.hpp"
 #include "mouse.hpp"
 #include "surface_man.hpp"
 #include "room_display.hpp"
@@ -19,7 +20,7 @@ namespace bryte
 
           editor_state ( surface_man& sman, int window_width, int window_height );
 
-          void update ( );
+          game_state update ( );
           void draw ( SDL_Surface* back_buffer );
           void handle_sdl_event ( const SDL_Event& sdl_event );
 
@@ -80,6 +81,8 @@ namespace bryte
           SDL_Surface* m_ui_buttons_surface;
           ui_icon_button m_tile_index_inc_btn;
           ui_icon_button m_tile_index_dec_btn;
+
+          ui_icon_button m_quit_btn;
 
           rectangle m_map_area;
      };

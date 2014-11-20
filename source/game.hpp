@@ -33,15 +33,11 @@ namespace bryte
 
      private:
 
-          enum class state {
-               title,
-               editor,
-               world
-          };
-
           static const int k_fps_delay = 1000 / 30;
 
      private:
+
+          bool m_quit;
 
           configuration m_configuration;
 
@@ -52,7 +48,7 @@ namespace bryte
 
           text_raii m_text_raii;
 
-          state m_state;
+          game_state m_state;
 
           title_state m_title_state;
           editor_state m_editor_state;

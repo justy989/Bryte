@@ -6,10 +6,11 @@
 #ifndef BRYTE_EDITOR_STATE_HPP
 #define BRYTE_EDITOR_STATE_HPP
 
+#include "mouse.hpp"
 #include "surface_man.hpp"
 #include "room_display.hpp"
 #include "sdl_window.hpp"
-#include "ui_button.hpp"
+#include "ui_icon_button.hpp"
 
 namespace bryte
 {
@@ -58,7 +59,7 @@ namespace bryte
           int m_window_width;
           int m_window_height;
 
-          vector m_mouse;
+          mouse m_mouse;
 
           room m_room;
 
@@ -77,8 +78,8 @@ namespace bryte
           ubyte m_max_tile_index;
 
           SDL_Surface* m_ui_buttons_surface;
-          ui_button m_tile_index_inc_btn;
-          ui_button m_tile_index_dec_btn;
+          ui_icon_button m_tile_index_inc_btn;
+          ui_icon_button m_tile_index_dec_btn;
 
           rectangle m_map_area;
      };

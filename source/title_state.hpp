@@ -5,14 +5,15 @@
 #ifndef BRYTE_TITLE_STATE_HPP
 #define BRYTE_TITLE_STATE_HPP
 
+#include "mouse.hpp"
 #include "surface_man.hpp"
-#include "ui_button.hpp"
+#include "ui_text_button.hpp"
 
 namespace bryte
 {
      class title_state {
      public:
-          title_state ( surface_man& sman );
+          title_state ( surface_man& sman, int window_width, int window_height );
 
           void update ( );
           void draw ( SDL_Surface* back_buffer );
@@ -22,8 +23,13 @@ namespace bryte
 
      private:
 
+          mouse m_mouse;
+
           SDL_Surface* m_background;
+
+          ui_text_button m_new_game_text;
      };
 }
 
 #endif
+

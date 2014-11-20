@@ -10,7 +10,9 @@ game::game ( int argc, char** argv ) :
                     m_configuration.window_width ( ),
                     m_configuration.window_height ( ) ),
      m_state ( state::title ),
-     m_title_state ( m_surface_man ),
+     m_title_state ( m_surface_man,
+                     m_sdl_window.width ( ),
+                     m_sdl_window.height ( ) ),
      m_editor_state ( m_surface_man,
                       m_sdl_window.width ( ),
                       m_sdl_window.height ( ) )
@@ -77,8 +79,6 @@ void game::draw ( )
      default:
           throw std::out_of_range ( "Tried to execute unknown game state." );
      }
-
-     text::draw ( m_sdl_window.back_buffer ( ),  std::string( "BRYTE" ), vector ( 30, 30 ) );
 
      m_sdl_window.render ( );
 }

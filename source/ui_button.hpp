@@ -1,7 +1,12 @@
+/* ui_button : base class for button functionality and drawing
+ */
+
 #ifndef BRYTE_UI_BUTTON_HPP
 #define BRYTE_UI_BUTTON_HPP
 
-#include "clipped_sprite.hpp"
+#include "types.hpp"
+
+#include <SDL2/SDL.h>
 
 namespace bryte
 {
@@ -16,10 +21,11 @@ namespace bryte
 
      public:
 
-          ui_button ( SDL_Surface* icon_surface, vector position, const rectangle& clip );
+          ui_button ( const rectangle& border );
 
           void update ( vector mouse_position, bool mouse_clicked );
-          void draw ( SDL_Surface* back_buffer );
+
+          void draw_border ( SDL_Surface* back_buffer );
 
           inline state get_state ( ) const;
 
@@ -33,7 +39,7 @@ namespace bryte
 
      private:
 
-          clipped_sprite m_icon_sprite;
+          rectangle m_border;
 
           state m_state;
 
@@ -44,3 +50,4 @@ namespace bryte
 }
 
 #endif
+

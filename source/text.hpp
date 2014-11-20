@@ -27,6 +27,11 @@ namespace bryte
 
      public:
 
+          static const int k_character_width = 5;
+          static const int k_character_height = 8;
+
+     public:
+
           static void create_sprite ( );
           static void destroy_sprite ( );
 

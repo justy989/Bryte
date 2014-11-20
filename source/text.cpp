@@ -25,7 +25,7 @@ void text::draw ( SDL_Surface* back_buffer, const std::string& message,
 {
      for ( const auto& character : message ) {
           draw_character ( back_buffer, character, position, color );
-          position += vector ( 6, 0 );
+          position += vector ( k_character_width + 1, 0 );
      }
 }
 
@@ -33,10 +33,11 @@ void text::draw_character ( SDL_Surface* back_buffer, char character,
                             vector position, color color )
 {
      auto& clip = ms_sprite->clip ( );
-     vector_base_type left = ( character - 'A' ) * 5;
-     clip.set ( left, 0, left + 5, 8 );
+     vector_base_type left = ( character - 'A' ) * k_character_width;
+     clip.set ( left, 0, left + k_character_width, k_character_height );
 
      ms_sprite->position ( ).set ( position );
 
      ms_sprite->blit_onto ( back_buffer );
 }
+

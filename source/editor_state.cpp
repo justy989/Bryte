@@ -9,6 +9,9 @@ editor_state::editor_state ( surface_man& sman,
                              int window_height ) :
      m_window_width ( window_width ),
      m_window_height ( window_height ),
+     m_mouse ( window_width, window_height,
+               sdl_window::k_back_buffer_width,
+               sdl_window::k_back_buffer_height ),
      m_room ( 20, 20 ),
      m_camera ( rectangle ( 0, 0,
                             sdl_window::k_back_buffer_width,
@@ -38,26 +41,12 @@ editor_state::editor_state ( surface_man& sman,
 
 void editor_state::update ( )
 {
-     int mousex, mousey;
+     m_mouse.update ( );
 
-     auto mouse_state = SDL_GetMouseState ( &mousex, &mousey );
+     m_tile_sprite_to_place.position ( ).set ( m_mouse.position ( ) );
 
-     // calculate the coordinate ratio on the window: 320 / 640 would be 0.5
-     float window_x_pct = static_cast< float >( mousex ) / static_cast< float >( m_window_width );
-     float window_y_pct = static_cast< float >( mousey ) / static_cast< float >( m_window_height );
-
-     // convert it to the back buffer quantity: 0.5 * 256 = 128
-     float screen_x = window_x_pct * static_cast< float >( sdl_window::k_back_buffer_width );
-     float screen_y = window_y_pct * static_cast< float >( sdl_window::k_back_buffer_height );
-
-     // find the world position by casting down to our vector type
-     m_mouse.set ( static_cast< vector_base_type >( screen_x ),
-                   static_cast< vector_base_type >( screen_y ) );
-
-     m_tile_sprite_to_place.position ( ).set ( m_mouse );
-
-     m_tile_index_inc_btn.update ( m_mouse, mouse_state & SDL_BUTTON ( SDL_BUTTON_LEFT ) );
-     m_tile_index_dec_btn.update ( m_mouse, mouse_state & SDL_BUTTON ( SDL_BUTTON_LEFT ) );
+     m_tile_index_inc_btn.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
+     m_tile_index_dec_btn.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
 
      if ( m_tile_index_inc_btn.get_state ( ) == ui_button::state::pressed ) {
           increment_tile_index ( );
@@ -144,20 +133,20 @@ void editor_state::handle_change_selected ( const SDL_Event& sdl_event )
 
 void editor_state::change_tile_at_screen_position ( int x, int y )
 {
-     if ( !m_map_area.contains ( m_mouse ) ) {
+     if ( !m_map_area.contains ( m_mouse.position ( ) ) ) {
           return;
      }
 
      // find the world position
-     vector world_pos ( m_mouse );
+     vector mouse_world_pos ( m_mouse.position ( ) );
 
      // offset by the camera
-     world_pos += m_camera.viewport ( ).bottom_left ( );
-     world_pos -= vector ( 0, k_top_border );
+     mouse_world_pos += m_camera.viewport ( ).bottom_left ( );
+     mouse_world_pos -= vector ( 0, k_top_border );
 
      // find the tile index we need to set
-     vector tile_location ( world_pos.x ( ) / room::k_tile_width,
-                            world_pos.y ( ) / room::k_tile_width );
+     vector tile_location ( mouse_world_pos.x ( ) / room::k_tile_width,
+                            mouse_world_pos.y ( ) / room::k_tile_width );
 
      auto& tile = m_room.get_tile ( tile_location );
      tile.id = m_tile_index_to_place;

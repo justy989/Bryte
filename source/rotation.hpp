@@ -1,3 +1,6 @@
+/* rotation: holds orientation in increments of 90 degress
+ */
+
 #ifndef BRYTE_ROTATION_HPP
 #define BRYTE_ROTATION_HPP
 

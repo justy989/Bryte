@@ -1,3 +1,6 @@
+/* draw_utils: utilities for common drawing functionality
+ */
+
 #ifndef BRYTE_DRAW_UTILS_HPP
 #define BRYTE_DRAW_UTILS_HPP
 

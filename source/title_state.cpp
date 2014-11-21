@@ -4,9 +4,7 @@
 using namespace bryte;
 
 title_state::title_state ( surface_man& sman, int window_width, int window_height ) :
-     m_mouse ( window_width, window_height,
-               sdl_window::k_back_buffer_width,
-               sdl_window::k_back_buffer_height ),
+     m_mouse ( window_width, window_height ),
      m_background ( sman.load ( "title_menu_bg.bmp" ) ),
      m_new_game_text ( "NEW GAME", vector ( 152, 106 ) ),
      m_load_game_text ( "LOAD GAME", vector ( 149, 121 ) ),

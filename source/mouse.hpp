@@ -6,6 +6,7 @@
 #define BRYTE_MOUSE_HPP
 
 #include "types.hpp"
+#include "sdl_window.hpp"
 
 #include <SDL2/SDL.h>
 
@@ -14,8 +15,7 @@ namespace bryte
      class mouse {
      public:
 
-          mouse ( int window_width, int window_height,
-                  int back_buffer_width, int back_buffer_height );
+          mouse ( int window_width, int window_height );
 
           void update ( );
 
@@ -28,9 +28,6 @@ namespace bryte
 
           int m_window_width;
           int m_window_height;
-
-          int m_back_buffer_width;
-          int m_back_buffer_height;
 
           vector m_position;
           Uint32 m_button_states;

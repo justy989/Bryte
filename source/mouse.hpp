@@ -37,12 +37,12 @@ namespace bryte
 
      inline bool mouse::left_clicked ( ) const
      {
-          return m_button_states & SDL_BUTTON ( SDL_BUTTON_LEFT );
+          return ( m_button_states & SDL_BUTTON ( SDL_BUTTON_LEFT ) ) > 0;
      }
 
      inline bool mouse::right_clicked ( ) const
      {
-          return m_button_states & SDL_BUTTON ( SDL_BUTTON_RIGHT );
+          return ( m_button_states & SDL_BUTTON ( SDL_BUTTON_RIGHT ) ) > 0;
      }
 }
 

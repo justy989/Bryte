@@ -15,6 +15,7 @@
 
 #include "title_state.hpp"
 #include "editor_state.hpp"
+#include "world_state.hpp"
 
 namespace bryte
 {
@@ -52,6 +53,7 @@ namespace bryte
 
           title_state m_title_state;
           editor_state m_editor_state;
+          world_state m_world_state;
      };
 }
 

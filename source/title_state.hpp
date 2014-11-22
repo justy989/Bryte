@@ -1,5 +1,5 @@
 /* title_state: allows starting a new game, loading a saved game, changing
- *               options, running the editor or quitting.
+ *              options, running the editor or quitting.
  */
 
 #ifndef BRYTE_TITLE_STATE_HPP
@@ -14,6 +14,7 @@ namespace bryte
 {
      class title_state {
      public:
+
           title_state ( surface_man& sman, int window_width, int window_height );
 
           game_state update ( );

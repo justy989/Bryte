@@ -25,6 +25,10 @@ game_state title_state::update ( )
      m_options_text.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
      m_quit_text.update ( m_mouse.position ( ), m_mouse.left_clicked ( ) );
 
+     if ( m_new_game_text.pressed ( ) ) {
+          return game_state::world;
+     }
+
      if ( m_editor_text.pressed ( ) ) {
           return game_state::editor;
      }

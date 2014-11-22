@@ -16,7 +16,8 @@ game::game ( int argc, char** argv ) :
                      m_sdl_window.height ( ) ),
      m_editor_state ( m_surface_man,
                       m_sdl_window.width ( ),
-                      m_sdl_window.height ( ) )
+                      m_sdl_window.height ( ) ),
+     m_world_state ( m_surface_man )
 {
 
 }
@@ -59,6 +60,7 @@ void game::update ( )
           m_state = m_editor_state.update ( );
           break;
      case game_state::world:
+          m_state = m_world_state.update ( );
           break;
      case game_state::quit:
           break;
@@ -82,6 +84,7 @@ void game::draw ( )
           m_editor_state.draw ( m_sdl_window.back_buffer ( ) );
           break;
      case game_state::world:
+          m_world_state.draw ( m_sdl_window.back_buffer ( ) );
           break;
      case game_state::quit:
           break;
@@ -102,6 +105,7 @@ void game::handle_sdl_event ( const SDL_Event& sdl_event )
           m_editor_state.handle_sdl_event ( sdl_event );
           break;
      case game_state::world:
+          m_world_state.handle_sdl_event ( sdl_event );
           break;
      case game_state::quit:
           break;

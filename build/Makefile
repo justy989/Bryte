@@ -2,14 +2,14 @@
 
 # directories
 SOURCE_DIR      = ../source
-SDL_INCLUDE_DIR = /usr/local/include
-SDL_LINK_DIR    = /usr/local/lib
+SDL_INCLUDE_DIR = /usr/include
+SDL_LINK_DIR    = /usr/lib64
 
 # vars
 CC      = g++
 CFLAGS  = -Wall -Werror -std=c++11
 INCLUDE = -I$(SDL_INCLUDE_DIR) -I$(SOURCE_DIR)
-LINK    = -L$(SDL_LINK_DIR) -lSDL2 -lSDL2main
+LINK    = -L$(SDL_LINK_DIR) -lSDL2
 EXE     = bryte
 OBJS    = sprite.o animated_sprite.o clipped_sprite.o room.o sdl.o sdl_window.o\
           configuration.o surface_man.o camera.o draw_utils.o ui_button.o\

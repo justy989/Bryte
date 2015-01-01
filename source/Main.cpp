@@ -19,11 +19,9 @@ int main ( int argc, char** argv )
           return 1;
      }
 
-#if 0 // TODO: create game shared object to load
-     if ( !platform.load_game_code ( "bryte.so" ) ) {
+     if ( !platform.load_game_code ( "./bryte_game.so" ) ) {
           return 1;
      }
-#endif
 
      return platform.run_game ( ) ? 0 : 1;
 }

@@ -1,5 +1,6 @@
-#include "Platform.hpp"
+#include "Application.hpp"
 #include "Utils.hpp"
+#include "Log.hpp"
 
 #include <thread>
 
@@ -12,7 +13,7 @@ using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
-const Char8* Platform::c_game_func_strs [ c_func_count ] = {
+const Char8* Application::c_game_func_strs [ c_func_count ] = {
      "bryte_init",
      "bryte_destroy",
      "bryte_user_input",
@@ -20,7 +21,7 @@ const Char8* Platform::c_game_func_strs [ c_func_count ] = {
      "bryte_render"
 };
 
-Platform::Platform ( ) :
+Application::Application ( ) :
      m_window                ( nullptr ),
      m_renderer              ( nullptr ),
      m_back_buffer_texture   ( nullptr ),
@@ -36,42 +37,52 @@ Platform::Platform ( ) :
      m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
      m_current_update_timestamp ( m_previous_update_timestamp )
 {
+     LOG_INFO ( "Initializing SDL\n" );
      SDL_Init ( SDL_INIT_VIDEO );
 }
 
-Platform::~Platform ( )
+Application::~Application ( )
 {
      if ( m_game_memory ) {
+          LOG_INFO ( "Freeing allocated game memory.\n" );
           free ( m_game_memory );
      }
 
      if ( m_shared_library_handle ) {
+          LOG_INFO ( "Closing shared library\n" );
           dlclose ( m_shared_library_handle );
      }
 
      if ( m_back_buffer_surface ) {
+          LOG_INFO ( "Freeing SDL back buffer surface\n" );
           SDL_FreeSurface ( m_back_buffer_surface );
      }
 
      if ( m_back_buffer_texture ) {
+          LOG_INFO ( "Destroying SDL back buffer texture\n" );
           SDL_DestroyTexture ( m_back_buffer_texture );
      }
 
      if ( m_renderer ) {
+          LOG_INFO ( "Destroying SDL renderer\n" );
           SDL_DestroyRenderer ( m_renderer );
      }
 
      if ( m_window ) {
+          LOG_INFO ( "Destroying SDL window\n" );
           SDL_DestroyWindow ( m_window );
      }
 
+     LOG_INFO ( "Quitting SDL\n" );
      SDL_Quit ( );
 }
 
-Bool Platform::create_window ( const Char8* window_title, Int32 window_width, Int32 window_height,
+Bool Application::create_window ( const Char8* window_title, Int32 window_width, Int32 window_height,
                                Int32 back_buffer_width, Int32 back_buffer_height )
 {
+
      // create the window with the specified parameters
+     LOG_INFO ( "Creating SDL window: '%s' %d, %d\n", window_title, window_width, window_height );
      m_window = SDL_CreateWindow ( window_title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                    window_width, window_height, 0 );
 
@@ -81,6 +92,7 @@ Bool Platform::create_window ( const Char8* window_title, Int32 window_width, In
      }
 
      // create the renderer for the window
+     LOG_INFO ( "Creating SDL renderer\n" );
      m_renderer = SDL_CreateRenderer ( m_window, -1, SDL_RENDERER_ACCELERATED );
 
      if ( !m_renderer ) {
@@ -89,6 +101,7 @@ Bool Platform::create_window ( const Char8* window_title, Int32 window_width, In
      }
 
      // attempt to create a surface to draw on
+     LOG_INFO ( "Creating SDL back buffer surface: %d, %d\n", back_buffer_width, back_buffer_height );
      m_back_buffer_surface = SDL_CreateRGBSurface ( 0, back_buffer_width, back_buffer_height, 32,
                                                     0, 0, 0, 0 );
 
@@ -98,6 +111,7 @@ Bool Platform::create_window ( const Char8* window_title, Int32 window_width, In
      }
 
      // create a texture based on that surface
+     LOG_INFO ( "Creating SDL back buffer texture: %d, %d\n", back_buffer_width, back_buffer_height );
      m_back_buffer_texture = SDL_CreateTextureFromSurface ( m_renderer, m_back_buffer_surface );
 
      if ( !m_back_buffer_texture ) {
@@ -108,12 +122,14 @@ Bool Platform::create_window ( const Char8* window_title, Int32 window_width, In
      return true;
 }
 
-Bool Platform::load_game_code ( const Char8* shared_library_path )
+Bool Application::load_game_code ( const Char8* shared_library_path )
 {
      if ( m_shared_library_handle ) {
+          LOG_INFO ( "Freeing shared library handle\n" );
           dlclose ( m_shared_library_handle );
      }
 
+     LOG_INFO ( "Loading shared library: %s\n", shared_library_path );
      m_shared_library_handle = dlopen ( shared_library_path, RTLD_LAZY );
 
      if ( !m_shared_library_handle ) {
@@ -153,74 +169,14 @@ Bool Platform::load_game_code ( const Char8* shared_library_path )
      return true;
 }
 
-Void Platform::clear_back_buffer ( )
-{
-     Uint32    black      = SDL_MapRGB ( m_back_buffer_surface->format, 0, 0, 0 );
-     SDL_Rect  clear_rect { 0, 0, m_back_buffer_surface->w, m_back_buffer_surface->h };
-
-     SDL_FillRect ( m_back_buffer_surface, &clear_rect, black );
-}
-
-Void Platform::render_to_window ( )
-{
-     SDL_UpdateTexture ( m_back_buffer_texture, nullptr, m_back_buffer_surface->pixels,
-                         m_back_buffer_surface->pitch );
-
-     SDL_RenderClear ( m_renderer );
-     SDL_RenderCopy ( m_renderer, m_back_buffer_texture, nullptr, nullptr );
-
-     SDL_RenderPresent ( m_renderer );
-}
-
-Bool Platform::poll_sdl_events ( )
-{
-     SDL_Event sdl_event  = {};
-
-     while ( SDL_PollEvent ( &sdl_event ) ) {
-          if ( sdl_event.type == SDL_QUIT ) {
-               return false;
-          }
-
-          if ( sdl_event.type == SDL_KEYDOWN ) {
-               if ( sdl_event.key.keysym.scancode == SDL_SCANCODE_0 ) {
-                    load_game_code ( m_shared_library_path );
-               }
-
-               m_game_user_input_func ( sdl_event.key.keysym.scancode, true );
-          } else if ( sdl_event.type == SDL_KEYUP ) {
-               m_game_user_input_func ( sdl_event.key.keysym.scancode, false );
-          }
-     }
-
-     return true;
-}
-
-Real32 Platform::time_and_limit_loop ( Int32 locked_frames_per_second )
-{
-     m_previous_update_timestamp = m_current_update_timestamp;
-     m_current_update_timestamp  = high_resolution_clock::now ( );
-
-     auto duration = m_current_update_timestamp - m_previous_update_timestamp;
-     auto dt_ms = duration_cast<milliseconds>( duration ).count ( );
-
-     auto max_allowed_microseconds = 1000 / locked_frames_per_second;
-
-     if ( dt_ms < max_allowed_microseconds ) {
-          auto time_until_limit = max_allowed_microseconds - dt_ms;
-          std::this_thread::sleep_for ( milliseconds ( time_until_limit ) );
-     } else {
-          printf ( "Warning: game loop took %ld milliseconds.\n", dt_ms );
-     }
-
-     return static_cast<float>( dt_ms ) / 1000.0f;
-}
-
-Bool Platform::allocate_game_memory ( Uint32 size )
+Bool Application::allocate_game_memory ( Uint32 size )
 {
      if ( m_game_memory ) {
+          LOG_INFO ( "Freeing allocated game memory.\n" );
           free ( m_game_memory );
      }
 
+     LOG_INFO ( "Allocating game memory: %d bytes\n", size );
      m_game_memory = malloc ( size );
 
      if ( !m_game_memory ) {
@@ -231,8 +187,90 @@ Bool Platform::allocate_game_memory ( Uint32 size )
      return true;
 }
 
-Bool Platform::run_game ( Int32 locked_frames_per_second )
+Void Application::clear_back_buffer ( )
 {
+     Uint32    black      = SDL_MapRGB ( m_back_buffer_surface->format, 0, 0, 0 );
+     SDL_Rect  clear_rect { 0, 0, m_back_buffer_surface->w, m_back_buffer_surface->h };
+
+     SDL_FillRect ( m_back_buffer_surface, &clear_rect, black );
+}
+
+Void Application::render_to_window ( )
+{
+     SDL_UpdateTexture ( m_back_buffer_texture, nullptr, m_back_buffer_surface->pixels,
+                         m_back_buffer_surface->pitch );
+
+     SDL_RenderClear ( m_renderer );
+     SDL_RenderCopy ( m_renderer, m_back_buffer_texture, nullptr, nullptr );
+
+     SDL_RenderPresent ( m_renderer );
+}
+
+Bool Application::poll_sdl_events ( )
+{
+     SDL_Event sdl_event  = {};
+
+     while ( SDL_PollEvent ( &sdl_event ) ) {
+          if ( sdl_event.type == SDL_QUIT ) {
+               return false;
+          }
+
+          if ( sdl_event.type == SDL_KEYDOWN ) {
+               auto sc = sdl_event.key.keysym.scancode;
+
+               if ( sc == SDL_SCANCODE_ESCAPE ) {
+                    return false;
+               }
+
+               if ( sc == SDL_SCANCODE_0 ) {
+                    load_game_code ( m_shared_library_path );
+               }
+
+               m_game_user_input_func ( sc, true );
+          } else if ( sdl_event.type == SDL_KEYUP ) {
+               m_game_user_input_func ( sdl_event.key.keysym.scancode, false );
+          }
+     }
+
+     return true;
+}
+
+Real32 Application::time_and_limit_loop ( Int32 locked_frames_per_second )
+{
+     m_previous_update_timestamp = m_current_update_timestamp;
+     m_current_update_timestamp  = high_resolution_clock::now ( );
+
+     auto duration = m_current_update_timestamp - m_previous_update_timestamp;
+     auto dt_ms = duration_cast<milliseconds>( duration ).count ( );
+
+     auto max_allowed_milliseconds = 1000 / locked_frames_per_second;
+
+     if ( dt_ms < max_allowed_milliseconds ) {
+          auto time_until_limit = max_allowed_milliseconds - dt_ms;
+          std::this_thread::sleep_for ( milliseconds ( time_until_limit ) );
+     } else if ( dt_ms > max_allowed_milliseconds * 2 ) {
+          // log a warning if we take much too long on a frame
+          LOG_WARNING ( "game loop executed in %d milliseconds\n", dt_ms );
+     }
+
+     return static_cast<float>( dt_ms ) / 1000.0f;
+}
+
+Bool Application::run_game ( const Settings& settings )
+{
+     if ( !create_window ( settings.window_title, settings.window_width, settings.window_height,
+                           settings.back_buffer_width, settings.back_buffer_height ) ) {
+          return false;
+     }
+
+     if ( !load_game_code ( settings.shared_library_path ) ) {
+          return false;
+     }
+
+     if ( !allocate_game_memory ( settings.game_memory_allocation_size ) ) {
+          return false;
+     }
+
      Real32 time_delta = 0.0f;
 
      ASSERT ( m_game_init_func );
@@ -247,7 +285,7 @@ Bool Platform::run_game ( Int32 locked_frames_per_second )
 
      while ( true ) {
 
-          time_delta = time_and_limit_loop ( locked_frames_per_second );
+          time_delta = time_and_limit_loop ( settings.locked_frames_per_second );
 
           if ( !poll_sdl_events ( ) ) {
                break;

@@ -11,11 +11,30 @@
 #define PRINT_DL_ERROR(dl_api) printf ( "%s() failed: %s\n", dl_api, dlerror ( ) );
 
 // Create's a platform application to run the game code
-class Platform {
+class Application {
 public:
 
-     Platform ( );
-     ~Platform ( );
+     struct Settings {
+          const Char8* window_title;
+          Int32        window_width;
+          Int32        window_height;
+
+          Int32        back_buffer_height;
+          Int32        back_buffer_width;
+
+          const Char8* shared_library_path;
+
+          Uint32       game_memory_allocation_size;
+
+          Uint32       locked_frames_per_second;
+     };
+
+     Application ( );
+     ~Application ( );
+
+     Bool run_game ( const Settings& settings );
+
+private:
 
      Bool create_window ( const Char8* window_title, Int32 window_width, Int32 window_height,
                           Int32 back_buffer_width, Int32 back_buffer_height );
@@ -23,10 +42,6 @@ public:
      Bool load_game_code ( const Char8* shared_library_path );
 
      Bool allocate_game_memory ( Uint32 size );
-
-     Bool run_game ( Int32 locked_frames_per_second );
-
-private:
 
      Void clear_back_buffer ( );
      Void render_to_window ( );

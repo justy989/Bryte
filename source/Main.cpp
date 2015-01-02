@@ -2,34 +2,28 @@
 
 #include <SDL2/SDL.h>
 
-#include "Platform.hpp"
+#include "Application.hpp"
 #include "Utils.hpp"
-
-static const int c_window_width       = 800;
-static const int c_window_height      = 600;
-
-static const int c_back_buffer_width  = 256;
-static const int c_back_buffer_height = 240;
-
-static const int c_fps_limit          = 30;
+#include "Log.hpp"
 
 int main ( int argc, char** argv )
 {
-     Platform platform;
+     Application platform;
+     Application::Settings settings;
 
-     if ( !platform.create_window ( "bryte 0.01", c_window_width, c_window_height,
-                                    c_back_buffer_width, c_back_buffer_height ) ) {
-          return 1;
-     }
+     settings.window_title                  = "Bryte 0.01";
+     settings.window_width                  = 1024;
+     settings.window_height                 = 768;
 
-     if ( !platform.load_game_code ( "./bryte_game.so" ) ) {
-          return 1;
-     }
+     settings.back_buffer_width             = 256;
+     settings.back_buffer_height            = 240;
 
-     if ( !platform.allocate_game_memory ( MEGABYTES ( 32 ) ) ) {
-          return 1;
-     }
+     settings.shared_library_path           = "./bryte_game.so";
 
-     return platform.run_game ( c_fps_limit ) ? 0 : 1;
+     settings.game_memory_allocation_size   = MEGABYTES ( 32 );
+
+     settings.locked_frames_per_second      = 30;
+
+     return platform.run_game ( settings ) ? 0 : 1;
 }
 

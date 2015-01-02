@@ -3,6 +3,7 @@
 #include "Log.hpp"
 
 #include <thread>
+#include <fstream>
 
 #include <cstdio>
 #include <cassert>
@@ -16,10 +17,13 @@ using std::chrono::milliseconds;
 const Char8* Application::c_game_func_strs [ c_func_count ] = {
      "bryte_init",
      "bryte_destroy",
+     "bryte_reload_memory",
      "bryte_user_input",
      "bryte_update",
      "bryte_render"
 };
+
+static const Char8* game_memory_filepath = "game_memory.bry";
 
 Application::Application ( ) :
      m_window                ( nullptr ),
@@ -34,6 +38,7 @@ Application::Application ( ) :
      m_game_update_func      ( nullptr ),
      m_game_render_func      ( nullptr ),
      m_game_memory           ( nullptr ),
+     m_game_memory_size      ( 0 ),
      m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
      m_current_update_timestamp ( m_previous_update_timestamp )
 {
@@ -78,7 +83,7 @@ Application::~Application ( )
 }
 
 Bool Application::create_window ( const Char8* window_title, Int32 window_width, Int32 window_height,
-                               Int32 back_buffer_width, Int32 back_buffer_height )
+                                  Int32 back_buffer_width, Int32 back_buffer_height )
 {
 
      // create the window with the specified parameters
@@ -160,11 +165,12 @@ Bool Application::load_game_code ( const Char8* shared_library_path )
      }
 
      // set the loaded functions
-     m_game_init_func       = reinterpret_cast<GameInitFunc>( game_funcs [ 0 ] );
-     m_game_destroy_func    = reinterpret_cast<GameDestroyFunc>( game_funcs [ 1 ] );
-     m_game_user_input_func = reinterpret_cast<GameUserInputFunc>( game_funcs [ 2 ] );
-     m_game_update_func     = reinterpret_cast<GameUpdateFunc>( game_funcs [ 3 ] );
-     m_game_render_func     = reinterpret_cast<GameRenderFunc>( game_funcs [ 4 ] );
+     m_game_init_func          = reinterpret_cast<GameInitFunc>( game_funcs [ 0 ] );
+     m_game_destroy_func       = reinterpret_cast<GameDestroyFunc>( game_funcs [ 1 ] );
+     m_game_reload_memory_func = reinterpret_cast<GameReloadMemoryFunc>( game_funcs [ 2 ] );
+     m_game_user_input_func    = reinterpret_cast<GameUserInputFunc>( game_funcs [ 3 ] );
+     m_game_update_func        = reinterpret_cast<GameUpdateFunc>( game_funcs [ 4 ] );
+     m_game_render_func        = reinterpret_cast<GameRenderFunc>( game_funcs [ 5 ] );
 
      return true;
 }
@@ -184,6 +190,50 @@ Bool Application::allocate_game_memory ( Uint32 size )
           return false;
      }
 
+     return true;
+}
+
+Bool Application::save_game_memory ( const Char8* path )
+{
+     LOG_INFO ( "Saving game memory to '%s'\n", path );
+
+     std::ofstream file ( path, std::ios::binary );
+
+     if ( !file.is_open ( ) ) {
+          LOG_ERROR ( "Failed to open '%s' to save game memory.\n", path );
+          return false;
+     }
+
+     file.write ( reinterpret_cast<char*>( m_game_memory ), m_game_memory_size );
+
+     if ( !file ) {
+          LOG_ERROR ( "Failed to write %d bytes to '%s' to save game memory.\n",
+                      path, m_game_memory_size );
+     }
+
+     file.close ( );
+     return true;
+}
+
+Bool Application::load_game_memory ( const Char8* path )
+{
+     LOG_INFO ( "Loading game memory from '%s'\n", path );
+
+     std::ifstream file ( path, std::ios::binary );
+
+     if ( !file.is_open ( ) ) {
+          LOG_ERROR ( "Failed to open '%s' to load game memory.\n", path );
+          return false;
+     }
+
+     file.read ( reinterpret_cast<char*>( m_game_memory ), m_game_memory_size );
+
+     if ( !file ) {
+          LOG_ERROR ( "Failed to read %d bytes from '%s' to load game memory.\n",
+                      path, m_game_memory_size );
+     }
+
+     file.close ( );
      return true;
 }
 
@@ -224,6 +274,15 @@ Bool Application::poll_sdl_events ( )
 
                if ( sc == SDL_SCANCODE_0 ) {
                     load_game_code ( m_shared_library_path );
+                    m_game_reload_memory_func ( m_game_memory, m_game_memory_size );
+               }
+
+               if ( sc == SDL_SCANCODE_1 ) {
+                    save_game_memory ( game_memory_filepath );
+               }
+
+               if ( sc == SDL_SCANCODE_2 ) {
+                    load_game_memory ( game_memory_filepath );
                }
 
                m_game_user_input_func ( sc, true );
@@ -248,6 +307,7 @@ Real32 Application::time_and_limit_loop ( Int32 locked_frames_per_second )
      if ( dt_ms < max_allowed_milliseconds ) {
           auto time_until_limit = max_allowed_milliseconds - dt_ms;
           std::this_thread::sleep_for ( milliseconds ( time_until_limit ) );
+          dt_ms += time_until_limit;
      } else if ( dt_ms > max_allowed_milliseconds * 2 ) {
           // log a warning if we take much too long on a frame
           LOG_WARNING ( "game loop executed in %d milliseconds\n", dt_ms );
@@ -267,7 +327,9 @@ Bool Application::run_game ( const Settings& settings )
           return false;
      }
 
-     if ( !allocate_game_memory ( settings.game_memory_allocation_size ) ) {
+     m_game_memory_size = settings.game_memory_allocation_size;
+
+     if ( !allocate_game_memory ( m_game_memory_size ) ) {
           return false;
      }
 
@@ -275,11 +337,12 @@ Bool Application::run_game ( const Settings& settings )
 
      ASSERT ( m_game_init_func );
      ASSERT ( m_game_destroy_func );
+     ASSERT ( m_game_reload_memory_func );
      ASSERT ( m_game_user_input_func );
      ASSERT ( m_game_update_func );
      ASSERT ( m_game_render_func );
 
-     if ( !m_game_init_func ( m_game_memory ) ) {
+     if ( !m_game_init_func ( m_game_memory, m_game_memory_size ) ) {
           return false;
      }
 

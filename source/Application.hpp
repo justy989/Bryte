@@ -7,8 +7,8 @@
 
 #include <chrono>
 
-#define PRINT_SDL_ERROR(sdl_api) printf ( "%s() failed: %s\n", sdl_api, SDL_GetError ( ) );
-#define PRINT_DL_ERROR(dl_api) printf ( "%s() failed: %s\n", dl_api, dlerror ( ) );
+#define PRINT_SDL_ERROR(sdl_api) LOG_ERROR ( "%s() failed: %s\n", sdl_api, SDL_GetError ( ) );
+#define PRINT_DL_ERROR(dl_api) LOG_ERROR ( "%s() failed: %s\n", dl_api, dlerror ( ) );
 
 // Create's a platform application to run the game code
 class Application {
@@ -38,17 +38,18 @@ private:
 
      Bool create_window ( const Char8* window_title, Int32 window_width, Int32 window_height,
                           Int32 back_buffer_width, Int32 back_buffer_height );
-
      Bool load_game_code ( const Char8* shared_library_path );
-
      Bool allocate_game_memory ( Uint32 size );
+
+     Bool save_game_memory ( const Char8* save_path );
+     Bool load_game_memory ( const Char8* save_path );
 
      Void clear_back_buffer ( );
      Void render_to_window ( );
      Bool poll_sdl_events ( );
      Real32 time_and_limit_loop ( Int32 locked_frames_per_second );
 
-     static const int c_func_count = 5;
+     static const int c_func_count = 6;
      static const Char8* c_game_func_strs [ c_func_count ];
 
 private:
@@ -64,14 +65,16 @@ private:
      void*  m_shared_library_handle;
 
      // functions loaded from game shared library
-     GameInitFunc       m_game_init_func;
-     GameDestroyFunc    m_game_destroy_func;
-     GameUserInputFunc  m_game_user_input_func;
-     GameUpdateFunc     m_game_update_func;
-     GameRenderFunc     m_game_render_func;
+     GameInitFunc         m_game_init_func;
+     GameDestroyFunc      m_game_destroy_func;
+     GameReloadMemoryFunc m_game_reload_memory_func;
+     GameUserInputFunc    m_game_user_input_func;
+     GameUpdateFunc       m_game_update_func;
+     GameRenderFunc       m_game_render_func;
 
      // Game memory
      void* m_game_memory;
+     Uint32 m_game_memory_size;
 
      // timer timestamps
      std::chrono::high_resolution_clock::time_point m_previous_update_timestamp;

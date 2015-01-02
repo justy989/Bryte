@@ -16,9 +16,9 @@ EXE      = bryte
 EXE_OBJS = Log.o Application.o
 
 all: release
-release: CFLAGS += -O3 -DNDEBUG
+release: CFLAGS += -O3
 release: $(SO) $(EXE)
-debug: CFLAGS += -g3
+debug: CFLAGS += -g3 -DDEBUG
 debug: $(SO) $(EXE)
 
 clean:

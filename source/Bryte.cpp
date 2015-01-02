@@ -6,7 +6,7 @@ const Int32  c_player_width  = 16;
 const Int32  c_player_height = 24;
 const Real32 c_player_speed  = 100.0f;
 
-GameState g_game_state;
+GameMemory g_game_memory;
 
 static const Int32 c_width       = 8;
 static const Int32 c_height      = 6;
@@ -21,6 +21,11 @@ Int8 g_tiles [ c_height ][ c_width ] = {
      { 1, 0, 0, 0, 0, 0, 0, 1 },
      { 1, 1, 1, 1, 1, 1, 1, 1 }
 };
+
+static GameState* get_game_state ( )
+{
+     return reinterpret_cast<GameState*>( reinterpret_cast<char*>( g_game_memory.memory ) + 0 );
+}
 
 Void Map::build ( )
 {
@@ -51,12 +56,15 @@ Void Map::render ( SDL_Surface* surface )
      }
 }
 
-extern "C" Bool bryte_init ( void* memory )
+extern "C" Bool bryte_init ( void* memory, Uint32 memory_size )
 {
-     g_game_state.memory = memory;
+     g_game_memory.memory = memory;
+     g_game_memory.size   = memory_size;
 
-     g_game_state.player_position_x = 20.0f;
-     g_game_state.player_position_y = 20.0f;
+     GameState* game_state = get_game_state ( );
+
+     game_state->player_position_x = 20.0f;
+     game_state->player_position_y = 20.0f;
 
      return true;
 }
@@ -66,60 +74,71 @@ extern "C" Void bryte_destroy ( )
 
 }
 
+extern "C" Void bryte_reload_memory ( void* memory, Uint32 size )
+{
+     g_game_memory.memory = memory;
+     g_game_memory.size   = size;
+}
+
 extern "C" Void bryte_user_input ( SDL_Scancode scan_code, bool key_down )
 {
+     GameState* game_state = get_game_state ( );
+
      switch ( scan_code ) {
      default:
           break;
      case SDL_SCANCODE_W:
-          g_game_state.direction_keys [ Direction::up ] = key_down;
+          game_state->direction_keys [ Direction::up ] = key_down;
           break;
      case SDL_SCANCODE_S:
-          g_game_state.direction_keys [ Direction::down ] = key_down;
+          game_state->direction_keys [ Direction::down ] = key_down;
           break;
      case SDL_SCANCODE_A:
-          g_game_state.direction_keys [ Direction::left ] = key_down;
+          game_state->direction_keys [ Direction::left ] = key_down;
           break;
      case SDL_SCANCODE_D:
-          g_game_state.direction_keys [ Direction::right ] = key_down;
+          game_state->direction_keys [ Direction::right ] = key_down;
           break;
      }
 }
 
 extern "C" Void bryte_update ( Real32 time_delta )
 {
+     GameState* game_state = get_game_state ( );
      static bool did_stuff = false;
 
      if ( !did_stuff ) {
           did_stuff = true;
-          g_game_state.player_position_x = 20.0f;
-          g_game_state.player_position_y = 20.0f;
+          game_state->player_position_x = 20.0f;
+          game_state->player_position_y = 20.0f;
      }
 
-     if ( g_game_state.direction_keys [ Direction::up ] ) {
-          g_game_state.player_position_y -= c_player_speed * time_delta;
+     if ( game_state->direction_keys [ Direction::up ] ) {
+          game_state->player_position_y -= c_player_speed * time_delta;
      }
 
-     if ( g_game_state.direction_keys [ Direction::down ] ) {
-          g_game_state.player_position_y += c_player_speed * time_delta;
+     if ( game_state->direction_keys [ Direction::down ] ) {
+          game_state->player_position_y += c_player_speed * time_delta;
      }
 
-     if ( g_game_state.direction_keys [ Direction::left ] ) {
-          g_game_state.player_position_x -= c_player_speed * time_delta;
+     if ( game_state->direction_keys [ Direction::left ] ) {
+          game_state->player_position_x -= c_player_speed * time_delta;
      }
 
-     if ( g_game_state.direction_keys [ Direction::right ] ) {
-          g_game_state.player_position_x += c_player_speed * time_delta;
+     if ( game_state->direction_keys [ Direction::right ] ) {
+          game_state->player_position_x += c_player_speed * time_delta;
      }
 }
 
 extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 {
-     g_game_state.map.build ( );
-     g_game_state.map.render ( back_buffer );
+     GameState* game_state = get_game_state ( );
 
-     SDL_Rect player_rect { static_cast<int>( g_game_state.player_position_x ),
-                            static_cast<int>( g_game_state.player_position_y ),
+     game_state->map.build ( );
+     game_state->map.render ( back_buffer );
+
+     SDL_Rect player_rect { static_cast<int>( game_state->player_position_x ),
+                            static_cast<int>( game_state->player_position_y ),
                             c_player_width, c_player_height };
 
      Uint32 red = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );

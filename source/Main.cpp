@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 
 #include "Platform.hpp"
+#include "Utils.hpp"
 
 static const int c_window_width       = 800;
 static const int c_window_height      = 600;
@@ -22,6 +23,10 @@ int main ( int argc, char** argv )
      }
 
      if ( !platform.load_game_code ( "./bryte_game.so" ) ) {
+          return 1;
+     }
+
+     if ( !platform.allocate_game_memory ( MEGABYTES ( 32 ) ) ) {
           return 1;
      }
 

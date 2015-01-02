@@ -22,6 +22,8 @@ public:
 
      Bool load_game_code ( const Char8* shared_library_path );
 
+     Bool allocate_game_memory ( Uint32 size );
+
      Bool run_game ( Int32 locked_frames_per_second );
 
 private:
@@ -47,11 +49,14 @@ private:
      void*  m_shared_library_handle;
 
      // functions loaded from game shared library
-     Game_Init_Func       m_game_init_func;
-     Game_Destroy_Func    m_game_destroy_func;
-     Game_User_Input_Func m_game_user_input_func;
-     Game_Update_Func     m_game_update_func;
-     Game_Render_Func     m_game_render_func;
+     GameInitFunc       m_game_init_func;
+     GameDestroyFunc    m_game_destroy_func;
+     GameUserInputFunc  m_game_user_input_func;
+     GameUpdateFunc     m_game_update_func;
+     GameRenderFunc     m_game_render_func;
+
+     // Game memory
+     void* m_game_memory;
 
      // timer timestamps
      std::chrono::high_resolution_clock::time_point m_previous_update_timestamp;

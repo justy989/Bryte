@@ -6,7 +6,7 @@ const Int32  c_player_width  = 16;
 const Int32  c_player_height = 24;
 const Real32 c_player_speed  = 100.0f;
 
-Game_State g_game_state;
+GameState g_game_state;
 
 static const Int32 c_width       = 8;
 static const Int32 c_height      = 6;
@@ -51,8 +51,10 @@ Void Map::render ( SDL_Surface* surface )
      }
 }
 
-extern "C" Bool bryte_init ( )
+extern "C" Bool bryte_init ( void* memory )
 {
+     g_game_state.memory = memory;
+
      g_game_state.player_position_x = 20.0f;
      g_game_state.player_position_y = 20.0f;
 

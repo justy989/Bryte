@@ -1,4 +1,5 @@
 #include "Platform.hpp"
+#include "Utils.hpp"
 
 #include <thread>
 
@@ -31,6 +32,7 @@ Platform::Platform ( ) :
      m_game_user_input_func  ( nullptr ),
      m_game_update_func      ( nullptr ),
      m_game_render_func      ( nullptr ),
+     m_game_memory           ( nullptr ),
      m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
      m_current_update_timestamp ( m_previous_update_timestamp )
 {
@@ -39,6 +41,10 @@ Platform::Platform ( ) :
 
 Platform::~Platform ( )
 {
+     if ( m_game_memory ) {
+          free ( m_game_memory );
+     }
+
      if ( m_shared_library_handle ) {
           dlclose ( m_shared_library_handle );
      }
@@ -138,11 +144,11 @@ Bool Platform::load_game_code ( const Char8* shared_library_path )
      }
 
      // set the loaded functions
-     m_game_init_func       = reinterpret_cast<Game_Init_Func>( game_funcs [ 0 ] );
-     m_game_destroy_func    = reinterpret_cast<Game_Destroy_Func>( game_funcs [ 1 ] );
-     m_game_user_input_func = reinterpret_cast<Game_User_Input_Func>( game_funcs [ 2 ] );
-     m_game_update_func     = reinterpret_cast<Game_Update_Func>( game_funcs [ 3 ] );
-     m_game_render_func     = reinterpret_cast<Game_Render_Func>( game_funcs [ 4 ] );
+     m_game_init_func       = reinterpret_cast<GameInitFunc>( game_funcs [ 0 ] );
+     m_game_destroy_func    = reinterpret_cast<GameDestroyFunc>( game_funcs [ 1 ] );
+     m_game_user_input_func = reinterpret_cast<GameUserInputFunc>( game_funcs [ 2 ] );
+     m_game_update_func     = reinterpret_cast<GameUpdateFunc>( game_funcs [ 3 ] );
+     m_game_render_func     = reinterpret_cast<GameRenderFunc>( game_funcs [ 4 ] );
 
      return true;
 }
@@ -209,17 +215,33 @@ Real32 Platform::time_and_limit_loop ( Int32 locked_frames_per_second )
      return static_cast<float>( dt_ms ) / 1000.0f;
 }
 
+Bool Platform::allocate_game_memory ( Uint32 size )
+{
+     if ( m_game_memory ) {
+          free ( m_game_memory );
+     }
+
+     m_game_memory = malloc ( size );
+
+     if ( !m_game_memory ) {
+          printf ( "Failed to Allocate %d memory for game.\n", size );
+          return false;
+     }
+
+     return true;
+}
+
 Bool Platform::run_game ( Int32 locked_frames_per_second )
 {
      Real32 time_delta = 0.0f;
 
-     assert ( m_game_init_func );
-     assert ( m_game_destroy_func );
-     assert ( m_game_user_input_func );
-     assert ( m_game_update_func );
-     assert ( m_game_render_func );
+     ASSERT ( m_game_init_func );
+     ASSERT ( m_game_destroy_func );
+     ASSERT ( m_game_user_input_func );
+     ASSERT ( m_game_update_func );
+     ASSERT ( m_game_render_func );
 
-     if ( !m_game_init_func ( ) ) {
+     if ( !m_game_init_func ( m_game_memory ) ) {
           return false;
      }
 

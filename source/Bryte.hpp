@@ -5,15 +5,28 @@
 
 #include <SDL2/SDL.h>
 
-struct Bryte_State {
-     Int32 player_position_x;
-     Int32 player_position_y;
-};
+namespace bryte {
+
+     enum Direction {
+          left = 0 ,
+          up,
+          right,
+          down
+     };
+
+     struct Game_State {
+
+          Int32 player_position_x;
+          Int32 player_position_y;
+
+          bool direction_keys [ 4 ];
+     };
+}
 
 extern "C" Bool bryte_init ( );
 extern "C" Void bryte_destroy ( );
-extern "C" Void bryte_user_input ( SDL_Scancode );
-extern "C" Void bryte_update ( Real32 );
+extern "C" Void bryte_user_input ( SDL_Scancode, bool );
+extern "C" Void bryte_update ( Int32 );
 extern "C" Void bryte_render ( SDL_Surface* );
 
 // Game code function types

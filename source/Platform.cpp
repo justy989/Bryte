@@ -1,9 +1,15 @@
 #include "Platform.hpp"
 
+#include <chrono>
+
 #include <cstdio>
 #include <cassert>
 #include <cstring>
 #include <dlfcn.h>
+
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::microseconds;
 
 const Char8* Platform::c_game_func_strs [ c_func_count ] = {
      "bryte_init",
@@ -141,10 +147,11 @@ Bool Platform::load_game_code ( const Char8* shared_library_path )
 
 Bool Platform::run_game ( )
 {
-     SDL_Event sdl_event  = {};
-     Bool      done       = false;
-     SDL_Rect  clear_rect { 0, 0, m_back_buffer_surface->w, m_back_buffer_surface->h };
-     Uint32    black      = SDL_MapRGB ( m_back_buffer_surface->format, 0, 0, 0 );
+     SDL_Event sdl_event     = {};
+     Bool      done          = false;
+     SDL_Rect  clear_rect    { 0, 0, m_back_buffer_surface->w, m_back_buffer_surface->h };
+     Uint32    black         = SDL_MapRGB ( m_back_buffer_surface->format, 0, 0, 0 );
+     Int32     time_delta_us = { };
 
      assert ( m_game_init_func );
      assert ( m_game_destroy_func );
@@ -156,7 +163,15 @@ Bool Platform::run_game ( )
           return false;
      }
 
+     high_resolution_clock::time_point previous_timestamp = high_resolution_clock::now ( );
+     high_resolution_clock::time_point current_timestamp = previous_timestamp;
+
      while ( !done ) {
+
+          previous_timestamp = current_timestamp;
+          current_timestamp = high_resolution_clock::now ( );
+
+          time_delta_us = duration_cast<microseconds>( current_timestamp - previous_timestamp ).count ( );
 
           while ( SDL_PollEvent ( &sdl_event ) ) {
                if ( sdl_event.type == SDL_QUIT ) {
@@ -167,12 +182,16 @@ Bool Platform::run_game ( )
                     if ( sdl_event.key.keysym.scancode == SDL_SCANCODE_0 ) {
                          load_game_code ( m_shared_library_path );
                     }
+
+                    m_game_user_input_func ( sdl_event.key.keysym.scancode, true );
+               } else if ( sdl_event.type == SDL_KEYUP ) {
+                    m_game_user_input_func ( sdl_event.key.keysym.scancode, false );
                }
           }
 
           SDL_FillRect ( m_back_buffer_surface, &clear_rect, black );
 
-          m_game_update_func ( 0.0f );
+          m_game_update_func ( time_delta_us );
           m_game_render_func ( m_back_buffer_surface );
 
           SDL_UpdateTexture ( m_back_buffer_texture, nullptr, m_back_buffer_surface->pixels,

@@ -14,12 +14,29 @@ namespace bryte {
           down
      };
 
+     struct Map {
+          Int8* m_tiles;
+
+          Int8 m_tile_width;
+          Int8 m_tile_height;
+
+          Int8 m_width;
+          Int8 m_height;
+
+          // TODO: Exits to other maps
+
+          Void build ( );
+          Void render ( SDL_Surface* surface );
+     };
+
      struct Game_State {
 
-          Int32 player_position_x;
-          Int32 player_position_y;
+          Real32 player_position_x;
+          Real32 player_position_y;
 
           bool direction_keys [ 4 ];
+
+          Map map;
      };
 }
 

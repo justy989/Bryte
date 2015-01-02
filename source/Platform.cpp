@@ -196,10 +196,11 @@ Real32 Platform::time_and_limit_loop ( Int32 locked_frames_per_second )
 
      auto duration = m_current_update_timestamp - m_previous_update_timestamp;
      auto dt_ms = duration_cast<milliseconds>( duration ).count ( );
+
      auto max_allowed_microseconds = 1000 / locked_frames_per_second;
-     auto time_until_limit = max_allowed_microseconds - dt_ms;
 
      if ( dt_ms < max_allowed_microseconds ) {
+          auto time_until_limit = max_allowed_microseconds - dt_ms;
           std::this_thread::sleep_for ( milliseconds ( time_until_limit ) );
      } else {
           printf ( "Warning: game loop took %ld milliseconds.\n", dt_ms );

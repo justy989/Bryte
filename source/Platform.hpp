@@ -24,12 +24,19 @@ public:
 
 private:
 
+     static const int c_func_count = 5;
+     static const Char8* c_game_func_strs [ c_func_count ];
+
+private:
+
      // SDL components required to make window and draw to it
      SDL_Window*   m_window;
      SDL_Renderer* m_renderer;
      SDL_Texture*  m_back_buffer_texture;
      SDL_Surface*  m_back_buffer_surface;
 
+     // loaded share library attributes
+     Char8* m_shared_library_path;
      void* m_shared_library_handle;
 
      // functions loaded from game shared library

@@ -30,6 +30,9 @@ extern "C" Void bryte_update ( Real32 time_delta )
 
 extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 {
+     g_bryte_state.player_position_x = 50;
+     g_bryte_state.player_position_y = 60;
+
      SDL_Rect player_rect { g_bryte_state.player_position_x,
                             g_bryte_state.player_position_y,
                             c_player_width, c_player_height };

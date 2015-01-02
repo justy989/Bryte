@@ -1,25 +1,40 @@
 #include "Platform.hpp"
 
 #include <cstdio>
-#include <dlfcn.h>
 #include <cassert>
+#include <cstring>
+#include <dlfcn.h>
+
+const Char8* Platform::c_game_func_strs [ c_func_count ] = {
+     "bryte_init",
+     "bryte_destroy",
+     "bryte_user_input",
+     "bryte_update",
+     "bryte_render"
+};
 
 Platform::Platform ( ) :
-     m_window               ( nullptr ),
-     m_renderer             ( nullptr ),
-     m_back_buffer_texture  ( nullptr ),
-     m_back_buffer_surface  ( nullptr ),
-     m_game_init_func       ( nullptr ),
-     m_game_destroy_func    ( nullptr ),
-     m_game_user_input_func ( nullptr ),
-     m_game_update_func     ( nullptr ),
-     m_game_render_func     ( nullptr )
+     m_window                ( nullptr ),
+     m_renderer              ( nullptr ),
+     m_back_buffer_texture   ( nullptr ),
+     m_back_buffer_surface   ( nullptr ),
+     m_shared_library_path   ( nullptr ),
+     m_shared_library_handle ( nullptr ),
+     m_game_init_func        ( nullptr ),
+     m_game_destroy_func     ( nullptr ),
+     m_game_user_input_func  ( nullptr ),
+     m_game_update_func      ( nullptr ),
+     m_game_render_func      ( nullptr )
 {
      SDL_Init ( SDL_INIT_VIDEO );
 }
 
 Platform::~Platform ( )
 {
+     if ( m_shared_library_handle ) {
+          dlclose ( m_shared_library_handle );
+     }
+
      if ( m_back_buffer_surface ) {
           SDL_FreeSurface ( m_back_buffer_surface );
      }
@@ -81,6 +96,10 @@ Bool Platform::create_window ( const Char8* window_title, Int32 window_width, In
 
 Bool Platform::load_game_code ( const Char8* shared_library_path )
 {
+     if ( m_shared_library_handle ) {
+          dlclose ( m_shared_library_handle );
+     }
+
      m_shared_library_handle = dlopen ( shared_library_path, RTLD_LAZY );
 
      if ( !m_shared_library_handle ) {
@@ -88,30 +107,23 @@ Bool Platform::load_game_code ( const Char8* shared_library_path )
           return false;
      }
 
-     static const int c_func_count = 5;
+     Char8* save_path = strdup ( shared_library_path );
 
-     static const char* game_func_strs [ c_func_count ] = {
-          "bryte_init",
-          "bryte_destroy",
-          "bryte_user_input",
-          "bryte_update",
-          "bryte_render"
-     };
+     // if we succeded, save the shared library path
+     if ( m_shared_library_path ) {
+          free ( m_shared_library_path );
+     }
 
-     void* game_funcs [ c_func_count ] = {
-          nullptr,
-          nullptr,
-          nullptr,
-          nullptr,
-          nullptr
-     };
+     m_shared_library_path = save_path;
 
      // load each func and validate they succeeded in loading
+     void* game_funcs [ c_func_count ];
+
      for ( int i = 0; i < c_func_count; ++i ) {
-          game_funcs [ i ] = dlsym ( m_shared_library_handle, game_func_strs [ i ]);
+          game_funcs [ i ] = dlsym ( m_shared_library_handle, c_game_func_strs [ i ]);
 
           if ( !game_funcs [ i ] ) {
-               printf ( "Failed to load: %s\n", game_func_strs [ i ] );
+               printf ( "Failed to load: %s\n", c_game_func_strs [ i ] );
                PRINT_DL_ERROR ( "dlsym" );
                return false;
           }
@@ -150,10 +162,17 @@ Bool Platform::run_game ( )
                if ( sdl_event.type == SDL_QUIT ) {
                     done = true;
                }
+
+               if ( sdl_event.type == SDL_KEYDOWN ) {
+                    if ( sdl_event.key.keysym.scancode == SDL_SCANCODE_0 ) {
+                         load_game_code ( m_shared_library_path );
+                    }
+               }
           }
 
           SDL_FillRect ( m_back_buffer_surface, &clear_rect, black );
 
+          m_game_update_func ( 0.0f );
           m_game_render_func ( m_back_buffer_surface );
 
           SDL_UpdateTexture ( m_back_buffer_texture, nullptr, m_back_buffer_surface->pixels,

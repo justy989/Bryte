@@ -41,14 +41,14 @@ extern "C" Void bryte_user_input ( SDL_Scancode scan_code, bool key_down )
      }
 }
 
-extern "C" Void bryte_update ( Int32 time_delta )
+extern "C" Void bryte_update ( Real32 time_delta )
 {
      static bool did_stuff = false;
 
      if ( !did_stuff ) {
           did_stuff = true;
-          g_game_state.player_position_x = 10;
-          g_game_state.player_position_y = 10;
+          g_game_state.player_position_x = 20;
+          g_game_state.player_position_y = 20;
      }
 
      if ( g_game_state.direction_keys [ Direction::up ] ) {

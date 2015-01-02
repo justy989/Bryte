@@ -4,11 +4,13 @@
 
 #include "Platform.hpp"
 
-static const int c_window_width  = 800;
-static const int c_window_height = 600;
+static const int c_window_width       = 800;
+static const int c_window_height      = 600;
 
-static const int c_back_buffer_width = 256;
+static const int c_back_buffer_width  = 256;
 static const int c_back_buffer_height = 240;
+
+static const int c_fps_limit          = 30;
 
 int main ( int argc, char** argv )
 {
@@ -23,6 +25,6 @@ int main ( int argc, char** argv )
           return 1;
      }
 
-     return platform.run_game ( ) ? 0 : 1;
+     return platform.run_game ( c_fps_limit ) ? 0 : 1;
 }
 

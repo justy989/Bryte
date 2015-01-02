@@ -5,6 +5,8 @@
 
 #include <SDL2/SDL.h>
 
+#include <chrono>
+
 #define PRINT_SDL_ERROR(sdl_api) printf ( "%s() failed: %s\n", sdl_api, SDL_GetError ( ) );
 #define PRINT_DL_ERROR(dl_api) printf ( "%s() failed: %s\n", dl_api, dlerror ( ) );
 
@@ -20,9 +22,14 @@ public:
 
      Bool load_game_code ( const Char8* shared_library_path );
 
-     Bool run_game ( );
+     Bool run_game ( Int32 locked_frames_per_second );
 
 private:
+
+     Void clear_back_buffer ( );
+     Void render_to_window ( );
+     Bool poll_sdl_events ( );
+     Real32 time_and_limit_loop ( Int32 locked_frames_per_second );
 
      static const int c_func_count = 5;
      static const Char8* c_game_func_strs [ c_func_count ];
@@ -37,7 +44,7 @@ private:
 
      // loaded share library attributes
      Char8* m_shared_library_path;
-     void* m_shared_library_handle;
+     void*  m_shared_library_handle;
 
      // functions loaded from game shared library
      Game_Init_Func       m_game_init_func;
@@ -45,6 +52,10 @@ private:
      Game_User_Input_Func m_game_user_input_func;
      Game_Update_Func     m_game_update_func;
      Game_Render_Func     m_game_render_func;
+
+     // timer timestamps
+     std::chrono::high_resolution_clock::time_point m_previous_update_timestamp;
+     std::chrono::high_resolution_clock::time_point m_current_update_timestamp;
 };
 
 #endif

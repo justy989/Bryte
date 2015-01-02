@@ -1,6 +1,6 @@
 #include "Platform.hpp"
 
-#include <chrono>
+#include <thread>
 
 #include <cstdio>
 #include <cassert>
@@ -9,7 +9,7 @@
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
-using std::chrono::microseconds;
+using std::chrono::milliseconds;
 
 const Char8* Platform::c_game_func_strs [ c_func_count ] = {
      "bryte_init",
@@ -30,7 +30,9 @@ Platform::Platform ( ) :
      m_game_destroy_func     ( nullptr ),
      m_game_user_input_func  ( nullptr ),
      m_game_update_func      ( nullptr ),
-     m_game_render_func      ( nullptr )
+     m_game_render_func      ( nullptr ),
+     m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
+     m_current_update_timestamp ( m_previous_update_timestamp )
 {
      SDL_Init ( SDL_INIT_VIDEO );
 }
@@ -145,13 +147,70 @@ Bool Platform::load_game_code ( const Char8* shared_library_path )
      return true;
 }
 
-Bool Platform::run_game ( )
+Void Platform::clear_back_buffer ( )
 {
-     SDL_Event sdl_event     = {};
-     Bool      done          = false;
-     SDL_Rect  clear_rect    { 0, 0, m_back_buffer_surface->w, m_back_buffer_surface->h };
-     Uint32    black         = SDL_MapRGB ( m_back_buffer_surface->format, 0, 0, 0 );
-     Int32     time_delta_us = { };
+     Uint32    black      = SDL_MapRGB ( m_back_buffer_surface->format, 0, 0, 0 );
+     SDL_Rect  clear_rect { 0, 0, m_back_buffer_surface->w, m_back_buffer_surface->h };
+
+     SDL_FillRect ( m_back_buffer_surface, &clear_rect, black );
+}
+
+Void Platform::render_to_window ( )
+{
+     SDL_UpdateTexture ( m_back_buffer_texture, nullptr, m_back_buffer_surface->pixels,
+                         m_back_buffer_surface->pitch );
+
+     SDL_RenderClear ( m_renderer );
+     SDL_RenderCopy ( m_renderer, m_back_buffer_texture, nullptr, nullptr );
+
+     SDL_RenderPresent ( m_renderer );
+}
+
+Bool Platform::poll_sdl_events ( )
+{
+     SDL_Event sdl_event  = {};
+
+     while ( SDL_PollEvent ( &sdl_event ) ) {
+          if ( sdl_event.type == SDL_QUIT ) {
+               return false;
+          }
+
+          if ( sdl_event.type == SDL_KEYDOWN ) {
+               if ( sdl_event.key.keysym.scancode == SDL_SCANCODE_0 ) {
+                    load_game_code ( m_shared_library_path );
+               }
+
+               m_game_user_input_func ( sdl_event.key.keysym.scancode, true );
+          } else if ( sdl_event.type == SDL_KEYUP ) {
+               m_game_user_input_func ( sdl_event.key.keysym.scancode, false );
+          }
+     }
+
+     return true;
+}
+
+Real32 Platform::time_and_limit_loop ( Int32 locked_frames_per_second )
+{
+     m_previous_update_timestamp = m_current_update_timestamp;
+     m_current_update_timestamp  = high_resolution_clock::now ( );
+
+     auto duration = m_current_update_timestamp - m_previous_update_timestamp;
+     auto dt_ms = duration_cast<milliseconds>( duration ).count ( );
+     auto max_allowed_microseconds = 1000 / locked_frames_per_second;
+     auto time_until_limit = max_allowed_microseconds - dt_ms;
+
+     if ( dt_ms < max_allowed_microseconds ) {
+          std::this_thread::sleep_for ( milliseconds ( time_until_limit ) );
+     } else {
+          printf ( "Warning: game loop took %ld milliseconds.\n", dt_ms );
+     }
+
+     return static_cast<float>( dt_ms ) / 1000.0f;
+}
+
+Bool Platform::run_game ( Int32 locked_frames_per_second )
+{
+     Real32 time_delta = 0.0f;
 
      assert ( m_game_init_func );
      assert ( m_game_destroy_func );
@@ -163,44 +222,20 @@ Bool Platform::run_game ( )
           return false;
      }
 
-     high_resolution_clock::time_point previous_timestamp = high_resolution_clock::now ( );
-     high_resolution_clock::time_point current_timestamp = previous_timestamp;
+     while ( true ) {
 
-     while ( !done ) {
+          time_delta = time_and_limit_loop ( locked_frames_per_second );
 
-          previous_timestamp = current_timestamp;
-          current_timestamp = high_resolution_clock::now ( );
-
-          time_delta_us = duration_cast<microseconds>( current_timestamp - previous_timestamp ).count ( );
-
-          while ( SDL_PollEvent ( &sdl_event ) ) {
-               if ( sdl_event.type == SDL_QUIT ) {
-                    done = true;
-               }
-
-               if ( sdl_event.type == SDL_KEYDOWN ) {
-                    if ( sdl_event.key.keysym.scancode == SDL_SCANCODE_0 ) {
-                         load_game_code ( m_shared_library_path );
-                    }
-
-                    m_game_user_input_func ( sdl_event.key.keysym.scancode, true );
-               } else if ( sdl_event.type == SDL_KEYUP ) {
-                    m_game_user_input_func ( sdl_event.key.keysym.scancode, false );
-               }
+          if ( !poll_sdl_events ( ) ) {
+               break;
           }
 
-          SDL_FillRect ( m_back_buffer_surface, &clear_rect, black );
+          clear_back_buffer ( );
 
-          m_game_update_func ( time_delta_us );
+          m_game_update_func ( time_delta );
           m_game_render_func ( m_back_buffer_surface );
 
-          SDL_UpdateTexture ( m_back_buffer_texture, nullptr, m_back_buffer_surface->pixels,
-                              m_back_buffer_surface->pitch );
-
-          SDL_RenderClear ( m_renderer );
-          SDL_RenderCopy ( m_renderer, m_back_buffer_texture, nullptr, nullptr );
-
-          SDL_RenderPresent ( m_renderer );
+          render_to_window ( );
      }
 
      m_game_destroy_func ( );

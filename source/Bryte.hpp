@@ -26,7 +26,7 @@ namespace bryte {
 extern "C" Bool bryte_init ( );
 extern "C" Void bryte_destroy ( );
 extern "C" Void bryte_user_input ( SDL_Scancode, bool );
-extern "C" Void bryte_update ( Int32 );
+extern "C" Void bryte_update ( Real32 );
 extern "C" Void bryte_render ( SDL_Surface* );
 
 // Game code function types

@@ -35,8 +35,6 @@ namespace bryte
      public:
 
           Character player;
-          Real32    player_position_x;
-          Real32    player_position_y;
 
           Int32     player_exit_tile_index;
 

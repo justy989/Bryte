@@ -11,5 +11,7 @@
      #define ASSERT( condition )
 #endif
 
+#define CLAMP( value, min, max ) if ( value < min ) { value = min; } else if ( value > max ) { value = max; }
+
 #endif
 

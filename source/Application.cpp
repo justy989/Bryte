@@ -23,8 +23,8 @@ const Char8* Application::c_game_func_strs [ c_func_count ] = {
      "bryte_render"
 };
 
-static const Char8* c_game_memory_filepath  = "game_memory.bry";
-static const Char8* c_record_input_filepath = "bryte_input.brin";
+static const Char8* c_game_memory_filepath  = "bryte_memory.mem";
+static const Char8* c_record_input_filepath = "bryte_input.in";
 
 Application::Application ( ) :
      m_window                ( nullptr ),
@@ -38,8 +38,6 @@ Application::Application ( ) :
      m_game_user_input_func  ( nullptr ),
      m_game_update_func      ( nullptr ),
      m_game_render_func      ( nullptr ),
-     m_game_memory           ( nullptr ),
-     m_game_memory_size      ( 0 ),
      m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
      m_current_update_timestamp ( m_previous_update_timestamp ),
      m_key_change_count      ( 0 ),
@@ -52,9 +50,9 @@ Application::Application ( ) :
 
 Application::~Application ( )
 {
-     if ( m_game_memory ) {
+     if ( m_game_memory.memory ) {
           LOG_INFO ( "Freeing allocated game memory.\n" );
-          free ( m_game_memory );
+          free ( m_game_memory.memory );
      }
 
      if ( m_shared_library_handle ) {
@@ -179,18 +177,18 @@ Bool Application::load_game_code ( const Char8* shared_library_path )
      return true;
 }
 
-Bool Application::allocate_game_memory ( Uint32 size )
+Bool Application::allocate_game_memory ( )
 {
-     if ( m_game_memory ) {
+     if ( m_game_memory.memory ) {
           LOG_INFO ( "Freeing allocated game memory.\n" );
-          free ( m_game_memory );
+          free ( m_game_memory.memory );
      }
 
-     LOG_INFO ( "Allocating game memory: %d bytes\n", size );
-     m_game_memory = malloc ( size );
+     LOG_INFO ( "Allocating game memory: %d bytes\n", m_game_memory.size );
+     m_game_memory.memory = malloc ( m_game_memory.size );
 
-     if ( !m_game_memory ) {
-          printf ( "Failed to Allocate %d memory for game.\n", size );
+     if ( !m_game_memory.memory ) {
+          printf ( "Failed to Allocate %d memory for game.\n", m_game_memory.size );
           return false;
      }
 
@@ -208,11 +206,11 @@ Bool Application::save_game_memory ( const Char8* path )
           return false;
      }
 
-     file.write ( reinterpret_cast<char*>( m_game_memory ), m_game_memory_size );
+     file.write ( reinterpret_cast<char*>( m_game_memory.memory ), m_game_memory.size );
 
      if ( !file ) {
           LOG_ERROR ( "Failed to write %d bytes to '%s' to save game memory.\n",
-                      path, m_game_memory_size );
+                      path, m_game_memory.size );
      }
 
      file.close ( );
@@ -230,11 +228,11 @@ Bool Application::load_game_memory ( const Char8* path )
           return false;
      }
 
-     file.read ( reinterpret_cast<char*>( m_game_memory ), m_game_memory_size );
+     file.read ( reinterpret_cast<char*>( m_game_memory.memory ), m_game_memory.size );
 
      if ( !file ) {
           LOG_ERROR ( "Failed to read %d bytes from '%s' to load game memory.\n",
-                      path, m_game_memory_size );
+                      path, m_game_memory.size );
      }
 
      file.close ( );
@@ -377,7 +375,7 @@ Bool Application::poll_sdl_events ( )
 
                if ( sc == SDL_SCANCODE_0 ) {
                     load_game_code ( m_shared_library_path );
-                    m_game_reload_memory_func ( m_game_memory, m_game_memory_size );
+                    m_game_reload_memory_func ( m_game_memory );
                     continue;
                }
 
@@ -450,9 +448,9 @@ Bool Application::run_game ( const Settings& settings )
           return false;
      }
 
-     m_game_memory_size = settings.game_memory_allocation_size;
+     m_game_memory.size = settings.game_memory_allocation_size;
 
-     if ( !allocate_game_memory ( m_game_memory_size ) ) {
+     if ( !allocate_game_memory ( ) ) {
           return false;
      }
 
@@ -465,7 +463,7 @@ Bool Application::run_game ( const Settings& settings )
      ASSERT ( m_game_update_func );
      ASSERT ( m_game_render_func );
 
-     if ( !m_game_init_func ( m_game_memory, m_game_memory_size ) ) {
+     if ( !m_game_init_func ( m_game_memory) ) {
           return false;
      }
 

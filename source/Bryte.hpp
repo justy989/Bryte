@@ -26,10 +26,13 @@ namespace bryte {
           // TODO: exits to other maps
 
           Void build ( );
-          Void render ( SDL_Surface* surface );
+          Void render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y );
      };
 
      struct GameMemory {
+
+          GameMemory ( ) : memory ( nullptr ), size ( 0 ) { }
+
           Void*  memory;
           Uint32 size;
      };
@@ -41,12 +44,15 @@ namespace bryte {
           Bool   direction_keys [ 4 ];
 
           Map    map;
+
+          Real32 camera_x;
+          Real32 camera_y;
      };
 }
 
-extern "C" Bool bryte_init ( void*, Uint32 );
+extern "C" Bool bryte_init ( bryte::GameMemory& );
 extern "C" Void bryte_destroy ( );
-extern "C" Void bryte_reload_memory ( void*, Uint32 );
+extern "C" Void bryte_reload_memory ( bryte::GameMemory& );
 extern "C" Void bryte_user_input ( SDL_Scancode, bool );
 extern "C" Void bryte_update ( Real32 );
 extern "C" Void bryte_render ( SDL_Surface* );

@@ -37,6 +37,13 @@ public:
 
 private:
 
+     struct KeyChange {
+          SDL_Scancode scan_code;
+          bool down;
+     };
+
+private:
+
      Bool create_window ( const Char8* window_title, Int32 window_width, Int32 window_height,
                           Int32 back_buffer_width, Int32 back_buffer_height );
      Bool load_game_code ( const Char8* shared_library_path );
@@ -48,18 +55,20 @@ private:
      Bool start_recording_input ( const Char8* path );
      Bool stop_recording_input ( );
 
-     Bool start_playback_input ( const Char8* path );
-     Bool stop_playback_input ( );
+     Bool start_playing_back_input ( const Char8* path );
+     Bool stop_playing_back_input ( );
 
-     Void update_recorder ( SDL_Scancode scan_code, Bool key_down );
+     Void handle_input ( );
 
      Void clear_back_buffer ( );
      Void render_to_window ( );
      Bool poll_sdl_events ( );
      Real32 time_and_limit_loop ( Int32 locked_frames_per_second );
 
-     static const int c_func_count = 6;
+     static const Int32  c_func_count = 6;
      static const Char8* c_game_func_strs [ c_func_count ];
+
+     static const Uint32 c_max_key_changes_per_frame = 8;
 
 private:
 
@@ -90,8 +99,11 @@ private:
      std::chrono::high_resolution_clock::time_point m_current_update_timestamp;
 
      // input recorder file handles
-     std::ifstream m_input_record_reader_handle;
-     std::ofstream m_input_record_writer_handle;
+     std::ifstream m_input_record_reader_file;
+     std::ofstream m_input_record_writer_file;
+
+     KeyChange m_key_changes [ c_max_key_changes_per_frame ];
+     Uint32 m_key_change_count;
 
      Bool m_recording_input;
      Bool m_playing_back_input;

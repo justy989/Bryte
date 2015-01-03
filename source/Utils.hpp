@@ -6,7 +6,7 @@
 #define GIGABYTES( bytes ) MEGABYTES( bytes ) * 1024
 
 #ifdef DEBUG
-     #define ASSERT( condition ) if ( !condition ) { *reinterpret_cast<char*>(nullptr) = 0; }
+     #define ASSERT( condition ) if ( !condition ) { *reinterpret_cast<char*>(0) = 0; }
 #else
      #define ASSERT( condition )
 #endif

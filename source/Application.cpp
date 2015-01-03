@@ -23,7 +23,8 @@ const Char8* Application::c_game_func_strs [ c_func_count ] = {
      "bryte_render"
 };
 
-static const Char8* game_memory_filepath = "game_memory.bry";
+static const Char8* c_game_memory_filepath  = "game_memory.bry";
+static const Char8* c_record_input_filepath = "bryte_input.brin";
 
 Application::Application ( ) :
      m_window                ( nullptr ),
@@ -40,7 +41,10 @@ Application::Application ( ) :
      m_game_memory           ( nullptr ),
      m_game_memory_size      ( 0 ),
      m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
-     m_current_update_timestamp ( m_previous_update_timestamp )
+     m_current_update_timestamp ( m_previous_update_timestamp ),
+     m_key_change_count      ( 0 ),
+     m_recording_input       ( false ),
+     m_playing_back_input    ( false )
 {
      LOG_INFO ( "Initializing SDL\n" );
      SDL_Init ( SDL_INIT_VIDEO );
@@ -239,48 +243,99 @@ Bool Application::load_game_memory ( const Char8* path )
 
 Bool Application::start_recording_input ( const Char8* path )
 {
-     m_input_record_writer_handle.open ( path, std::ios::binary );
+     LOG_INFO ( "Recording input to '%s'\n", path );
 
-     if ( !m_input_record_writer_handle.is_open ( ) ) {
+     m_input_record_writer_file.open ( path, std::ios::binary );
+
+     if ( !m_input_record_writer_file.is_open ( ) ) {
           LOG_ERROR ( "Failed to open '%s' to load record input.\n", path );
           return false;
      }
+
+     m_recording_input = true;
 
      return true;
 }
 
 Bool Application::stop_recording_input ( )
 {
-     m_input_record_writer_handle.close ( );
+     LOG_INFO ( "Done recording input.\n" );
+
+     m_input_record_writer_file.close ( );
+
+     m_recording_input = false;
+
      return true;
 }
 
-Bool Application::start_playback_input ( const Char8* path )
+Bool Application::start_playing_back_input ( const Char8* path )
 {
-     m_input_record_reader_handle.open ( path, std::ios::binary );
+     LOG_INFO ( "Playing back input from '%s'\n", path );
 
-     if ( !m_input_record_reader_handle.is_open ( ) ) {
+     m_input_record_reader_file.open ( path, std::ios::binary );
+
+     if ( !m_input_record_reader_file.is_open ( ) ) {
           LOG_ERROR ( "Failed to open '%s' to load record input.\n", path );
           return false;
      }
 
+     m_playing_back_input = true;
+
      return true;
 }
 
-Bool Application::stop_playback_input ( )
+Bool Application::stop_playing_back_input ( )
 {
-     m_input_record_reader_handle.close ( );
+     LOG_INFO ( "Done playing back input.\n" );
+
+     m_input_record_reader_file.close ( );
+
+     m_playing_back_input = false;
+
      return true;
 }
 
-Void Application::update_recorder ( SDL_Scancode scan_code, Bool key_down )
+Void Application::handle_input ( )
 {
      if ( m_recording_input ) {
-          m_input_record_writer_handle.write ( reinterpret_cast<char*>( scan_code ), sizeof ( scan_code ) );
-          m_input_record_writer_handle.write ( reinterpret_cast<char*>( key_down ), sizeof ( key_down ) );
+          m_input_record_writer_file.write ( reinterpret_cast<char*>( &m_key_change_count ),
+                                             sizeof ( m_key_change_count ) );
+
+          for ( Uint32 i = 0; i < m_key_change_count; ++i ) {
+               KeyChange& key_change = m_key_changes [ i ];
+
+               m_input_record_writer_file.write ( reinterpret_cast<char*>( &key_change.scan_code ),
+                                                  sizeof ( key_change.scan_code ) );
+               m_input_record_writer_file.write ( reinterpret_cast<char*>( &key_change.down ),
+                                                  sizeof ( key_change.down ) );
+          }
      }
 
      if ( m_playing_back_input ) {
+
+          // if we reached the end, go back to the beginning
+          if ( m_input_record_reader_file.eof ( ) ) {
+               m_input_record_reader_file.clear ( );
+               m_input_record_reader_file.seekg ( 0, m_input_record_reader_file.beg );
+               load_game_memory ( c_game_memory_filepath );
+          }
+
+          m_input_record_reader_file.read ( reinterpret_cast<char*>( &m_key_change_count ),
+                                           sizeof ( m_key_change_count ) );
+
+          for ( Uint32 i = 0; i < m_key_change_count; ++i ) {
+               KeyChange& key_change = m_key_changes [ i ];
+
+               m_input_record_reader_file.read ( reinterpret_cast<char*>( &key_change.scan_code ),
+                                                sizeof ( key_change.scan_code ) );
+               m_input_record_reader_file.read ( reinterpret_cast<char*>( &key_change.down ),
+                                                sizeof ( key_change.down ) );
+          }
+     }
+
+     for ( Uint32 i = 0; i < m_key_change_count; ++i ) {
+          KeyChange& key_change = m_key_changes [ i ];
+          m_game_user_input_func ( key_change.scan_code, key_change.down );
      }
 }
 
@@ -305,7 +360,8 @@ Void Application::render_to_window ( )
 
 Bool Application::poll_sdl_events ( )
 {
-     SDL_Event sdl_event  = {};
+     SDL_Event sdl_event = {};
+     m_key_change_count  = 0;
 
      while ( SDL_PollEvent ( &sdl_event ) ) {
           if ( sdl_event.type == SDL_QUIT ) {
@@ -322,19 +378,39 @@ Bool Application::poll_sdl_events ( )
                if ( sc == SDL_SCANCODE_0 ) {
                     load_game_code ( m_shared_library_path );
                     m_game_reload_memory_func ( m_game_memory, m_game_memory_size );
+                    continue;
                }
 
                if ( sc == SDL_SCANCODE_1 ) {
-                    save_game_memory ( game_memory_filepath );
+                    start_recording_input ( c_record_input_filepath );
+                    save_game_memory ( c_game_memory_filepath );
+                    continue;
                }
 
                if ( sc == SDL_SCANCODE_2 ) {
-                    load_game_memory ( game_memory_filepath );
+                    stop_recording_input ( );
+                    load_game_memory ( c_game_memory_filepath );
+                    start_playing_back_input ( c_record_input_filepath );
+                    continue;
                }
 
-               m_game_user_input_func ( sc, true );
+               if ( sc == SDL_SCANCODE_3 ) {
+                    stop_playing_back_input ( );
+                    continue;
+               }
+
+               if ( m_key_change_count < c_max_key_changes_per_frame ) {
+                    m_key_changes [ m_key_change_count ].scan_code = sc;
+                    m_key_changes [ m_key_change_count ].down = true;
+                    m_key_change_count++;
+               }
           } else if ( sdl_event.type == SDL_KEYUP ) {
-               m_game_user_input_func ( sdl_event.key.keysym.scancode, false );
+               if ( m_key_change_count < c_max_key_changes_per_frame ) {
+                    auto sc = sdl_event.key.keysym.scancode;
+                    m_key_changes [ m_key_change_count ].scan_code = sc;
+                    m_key_changes [ m_key_change_count ].down = false;
+                    m_key_change_count++;
+               }
           }
      }
 
@@ -401,11 +477,12 @@ Bool Application::run_game ( const Settings& settings )
                break;
           }
 
-          clear_back_buffer ( );
+          handle_input ( );
 
           m_game_update_func ( time_delta );
-          m_game_render_func ( m_back_buffer_surface );
 
+          clear_back_buffer ( );
+          m_game_render_func ( m_back_buffer_surface );
           render_to_window ( );
      }
 

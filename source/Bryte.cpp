@@ -4,7 +4,7 @@ using namespace bryte;
 
 const Int32  c_player_width  = 16;
 const Int32  c_player_height = 24;
-const Real32 c_player_speed  = 20.0f;
+const Real32 c_player_speed  = 50.0f;
 
 GameMemory g_game_memory;
 

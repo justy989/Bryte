@@ -1,15 +1,13 @@
 # bryte makefile
 
 # directories
-SOURCE_DIR      = ../source
-SDL_INCLUDE_DIR = /usr/include
-SDL_LINK_DIR    = /usr/lib64
+SOURCE_DIR = ../source
 
 # vars
 CC       = g++
 CFLAGS   = -Wall -Werror -m64 -fPIC -std=c++11
-INCLUDE  = -I$(SDL_INCLUDE_DIR) -I$(SOURCE_DIR)
-LINK     = -L$(SDL_LINK_DIR) -lSDL2 -ldl
+INCLUDE  = -I$(SOURCE_DIR)
+LINK     = -lSDL2 -ldl
 SO       = bryte_game.so
 SO_OBJS  = Log.o
 EXE      = bryte

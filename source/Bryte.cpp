@@ -109,13 +109,13 @@ Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
      Uint32   wall_color  = SDL_MapRGB ( surface->format, 30, 30, 30 );
      Uint32   door_color  = SDL_MapRGB ( surface->format, 30, 110, 30 );
 
-     for ( Uint32 y = 0; y < m_room->m_height; ++y ) {
-          for ( Uint32 x = 0; x < m_room->m_width; ++x ) {
+     for ( Uint32 y = 0; y < static_cast<Uint32>( m_room->m_height ); ++y ) {
+          for ( Uint32 x = 0; x < static_cast<Uint32>( m_room->m_width ); ++x ) {
 
                auto   tile_index = y * m_room->m_width + x;
                Uint32 tile_color = m_room->m_tiles [ tile_index ] ? wall_color : floor_color;
 
-               for ( Uint32 d = 0; d < m_room->m_exit_count; ++d ) {
+               for ( Uint8 d = 0; d < m_room->m_exit_count; ++d ) {
                     if ( m_room->m_exits [ d ].location_x == x &&
                          m_room->m_exits [ d ].location_y == y ) {
                          tile_color = door_color;
@@ -134,41 +134,41 @@ Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
      }
 }
 
-Uint32 Map::map_to_tile_index ( Uint32 x, Uint32 y )
+Int32 Map::map_to_tile_index ( Int32 x, Int32 y )
 {
-     Uint32 tile_x = x / static_cast<Uint32>( m_tile_dimension );
-     Uint32 tile_y = y / static_cast<Uint32>( m_tile_dimension );
+     Int32 tile_x = x / static_cast<Int32>( m_tile_dimension );
+     Int32 tile_y = y / static_cast<Int32>( m_tile_dimension );
 
      return get_tile_index ( tile_x, tile_y );
 }
 
-Uint32 Map::get_tile_index ( Uint32 tile_x, Uint32 tile_y )
+Int32 Map::get_tile_index ( Int32 tile_x, Int32 tile_y )
 {
      ASSERT ( static_cast<Uint8>( tile_x ) < m_room->m_width );
      ASSERT ( static_cast<Uint8>( tile_y ) < m_room->m_height );
 
-     return tile_y * static_cast<Uint32>( m_room->m_width ) + tile_x;
+     return tile_y * static_cast<Int32>( m_room->m_width ) + tile_x;
 }
 
-Uint32 Map::get_tile_index_x ( Uint32 tile_index )
+Int32 Map::get_tile_index_x ( Int32 tile_index )
 {
-     return tile_index % static_cast<Uint32>( m_room->m_width );
+     return tile_index % static_cast<Int32>( m_room->m_width );
 }
 
-Uint32 Map::get_tile_index_y ( Uint32 tile_index )
+Int32 Map::get_tile_index_y ( Int32 tile_index )
 {
-     return tile_index / static_cast<Uint32>( m_room->m_width );
+     return tile_index / static_cast<Int32>( m_room->m_width );
 }
 
-Bool Map::is_tile_solid_on_map ( Uint32 x, Uint32 y )
+Bool Map::is_tile_solid_on_map ( Int32 x, Int32 y )
 {
      return m_room->m_tiles [ map_to_tile_index ( x, y ) ] > 0;
 }
 
-Uint32 Map::check_player_exit ( Uint32 x, Uint32 y )
+Int32 Map::check_player_exit ( Int32 x, Int32 y )
 {
-     Uint32 player_tile_x = x / static_cast<Uint32>( m_tile_dimension );
-     Uint32 player_tile_y = y / static_cast<Uint32>( m_tile_dimension );
+     Int32 player_tile_x = x / static_cast<Int32>( m_tile_dimension );
+     Int32 player_tile_y = y / static_cast<Int32>( m_tile_dimension );
 
      for ( Uint8 d = 0; d < m_room->m_exit_count; ++d ) {
           auto& exit = m_room->m_exits [ d ];

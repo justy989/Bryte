@@ -50,19 +50,18 @@ namespace bryte {
      struct Map {
      public:
 
-          Void   build  ( );
+          Void build  ( );
+          Void render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y );
 
-          Void   render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y );
+          Int32 map_to_tile_index    ( Int32 x, Int32 y );
 
-          Uint32 map_to_tile_index    ( Uint32 x, Uint32 y );
+          Int32 get_tile_index       ( Int32 tile_x, Int32 tile_y );
+          Int32 get_tile_index_x     ( Int32 tile_index );
+          Int32 get_tile_index_y     ( Int32 tile_index );
 
-          Uint32 get_tile_index       ( Uint32 tile_x, Uint32 tile_y );
-          Uint32 get_tile_index_x     ( Uint32 tile_index );
-          Uint32 get_tile_index_y     ( Uint32 tile_index );
+          Bool  is_tile_solid_on_map ( Int32 x, Int32 y );
 
-          Bool   is_tile_solid_on_map ( Uint32 x, Uint32 y );
-
-          Uint32 check_player_exit    ( Uint32 x, Uint32 y );
+          Int32 check_player_exit    ( Int32 x, Int32 y );
 
      public:
           static const Uint8 c_max_rooms = 8;
@@ -81,7 +80,7 @@ namespace bryte {
           Real32 player_position_x;
           Real32 player_position_y;
 
-          Uint32 player_exit_destination;
+          Int32 player_exit_destination;
 
           Bool   direction_keys [ c_max_directions ];
 

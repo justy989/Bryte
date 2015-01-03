@@ -44,26 +44,26 @@ private:
 
 private:
 
-     Bool create_window ( const Char8* window_title, Int32 window_width, Int32 window_height,
-                          Int32 back_buffer_width, Int32 back_buffer_height );
-     Bool load_game_code ( const Char8* shared_library_path );
+     Bool create_window        ( const Char8* window_title, Int32 window_width, Int32 window_height,
+                                 Int32 back_buffer_width, Int32 back_buffer_height );
+     Bool load_game_code       ( const Char8* shared_library_path );
      Bool allocate_game_memory ( );
 
-     Bool save_game_memory ( const Char8* save_path );
-     Bool load_game_memory ( const Char8* save_path );
+     Bool save_game_memory      ( const Char8* save_path );
+     Bool load_game_memory      ( const Char8* save_path );
 
-     Bool start_recording_input ( const Char8* path );
-     Bool stop_recording_input ( );
-
+     Bool start_recording_input    ( const Char8* path );
+     Bool stop_recording_input     ( );
      Bool start_playing_back_input ( const Char8* path );
-     Bool stop_playing_back_input ( );
+     Bool stop_playing_back_input  ( );
 
-     Void handle_input ( );
-
-     Void clear_back_buffer ( );
-     Void render_to_window ( );
-     Bool poll_sdl_events ( );
      Real32 time_and_limit_loop ( Int32 locked_frames_per_second );
+     Bool poll_sdl_events       ( );
+     Void handle_input          ( );
+     Void clear_back_buffer     ( );
+     Void render_to_window      ( );
+
+private:
 
      static const Int32  c_func_count = 6;
      static const Char8* c_game_func_strs [ c_func_count ];
@@ -90,7 +90,7 @@ private:
      GameUpdateFunc       m_game_update_func;
      GameRenderFunc       m_game_render_func;
 
-     bryte::GameMemory m_game_memory;
+     GameMemory           m_game_memory;
 
      // timer timestamps
      std::chrono::high_resolution_clock::time_point m_previous_update_timestamp;
@@ -101,7 +101,7 @@ private:
      std::ofstream m_input_record_writer_file;
 
      KeyChange m_key_changes [ c_max_key_changes_per_frame ];
-     Uint32 m_key_change_count;
+     Uint32    m_key_change_count;
 
      Bool m_recording_input;
      Bool m_playing_back_input;

@@ -3,20 +3,20 @@
 
 using namespace bryte;
 
-const Int32  c_player_width        = 16;
-const Int32  c_player_height       = 24;
-const Int32  c_half_player_width   = c_player_width / 2;
-const Int32  c_half_player_height  = c_player_height / 2;
-const Real32 c_player_speed        = 50.0f;
-
-GameMemory g_game_memory;
-MemoryLocations g_memory_locations;
+static const Int32  c_player_width        = 16;
+static const Int32  c_player_height       = 24;
+static const Int32  c_half_player_width   = c_player_width / 2;
+static const Int32  c_half_player_height  = c_player_height / 2;
+static const Real32 c_player_speed        = 50.0f;
 
 static const Uint8 c_width_1         = 20;
 static const Uint8 c_height_1        = 16;
 static const Uint8 c_width_2         = 16;
 static const Uint8 c_height_2        = 24;
 static const Uint8 c_tile_dimension  = 16;
+
+GameMemory      g_game_memory;
+MemoryLocations g_memory_locations;
 
 Uint8 g_tilemap_1 [ c_height_1 ][ c_width_1 ] = {
      { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
@@ -182,7 +182,7 @@ Uint32 Map::check_player_exit ( Uint32 x, Uint32 y )
      return 0;
 }
 
-extern "C" Bool bryte_init ( bryte::GameMemory& game_memory )
+extern "C" Bool bryte_init ( GameMemory& game_memory )
 {
      g_game_memory.memory = game_memory.memory;
      g_game_memory.size   = game_memory.size;
@@ -204,7 +204,7 @@ extern "C" Void bryte_destroy ( )
 
 }
 
-extern "C" Void bryte_reload_memory ( bryte::GameMemory& game_memory )
+extern "C" Void bryte_reload_memory ( GameMemory& game_memory )
 {
      g_game_memory.memory = game_memory.memory;
      g_game_memory.size   = game_memory.size;

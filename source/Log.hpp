@@ -6,10 +6,10 @@
 class Log {
 public:
 
-     static void info ( const Char8* format, ... );
+     static void info    ( const Char8* format, ... );
      static void warning ( const Char8* format, ... );
-     static void error ( const Char8* format, ... );
-     static void debug ( const Char8* format, ... );
+     static void error   ( const Char8* format, ... );
+     static void debug   ( const Char8* format, ... );
 
 private:
 

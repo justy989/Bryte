@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstring>
 
+// because I don't know how to pass ... to another func
 #define LOG_FUNC_BODY( log_level )\
      va_list arg;\
      Char8 timestamp [ timestamp_max_characters ];\

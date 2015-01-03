@@ -12,6 +12,8 @@
 #define PRINT_SDL_ERROR(sdl_api) LOG_ERROR ( "%s() failed: %s\n", sdl_api, SDL_GetError ( ) );
 #define PRINT_DL_ERROR(dl_api) LOG_ERROR ( "%s() failed: %s\n", dl_api, dlerror ( ) );
 
+using std::chrono::high_resolution_clock;
+
 // Create's a platform application to run the game code
 class Application {
 public:
@@ -91,9 +93,9 @@ private:
 
      InputRecorder        m_input_recorder;
 
-     // timer timestamps
-     std::chrono::high_resolution_clock::time_point m_previous_update_timestamp;
-     std::chrono::high_resolution_clock::time_point m_current_update_timestamp;
+     // frame timestamps
+     high_resolution_clock::time_point m_previous_update_timestamp;
+     high_resolution_clock::time_point m_current_update_timestamp;
 };
 
 #endif

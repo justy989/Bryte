@@ -294,21 +294,28 @@ Bool Application::poll_sdl_events ( )
                }
 
                if ( sc == SDL_SCANCODE_1 ) {
-                    m_input_recorder.start_recording ( c_record_input_filepath );
-                    save_game_memory ( c_game_memory_filepath );
-                    continue;
+                    if ( !m_input_recorder.is_recording ( ) &&
+                         !m_input_recorder.is_playing_back ( ) ) {
+                         m_input_recorder.start_recording ( c_record_input_filepath );
+                         save_game_memory ( c_game_memory_filepath );
+                         continue;
+                    }
                }
 
                if ( sc == SDL_SCANCODE_2 ) {
-                    m_input_recorder.stop_recording ( );
-                    load_game_memory ( c_game_memory_filepath );
-                    m_input_recorder.start_playing_back ( c_record_input_filepath );
-                    continue;
+                    if ( m_input_recorder.is_recording ( ) ) {
+                         m_input_recorder.stop_recording ( );
+                         load_game_memory ( c_game_memory_filepath );
+                         m_input_recorder.start_playing_back ( c_record_input_filepath );
+                         continue;
+                    }
                }
 
                if ( sc == SDL_SCANCODE_3 ) {
-                    m_input_recorder.stop_playing_back ( );
-                    continue;
+                    if ( m_input_recorder.is_playing_back ( ) ) {
+                         m_input_recorder.stop_playing_back ( );
+                         continue;
+                    }
                }
 
                if ( !m_game_input.add_key_change ( sc, true ) ) {

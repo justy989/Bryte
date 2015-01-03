@@ -104,10 +104,11 @@ Void Map::build ( )
 
 Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
 {
-     SDL_Rect tile_rect   { 0, 0, m_tile_dimension, m_tile_dimension };
-     Uint32   floor_color = SDL_MapRGB ( surface->format, 190, 190, 190 );
-     Uint32   wall_color  = SDL_MapRGB ( surface->format, 30, 30, 30 );
-     Uint32   door_color  = SDL_MapRGB ( surface->format, 30, 110, 30 );
+     Int32    tile_dimension = static_cast<Int32>( m_tile_dimension );
+     SDL_Rect tile_rect      { 0, 0, tile_dimension, tile_dimension };
+     Uint32   floor_color    = SDL_MapRGB ( surface->format, 190, 190, 190 );
+     Uint32   wall_color     = SDL_MapRGB ( surface->format, 30, 30, 30 );
+     Uint32   door_color     = SDL_MapRGB ( surface->format, 30, 110, 30 );
 
      for ( Uint32 y = 0; y < static_cast<Uint32>( m_room->m_height ); ++y ) {
           for ( Uint32 x = 0; x < static_cast<Uint32>( m_room->m_width ); ++x ) {
@@ -134,15 +135,15 @@ Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
      }
 }
 
-Int32 Map::map_to_tile_index ( Int32 x, Int32 y )
+Int32 Map::position_to_tile_index ( Real32 x, Real32 y )
 {
-     Int32 tile_x = x / static_cast<Int32>( m_tile_dimension );
-     Int32 tile_y = y / static_cast<Int32>( m_tile_dimension );
+     Int32 tile_x = x / m_tile_dimension;
+     Int32 tile_y = y / m_tile_dimension;
 
-     return get_tile_index ( tile_x, tile_y );
+     return coordinate_to_tile_index ( tile_x, tile_y );
 }
 
-Int32 Map::get_tile_index ( Int32 tile_x, Int32 tile_y )
+Int32 Map::coordinate_to_tile_index ( Int32 tile_x, Int32 tile_y )
 {
      ASSERT ( static_cast<Uint8>( tile_x ) < m_room->m_width );
      ASSERT ( static_cast<Uint8>( tile_y ) < m_room->m_height );
@@ -150,32 +151,32 @@ Int32 Map::get_tile_index ( Int32 tile_x, Int32 tile_y )
      return tile_y * static_cast<Int32>( m_room->m_width ) + tile_x;
 }
 
-Int32 Map::get_tile_index_x ( Int32 tile_index )
+Int32 Map::tile_index_to_coordinate_x ( Int32 tile_index )
 {
      return tile_index % static_cast<Int32>( m_room->m_width );
 }
 
-Int32 Map::get_tile_index_y ( Int32 tile_index )
+Int32 Map::tile_index_to_coordinate_y ( Int32 tile_index )
 {
      return tile_index / static_cast<Int32>( m_room->m_width );
 }
 
-Bool Map::is_tile_solid_on_map ( Int32 x, Int32 y )
+Bool Map::is_position_solid ( Real32 x, Real32 y )
 {
-     return m_room->m_tiles [ map_to_tile_index ( x, y ) ] > 0;
+     return m_room->m_tiles [ position_to_tile_index ( x, y ) ] > 0;
 }
 
-Int32 Map::check_player_exit ( Int32 x, Int32 y )
+Int32 Map::check_player_exit ( Real32 x, Real32 y )
 {
-     Int32 player_tile_x = x / static_cast<Int32>( m_tile_dimension );
-     Int32 player_tile_y = y / static_cast<Int32>( m_tile_dimension );
+     Int32 player_tile_x = x / m_tile_dimension;
+     Int32 player_tile_y = y / m_tile_dimension;
 
      for ( Uint8 d = 0; d < m_room->m_exit_count; ++d ) {
           auto& exit = m_room->m_exits [ d ];
 
           if ( exit.location_x == player_tile_x && exit.location_y == player_tile_y ) {
                m_room = &g_memory_locations.rooms [ exit.room_index ];
-               return get_tile_index ( exit.destination_x, exit.destination_y );
+               return coordinate_to_tile_index ( exit.destination_x, exit.destination_y );
           }
      }
 
@@ -260,13 +261,13 @@ extern "C" Void bryte_update ( Real32 time_delta )
      }
 
      // collision
-     if ( !game_state->map.is_tile_solid_on_map ( target_position_x,
-                                                  target_position_y ) ) {
+     if ( !game_state->map.is_position_solid ( target_position_x,
+                                               target_position_y ) ) {
           game_state->player_position_x = target_position_x;
           game_state->player_position_y = target_position_y;
      }
 
-     auto& player_exit = game_state->player_exit_destination;
+     auto& player_exit = game_state->player_exit_tile_index;
      auto& map         = game_state->map;
 
      // check if the player has exitted
@@ -275,15 +276,15 @@ extern "C" Void bryte_update ( Real32 time_delta )
                                                 game_state->player_position_y );
 
           if ( player_exit ) {
-               game_state->player_position_x = map.get_tile_index_x ( player_exit );
-               game_state->player_position_y = map.get_tile_index_y ( player_exit );
+               game_state->player_position_x = map.tile_index_to_coordinate_x ( player_exit );
+               game_state->player_position_y = map.tile_index_to_coordinate_y ( player_exit );
 
                game_state->player_position_x *= map.m_tile_dimension;
                game_state->player_position_y *= map.m_tile_dimension;
           }
      } else {
-          auto player_tile_index = map.map_to_tile_index ( game_state->player_position_x,
-                                                           game_state->player_position_y );
+          auto player_tile_index = map.position_to_tile_index ( game_state->player_position_x,
+                                                                game_state->player_position_y );
 
           // clear the exit destination if they've left the tile
           if ( player_exit != player_tile_index ) {

@@ -11,7 +11,8 @@ namespace bryte {
           left = 0 ,
           up,
           right,
-          down
+          down,
+          count
      };
 
      struct Room;
@@ -53,36 +54,33 @@ namespace bryte {
           Void build  ( );
           Void render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y );
 
-          Int32 map_to_tile_index    ( Int32 x, Int32 y );
+          Int32 position_to_tile_index     ( Real32 x, Real32 y );
 
-          Int32 get_tile_index       ( Int32 tile_x, Int32 tile_y );
-          Int32 get_tile_index_x     ( Int32 tile_index );
-          Int32 get_tile_index_y     ( Int32 tile_index );
+          Int32 coordinate_to_tile_index   ( Int32 tile_x, Int32 tile_y );
+          Int32 tile_index_to_coordinate_x ( Int32 tile_index );
+          Int32 tile_index_to_coordinate_y ( Int32 tile_index );
 
-          Bool  is_tile_solid_on_map ( Int32 x, Int32 y );
+          Bool  is_position_solid ( Real32 x, Real32 y );
 
-          Int32 check_player_exit    ( Int32 x, Int32 y );
+          Int32 check_player_exit ( Real32 x, Real32 y );
 
      public:
           static const Uint8 c_max_rooms = 8;
 
           Room* m_room;
 
-          Uint8 m_tile_dimension;
+          Real32 m_tile_dimension;
      };
 
      struct GameState {
      public:
 
-          static const Uint8 c_max_directions = 4;
-
-     public:
           Real32 player_position_x;
           Real32 player_position_y;
 
-          Int32 player_exit_destination;
+          Int32  player_exit_tile_index;
 
-          Bool   direction_keys [ c_max_directions ];
+          Bool   direction_keys [ Direction::count ];
 
           Map    map;
 

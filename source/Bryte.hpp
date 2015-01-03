@@ -29,6 +29,8 @@ namespace bryte
           Real32 width;
           Real32 height;
 
+          Real32 collision_height;
+
      };
 
      struct GameState {

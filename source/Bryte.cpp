@@ -15,10 +15,11 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
 
      auto* game_state = Globals::g_memory_locations.game_state;
 
-     game_state->player.position_x = Map::c_tile_dimension * 2.0f;
-     game_state->player.position_y = Map::c_tile_dimension * 2.0f;
-     game_state->player.width      = 1.6f;
-     game_state->player.height     = game_state->player.width * 1.5f;
+     game_state->player.position_x       = Map::c_tile_dimension * 2.0f;
+     game_state->player.position_y       = Map::c_tile_dimension * 2.0f;
+     game_state->player.width            = 1.6f;
+     game_state->player.height           = game_state->player.width * 1.5f;
+     game_state->player.collision_height = game_state->player.width;
 
      game_state->map.build ( );
 
@@ -95,9 +96,9 @@ extern "C" Void bryte_update ( Real32 time_delta )
           !game_state->map.is_position_solid ( target_position_x + game_state->player.width,
                                                target_position_y ) &&
           !game_state->map.is_position_solid ( target_position_x,
-                                               target_position_y + game_state->player.height ) &&
+                                               target_position_y + game_state->player.collision_height ) &&
           !game_state->map.is_position_solid ( target_position_x + game_state->player.width,
-                                               target_position_y + game_state->player.height ) ) {
+                                               target_position_y + game_state->player.collision_height ) ) {
           game_state->player.position_x = target_position_x;
           game_state->player.position_y = target_position_y;
      }

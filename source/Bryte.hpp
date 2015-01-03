@@ -20,20 +20,32 @@ namespace bryte
           count
      };
 
+     struct Character {
+     public:
+
+          Real32 position_x;
+          Real32 position_y;
+
+          Real32 width;
+          Real32 height;
+
+     };
+
      struct GameState {
      public:
 
-          Real32 player_position_x;
-          Real32 player_position_y;
+          Character player;
+          Real32    player_position_x;
+          Real32    player_position_y;
 
-          Int32  player_exit_tile_index;
+          Int32     player_exit_tile_index;
 
-          Bool   direction_keys [ Direction::count ];
+          Bool      direction_keys [ Direction::count ];
 
-          Map    map;
+          Map       map;
 
-          Real32 camera_x;
-          Real32 camera_y;
+          Real32    camera_x;
+          Real32    camera_y;
      };
 }
 

@@ -127,6 +127,8 @@ Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
                tile_rect.x += meters_to_pixels ( camera_x );
                tile_rect.y += meters_to_pixels ( camera_y );
 
+               convert_to_sdl_origin_for_surface ( tile_rect, surface );
+
                SDL_FillRect ( surface, &tile_rect, tile_color );
           }
      }

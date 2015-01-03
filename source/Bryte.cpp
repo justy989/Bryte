@@ -76,11 +76,11 @@ extern "C" Void bryte_update ( Real32 time_delta )
      Real32 target_position_y = game_state->player_position_y;
 
      if ( game_state->direction_keys [ Direction::up ] ) {
-          target_position_y -= c_player_speed * time_delta;
+          target_position_y += c_player_speed * time_delta;
      }
 
      if ( game_state->direction_keys [ Direction::down ] ) {
-          target_position_y += c_player_speed * time_delta;
+          target_position_y -= c_player_speed * time_delta;
      }
 
      if ( game_state->direction_keys [ Direction::left ] ) {
@@ -156,6 +156,8 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
                             meters_to_pixels ( c_player_width ), meters_to_pixels ( c_player_height ) };
 
      Uint32 red = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
+
+     convert_to_sdl_origin_for_surface ( player_rect, back_buffer );
 
      SDL_FillRect ( back_buffer, &player_rect, red );
 }

@@ -4,6 +4,8 @@
 #include "Log.hpp"
 #include "Types.hpp"
 
+#include <SDL2/SDL.h>
+
 #define KILOBYTES( bytes ) bytes * 1024
 #define MEGABYTES( bytes ) KILOBYTES( bytes ) * 1024
 #define GIGABYTES( bytes ) MEGABYTES( bytes ) * 1024
@@ -32,6 +34,11 @@ namespace bryte
      inline Real32 pixels_to_meters ( Int32 pixels )
      {
           return static_cast<Real32>( pixels ) / pixels_per_meter;
+     }
+
+     inline Void convert_to_sdl_origin_for_surface ( SDL_Rect& rect, SDL_Surface* surface )
+     {
+          rect.y = ( surface->h - rect.y ) - rect.h;
      }
 }
 

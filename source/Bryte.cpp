@@ -3,20 +3,30 @@
 
 using namespace bryte;
 
-static const Int32  c_player_width        = 16;
-static const Int32  c_player_height       = 24;
-static const Int32  c_half_player_width   = c_player_width / 2;
-static const Int32  c_half_player_height  = c_player_height / 2;
-static const Real32 c_player_speed        = 50.0f;
+static const Real32 c_player_width        = 1.6f;
+static const Real32 c_player_height       = c_player_width * 1.5f;
+static const Real32 c_half_player_width   = c_player_width / 2;
+static const Real32 c_half_player_height  = c_player_height / 2;
+static const Real32 c_player_speed        = 3.0f;
 
-static const Uint8 c_width_1         = 20;
-static const Uint8 c_height_1        = 16;
-static const Uint8 c_width_2         = 16;
-static const Uint8 c_height_2        = 24;
-static const Uint8 c_tile_dimension  = 16;
+static const Uint8  c_width_1         = 20;
+static const Uint8  c_height_1        = 16;
+static const Uint8  c_width_2         = 16;
+static const Uint8  c_height_2        = 24;
+static const Real32 c_tile_dimension  = 1.8f;
 
 GameMemory      g_game_memory;
 MemoryLocations g_memory_locations;
+
+Int32 meters_to_pixels ( Real32 meters )
+{
+     return static_cast<Int32>( meters * pixels_per_meter );
+}
+
+Real32 pixels_to_meters ( Int32 pixels )
+{
+     return static_cast<Real32>( pixels ) / pixels_per_meter;
+}
 
 Uint8 g_tilemap_1 [ c_height_1 ][ c_width_1 ] = {
      { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
@@ -71,7 +81,6 @@ Void Map::build ( )
      g_memory_locations.rooms = g_game_memory.push_array<Room>( Map::c_max_rooms );
      auto* rooms              = g_memory_locations.rooms;
 
-
      rooms [ 0 ].m_tiles  = reinterpret_cast<Uint8*>( g_tilemap_1 );
 
      rooms [ 0 ].m_width  = c_width_1;
@@ -84,7 +93,6 @@ Void Map::build ( )
      rooms [ 0 ].m_exits [ 0 ].room_index    = 1;
      rooms [ 0 ].m_exits [ 0 ].destination_x = 5;
      rooms [ 0 ].m_exits [ 0 ].destination_y = 2;
-
 
      rooms [ 1 ].m_tiles  = reinterpret_cast<Uint8*>( g_tilemap_2 );
 
@@ -104,16 +112,17 @@ Void Map::build ( )
 
 Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
 {
-     Int32    tile_dimension = static_cast<Int32>( m_tile_dimension );
-     SDL_Rect tile_rect      { 0, 0, tile_dimension, tile_dimension };
+     SDL_Rect tile_rect      { 0, 0,
+                               meters_to_pixels ( m_tile_dimension ),
+                               meters_to_pixels ( m_tile_dimension ) };
      Uint32   floor_color    = SDL_MapRGB ( surface->format, 190, 190, 190 );
      Uint32   wall_color     = SDL_MapRGB ( surface->format, 30, 30, 30 );
      Uint32   door_color     = SDL_MapRGB ( surface->format, 30, 110, 30 );
 
-     for ( Uint32 y = 0; y < static_cast<Uint32>( m_room->m_height ); ++y ) {
-          for ( Uint32 x = 0; x < static_cast<Uint32>( m_room->m_width ); ++x ) {
+     for ( Int32 y = 0; y < static_cast<Int32>( m_room->m_height ); ++y ) {
+          for ( Int32 x = 0; x < static_cast<Int32>( m_room->m_width ); ++x ) {
 
-               auto   tile_index = y * m_room->m_width + x;
+               auto   tile_index = coordinate_to_tile_index ( x, y );
                Uint32 tile_color = m_room->m_tiles [ tile_index ] ? wall_color : floor_color;
 
                for ( Uint8 d = 0; d < m_room->m_exit_count; ++d ) {
@@ -124,11 +133,11 @@ Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
                     }
                }
 
-               tile_rect.x = x * m_tile_dimension;
-               tile_rect.y = y * m_tile_dimension;
+               tile_rect.x = x * meters_to_pixels ( m_tile_dimension );
+               tile_rect.y = y * meters_to_pixels ( m_tile_dimension );
 
-               tile_rect.x += static_cast<Int32>( camera_x );
-               tile_rect.y += static_cast<Int32>( camera_y );
+               tile_rect.x += meters_to_pixels ( camera_x );
+               tile_rect.y += meters_to_pixels ( camera_y );
 
                SDL_FillRect ( surface, &tile_rect, tile_color );
           }
@@ -192,8 +201,8 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
 
      auto* game_state = g_memory_locations.game_state;
 
-     game_state->player_position_x = 20.0f;
-     game_state->player_position_y = 20.0f;
+     game_state->player_position_x = c_tile_dimension * 2.0f;
+     game_state->player_position_y = c_tile_dimension * 2.0f;
 
      game_state->map.build ( );
 
@@ -271,11 +280,11 @@ extern "C" Void bryte_update ( Real32 time_delta )
      auto& map         = game_state->map;
 
      // check if the player has exitted
-     if ( !player_exit ) {
+     if ( player_exit == 0 ) {
           player_exit = map.check_player_exit ( game_state->player_position_x,
                                                 game_state->player_position_y );
 
-          if ( player_exit ) {
+          if ( player_exit > 0 ) {
                game_state->player_position_x = map.tile_index_to_coordinate_x ( player_exit );
                game_state->player_position_y = map.tile_index_to_coordinate_y ( player_exit );
 
@@ -297,23 +306,32 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 {
      auto* game_state = g_memory_locations.game_state;
 
-     game_state->camera_x = -( game_state->player_position_x - back_buffer->w / 2 );
-     game_state->camera_y = -( game_state->player_position_y - back_buffer->h / 2 );
+     Real32 camera_center_offset_x = pixels_to_meters ( back_buffer->w / 2 );
+     Real32 camera_center_offset_y = pixels_to_meters ( back_buffer->h / 2 );
 
-     Real32 min_x = -( game_state->map.m_room->m_width * game_state->map.m_tile_dimension - back_buffer->w );
-     Real32 min_y = -( game_state->map.m_room->m_height * game_state->map.m_tile_dimension - back_buffer->h );
+     game_state->camera_x = -( game_state->player_position_x - camera_center_offset_x );
+     game_state->camera_y = -( game_state->player_position_y - camera_center_offset_y );
 
-     CLAMP ( game_state->camera_x, min_x, 0 );
-     CLAMP ( game_state->camera_y, min_y, 0 );
+     Real32 map_width  = game_state->map.m_room->m_width * game_state->map.m_tile_dimension;
+     Real32 map_height = game_state->map.m_room->m_height * game_state->map.m_tile_dimension;
+
+     Real32 min_camera_x = -( map_width - pixels_to_meters ( back_buffer->w ) );
+     Real32 min_camera_y = -( map_height - pixels_to_meters ( back_buffer->h ) );
+
+     CLAMP ( game_state->camera_x, min_camera_x, 0 );
+     CLAMP ( game_state->camera_y, min_camera_y, 0 );
 
      game_state->map.render ( back_buffer, game_state->camera_x, game_state->camera_y );
 
-     Int32 player_screen_x = static_cast<Int32>( game_state->player_position_x + game_state->camera_x );
-     Int32 player_screen_y = static_cast<Int32>( game_state->player_position_y + game_state->camera_y );
+     Real32 player_screen_center_x = game_state->player_position_x + game_state->camera_x;
+     Real32 player_screen_center_y = game_state->player_position_y + game_state->camera_y;
 
-     SDL_Rect player_rect { player_screen_x - c_half_player_width,
-                            player_screen_y - c_half_player_height,
-                            c_player_width, c_player_height };
+     Real32 player_screen_top_left_x = player_screen_center_x - c_half_player_width;
+     Real32 player_screen_top_left_y = player_screen_center_y - c_half_player_height;
+
+     SDL_Rect player_rect { meters_to_pixels ( player_screen_top_left_x ),
+                            meters_to_pixels ( player_screen_top_left_y ),
+                            meters_to_pixels ( c_player_width ), meters_to_pixels ( c_player_height ) };
 
      Uint32 red = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
 

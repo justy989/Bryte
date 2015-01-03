@@ -7,7 +7,9 @@
 
 namespace bryte {
 
-      enum Direction {
+     static const Real32 pixels_per_meter = 10.0f;
+
+     enum Direction {
           left = 0 ,
           up,
           right,

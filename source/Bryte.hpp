@@ -3,6 +3,7 @@
 
 #include "Defines.hpp"
 #include "GameMemory.hpp"
+#include "GameInput.hpp"
 #include "Map.hpp"
 
 #include <SDL2/SDL.h>
@@ -32,17 +33,17 @@ namespace bryte
           Real32 camera_x;
           Real32 camera_y;
      };
-
 }
 
+// exported functions to be called by the application
 extern "C" Bool bryte_init ( GameMemory& );
 extern "C" Void bryte_destroy ( );
 extern "C" Void bryte_reload_memory ( GameMemory& );
-extern "C" Void bryte_user_input ( SDL_Scancode, bool );
+extern "C" Void bryte_user_input ( const GameInput& );
 extern "C" Void bryte_update ( Real32 );
 extern "C" Void bryte_render ( SDL_Surface* );
 
-// Game code function types
+// exported function types
 using GameInitFunc         = decltype ( bryte_init )*;
 using GameDestroyFunc      = decltype ( bryte_destroy )*;
 using GameReloadMemoryFunc = decltype ( bryte_reload_memory )*;

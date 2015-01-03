@@ -42,25 +42,29 @@ extern "C" Void bryte_reload_memory ( GameMemory& game_memory )
      game_state->map.build ( );
 }
 
-extern "C" Void bryte_user_input ( SDL_Scancode scan_code, bool key_down )
+extern "C" Void bryte_user_input ( const GameInput& game_input )
 {
      auto* game_state = Globals::g_memory_locations.game_state;
 
-     switch ( scan_code ) {
-     default:
-          break;
-     case SDL_SCANCODE_W:
-          game_state->direction_keys [ Direction::up ] = key_down;
-          break;
-     case SDL_SCANCODE_S:
-          game_state->direction_keys [ Direction::down ] = key_down;
-          break;
-     case SDL_SCANCODE_A:
-          game_state->direction_keys [ Direction::left ] = key_down;
-          break;
-     case SDL_SCANCODE_D:
-          game_state->direction_keys [ Direction::right ] = key_down;
-          break;
+     for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
+          const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
+
+          switch ( key_change.scan_code ) {
+          default:
+               break;
+          case SDL_SCANCODE_W:
+               game_state->direction_keys [ Direction::up ] = key_change.down;
+               break;
+          case SDL_SCANCODE_S:
+               game_state->direction_keys [ Direction::down ] = key_change.down;
+               break;
+          case SDL_SCANCODE_A:
+               game_state->direction_keys [ Direction::left ] = key_change.down;
+               break;
+          case SDL_SCANCODE_D:
+               game_state->direction_keys [ Direction::right ] = key_change.down;
+               break;
+          }
      }
 }
 

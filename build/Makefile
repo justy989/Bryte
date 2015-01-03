@@ -11,7 +11,7 @@ LINK     = -lSDL2 -ldl
 SO       = bryte_game.so
 SO_OBJS  = Log.o Globals.o Map.o
 EXE      = bryte
-EXE_OBJS = Log.o Application.o
+EXE_OBJS = Log.o InputRecorder.o GameInput.o Application.o
 
 all: release
 release: CFLAGS += -O3

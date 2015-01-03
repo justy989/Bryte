@@ -1,7 +1,8 @@
-#ifndef BRYTE_PLATFORM_HPP
-#define BRYTE_PLATFORM_HPP
+#ifndef APPLICATION_HPP
+#define APPLICATION_HPP
 
 #include "Bryte.hpp"
+#include "InputRecorder.hpp"
 
 #include <SDL2/SDL.h>
 
@@ -52,11 +53,6 @@ private:
      Bool save_game_memory      ( const Char8* save_path );
      Bool load_game_memory      ( const Char8* save_path );
 
-     Bool start_recording_input    ( const Char8* path );
-     Bool stop_recording_input     ( );
-     Bool start_playing_back_input ( const Char8* path );
-     Bool stop_playing_back_input  ( );
-
      Real32 time_and_limit_loop ( Int32 locked_frames_per_second );
      Bool   poll_sdl_events     ( );
      Void   handle_input        ( );
@@ -91,20 +87,13 @@ private:
      GameRenderFunc       m_game_render_func;
 
      GameMemory           m_game_memory;
+     GameInput            m_game_input;
+
+     InputRecorder        m_input_recorder;
 
      // timer timestamps
      std::chrono::high_resolution_clock::time_point m_previous_update_timestamp;
      std::chrono::high_resolution_clock::time_point m_current_update_timestamp;
-
-     // input recorder file handles
-     std::ifstream m_input_record_reader_file;
-     std::ofstream m_input_record_writer_file;
-
-     KeyChange m_key_changes [ c_max_key_changes_per_frame ];
-     Uint32    m_key_change_count;
-
-     Bool m_recording_input;
-     Bool m_playing_back_input;
 };
 
 #endif

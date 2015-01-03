@@ -38,10 +38,7 @@ Application::Application ( ) :
      m_game_update_func      ( nullptr ),
      m_game_render_func      ( nullptr ),
      m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
-     m_current_update_timestamp ( m_previous_update_timestamp ),
-     m_key_change_count      ( 0 ),
-     m_recording_input       ( false ),
-     m_playing_back_input    ( false )
+     m_current_update_timestamp ( m_previous_update_timestamp )
 {
      LOG_INFO ( "Initializing SDL\n" );
      SDL_Init ( SDL_INIT_VIDEO );
@@ -238,102 +235,19 @@ Bool Application::load_game_memory ( const Char8* path )
      return true;
 }
 
-Bool Application::start_recording_input ( const Char8* path )
-{
-     LOG_INFO ( "Recording input to '%s'\n", path );
-
-     m_input_record_writer_file.open ( path, std::ios::binary );
-
-     if ( !m_input_record_writer_file.is_open ( ) ) {
-          LOG_ERROR ( "Failed to open '%s' to load record input.\n", path );
-          return false;
-     }
-
-     m_recording_input = true;
-
-     return true;
-}
-
-Bool Application::stop_recording_input ( )
-{
-     LOG_INFO ( "Done recording input.\n" );
-
-     m_input_record_writer_file.close ( );
-
-     m_recording_input = false;
-
-     return true;
-}
-
-Bool Application::start_playing_back_input ( const Char8* path )
-{
-     LOG_INFO ( "Playing back input from '%s'\n", path );
-
-     m_input_record_reader_file.open ( path, std::ios::binary );
-
-     if ( !m_input_record_reader_file.is_open ( ) ) {
-          LOG_ERROR ( "Failed to open '%s' to load record input.\n", path );
-          return false;
-     }
-
-     m_playing_back_input = true;
-
-     return true;
-}
-
-Bool Application::stop_playing_back_input ( )
-{
-     LOG_INFO ( "Done playing back input.\n" );
-
-     m_input_record_reader_file.close ( );
-
-     m_playing_back_input = false;
-
-     return true;
-}
-
 Void Application::handle_input ( )
 {
-     if ( m_recording_input ) {
-          m_input_record_writer_file.write ( reinterpret_cast<char*>( &m_key_change_count ),
-                                             sizeof ( m_key_change_count ) );
-
-          for ( Uint32 i = 0; i < m_key_change_count; ++i ) {
-               KeyChange& key_change = m_key_changes [ i ];
-
-               m_input_record_writer_file.write ( reinterpret_cast<char*>( &key_change.scan_code ),
-                                                  sizeof ( key_change.scan_code ) );
-               m_input_record_writer_file.write ( reinterpret_cast<char*>( &key_change.down ),
-                                                  sizeof ( key_change.down ) );
-          }
+     if ( m_input_recorder.is_recording ( ) ) {
+          m_input_recorder.write_frame ( m_game_input );
      }
 
-     if ( m_playing_back_input ) {
-
-          // if we reached the end, go back to the beginning
-          if ( m_input_record_reader_file.eof ( ) ) {
-               m_input_record_reader_file.clear ( );
-               m_input_record_reader_file.seekg ( 0, m_input_record_reader_file.beg );
+     if ( m_input_recorder.is_playing_back ( ) ) {
+          if ( !m_input_recorder.read_frame ( m_game_input ) ) {
                load_game_memory ( c_game_memory_filepath );
           }
-
-          m_input_record_reader_file.read ( reinterpret_cast<char*>( &m_key_change_count ),
-                                            sizeof ( m_key_change_count ) );
-
-          for ( Uint32 i = 0; i < m_key_change_count; ++i ) {
-               KeyChange& key_change = m_key_changes [ i ];
-
-               m_input_record_reader_file.read ( reinterpret_cast<char*>( &key_change.scan_code ),
-                                                 sizeof ( key_change.scan_code ) );
-               m_input_record_reader_file.read ( reinterpret_cast<char*>( &key_change.down ),
-                                                 sizeof ( key_change.down ) );
-          }
      }
 
-     for ( Uint32 i = 0; i < m_key_change_count; ++i ) {
-          KeyChange& key_change = m_key_changes [ i ];
-          m_game_user_input_func ( key_change.scan_code, key_change.down );
-     }
+     m_game_user_input_func ( m_game_input );
 }
 
 Void Application::clear_back_buffer ( )
@@ -358,7 +272,8 @@ Void Application::render_to_window ( )
 Bool Application::poll_sdl_events ( )
 {
      SDL_Event sdl_event = {};
-     m_key_change_count  = 0;
+
+     m_game_input.reset ( );
 
      while ( SDL_PollEvent ( &sdl_event ) ) {
           if ( sdl_event.type == SDL_QUIT ) {
@@ -379,34 +294,34 @@ Bool Application::poll_sdl_events ( )
                }
 
                if ( sc == SDL_SCANCODE_1 ) {
-                    start_recording_input ( c_record_input_filepath );
+                    m_input_recorder.start_recording ( c_record_input_filepath );
                     save_game_memory ( c_game_memory_filepath );
                     continue;
                }
 
                if ( sc == SDL_SCANCODE_2 ) {
-                    stop_recording_input ( );
+                    m_input_recorder.stop_recording ( );
                     load_game_memory ( c_game_memory_filepath );
-                    start_playing_back_input ( c_record_input_filepath );
+                    m_input_recorder.start_playing_back ( c_record_input_filepath );
                     continue;
                }
 
                if ( sc == SDL_SCANCODE_3 ) {
-                    stop_playing_back_input ( );
+                    m_input_recorder.stop_playing_back ( );
                     continue;
                }
 
-               if ( m_key_change_count < c_max_key_changes_per_frame ) {
-                    m_key_changes [ m_key_change_count ].scan_code = sc;
-                    m_key_changes [ m_key_change_count ].down = true;
-                    m_key_change_count++;
+               if ( !m_game_input.add_key_change ( sc, true ) ) {
+                    LOG_WARNING ( "Unable to handle more than %d keys per frame\n",
+                                  GameInput::c_max_key_change_count );
                }
+
           } else if ( sdl_event.type == SDL_KEYUP ) {
-               if ( m_key_change_count < c_max_key_changes_per_frame ) {
-                    auto sc = sdl_event.key.keysym.scancode;
-                    m_key_changes [ m_key_change_count ].scan_code = sc;
-                    m_key_changes [ m_key_change_count ].down = false;
-                    m_key_change_count++;
+               auto sc = sdl_event.key.keysym.scancode;
+
+               if ( !m_game_input.add_key_change ( sc, false ) ) {
+                    LOG_WARNING ( "Unable to handle more than %d keys per frame\n",
+                                  GameInput::c_max_key_change_count );
                }
           }
      }

@@ -1,9 +1,11 @@
 #ifndef BRYTE_HPP
 #define BRYTE_HPP
 
-#include "Defines.hpp"
+#include "Utils.hpp"
+
 #include "GameMemory.hpp"
 #include "GameInput.hpp"
+
 #include "Map.hpp"
 
 #include <SDL2/SDL.h>
@@ -11,7 +13,7 @@
 namespace bryte
 {
      enum Direction {
-          left = 0 ,
+          left = 0,
           up,
           right,
           down,

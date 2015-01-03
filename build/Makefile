@@ -23,7 +23,7 @@ clean:
 	rm -f $(SO) $(SO_OBJS) $(EXE_OBJS) $(EXE)
 
 $(SO): $(SO_OBJS) $(SOURCE_DIR)/Bryte.cpp
-	$(CC) -shared $(CFLAGS) $(INCLUDE) $(SO_OBJS) $(SOURCE_DIR)/Bryte.cpp -o $@ $(LINK)
+	$(CC) $(CFLAGS) $(INCLUDE) $(SO_OBJS) $(SOURCE_DIR)/Bryte.cpp -shared -o $@ $(LINK)
 
 $(EXE): $(EXE_OBJS) $(SOURCE_DIR)/Main.cpp
 	$(CC) $(CFLAGS) $(INCLUDE) $(EXE_OBJS) $(SOURCE_DIR)/Main.cpp -o $@ $(LINK)

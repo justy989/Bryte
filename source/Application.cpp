@@ -318,15 +318,15 @@ Void Application::handle_input ( )
           }
 
           m_input_record_reader_file.read ( reinterpret_cast<char*>( &m_key_change_count ),
-                                           sizeof ( m_key_change_count ) );
+                                            sizeof ( m_key_change_count ) );
 
           for ( Uint32 i = 0; i < m_key_change_count; ++i ) {
                KeyChange& key_change = m_key_changes [ i ];
 
                m_input_record_reader_file.read ( reinterpret_cast<char*>( &key_change.scan_code ),
-                                                sizeof ( key_change.scan_code ) );
+                                                 sizeof ( key_change.scan_code ) );
                m_input_record_reader_file.read ( reinterpret_cast<char*>( &key_change.down ),
-                                                sizeof ( key_change.down ) );
+                                                 sizeof ( key_change.down ) );
           }
      }
 

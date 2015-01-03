@@ -58,10 +58,10 @@ private:
      Bool stop_playing_back_input  ( );
 
      Real32 time_and_limit_loop ( Int32 locked_frames_per_second );
-     Bool poll_sdl_events       ( );
-     Void handle_input          ( );
-     Void clear_back_buffer     ( );
-     Void render_to_window      ( );
+     Bool   poll_sdl_events     ( );
+     Void   handle_input        ( );
+     Void   clear_back_buffer   ( );
+     Void   render_to_window    ( );
 
 private:
 

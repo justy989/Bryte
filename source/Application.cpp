@@ -237,6 +237,53 @@ Bool Application::load_game_memory ( const Char8* path )
      return true;
 }
 
+Bool Application::start_recording_input ( const Char8* path )
+{
+     m_input_record_writer_handle.open ( path, std::ios::binary );
+
+     if ( !m_input_record_writer_handle.is_open ( ) ) {
+          LOG_ERROR ( "Failed to open '%s' to load record input.\n", path );
+          return false;
+     }
+
+     return true;
+}
+
+Bool Application::stop_recording_input ( )
+{
+     m_input_record_writer_handle.close ( );
+     return true;
+}
+
+Bool Application::start_playback_input ( const Char8* path )
+{
+     m_input_record_reader_handle.open ( path, std::ios::binary );
+
+     if ( !m_input_record_reader_handle.is_open ( ) ) {
+          LOG_ERROR ( "Failed to open '%s' to load record input.\n", path );
+          return false;
+     }
+
+     return true;
+}
+
+Bool Application::stop_playback_input ( )
+{
+     m_input_record_reader_handle.close ( );
+     return true;
+}
+
+Void Application::update_recorder ( SDL_Scancode scan_code, Bool key_down )
+{
+     if ( m_recording_input ) {
+          m_input_record_writer_handle.write ( reinterpret_cast<char*>( scan_code ), sizeof ( scan_code ) );
+          m_input_record_writer_handle.write ( reinterpret_cast<char*>( key_down ), sizeof ( key_down ) );
+     }
+
+     if ( m_playing_back_input ) {
+     }
+}
+
 Void Application::clear_back_buffer ( )
 {
      Uint32    black      = SDL_MapRGB ( m_back_buffer_surface->format, 0, 0, 0 );

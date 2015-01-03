@@ -4,7 +4,7 @@ using namespace bryte;
 
 const Int32  c_player_width  = 16;
 const Int32  c_player_height = 24;
-const Real32 c_player_speed  = 100.0f;
+const Real32 c_player_speed  = 20.0f;
 
 GameMemory g_game_memory;
 
@@ -105,12 +105,12 @@ extern "C" Void bryte_user_input ( SDL_Scancode scan_code, bool key_down )
 extern "C" Void bryte_update ( Real32 time_delta )
 {
      GameState* game_state = get_game_state ( );
-     static bool did_stuff = false;
+     static Bool did_stuff = false;
 
      if ( !did_stuff ) {
-          did_stuff = true;
           game_state->player_position_x = 20.0f;
           game_state->player_position_y = 20.0f;
+          did_stuff = true;
      }
 
      if ( game_state->direction_keys [ Direction::up ] ) {

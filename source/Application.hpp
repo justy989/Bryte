@@ -6,6 +6,7 @@
 #include <SDL2/SDL.h>
 
 #include <chrono>
+#include <fstream>
 
 #define PRINT_SDL_ERROR(sdl_api) LOG_ERROR ( "%s() failed: %s\n", sdl_api, SDL_GetError ( ) );
 #define PRINT_DL_ERROR(dl_api) LOG_ERROR ( "%s() failed: %s\n", dl_api, dlerror ( ) );
@@ -44,6 +45,14 @@ private:
      Bool save_game_memory ( const Char8* save_path );
      Bool load_game_memory ( const Char8* save_path );
 
+     Bool start_recording_input ( const Char8* path );
+     Bool stop_recording_input ( );
+
+     Bool start_playback_input ( const Char8* path );
+     Bool stop_playback_input ( );
+
+     Void update_recorder ( SDL_Scancode scan_code, Bool key_down );
+
      Void clear_back_buffer ( );
      Void render_to_window ( );
      Bool poll_sdl_events ( );
@@ -72,13 +81,20 @@ private:
      GameUpdateFunc       m_game_update_func;
      GameRenderFunc       m_game_render_func;
 
-     // Game memory
+     // game memory
      void* m_game_memory;
      Uint32 m_game_memory_size;
 
      // timer timestamps
      std::chrono::high_resolution_clock::time_point m_previous_update_timestamp;
      std::chrono::high_resolution_clock::time_point m_current_update_timestamp;
+
+     // input recorder file handles
+     std::ifstream m_input_record_reader_handle;
+     std::ofstream m_input_record_writer_handle;
+
+     Bool m_recording_input;
+     Bool m_playing_back_input;
 };
 
 #endif

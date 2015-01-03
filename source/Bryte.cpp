@@ -70,6 +70,19 @@ Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
      }
 }
 
+Bool Map::is_tile_solid ( Int32 x, Int32 y )
+{
+     int index_x = x / m_tile_width;
+     int index_y = y / m_tile_height;
+
+     ASSERT ( index_x >= 0 && index_x < m_width );
+     ASSERT ( index_y >= 0 && index_y < m_height );
+
+     Int32 final_index = index_y * m_width + index_x;
+
+     return m_tiles [ final_index ];
+}
+
 extern "C" Bool bryte_init ( bryte::GameMemory& game_memory )
 {
      g_game_memory.memory = game_memory.memory;
@@ -79,6 +92,8 @@ extern "C" Bool bryte_init ( bryte::GameMemory& game_memory )
 
      game_state->player_position_x = 20.0f;
      game_state->player_position_y = 20.0f;
+
+     game_state->map.build ( );
 
      return true;
 }
@@ -92,6 +107,10 @@ extern "C" Void bryte_reload_memory ( bryte::GameMemory& game_memory )
 {
      g_game_memory.memory = game_memory.memory;
      g_game_memory.size   = game_memory.size;
+
+     GameState* game_state = get_game_state ( );
+
+     game_state->map.build ( );
 }
 
 extern "C" Void bryte_user_input ( SDL_Scancode scan_code, bool key_down )
@@ -119,28 +138,30 @@ extern "C" Void bryte_user_input ( SDL_Scancode scan_code, bool key_down )
 extern "C" Void bryte_update ( Real32 time_delta )
 {
      GameState* game_state = get_game_state ( );
-     static Bool did_stuff = false;
 
-     if ( !did_stuff ) {
-          game_state->player_position_x = 20.0f;
-          game_state->player_position_y = 20.0f;
-          did_stuff = true;
-     }
+     Real32 target_position_x = game_state->player_position_x;
+     Real32 target_position_y = game_state->player_position_y;
 
      if ( game_state->direction_keys [ Direction::up ] ) {
-          game_state->player_position_y -= c_player_speed * time_delta;
+          target_position_y -= c_player_speed * time_delta;
      }
 
      if ( game_state->direction_keys [ Direction::down ] ) {
-          game_state->player_position_y += c_player_speed * time_delta;
+          target_position_y += c_player_speed * time_delta;
      }
 
      if ( game_state->direction_keys [ Direction::left ] ) {
-          game_state->player_position_x -= c_player_speed * time_delta;
+          target_position_x -= c_player_speed * time_delta;
      }
 
      if ( game_state->direction_keys [ Direction::right ] ) {
-          game_state->player_position_x += c_player_speed * time_delta;
+          target_position_x += c_player_speed * time_delta;
+     }
+
+     if ( !game_state->map.is_tile_solid ( static_cast<Int32>( target_position_x ),
+                                           static_cast<Int32>( target_position_y ) ) ) {
+          game_state->player_position_x = target_position_x;
+          game_state->player_position_y = target_position_y;
      }
 }
 
@@ -157,7 +178,6 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      CLAMP ( game_state->camera_x, min_x, 0 );
      CLAMP ( game_state->camera_y, min_y, 0 );
 
-     game_state->map.build ( );
      game_state->map.render ( back_buffer, game_state->camera_x, game_state->camera_y );
 
      SDL_Rect player_rect { static_cast<Int32>( game_state->player_position_x + game_state->camera_x ),

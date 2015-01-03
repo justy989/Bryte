@@ -1,6 +1,5 @@
 #include "Application.hpp"
 #include "Utils.hpp"
-#include "Log.hpp"
 
 #include <thread>
 #include <fstream>

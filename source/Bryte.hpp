@@ -27,6 +27,7 @@ namespace bryte {
 
           Void build ( );
           Void render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y );
+          Bool is_tile_solid ( Int32 x, Int32 y );
      };
 
      struct GameMemory {

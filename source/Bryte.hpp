@@ -31,12 +31,14 @@ namespace bryte
 
           Real32 collision_height;
 
+          Bool collides_with ( Real32 new_x, Real32 new_y, const Character& character );
      };
 
      struct GameState {
      public:
 
           Character player;
+          Character enemy;
 
           Int32     player_exit_tile_index;
 

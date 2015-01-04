@@ -40,6 +40,11 @@ namespace bryte
      {
           rect.y = ( surface->h - rect.y ) - rect.h;
      }
+
+     inline Bool point_inside_rect ( Real32 x, Real32 y, Real32 l, Real32 b, Real32 r, Real32 t )
+     {
+          return ( x >= l && x <= r && y >= b && y <= t );
+     }
 }
 
 #endif

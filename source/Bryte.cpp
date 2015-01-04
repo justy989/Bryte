@@ -6,6 +6,48 @@ using namespace bryte;
 
 static const Real32 c_player_speed = 3.0f;
 
+Bool Character::collides_with ( Real32 new_x, Real32 new_y, const Character& character )
+{
+     Real32 character_right = character.position_x + character.width;
+     Real32 character_top   = character.position_y + character.collision_height;
+
+     if ( point_inside_rect ( new_x, new_y,
+                              character.position_x, character.position_y,
+                              character_right, character_top ) ||
+          point_inside_rect ( new_x + width, new_y,
+                              character.position_x, character.position_y,
+                              character_right, character_top ) ||
+          point_inside_rect ( new_x, new_y + collision_height,
+                              character.position_x, character.position_y,
+                              character_right, character_top ) ||
+          point_inside_rect ( new_x + width, new_y + collision_height,
+                              character.position_x, character.position_y,
+                              character_right, character_top ) ) {
+          return true;
+     }
+
+     Real32 right = new_x + width;
+     Real32 top = new_y + collision_height;
+
+     if ( point_inside_rect ( character.position_x, character.position_y,
+                              new_x, new_y,
+                              right, top ) ||
+          point_inside_rect ( character.position_x + character.width, character.position_y,
+                              new_x, new_y,
+                              right, top ) ||
+          point_inside_rect ( character.position_x, character.position_y + character.collision_height,
+                              new_x, new_y,
+                              right, top ) ||
+          point_inside_rect ( character.position_x + character.width,
+                              character.position_y + character.collision_height,
+                              new_x, new_y,
+                              right, top ) ) {
+          return true;
+     }
+
+     return false;
+}
+
 extern "C" Bool bryte_init ( GameMemory& game_memory )
 {
      Globals::g_game_memory.memory = game_memory.memory;
@@ -20,6 +62,12 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
      game_state->player.width            = 1.6f;
      game_state->player.height           = game_state->player.width * 1.5f;
      game_state->player.collision_height = game_state->player.width;
+
+     game_state->enemy.position_x       = Map::c_tile_dimension * 5.0f;
+     game_state->enemy.position_y       = Map::c_tile_dimension * 5.0f;
+     game_state->enemy.width            = 1.0f;
+     game_state->enemy.height           = game_state->enemy.width * 1.5f;
+     game_state->enemy.collision_height = game_state->enemy.width;
 
      game_state->map.build ( );
 
@@ -90,15 +138,26 @@ extern "C" Void bryte_update ( Real32 time_delta )
           target_position_x += c_player_speed * time_delta;
      }
 
+     bool collided  = false;
+
      // collision
-     if ( !game_state->map.is_position_solid ( target_position_x,
-                                               target_position_y ) &&
-          !game_state->map.is_position_solid ( target_position_x + game_state->player.width,
-                                               target_position_y ) &&
-          !game_state->map.is_position_solid ( target_position_x,
-                                               target_position_y + game_state->player.collision_height ) &&
-          !game_state->map.is_position_solid ( target_position_x + game_state->player.width,
-                                               target_position_y + game_state->player.collision_height ) ) {
+     if ( game_state->map.is_position_solid ( target_position_x,
+                                              target_position_y ) ||
+          game_state->map.is_position_solid ( target_position_x + game_state->player.width,
+                                              target_position_y ) ||
+          game_state->map.is_position_solid ( target_position_x,
+                                              target_position_y + game_state->player.collision_height ) ||
+          game_state->map.is_position_solid ( target_position_x + game_state->player.width,
+                                              target_position_y + game_state->player.collision_height ) ) {
+          collided = true;
+     }
+
+     // check collision between player and enemy
+     if ( game_state->player.collides_with ( target_position_x, target_position_y, game_state->enemy ) ) {
+          collided = true;
+     }
+
+     if ( !collided ) {
           game_state->player.position_x = target_position_x;
           game_state->player.position_y = target_position_y;
      }
@@ -106,7 +165,7 @@ extern "C" Void bryte_update ( Real32 time_delta )
      auto& player_exit = game_state->player_exit_tile_index;
      auto& map         = game_state->map;
 
-     // check if the player has exitted
+     // check if the player has exitted the area
      if ( player_exit == 0 ) {
           player_exit = map.check_position_exit ( game_state->player.position_x,
                                                 game_state->player.position_y );
@@ -127,6 +186,24 @@ extern "C" Void bryte_update ( Real32 time_delta )
                player_exit = 0;
           }
      }
+
+}
+
+Void render_character ( SDL_Surface* back_buffer, const Character& character,
+                        Real32 camera_x, Real32 camera_y, Uint32 color )
+{
+     Real32 character_on_camera_x = character.position_x + camera_x;
+     Real32 character_on_camera_y = character.position_y + camera_y;
+
+     SDL_Rect character_rect { meters_to_pixels ( character_on_camera_x ),
+                               meters_to_pixels ( character_on_camera_y ),
+                               meters_to_pixels ( character.width ),
+                               meters_to_pixels ( character.height ) };
+
+
+     convert_to_sdl_origin_for_surface ( character_rect, back_buffer );
+
+     SDL_FillRect ( back_buffer, &character_rect, color );
 }
 
 extern "C" Void bryte_render ( SDL_Surface* back_buffer )
@@ -153,18 +230,10 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 
      game_state->map.render ( back_buffer, game_state->camera_x, game_state->camera_y );
 
-     Real32 player_on_camera_x = game_state->player.position_x + game_state->camera_x;
-     Real32 player_on_camera_y = game_state->player.position_y + game_state->camera_y;
+     Uint32 red  = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
+     Uint32 blue = SDL_MapRGB ( back_buffer->format, 0, 0, 255 );
 
-     SDL_Rect player_rect { meters_to_pixels ( player_on_camera_x ),
-                            meters_to_pixels ( player_on_camera_y ),
-                            meters_to_pixels ( game_state->player.width ),
-                            meters_to_pixels ( game_state->player.height ) };
-
-     Uint32 red = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
-
-     convert_to_sdl_origin_for_surface ( player_rect, back_buffer );
-
-     SDL_FillRect ( back_buffer, &player_rect, red );
+     render_character ( back_buffer, game_state->player, game_state->camera_x, game_state->camera_y, red );
+     render_character ( back_buffer, game_state->enemy, game_state->camera_x, game_state->camera_y, blue );
 }
 

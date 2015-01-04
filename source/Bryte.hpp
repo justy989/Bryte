@@ -23,6 +23,16 @@ namespace bryte
      struct Character {
      public:
 
+          Bool collides_with ( Real32 new_x, Real32 new_y, const Character& character );
+          Bool attack_collides_with ( const Character& character );
+
+          Void attack ( );
+          Void damage ( Int32 amount, Direction push );
+
+          Void update ( Real32 time_delta );
+
+     public:
+
           Real32 position_x;
           Real32 position_y;
 
@@ -35,6 +45,7 @@ namespace bryte
           Real32 collision_height;
 
           Int32  health;
+          Int32  max_health;
 
           // you are pushed when damaged
           Real32 damage_move_x;
@@ -45,16 +56,10 @@ namespace bryte
           Real32 attack_y;
 
           Real32 attack_time;
+          Real32 cooldown_time;
 
           Direction facing;
 
-          Bool collides_with ( Real32 new_x, Real32 new_y, const Character& character );
-          Bool attack_collides_with ( const Character& character );
-
-          Void attack ( );
-          Void damage ( Int32 amount, Direction push );
-
-          Void update ( Real32 time_delta );
      };
 
      struct GameState {

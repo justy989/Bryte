@@ -3,8 +3,6 @@
 
 #include "Types.hpp"
 
-#include <SDL2/SDL.h>
-
 namespace bryte
 {
      class Map {
@@ -48,7 +46,6 @@ namespace bryte
           Map ( );
 
           Void build  ( );
-          Void render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y );
 
           Int32 position_to_tile_index     ( Real32 x, Real32 y );
 
@@ -68,7 +65,7 @@ namespace bryte
 
           static const Uint8 c_max_rooms = 8;
 
-     private:
+     public:
 
           Room* m_current_room;
      };

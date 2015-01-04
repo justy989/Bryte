@@ -9,43 +9,8 @@ static const Real32 c_character_damage_speed  = 12.0f;
 static const Real32 c_character_damage_force  = 0.8f;
 static const Real32 c_character_attack_width  = 0.6f;
 static const Real32 c_character_attack_height = 1.2f;
-static const Real32 c_character_attack_time   = 0.5f;
-
-static Bool rect_collides_with_rect ( Real32 a_left, Real32 a_bottom, Real32 a_width, Real32 a_height,
-                                      Real32 b_left, Real32 b_bottom, Real32 b_width, Real32 b_height)
-{
-     Real32 b_right = b_left + b_width;
-     Real32 b_top = b_bottom + b_height;
-
-     // test A inside B
-     if ( point_inside_rect ( a_left, a_bottom,
-                              b_left, b_bottom, b_right, b_top ) ||
-          point_inside_rect ( a_left + a_width, a_bottom,
-                              b_left, b_bottom, b_right, b_top ) ||
-          point_inside_rect ( a_left, a_bottom + a_height,
-                              b_left, b_bottom, b_right, b_top ) ||
-          point_inside_rect ( a_left + a_width, a_bottom + a_height,
-                              b_left, b_bottom, b_right, b_top ) ) {
-          return true;
-     }
-
-     Real32 a_right = a_left + a_width;
-     Real32 a_top = a_bottom + a_height;
-
-     // test B inside A
-     if ( point_inside_rect ( b_left, b_bottom,
-                              a_left, a_bottom, a_right, a_top ) ||
-          point_inside_rect ( b_left + b_width, b_bottom,
-                              a_left, a_bottom, a_right, a_top ) ||
-          point_inside_rect ( b_left, b_bottom + b_height,
-                              a_left, a_bottom, a_right, a_top ) ||
-          point_inside_rect ( b_left + b_width, b_bottom + b_height,
-                              a_left, a_bottom, a_right, a_top ) ) {
-          return true;
-     }
-
-     return false;
-}
+static const Real32 c_character_attack_time   = 0.75f;
+static const Real32 c_character_cooldown_time = 0.5f;
 
 Bool Character::collides_with ( Real32 new_x, Real32 new_y, const Character& character )
 {
@@ -56,14 +21,35 @@ Bool Character::collides_with ( Real32 new_x, Real32 new_y, const Character& cha
 
 Void Character::attack ( )
 {
+     if ( attack_time > 0.0f || cooldown_time > 0.0f ) {
+          return;
+     }
+
      attack_time = c_character_attack_time;
 }
 
 Bool Character::attack_collides_with ( const Character& character )
 {
-     return rect_collides_with_rect ( attack_x, attack_y, c_character_attack_width, c_character_attack_height,
-                                      character.position_x, character.position_y,
-                                      character.width, character.height );
+     // swap width/height based on direction we are facing
+     switch ( facing ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Direction::left:
+     case Direction::right:
+          return rect_collides_with_rect ( attack_x, attack_y,
+                                           c_character_attack_height, c_character_attack_width,
+                                           character.position_x, character.position_y,
+                                           character.width, character.height );
+     case Direction::up:
+     case Direction::down:
+          return rect_collides_with_rect ( attack_x, attack_y,
+                                           c_character_attack_width, c_character_attack_height,
+                                           character.position_x, character.position_y,
+                                           character.width, character.height );
+     }
+
+     return false;
 }
 
 Void Character::damage ( Int32 amount, Direction push )
@@ -100,14 +86,45 @@ Void Character::update ( Real32 time_delta )
      Real32 target_position_x = position_x + velocity_x * time_delta;
      Real32 target_position_y = position_y + velocity_y * time_delta;
 
+     if ( damage_move_x > 0.0f ) {
+          target_position_x += c_character_damage_speed * time_delta;
+          damage_move_x     -= c_character_damage_speed * time_delta;
+
+          if ( damage_move_x < 0.0f ) {
+               damage_move_x = 0.0f;
+          }
+     }
+
+     if ( damage_move_x < 0.0f ) {
+          target_position_x -= c_character_damage_speed * time_delta;
+          damage_move_x     += c_character_damage_speed * time_delta;
+
+          if ( damage_move_x > 0.0f ) {
+               damage_move_x = 0.0f;
+          }
+     }
+
      if ( damage_move_y > 0.0f ) {
           target_position_y += c_character_damage_speed * time_delta;
           damage_move_y     -= c_character_damage_speed * time_delta;
+
+          if ( damage_move_y < 0.0f ) {
+               damage_move_y = 0.0f;
+          }
+     }
+
+     if ( damage_move_y < 0.0f ) {
+          target_position_y -= c_character_damage_speed * time_delta;
+          damage_move_y     += c_character_damage_speed * time_delta;
+
+          if ( damage_move_y > 0.0f ) {
+               damage_move_y = 0.0f;
+          }
      }
 
      bool collided = false;
 
-     // collision
+     // collision with tile map
      if ( game_state->map.is_position_solid ( target_position_x,
                                               target_position_y ) ||
           game_state->map.is_position_solid ( target_position_x + width,
@@ -124,16 +141,154 @@ Void Character::update ( Real32 time_delta )
           position_y = target_position_y;
      }
 
+     if ( cooldown_time > 0.0f ) {
+          cooldown_time -= time_delta;
+     }
+
+     if ( attack_time > 0.0f ) {
+          attack_time -= time_delta;
+
+          if ( attack_time < 0.0f ) {
+               attack_time = 0.0f;
+               cooldown_time = c_character_cooldown_time;
+          }
+     }
+
+     switch ( game_state->player.facing ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Direction::left:
+          game_state->player.attack_x = game_state->player.position_x - c_character_attack_height;
+          game_state->player.attack_y = game_state->player.position_y + game_state->player.height * 0.5f;
+          break;
+     case Direction::right:
+          game_state->player.attack_x = game_state->player.position_x + game_state->player.width;
+          game_state->player.attack_y = game_state->player.position_y + game_state->player.height * 0.5f;
+          break;
+     case Direction::up:
+          game_state->player.attack_x = game_state->player.position_x + game_state->player.width * 0.33f;
+          game_state->player.attack_y = game_state->player.position_y + game_state->player.height;
+          break;
+     case Direction::down:
+          game_state->player.attack_x = game_state->player.position_x + game_state->player.width * 0.33f;
+          game_state->player.attack_y = game_state->player.position_y - game_state->player.height * 0.5f;
+          break;
+     }
+
      velocity_x = 0.0f;
      velocity_y = 0.0f;
 }
 
-extern "C" Bool bryte_init ( GameMemory& game_memory )
+// assuming A attacks B
+static Direction determine_damage_direction ( const Character& a, const Character& b )
 {
+     Real32 diff_x = b.position_x - a.position_x;
+     Real32 diff_y = b.position_y - a.position_y;
+
+     Real32 abs_x = fabs ( diff_x );
+     Real32 abs_y = fabs ( diff_y );
+
+     if ( abs_x > abs_y ) {
+          if ( diff_x > 0.0f ) {
+               return Direction::right;
+          }
+
+          return Direction::left;
+     } else if ( abs_y < abs_x ) {
+          if ( diff_y > 0.0f ) {
+               return Direction::up;
+          }
+
+          return Direction::down;
+     } else {
+          if ( diff_y < 0.0f ) {
+               return Direction::down;
+          }
+
+          return Direction::up;
+     }
+
+     // the above cases should catch all
+     ASSERT ( 0 );
+     return Direction::left;
+}
+
+static Void render_character ( SDL_Surface* back_buffer, const Character& character,
+                               Real32 camera_x, Real32 camera_y, Uint32 color )
+{
+     // do not draw if dead
+     if ( character.health <= 0 ) {
+          return;
+     }
+
+     Real32 character_on_camera_x = character.position_x + camera_x;
+     Real32 character_on_camera_y = character.position_y + camera_y;
+
+     SDL_Rect character_rect { meters_to_pixels ( character_on_camera_x ),
+                               meters_to_pixels ( character_on_camera_y ),
+                               meters_to_pixels ( character.width ),
+                               meters_to_pixels ( character.height ) };
+
+     convert_to_sdl_origin_for_surface ( character_rect, back_buffer );
+
+     SDL_FillRect ( back_buffer, &character_rect, color );
+}
+
+static Void render_map ( SDL_Surface* surface, Map& map, Real32 camera_x, Real32 camera_y )
+{
+     ASSERT ( map.m_current_room );
+
+     SDL_Rect tile_rect      { 0, 0,
+                               meters_to_pixels ( Map::c_tile_dimension ),
+                               meters_to_pixels ( Map::c_tile_dimension ) };
+     Uint32   floor_color    = SDL_MapRGB ( surface->format, 190, 190, 190 );
+     Uint32   wall_color     = SDL_MapRGB ( surface->format, 30, 30, 30 );
+     Uint32   door_color     = SDL_MapRGB ( surface->format, 30, 110, 30 );
+     auto&    room           = *map.m_current_room;
+
+     for ( Int32 y = 0; y < static_cast<Int32>( room.height ); ++y ) {
+          for ( Int32 x = 0; x < static_cast<Int32>( room.width ); ++x ) {
+
+               auto   tile_index = map.coordinate_to_tile_index ( x, y );
+               Uint32 tile_color = room.tiles [ tile_index ] ? wall_color : floor_color;
+
+               for ( Uint8 d = 0; d < room.exit_count; ++d ) {
+                    auto& exit = room.exits [ d ];
+
+                    if ( exit.location_x == x && exit.location_y == y ) {
+                         tile_color = door_color;
+                         break;
+                    }
+               }
+
+               tile_rect.x = x * meters_to_pixels ( Map::c_tile_dimension );
+               tile_rect.y = y * meters_to_pixels ( Map::c_tile_dimension );
+
+               tile_rect.x += meters_to_pixels ( camera_x );
+               tile_rect.y += meters_to_pixels ( camera_y );
+
+               convert_to_sdl_origin_for_surface ( tile_rect, surface );
+
+               SDL_FillRect ( surface, &tile_rect, tile_color );
+          }
+     }
+}
+
+static Void setup_game_state_from_memory ( GameMemory& game_memory )
+{
+     ASSERT ( game_memory.memory );
+     ASSERT ( game_memory.size );
+
      Globals::g_game_memory.memory = game_memory.memory;
      Globals::g_game_memory.size   = game_memory.size;
 
      Globals::g_memory_locations.game_state = Globals::g_game_memory.push_object<GameState> ( );
+}
+
+extern "C" Bool bryte_init ( GameMemory& game_memory )
+{
+     setup_game_state_from_memory ( game_memory );
 
      auto* game_state = Globals::g_memory_locations.game_state;
 
@@ -143,6 +298,7 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
      game_state->player.height           = game_state->player.width * 1.5f;
      game_state->player.collision_height = game_state->player.width;
      game_state->player.health           = 100;
+     game_state->player.max_health       = 100;
 
      game_state->enemy.position_x       = Map::c_tile_dimension * 5.0f;
      game_state->enemy.position_y       = Map::c_tile_dimension * 5.0f;
@@ -150,6 +306,7 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
      game_state->enemy.height           = game_state->enemy.width * 1.5f;
      game_state->enemy.collision_height = game_state->enemy.width;
      game_state->enemy.health           = 10;
+     game_state->enemy.max_health       = 10;
 
      game_state->map.build ( );
 
@@ -163,8 +320,7 @@ extern "C" Void bryte_destroy ( )
 
 extern "C" Void bryte_reload_memory ( GameMemory& game_memory )
 {
-     Globals::g_game_memory.memory = game_memory.memory;
-     Globals::g_game_memory.size   = game_memory.size;
+     setup_game_state_from_memory ( game_memory );
 
      auto* game_state = Globals::g_memory_locations.game_state;
 
@@ -247,7 +403,7 @@ extern "C" Void bryte_update ( Real32 time_delta )
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
           player_exit = map.check_position_exit ( game_state->player.position_x,
-                                                game_state->player.position_y );
+                                                  game_state->player.position_y );
 
           if ( player_exit > 0 ) {
                game_state->player.position_x = map.tile_index_to_coordinate_x ( player_exit );
@@ -266,57 +422,11 @@ extern "C" Void bryte_update ( Real32 time_delta )
           }
      }
 
-     switch ( game_state->player.facing ) {
-     default:
-          ASSERT ( 0 );
-          break;
-     case Direction::left:
-          game_state->player.attack_x = game_state->player.position_x - 0.2f;
-          game_state->player.attack_y = game_state->player.position_y + game_state->player.height / 2.0f;
-          break;
-     case Direction::right:
-          game_state->player.attack_x = game_state->player.position_x + game_state->player.width + 0.2f;
-          game_state->player.attack_y = game_state->player.position_y + game_state->player.height / 2.0f;
-          break;
-     case Direction::up:
-          game_state->player.attack_x = game_state->player.position_x + game_state->player.width * 0.33f;
-          game_state->player.attack_y = game_state->player.position_y + game_state->player.height;
-          break;
-     case Direction::down:
-          game_state->player.attack_x = game_state->player.position_x + game_state->player.width * 0.33f;
-          game_state->player.attack_y = game_state->player.position_y - game_state->player.height * 0.5f;
-          break;
+     if ( game_state->player.attack_time > 0.0f &&
+          game_state->player.attack_collides_with ( game_state->enemy ) ) {
+          Direction damage_dir = determine_damage_direction ( game_state->player, game_state->enemy );
+          game_state->enemy.damage ( 1, damage_dir );
      }
-
-     if ( game_state->player.attack_time > 0.0f ) {
-          game_state->player.attack_time -= time_delta;
-
-          if ( game_state->player.attack_collides_with ( game_state->enemy ) ) {
-               game_state->enemy.damage ( 1, Direction::up );
-          }
-     }
-}
-
-Void render_character ( SDL_Surface* back_buffer, const Character& character,
-                        Real32 camera_x, Real32 camera_y, Uint32 color )
-{
-     // do not draw if dead
-     if ( character.health <= 0 ) {
-          return;
-     }
-
-     Real32 character_on_camera_x = character.position_x + camera_x;
-     Real32 character_on_camera_y = character.position_y + camera_y;
-
-     SDL_Rect character_rect { meters_to_pixels ( character_on_camera_x ),
-                               meters_to_pixels ( character_on_camera_y ),
-                               meters_to_pixels ( character.width ),
-                               meters_to_pixels ( character.height ) };
-
-
-     convert_to_sdl_origin_for_surface ( character_rect, back_buffer );
-
-     SDL_FillRect ( back_buffer, &character_rect, color );
 }
 
 extern "C" Void bryte_render ( SDL_Surface* back_buffer )
@@ -341,7 +451,7 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      CLAMP ( game_state->camera_x, min_camera_x, 0 );
      CLAMP ( game_state->camera_y, min_camera_y, 0 );
 
-     game_state->map.render ( back_buffer, game_state->camera_x, game_state->camera_y );
+     render_map ( back_buffer, game_state->map, game_state->camera_x, game_state->camera_y );
 
      Uint32 red   = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 blue  = SDL_MapRGB ( back_buffer->format, 0, 0, 255 );
@@ -356,6 +466,13 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
                                  meters_to_pixels ( game_state->player.attack_y + game_state->camera_y ),
                                  meters_to_pixels ( c_character_attack_width ),
                                  meters_to_pixels ( c_character_attack_height ) };
+
+          // swap width and height for facing left and right
+          if ( game_state->player.facing == Direction::left ||
+               game_state->player.facing == Direction::right ) {
+               attack_rect.w = meters_to_pixels ( c_character_attack_height );
+               attack_rect.h = meters_to_pixels ( c_character_attack_width );
+          }
 
           convert_to_sdl_origin_for_surface ( attack_rect, back_buffer );
 

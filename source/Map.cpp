@@ -97,43 +97,6 @@ Void Map::build ( )
      m_current_room = rooms;
 }
 
-Void Map::render ( SDL_Surface* surface, Real32 camera_x, Real32 camera_y )
-{
-     SDL_Rect tile_rect      { 0, 0,
-                               meters_to_pixels ( Map::c_tile_dimension ),
-                               meters_to_pixels ( Map::c_tile_dimension ) };
-     Uint32   floor_color    = SDL_MapRGB ( surface->format, 190, 190, 190 );
-     Uint32   wall_color     = SDL_MapRGB ( surface->format, 30, 30, 30 );
-     Uint32   door_color     = SDL_MapRGB ( surface->format, 30, 110, 30 );
-
-     for ( Int32 y = 0; y < static_cast<Int32>( m_current_room->height ); ++y ) {
-          for ( Int32 x = 0; x < static_cast<Int32>( m_current_room->width ); ++x ) {
-
-               auto   tile_index = coordinate_to_tile_index ( x, y );
-               Uint32 tile_color = m_current_room->tiles [ tile_index ] ? wall_color : floor_color;
-
-               for ( Uint8 d = 0; d < m_current_room->exit_count; ++d ) {
-                    auto& exit = m_current_room->exits [ d ];
-
-                    if ( exit.location_x == x && exit.location_y == y ) {
-                         tile_color = door_color;
-                         break;
-                    }
-               }
-
-               tile_rect.x = x * meters_to_pixels ( c_tile_dimension );
-               tile_rect.y = y * meters_to_pixels ( c_tile_dimension );
-
-               tile_rect.x += meters_to_pixels ( camera_x );
-               tile_rect.y += meters_to_pixels ( camera_y );
-
-               convert_to_sdl_origin_for_surface ( tile_rect, surface );
-
-               SDL_FillRect ( surface, &tile_rect, tile_color );
-          }
-     }
-}
-
 Int32 Map::position_to_tile_index ( Real32 x, Real32 y )
 {
      Int32 tile_x = x / c_tile_dimension;

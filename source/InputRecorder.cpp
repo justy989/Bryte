@@ -87,13 +87,16 @@ Bool InputRecorder::read_frame ( GameInput& game_input )
      ASSERT ( !m_recording );
      ASSERT ( m_playing_back );
 
-     m_file.read ( reinterpret_cast<char*>( &game_input ), sizeof ( game_input ) );
-
      if ( m_file.eof ( ) ) {
           m_file.clear ( );
           m_file.seekg ( m_file.beg );
+
+          m_file.read ( reinterpret_cast<char*>( &game_input ), sizeof ( game_input ) );
+
           return false;
      }
+
+     m_file.read ( reinterpret_cast<char*>( &game_input ), sizeof ( game_input ) );
 
      return true;
 }

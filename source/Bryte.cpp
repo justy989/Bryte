@@ -17,9 +17,9 @@ static const Real32 c_lever_activate_cooldown = 0.75f;
 
 Bool Character::collides_with ( const Character& character )
 {
-     return rect_collides_with_rect ( position_x, position_y, width, height,
+     return rect_collides_with_rect ( position_x, position_y, width, collision_height,
                                       character.position_x, character.position_y,
-                                      character.width, character.height );
+                                      character.width, character.collision_height );
 }
 
 Void Character::attack ( )

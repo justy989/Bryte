@@ -88,7 +88,7 @@ namespace bryte
      struct GameState {
      public:
 
-          Void initialize ( );
+          Bool initialize ( );
 
      public:
 
@@ -114,6 +114,8 @@ namespace bryte
 
           Real32    camera_x;
           Real32    camera_y;
+
+          SDL_Surface* tilesheet;
      };
 }
 

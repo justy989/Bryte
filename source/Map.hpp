@@ -64,7 +64,8 @@ namespace bryte
 
      public:
 
-          static const Real32 c_tile_dimension;
+          static const Int32 c_tile_dimension_in_pixels;
+          static const Real32 c_tile_dimension_in_meters;
 
           static const Uint8 c_max_rooms = 8;
 

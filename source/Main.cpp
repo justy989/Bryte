@@ -22,7 +22,7 @@ int main ( int argc, char** argv )
 
      settings.game_memory_allocation_size   = MEGABYTES ( 32 );
 
-     settings.locked_frames_per_second      = 60;
+     settings.locked_frames_per_second      = 30;
 
      return platform.run_game ( settings ) ? 0 : 1;
 }

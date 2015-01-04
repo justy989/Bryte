@@ -23,7 +23,7 @@ namespace bryte
      struct Character {
      public:
 
-          Bool collides_with ( Real32 new_x, Real32 new_y, const Character& character );
+          Bool collides_with ( const Character& character );
           Bool attack_collides_with ( const Character& character );
 
           Void attack ( );

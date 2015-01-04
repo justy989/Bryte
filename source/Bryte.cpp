@@ -12,9 +12,9 @@ static const Real32 c_character_attack_height = 1.2f;
 static const Real32 c_character_attack_time   = 0.75f;
 static const Real32 c_character_cooldown_time = 0.5f;
 
-Bool Character::collides_with ( Real32 new_x, Real32 new_y, const Character& character )
+Bool Character::collides_with ( const Character& character )
 {
-     return rect_collides_with_rect ( new_x, new_y, width, height,
+     return rect_collides_with_rect ( position_x, position_y, width, height,
                                       character.position_x, character.position_y,
                                       character.width, character.height );
 }
@@ -217,6 +217,21 @@ static Direction determine_damage_direction ( const Character& a, const Characte
 static Void render_character ( SDL_Surface* back_buffer, const Character& character,
                                Real32 camera_x, Real32 camera_y, Uint32 color )
 {
+     static const Int32 blink_length  = 3;
+     static Bool        blink_on      = false;
+     static Int32       blink_count   = 0;
+
+     if ( blink_count <= 0 ) {
+          blink_count = blink_length;
+          blink_on = !blink_on;
+     } else {
+          blink_count--;
+     }
+
+     if ( !blink_on && ( character.damage_move_x != 0.0f || character.damage_move_y != 0.0f ) ) {
+          return;
+     }
+
      // do not draw if dead
      if ( character.health <= 0 ) {
           return;
@@ -297,8 +312,8 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
      game_state->player.width            = 1.6f;
      game_state->player.height           = game_state->player.width * 1.5f;
      game_state->player.collision_height = game_state->player.width;
-     game_state->player.health           = 100;
-     game_state->player.max_health       = 100;
+     game_state->player.health           = 25;
+     game_state->player.max_health       = 25;
 
      game_state->enemy.position_x       = Map::c_tile_dimension * 5.0f;
      game_state->enemy.position_y       = Map::c_tile_dimension * 5.0f;
@@ -352,6 +367,8 @@ extern "C" Void bryte_user_input ( const GameInput& game_input )
           case SDL_SCANCODE_C:
                game_state->attack_key = key_change.down;
                break;
+          case SDL_SCANCODE_8:
+               game_state->enemy.health = 10;
           }
      }
 }
@@ -388,14 +405,11 @@ extern "C" Void bryte_update ( Real32 time_delta )
      game_state->enemy.update ( time_delta );
 
      // check collision between player and enemy
-#if 0
      if ( game_state->enemy.health > 0 &&
-          game_state->player.collides_with ( target_position_x, target_position_y, game_state->enemy ) ) {
-          collided = true;
-
-          game_state->player.damage ( 1, Direction::up );
+          game_state->player.collides_with ( game_state->enemy ) ) {
+          Direction damage_dir = determine_damage_direction ( game_state->enemy, game_state->player );
+          game_state->player.damage ( 1, damage_dir );
      }
-#endif
 
      auto& player_exit = game_state->player_exit_tile_index;
      auto& map         = game_state->map;

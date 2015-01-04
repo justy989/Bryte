@@ -19,8 +19,8 @@ Uint8 g_tilemap_1 [ c_map_1_height ][ c_map_1_width ] = {
      { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
      { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
      { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
-     { 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1 },
-     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+     { 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1 },
+     { 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
      { 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
      { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1 },
      { 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
@@ -33,7 +33,7 @@ Uint8 g_tilemap_1 [ c_map_1_height ][ c_map_1_width ] = {
 Uint8 g_tilemap_2 [ c_map_2_height ][ c_map_2_width ] = {
      { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
      { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+     { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 },
      { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
      { 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1 },
      { 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1 },
@@ -75,11 +75,11 @@ Void Map::build ( )
 
      rooms [ 0 ].exit_count = 1;
 
-     rooms [ 0 ].exits [ 0 ].location_x    = 3;
-     rooms [ 0 ].exits [ 0 ].location_y    = 4;
+     rooms [ 0 ].exits [ 0 ].location_x    = 1;
+     rooms [ 0 ].exits [ 0 ].location_y    = 8;
      rooms [ 0 ].exits [ 0 ].room_index    = 1;
-     rooms [ 0 ].exits [ 0 ].destination_x = 5;
-     rooms [ 0 ].exits [ 0 ].destination_y = 2;
+     rooms [ 0 ].exits [ 0 ].destination_x = 14;
+     rooms [ 0 ].exits [ 0 ].destination_y = 1;
 
      rooms [ 1 ].tiles  = reinterpret_cast<Uint8*>( g_tilemap_2 );
 
@@ -88,11 +88,11 @@ Void Map::build ( )
 
      rooms [ 1 ].exit_count = 1;
 
-     rooms [ 1 ].exits [ 0 ].location_x    = 5;
-     rooms [ 1 ].exits [ 0 ].location_y    = 2;
+     rooms [ 1 ].exits [ 0 ].location_x    = 14;
+     rooms [ 1 ].exits [ 0 ].location_y    = 1;
      rooms [ 1 ].exits [ 0 ].room_index    = 0;
-     rooms [ 1 ].exits [ 0 ].destination_x = 3;
-     rooms [ 1 ].exits [ 0 ].destination_y = 4;
+     rooms [ 1 ].exits [ 0 ].destination_x = 1;
+     rooms [ 1 ].exits [ 0 ].destination_y = 8;
 
      m_current_room = rooms;
 }
@@ -121,6 +121,16 @@ Int32 Map::tile_index_to_coordinate_x ( Int32 tile_index )
 Int32 Map::tile_index_to_coordinate_y ( Int32 tile_index )
 {
      return tile_index / static_cast<Int32>( m_current_room->width );
+}
+
+Uint8 Map::get_coordinate_value ( Int32 tile_x, Int32 tile_y )
+{
+     return m_current_room->tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ];
+}
+
+Void Map::set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value )
+{
+     m_current_room->tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ] = value;
 }
 
 Bool Map::is_position_solid ( Real32 x, Real32 y )

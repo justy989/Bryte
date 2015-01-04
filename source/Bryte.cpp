@@ -11,6 +11,9 @@ static const Real32 c_character_attack_width  = 0.6f;
 static const Real32 c_character_attack_height = 1.2f;
 static const Real32 c_character_attack_time   = 0.75f;
 static const Real32 c_character_cooldown_time = 0.5f;
+static const Real32 c_lever_width             = 0.5f;
+static const Real32 c_lever_height            = 0.5f;
+static const Real32 c_lever_activate_cooldown = 0.75f;
 
 Bool Character::collides_with ( const Character& character )
 {
@@ -180,6 +183,61 @@ Void Character::update ( Real32 time_delta )
      velocity_y = 0.0f;
 }
 
+Void Random::seed ( Uint32 value )
+{
+     i_f = value;
+     i_s = value;
+}
+
+Uint32 Random::generate ( Uint32 min, Uint32 max )
+{
+     if ( min == max ) {
+          return min;
+     }
+
+     // simple RNG by George Marsaglia
+     i_f = 36969 * ( i_f & 65535 ) + ( i_f >> 16 );
+     i_s = 18000 * ( i_s & 65535 ) + ( i_s >> 16 );
+
+     return ( ( ( i_f << 16 ) + i_s ) % ( max - min ) ) + min;
+}
+
+Void GameState::initialize ( )
+{
+     random.seed ( 93847567 );
+
+     player.position_x       = Map::c_tile_dimension * 2.0f;
+     player.position_y       = Map::c_tile_dimension * 2.0f;
+     player.width            = 1.6f;
+     player.height           = player.width * 1.5f;
+     player.collision_height = player.width;
+     player.health           = 25;
+     player.max_health       = 25;
+
+     enemy_count = 10;
+
+     for ( Uint32 i = 0; i < enemy_count; ++i ) {
+          auto& enemy = enemies [ i ];
+
+          enemy.position_x       = 0.0f;
+          enemy.position_y       = 0.0f;
+
+          enemy.width            = 1.0f;
+
+          enemy.height           = enemy.width * 1.5f;
+          enemy.collision_height = enemy.width;
+
+          enemy.health           = 10;
+          enemy.max_health       = 10;
+     }
+
+     lever.position_x      = Map::c_tile_dimension * 4.0f;
+     lever.position_y      = Map::c_tile_dimension * 7.5f - c_lever_width * 0.5f;
+     lever.activate_tile_x = 3;
+     lever.activate_tile_y = 8;
+     lever.activate_time   = 0.0f;
+}
+
 // assuming A attacks B
 static Direction determine_damage_direction ( const Character& a, const Character& b )
 {
@@ -307,23 +365,28 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
 
      auto* game_state = Globals::g_memory_locations.game_state;
 
-     game_state->player.position_x       = Map::c_tile_dimension * 2.0f;
-     game_state->player.position_y       = Map::c_tile_dimension * 2.0f;
-     game_state->player.width            = 1.6f;
-     game_state->player.height           = game_state->player.width * 1.5f;
-     game_state->player.collision_height = game_state->player.width;
-     game_state->player.health           = 25;
-     game_state->player.max_health       = 25;
-
-     game_state->enemy.position_x       = Map::c_tile_dimension * 5.0f;
-     game_state->enemy.position_y       = Map::c_tile_dimension * 5.0f;
-     game_state->enemy.width            = 1.0f;
-     game_state->enemy.height           = game_state->enemy.width * 1.5f;
-     game_state->enemy.collision_height = game_state->enemy.width;
-     game_state->enemy.health           = 10;
-     game_state->enemy.max_health       = 10;
-
+     game_state->initialize ( );
      game_state->map.build ( );
+
+     for ( Uint32 i = 0; i < game_state->enemy_count; ++i ) {
+          auto& enemy = game_state->enemies [ i ];
+
+          Int32 random_tile_x = 0;
+          Int32 random_tile_y = 0;
+
+          // spawn on random tile
+          while ( true ) {
+               random_tile_x = game_state->random.generate ( 0, 16 );
+               random_tile_y = game_state->random.generate ( 0, 16 );
+
+               if ( !game_state->map.is_position_solid ( random_tile_x, random_tile_y ) ) {
+                    break;
+               }
+          }
+
+          enemy.position_x = Map::c_tile_dimension * static_cast<Real32>( random_tile_x );
+          enemy.position_y = Map::c_tile_dimension * static_cast<Real32>( random_tile_y );
+     }
 
      return true;
 }
@@ -367,8 +430,13 @@ extern "C" Void bryte_user_input ( const GameInput& game_input )
           case SDL_SCANCODE_C:
                game_state->attack_key = key_change.down;
                break;
+          case SDL_SCANCODE_E:
+               game_state->activate_key = key_change.down;
+               break;
           case SDL_SCANCODE_8:
-               game_state->enemy.health = 10;
+               for ( Uint32 i = 0; i < game_state->enemy_count; ++i ) {
+                    game_state->enemies [ i ].health = 10;
+               }
           }
      }
 }
@@ -401,14 +469,47 @@ extern "C" Void bryte_update ( Real32 time_delta )
           game_state->player.attack ( );
      }
 
-     game_state->player.update ( time_delta );
-     game_state->enemy.update ( time_delta );
+     if ( game_state->activate_key ) {
+          if ( game_state->lever.activate_time <= 0.0f ) {
+               auto& player = game_state->player;
+               auto& lever  = game_state->lever;
 
-     // check collision between player and enemy
-     if ( game_state->enemy.health > 0 &&
-          game_state->player.collides_with ( game_state->enemy ) ) {
-          Direction damage_dir = determine_damage_direction ( game_state->enemy, game_state->player );
-          game_state->player.damage ( 1, damage_dir );
+               if ( rect_collides_with_rect ( player.position_x, player.position_y,
+                                              player.width, player.height,
+                                              lever.position_x, lever.position_y,
+                                              c_lever_width, c_lever_height ) ) {
+                    auto tile_value = game_state->map.get_coordinate_value ( lever.activate_tile_x,
+                                                                             lever.activate_tile_y );
+
+                    Uint8 id = tile_value ? 0 : 1;
+
+                    game_state->map.set_coordinate_value ( lever.activate_tile_x, lever.activate_tile_y, id );
+
+                    game_state->lever.activate_time = c_lever_activate_cooldown;
+               }
+          }
+     }
+
+     game_state->player.update ( time_delta );
+
+     for ( Uint32 i = 0; i < game_state->enemy_count; ++i ) {
+          auto& enemy = game_state->enemies [ i ];
+
+          enemy.update ( time_delta );
+
+          // check collision between player and enemy
+          if ( enemy.health > 0 &&
+               game_state->player.collides_with ( enemy ) ) {
+               Direction damage_dir = determine_damage_direction ( enemy, game_state->player );
+               game_state->player.damage ( 1, damage_dir );
+          }
+
+          // attacking enemy
+          if ( game_state->player.attack_time > 0.0f &&
+               game_state->player.attack_collides_with ( enemy ) ) {
+               Direction damage_dir = determine_damage_direction ( game_state->player, enemy );
+               enemy.damage ( 1, damage_dir );
+          }
      }
 
      auto& player_exit = game_state->player_exit_tile_index;
@@ -436,10 +537,8 @@ extern "C" Void bryte_update ( Real32 time_delta )
           }
      }
 
-     if ( game_state->player.attack_time > 0.0f &&
-          game_state->player.attack_collides_with ( game_state->enemy ) ) {
-          Direction damage_dir = determine_damage_direction ( game_state->player, game_state->enemy );
-          game_state->enemy.damage ( 1, damage_dir );
+     if ( game_state->lever.activate_time > 0.0f ) {
+          game_state->lever.activate_time -= time_delta;
      }
 }
 
@@ -447,6 +546,7 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 {
      auto* game_state = Globals::g_memory_locations.game_state;
 
+     // calculate camera position based on player
      Real32 camera_center_offset_x = pixels_to_meters ( back_buffer->w / 2 );
      Real32 camera_center_offset_y = pixels_to_meters ( back_buffer->h / 2 );
 
@@ -465,16 +565,35 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      CLAMP ( game_state->camera_x, min_camera_x, 0 );
      CLAMP ( game_state->camera_y, min_camera_y, 0 );
 
+     // draw map
      render_map ( back_buffer, game_state->map, game_state->camera_x, game_state->camera_y );
 
-     Uint32 red   = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
-     Uint32 blue  = SDL_MapRGB ( back_buffer->format, 0, 0, 255 );
-     Uint32 green = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
-     Uint32 white = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
+     Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
+     Uint32 blue    = SDL_MapRGB ( back_buffer->format, 0, 0, 255 );
+     Uint32 green   = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
+     Uint32 white   = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
+     Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
 
+     // draw lever
+     SDL_Rect lever_rect { meters_to_pixels ( game_state->lever.position_x + game_state->camera_x ),
+                           meters_to_pixels ( game_state->lever.position_y + game_state->camera_y ),
+                           meters_to_pixels ( c_lever_width ),
+                           meters_to_pixels ( c_lever_height ) };
+
+     convert_to_sdl_origin_for_surface ( lever_rect, back_buffer );
+
+     SDL_FillRect ( back_buffer, &lever_rect, magenta );
+
+     // draw enemies
+     for ( Uint32 i = 0; i < game_state->enemy_count; ++i ) {
+          render_character ( back_buffer, game_state->enemies [ i ],
+                             game_state->camera_x, game_state->camera_y, blue );
+     }
+
+     // draw player
      render_character ( back_buffer, game_state->player, game_state->camera_x, game_state->camera_y, red );
-     render_character ( back_buffer, game_state->enemy, game_state->camera_x, game_state->camera_y, blue );
 
+     // draw player attack
      if ( game_state->player.attack_time > 0.0f ) {
           SDL_Rect attack_rect { meters_to_pixels ( game_state->player.attack_x + game_state->camera_x ),
                                  meters_to_pixels ( game_state->player.attack_y + game_state->camera_y ),
@@ -493,7 +612,7 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
           SDL_FillRect ( back_buffer, &attack_rect, green );
      }
 
-     // health bar
+     // draw player health bar
      Real32 pct = static_cast<Real32>( game_state->player.health ) /
                   static_cast<Real32>( game_state->player.max_health );
 

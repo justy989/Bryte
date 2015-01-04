@@ -53,6 +53,9 @@ namespace bryte
           Int32 tile_index_to_coordinate_x ( Int32 tile_index );
           Int32 tile_index_to_coordinate_y ( Int32 tile_index );
 
+          Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y );
+          Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
+
           Bool  is_position_solid   ( Real32 x, Real32 y );
           Int32 check_position_exit ( Real32 x, Real32 y );
 

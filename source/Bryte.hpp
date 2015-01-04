@@ -62,16 +62,54 @@ namespace bryte
 
      };
 
+     struct Lever {
+          Real32 position_x;
+          Real32 position_y;
+
+          Int32  activate_tile_x;
+          Int32  activate_tile_y;
+
+          Real32 activate_time;
+     };
+
+     struct Random {
+     public:
+
+          Random ( ) : i_f ( 0 ), i_s ( 0 ) { }
+
+          Void   seed     ( Uint32 value );
+          Uint32 generate ( Uint32 min, Uint32 max );
+
+     public:
+
+          Uint32 i_f;
+          Uint32 i_s;
+     };
+
      struct GameState {
      public:
 
-          Character player;
-          Character enemy;
+          Void initialize ( );
 
+     public:
+
+          static const Uint32 c_max_enemies = 32;
+
+     public:
+
+          Random    random;
+
+          Character player;
           Int32     player_exit_tile_index;
+
+          Character enemies [ c_max_enemies ];
+          Uint32    enemy_count;
+
+          Lever     lever;
 
           Bool      direction_keys [ Direction::count ];
           Bool      attack_key;
+          Bool      activate_key;
 
           Map       map;
 

@@ -59,7 +59,6 @@ namespace bryte
           Real32 cooldown_time;
 
           Direction facing;
-
      };
 
      struct Lever {

@@ -12,14 +12,14 @@ struct GameMemory {
      Uint32 used;
 
      template < typename T >
-     T* push_array ( Uint8 count );
+     T* push_array ( Uint32 count );
 
      template < typename T >
      T* push_object ( );
 };
 
 template < typename T >
-T* GameMemory::push_array ( Uint8 count )
+T* GameMemory::push_array ( Uint32 count )
 {
      auto* ptr = reinterpret_cast<Char8*>( memory ) + used;
 

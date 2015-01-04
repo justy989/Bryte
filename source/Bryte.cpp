@@ -368,6 +368,26 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
      game_state->initialize ( );
      game_state->map.build ( );
 
+     game_state->map.set_coordinate_value ( 1, 7, 1 );
+     game_state->map.set_coordinate_value ( 2, 7, 1 );
+     game_state->map.set_coordinate_value ( 3, 7, 1 );
+     game_state->map.set_coordinate_value ( 1, 9, 1 );
+     game_state->map.set_coordinate_value ( 2, 9, 1 );
+     game_state->map.set_coordinate_value ( 3, 9, 1 );
+     game_state->map.set_coordinate_value ( 3, 8, 1 );
+
+     // generate some walls on each room
+     for ( Int32 i = 0; i < 2; ++i ) {
+          Map::Room& room = Globals::g_memory_locations.rooms [ i ];
+
+          for ( Int32 i = 0; i < 20; ++i ) {
+               auto tile_x = game_state->random.generate ( 0, room.width );
+               auto tile_y = game_state->random.generate ( 0, room.height );
+
+               room.tiles [ tile_x * room.width + tile_y ] = 1;
+          }
+     }
+
      for ( Uint32 i = 0; i < game_state->enemy_count; ++i ) {
           auto& enemy = game_state->enemies [ i ];
 

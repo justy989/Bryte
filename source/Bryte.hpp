@@ -26,12 +26,35 @@ namespace bryte
           Real32 position_x;
           Real32 position_y;
 
+          Real32 velocity_x;
+          Real32 velocity_y;
+
           Real32 width;
           Real32 height;
 
           Real32 collision_height;
 
+          Int32  health;
+
+          // you are pushed when damaged
+          Real32 damage_move_x;
+          Real32 damage_move_y;
+
+          // the area attacked
+          Real32 attack_x;
+          Real32 attack_y;
+
+          Real32 attack_time;
+
+          Direction facing;
+
           Bool collides_with ( Real32 new_x, Real32 new_y, const Character& character );
+          Bool attack_collides_with ( const Character& character );
+
+          Void attack ( );
+          Void damage ( Int32 amount, Direction push );
+
+          Void update ( Real32 time_delta );
      };
 
      struct GameState {
@@ -43,6 +66,7 @@ namespace bryte
           Int32     player_exit_tile_index;
 
           Bool      direction_keys [ Direction::count ];
+          Bool      attack_key;
 
           Map       map;
 

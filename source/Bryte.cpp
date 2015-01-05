@@ -471,14 +471,6 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
 
      game_state->map.build ( );
 
-     game_state->map.set_coordinate_value ( 1, 7, 4 );
-     game_state->map.set_coordinate_value ( 2, 7, 4 );
-     game_state->map.set_coordinate_value ( 3, 7, 4 );
-     game_state->map.set_coordinate_value ( 1, 9, 6 );
-     game_state->map.set_coordinate_value ( 2, 9, 6 );
-     game_state->map.set_coordinate_value ( 3, 9, 6 );
-     game_state->map.set_coordinate_value ( 3, 8, 5 );
-
      for ( Uint32 i = 0; i < 2; ++i ) {
           Int32 max_tries = 10;
           Int32 random_tile_x = 0;

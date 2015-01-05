@@ -23,6 +23,17 @@ namespace bryte
      struct Character {
      public:
 
+          enum State {
+               dead,
+               spawning,
+               alive,
+               blinking,
+               attacking,
+               dying,
+          };
+
+     public:
+
           Bool collides_with ( const Character& character );
           Bool attack_collides_with ( const Character& character );
 
@@ -32,6 +43,12 @@ namespace bryte
           Void update ( Real32 time_delta );
 
      public:
+
+          State     state;
+          Direction facing;
+
+          Int32  health;
+          Int32  max_health;
 
           Real32 position_x;
           Real32 position_y;
@@ -44,12 +61,10 @@ namespace bryte
 
           Real32 collision_height;
 
-          Int32  health;
-          Int32  max_health;
-
           // you are pushed when damaged
-          Real32 damage_move_x;
-          Real32 damage_move_y;
+          Direction damage_push;
+          Real32    damage_time;
+          Real32    blink_time;
 
           // the area attacked
           Real32 attack_x;
@@ -58,7 +73,6 @@ namespace bryte
           Real32 attack_time;
           Real32 cooldown_time;
 
-          Direction facing;
      };
 
      struct Lever {
@@ -89,6 +103,8 @@ namespace bryte
      public:
 
           Bool initialize ( );
+
+          Bool spawn_enemy ( Real32 x, Real32 y );
 
      public:
 

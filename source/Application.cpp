@@ -388,6 +388,8 @@ Bool Application::run_game ( const Settings& settings )
           return false;
      }
 
+     m_current_update_timestamp = high_resolution_clock::now ( );
+
      while ( true ) {
 
           time_delta = time_and_limit_loop ( settings.locked_frames_per_second );

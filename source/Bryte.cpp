@@ -5,12 +5,13 @@
 using namespace bryte;
 
 static const Real32 c_player_speed            = 3.0f;
-static const Real32 c_character_damage_speed  = 12.0f;
-static const Real32 c_character_damage_force  = 0.8f;
+static const Real32 c_character_damage_speed  = 10.0f;
+static const Real32 c_character_damage_time   = 0.15f;
+static const Real32 c_character_blink_time    = 1.5f;
 static const Real32 c_character_attack_width  = 0.6f;
 static const Real32 c_character_attack_height = 1.2f;
-static const Real32 c_character_attack_time   = 0.75f;
-static const Real32 c_character_cooldown_time = 0.5f;
+static const Real32 c_character_attack_time   = 0.35f;
+static const Real32 c_character_cooldown_time = 0.25f;
 static const Real32 c_lever_width             = 0.5f;
 static const Real32 c_lever_height            = 0.5f;
 static const Real32 c_lever_activate_cooldown = 0.75f;
@@ -30,6 +31,7 @@ Void Character::attack ( )
      }
 
      attack_time = c_character_attack_time;
+     state       = State::attacking;
 }
 
 Bool Character::attack_collides_with ( const Character& character )
@@ -58,28 +60,15 @@ Bool Character::attack_collides_with ( const Character& character )
 
 Void Character::damage ( Int32 amount, Direction push )
 {
-     health -= amount;
+     health      -= amount;
+     damage_push = push;
+     damage_time = c_character_damage_time;
+     blink_time  = c_character_blink_time;
 
-     switch ( push ) {
-     default:
-          ASSERT ( 0 );
-          break;
-     case Direction::left:
-          damage_move_x = -c_character_damage_force;
-          damage_move_y = 0.0f;
-          break;
-     case Direction::right:
-          damage_move_x = c_character_damage_force;
-          damage_move_y = 0.0f;
-          break;
-     case Direction::up:
-          damage_move_x = 0.0f;
-          damage_move_y = c_character_damage_force;
-          break;
-     case Direction::down:
-          damage_move_x = 0.0f;
-          damage_move_y = -c_character_damage_force;
-          break;
+     if ( health > 0 ) {
+          state = State::blinking;
+     } else {
+          state = State::dead;
      }
 }
 
@@ -90,39 +79,41 @@ Void Character::update ( Real32 time_delta )
      Real32 target_position_x = position_x + velocity_x * time_delta;
      Real32 target_position_y = position_y + velocity_y * time_delta;
 
-     if ( damage_move_x > 0.0f ) {
-          target_position_x += c_character_damage_speed * time_delta;
-          damage_move_x     -= c_character_damage_speed * time_delta;
+     if ( damage_time > 0.0f ) {
+          damage_time -= time_delta;
 
-          if ( damage_move_x < 0.0f ) {
-               damage_move_x = 0.0f;
+          switch ( damage_push ) {
+          default:
+               ASSERT ( 0 );
+               break;
+          case Direction::left:
+               target_position_x -= c_character_damage_speed * time_delta;
+               break;
+          case Direction::right:
+               target_position_x += c_character_damage_speed * time_delta;
+               break;
+          case Direction::up:
+               target_position_y += c_character_damage_speed * time_delta;
+               break;
+          case Direction::down:
+               target_position_y -= c_character_damage_speed * time_delta;
+               break;
+          }
+
+          if ( damage_time < 0.0f ) {
+               damage_time = 0.0f;
           }
      }
 
-     if ( damage_move_x < 0.0f ) {
-          target_position_x -= c_character_damage_speed * time_delta;
-          damage_move_x     += c_character_damage_speed * time_delta;
+     if ( blink_time > 0.0f ) {
+          blink_time -= time_delta;
 
-          if ( damage_move_x > 0.0f ) {
-               damage_move_x = 0.0f;
-          }
-     }
+          if ( blink_time < 0.0f ) {
+               blink_time = 0.0f;
 
-     if ( damage_move_y > 0.0f ) {
-          target_position_y += c_character_damage_speed * time_delta;
-          damage_move_y     -= c_character_damage_speed * time_delta;
-
-          if ( damage_move_y < 0.0f ) {
-               damage_move_y = 0.0f;
-          }
-     }
-
-     if ( damage_move_y < 0.0f ) {
-          target_position_y -= c_character_damage_speed * time_delta;
-          damage_move_y     += c_character_damage_speed * time_delta;
-
-          if ( damage_move_y > 0.0f ) {
-               damage_move_y = 0.0f;
+               if ( state != State::dead ) {
+                    state = State::alive;
+               }
           }
      }
 
@@ -153,8 +144,12 @@ Void Character::update ( Real32 time_delta )
           attack_time -= time_delta;
 
           if ( attack_time < 0.0f ) {
-               attack_time = 0.0f;
+               attack_time   = 0.0f;
                cooldown_time = c_character_cooldown_time;
+
+               if ( state == State::attacking ) {
+                    state = State::alive;
+               }
           }
      }
 
@@ -207,30 +202,38 @@ Bool GameState::initialize ( )
 {
      random.seed ( 41491 );
 
-     player.position_x       = Map::c_tile_dimension_in_meters * 2.0f;
-     player.position_y       = Map::c_tile_dimension_in_meters * 2.0f;
-     player.width            = 1.3f;
-     player.height           = player.width * 1.5f;
-     player.collision_height = player.width;
+     player.state  = Character::State::alive;
+     player.facing = Direction::left;
+
      player.health           = 25;
      player.max_health       = 25;
 
-     enemy_count = 10;
+     player.position_x       = Map::c_tile_dimension_in_meters * 2.0f;
+     player.position_y       = Map::c_tile_dimension_in_meters * 2.0f;
 
-     for ( Uint32 i = 0; i < enemy_count; ++i ) {
-          auto& enemy = enemies [ i ];
+     player.velocity_x       = 0.0f;
+     player.velocity_y       = 0.0f;
 
-          enemy.position_x       = 0.0f;
-          enemy.position_y       = 0.0f;
+     player.width            = 1.3f;
+     player.height           = player.width * 1.5f;
+     player.collision_height = player.width;
 
-          enemy.width            = 1.0f;
+     player.damage_push = Direction::left;
+     player.damage_time = 0.0f;
+     player.blink_time  = 0.0f;
 
-          enemy.height           = enemy.width * 1.5f;
-          enemy.collision_height = enemy.width;
+     player.attack_x = 0.0f;
+     player.attack_y = 0.0f;
 
-          enemy.health           = 10;
-          enemy.max_health       = 10;
+     player.attack_time   = 0.0f;
+     player.cooldown_time = 0.0f;
+
+     // ensure all enemies start dead
+     for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
+          enemies [ i ].state = Character::State::dead;
      }
+
+     // spawn a few
 
      lever.position_x      = Map::c_tile_dimension_in_meters * 4.0f;
      lever.position_y      = Map::c_tile_dimension_in_meters * 7.5f - c_lever_width * 0.5f;
@@ -247,6 +250,53 @@ Bool GameState::initialize ( )
                       SDL_GetError ( ) );
           return false;
      }
+
+     return true;
+}
+
+Bool GameState::spawn_enemy ( Real32 x, Real32 y )
+{
+     Character* enemy = nullptr;
+
+     for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
+          if ( enemies [ i ].state == Character::State::dead ) {
+               enemy = enemies + i;
+               break;
+          }
+     }
+
+     if ( !enemy ) {
+          LOG_WARNING ( "Tried to spawn enemy when %d enemies already exist.\n", c_max_enemies );
+          return false;
+     }
+
+     enemy->state  = Character::State::alive;
+     enemy->facing = Direction::left;
+
+     enemy->health     = 10;
+     enemy->max_health = 10;
+
+     enemy->position_x = x;
+     enemy->position_y = y;
+
+     enemy->velocity_x = 0.0f;
+     enemy->velocity_y = 0.0f;
+
+     enemy->width            = 1.0f;
+     enemy->height           = enemy->width * 1.5f;
+     enemy->collision_height = enemy->width;
+
+     enemy->damage_push = Direction::left;
+     enemy->damage_time = 0.0f;
+     enemy->blink_time  = 0.0f;
+
+     enemy->attack_x    = 0.0f;
+     enemy->attack_y    = 0.0f;
+
+     enemy->attack_time   = 0.0f;
+     enemy->cooldown_time = 0.0f;
+
+     enemy_count++;
 
      return true;
 }
@@ -292,6 +342,12 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
      static Bool        blink_on      = false;
      static Int32       blink_count   = 0;
 
+     // do not draw if dead
+     if ( character.state == Character::State::dead ) {
+          return;
+     }
+
+     // update blinking
      if ( blink_count <= 0 ) {
           blink_count = blink_length;
           blink_on = !blink_on;
@@ -299,12 +355,7 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
           blink_count--;
      }
 
-     if ( !blink_on && ( character.damage_move_x != 0.0f || character.damage_move_y != 0.0f ) ) {
-          return;
-     }
-
-     // do not draw if dead
-     if ( character.health <= 0 ) {
+     if ( !blink_on && character.state == Character::State::blinking ) {
           return;
      }
 
@@ -395,14 +446,10 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
      game_state->map.set_coordinate_value ( 3, 9, 6 );
      game_state->map.set_coordinate_value ( 3, 8, 5 );
 
-     for ( Uint32 i = 0; i < game_state->enemy_count; ++i ) {
-          auto& enemy = game_state->enemies [ i ];
-
+     for ( Uint32 i = 0; i < 2; ++i ) {
+          Int32 max_tries = 10;
           Int32 random_tile_x = 0;
           Int32 random_tile_y = 0;
-
-          // spawn on random tile
-          Int32 max_tries = 10;
 
           while ( max_tries > 0 ) {
                random_tile_x = game_state->random.generate ( 0, 16 );
@@ -415,8 +462,8 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
                max_tries--;
           }
 
-          enemy.position_x = Map::c_tile_dimension_in_meters * static_cast<Real32>( random_tile_x );
-          enemy.position_y = Map::c_tile_dimension_in_meters * static_cast<Real32>( random_tile_y );
+          game_state->spawn_enemy ( Map::c_tile_dimension_in_meters * static_cast<Real32>( random_tile_x ),
+                                    Map::c_tile_dimension_in_meters * static_cast<Real32>( random_tile_y ) );
      }
 
      return true;
@@ -465,9 +512,9 @@ extern "C" Void bryte_user_input ( const GameInput& game_input )
                game_state->activate_key = key_change.down;
                break;
           case SDL_SCANCODE_8:
-               for ( Uint32 i = 0; i < game_state->enemy_count; ++i ) {
-                    game_state->enemies [ i ].health = 10;
-               }
+               game_state->spawn_enemy ( game_state->player.position_x - game_state->player.width,
+                                         game_state->player.position_y );
+               break;
           }
      }
 }
@@ -523,13 +570,17 @@ extern "C" Void bryte_update ( Real32 time_delta )
 
      game_state->player.update ( time_delta );
 
-     for ( Uint32 i = 0; i < game_state->enemy_count; ++i ) {
+     for ( Uint32 i = 0; i < GameState::c_max_enemies; ++i ) {
           auto& enemy = game_state->enemies [ i ];
+
+          if ( enemy.state == Character::State::dead ) {
+               continue;
+          }
 
           enemy.update ( time_delta );
 
           // check collision between player and enemy
-          if ( enemy.health > 0 &&
+          if ( game_state->player.state != Character::State::blinking &&
                game_state->player.collides_with ( enemy ) ) {
                Direction damage_dir = determine_damage_direction ( enemy, game_state->player );
                game_state->player.damage ( 1, damage_dir );
@@ -537,6 +588,7 @@ extern "C" Void bryte_update ( Real32 time_delta )
 
           // attacking enemy
           if ( game_state->player.attack_time > 0.0f &&
+               enemy.state != Character::State::blinking &&
                game_state->player.attack_collides_with ( enemy ) ) {
                Direction damage_dir = determine_damage_direction ( game_state->player, enemy );
                enemy.damage ( 1, damage_dir );
@@ -626,7 +678,7 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      render_character ( back_buffer, game_state->player, game_state->camera_x, game_state->camera_y, red );
 
      // draw player attack
-     if ( game_state->player.attack_time > 0.0f ) {
+     if ( game_state->player.state == Character::State::attacking ) {
           SDL_Rect attack_rect { meters_to_pixels ( game_state->player.attack_x + game_state->camera_x ),
                                  meters_to_pixels ( game_state->player.attack_y + game_state->camera_y ),
                                  meters_to_pixels ( c_character_attack_width ),

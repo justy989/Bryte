@@ -74,6 +74,14 @@ Void Map::build ( )
      rooms [ 1 ].exits [ 0 ].destination_y = 8;
 
      m_current_room = rooms;
+
+     set_coordinate_value ( 1, 7, 4 );
+     set_coordinate_value ( 2, 7, 4 );
+     set_coordinate_value ( 3, 7, 4 );
+     set_coordinate_value ( 1, 9, 6 );
+     set_coordinate_value ( 2, 9, 6 );
+     set_coordinate_value ( 3, 9, 6 );
+     set_coordinate_value ( 3, 8, 5 );
 }
 
 Int32 Map::position_to_tile_index ( Real32 x, Real32 y )

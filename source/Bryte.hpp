@@ -20,6 +20,18 @@ namespace bryte
           count
      };
 
+     struct Stopwatch {
+     public:
+
+          Void reset ( Real32 remaining );
+
+          Bool tick ( Real32 delta );
+
+     public:
+
+          Real32 remaining;
+     };
+
      struct Character {
      public:
 
@@ -42,6 +54,9 @@ namespace bryte
 
           Void update ( Real32 time_delta );
 
+          Real32 calc_attack_x ( );
+          Real32 calc_attack_y ( );
+
      public:
 
           State     state;
@@ -61,17 +76,12 @@ namespace bryte
 
           Real32 collision_height;
 
-          // you are pushed when damaged
-          Direction damage_push;
-          Real32    damage_time;
-          Real32    blink_time;
+          Direction damage_pushed;
+          Stopwatch damage_time;
+          Stopwatch blink_time;
 
-          // the area attacked
-          Real32 attack_x;
-          Real32 attack_y;
-
-          Real32 attack_time;
-          Real32 cooldown_time;
+          Stopwatch attack_time;
+          Stopwatch cooldown_time;
      };
 
      struct Lever {

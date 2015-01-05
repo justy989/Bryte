@@ -17,6 +17,23 @@ static const Real32 c_lever_height            = 0.5f;
 static const Real32 c_lever_activate_cooldown = 0.75f;
 static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
 
+Void Stopwatch::reset ( Real32 remaining )
+{
+     this->remaining = remaining;
+}
+
+Bool Stopwatch::tick ( Real32 time_delta )
+{
+     remaining -= time_delta;
+
+     if ( remaining <= 0.0f ) {
+          remaining = 0.0f;
+          return true;
+     }
+
+     return false;
+}
+
 Bool Character::collides_with ( const Character& character )
 {
      return rect_collides_with_rect ( position_x, position_y, width, collision_height,
@@ -26,12 +43,49 @@ Bool Character::collides_with ( const Character& character )
 
 Void Character::attack ( )
 {
-     if ( attack_time > 0.0f || cooldown_time > 0.0f ) {
+     if ( state != State::alive || attack_time.remaining > 0.0f || cooldown_time.remaining > 0.0f ) {
           return;
      }
 
-     attack_time = c_character_attack_time;
-     state       = State::attacking;
+     attack_time.reset ( c_character_attack_time );
+
+     state = State::attacking;
+}
+
+Real32 Character::calc_attack_x ( )
+{
+     switch ( facing ) {
+     default:
+          ASSERT ( 0 );
+     case Direction::left:
+          return position_x - c_character_attack_height;
+     case Direction::right:
+          return position_x + width;
+     case Direction::up:
+          return position_x + width * 0.33f;
+     case Direction::down:
+          return position_x + width * 0.33f;
+     }
+
+     return 0.0f;
+}
+
+Real32 Character::calc_attack_y ( )
+{
+     switch ( facing ) {
+     default:
+          ASSERT ( 0 );
+     case Direction::left:
+          return position_y + height * 0.5f;
+     case Direction::right:
+          return position_y + height * 0.5f;
+     case Direction::up:
+          return position_y + height;
+     case Direction::down:
+          return position_y - height * 0.5f;
+     }
+
+     return 0.0f;
 }
 
 Bool Character::attack_collides_with ( const Character& character )
@@ -40,16 +94,15 @@ Bool Character::attack_collides_with ( const Character& character )
      switch ( facing ) {
      default:
           ASSERT ( 0 );
-          break;
      case Direction::up:
      case Direction::down:
-          return rect_collides_with_rect ( attack_x, attack_y,
+          return rect_collides_with_rect ( calc_attack_x ( ), calc_attack_y ( ),
                                            c_character_attack_width, c_character_attack_height,
                                            character.position_x, character.position_y,
                                            character.width, character.height );
      case Direction::left:
      case Direction::right:
-          return rect_collides_with_rect ( attack_x, attack_y,
+          return rect_collides_with_rect ( calc_attack_x ( ), calc_attack_y ( ),
                                            c_character_attack_height, c_character_attack_width,
                                            character.position_x, character.position_y,
                                            character.width, character.height );
@@ -60,12 +113,18 @@ Bool Character::attack_collides_with ( const Character& character )
 
 Void Character::damage ( Int32 amount, Direction push )
 {
-     health      -= amount;
-     damage_push = push;
-     damage_time = c_character_damage_time;
-     blink_time  = c_character_blink_time;
+     health       -= amount;
+     damage_pushed = push;
+
+     damage_time.reset ( c_character_damage_time );
+     blink_time.reset ( c_character_blink_time );
 
      if ( health > 0 ) {
+          if ( state == State::attacking ) {
+               attack_time.reset ( 0.0f );
+               cooldown_time.reset ( c_character_cooldown_time );
+          }
+
           state = State::blinking;
      } else {
           state = State::dead;
@@ -79,43 +138,46 @@ Void Character::update ( Real32 time_delta )
      Real32 target_position_x = position_x + velocity_x * time_delta;
      Real32 target_position_y = position_y + velocity_y * time_delta;
 
-     if ( damage_time > 0.0f ) {
-          damage_time -= time_delta;
-
-          switch ( damage_push ) {
-          default:
-               ASSERT ( 0 );
-               break;
-          case Direction::left:
-               target_position_x -= c_character_damage_speed * time_delta;
-               break;
-          case Direction::right:
-               target_position_x += c_character_damage_speed * time_delta;
-               break;
-          case Direction::up:
-               target_position_y += c_character_damage_speed * time_delta;
-               break;
-          case Direction::down:
-               target_position_y -= c_character_damage_speed * time_delta;
-               break;
+     switch ( state ) {
+     case State::blinking:
+          if ( !damage_time.tick ( time_delta ) ) {
+               switch ( damage_pushed ) {
+               default:
+                    ASSERT ( 0 );
+               case Direction::left:
+                    target_position_x -= c_character_damage_speed * time_delta;
+                    break;
+               case Direction::right:
+                    target_position_x += c_character_damage_speed * time_delta;
+                    break;
+               case Direction::up:
+                    target_position_y += c_character_damage_speed * time_delta;
+                    break;
+               case Direction::down:
+                    target_position_y -= c_character_damage_speed * time_delta;
+                    break;
+               }
           }
 
-          if ( damage_time < 0.0f ) {
-               damage_time = 0.0f;
-          }
-     }
-
-     if ( blink_time > 0.0f ) {
-          blink_time -= time_delta;
-
-          if ( blink_time < 0.0f ) {
-               blink_time = 0.0f;
-
+          if ( blink_time.tick ( time_delta ) ) {
                if ( state != State::dead ) {
                     state = State::alive;
                }
           }
+
+          break;
+     case State::attacking:
+          if ( attack_time.tick ( time_delta ) ) {
+               cooldown_time.reset ( c_character_cooldown_time );
+               state = State::alive;
+          }
+
+          break;
+     default:
+          break;
      }
+
+     cooldown_time.tick ( time_delta );
 
      bool collided = false;
 
@@ -136,44 +198,8 @@ Void Character::update ( Real32 time_delta )
           position_y = target_position_y;
      }
 
-     if ( cooldown_time > 0.0f ) {
-          cooldown_time -= time_delta;
-     }
 
-     if ( attack_time > 0.0f ) {
-          attack_time -= time_delta;
 
-          if ( attack_time < 0.0f ) {
-               attack_time   = 0.0f;
-               cooldown_time = c_character_cooldown_time;
-
-               if ( state == State::attacking ) {
-                    state = State::alive;
-               }
-          }
-     }
-
-     switch ( game_state->player.facing ) {
-     default:
-          ASSERT ( 0 );
-          break;
-     case Direction::left:
-          game_state->player.attack_x = game_state->player.position_x - c_character_attack_height;
-          game_state->player.attack_y = game_state->player.position_y + game_state->player.height * 0.5f;
-          break;
-     case Direction::right:
-          game_state->player.attack_x = game_state->player.position_x + game_state->player.width;
-          game_state->player.attack_y = game_state->player.position_y + game_state->player.height * 0.5f;
-          break;
-     case Direction::up:
-          game_state->player.attack_x = game_state->player.position_x + game_state->player.width * 0.33f;
-          game_state->player.attack_y = game_state->player.position_y + game_state->player.height;
-          break;
-     case Direction::down:
-          game_state->player.attack_x = game_state->player.position_x + game_state->player.width * 0.33f;
-          game_state->player.attack_y = game_state->player.position_y - game_state->player.height * 0.5f;
-          break;
-     }
 
      velocity_x = 0.0f;
      velocity_y = 0.0f;
@@ -218,15 +244,12 @@ Bool GameState::initialize ( )
      player.height           = player.width * 1.5f;
      player.collision_height = player.width;
 
-     player.damage_push = Direction::left;
-     player.damage_time = 0.0f;
-     player.blink_time  = 0.0f;
+     player.damage_pushed = Direction::left;
+     player.damage_time.reset ( 0.0f );
+     player.blink_time.reset ( 0.0f );
 
-     player.attack_x = 0.0f;
-     player.attack_y = 0.0f;
-
-     player.attack_time   = 0.0f;
-     player.cooldown_time = 0.0f;
+     player.attack_time.reset ( 0.0f );
+     player.cooldown_time.reset ( 0.0f );
 
      // ensure all enemies start dead
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
@@ -284,15 +307,13 @@ Bool GameState::spawn_enemy ( Real32 x, Real32 y )
      enemy->height           = enemy->width * 1.5f;
      enemy->collision_height = enemy->width;
 
-     enemy->damage_push = Direction::left;
-     enemy->damage_time = 0.0f;
-     enemy->blink_time  = 0.0f;
+     enemy->damage_pushed = Direction::left;
 
-     enemy->attack_x    = 0.0f;
-     enemy->attack_y    = 0.0f;
+     enemy->damage_time.reset ( 0.0f );
+     enemy->blink_time.reset ( 0.0f );
 
-     enemy->attack_time   = 0.0f;
-     enemy->cooldown_time = 0.0f;
+     enemy->attack_time.reset ( 0.0f );
+     enemy->cooldown_time.reset ( 0.0f );
 
      enemy_count++;
 
@@ -599,7 +620,7 @@ extern "C" Void bryte_update ( Real32 time_delta )
           }
 
           // attacking enemy
-          if ( game_state->player.attack_time > 0.0f &&
+          if ( game_state->player.state == Character::State::attacking &&
                enemy.state != Character::State::blinking &&
                game_state->player.attack_collides_with ( enemy ) ) {
                Direction damage_dir = determine_damage_direction ( game_state->player, enemy );
@@ -691,8 +712,8 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 
      // draw player attack
      if ( game_state->player.state == Character::State::attacking ) {
-          SDL_Rect attack_rect { meters_to_pixels ( game_state->player.attack_x ),
-                                 meters_to_pixels ( game_state->player.attack_y ),
+          SDL_Rect attack_rect { meters_to_pixels ( game_state->player.calc_attack_x ( ) ),
+                                 meters_to_pixels ( game_state->player.calc_attack_y ( ) ),
                                  meters_to_pixels ( c_character_attack_width ),
                                  meters_to_pixels ( c_character_attack_height ) };
 

@@ -284,6 +284,7 @@ Bool Application::poll_sdl_events ( )
                auto sc = sdl_event.key.keysym.scancode;
 
                if ( sc == SDL_SCANCODE_ESCAPE ) {
+                    LOG_INFO ( "Handling quit event\n" );
                     return false;
                }
 
@@ -384,10 +385,13 @@ Bool Application::run_game ( const Settings& settings )
      ASSERT ( m_game_update_func );
      ASSERT ( m_game_render_func );
 
+     LOG_INFO ( "Initializing game\n" );
+
      if ( !m_game_init_func ( m_game_memory) ) {
           return false;
      }
 
+     LOG_INFO ( "Starting game loop\n" );
      m_current_update_timestamp = high_resolution_clock::now ( );
 
      while ( true ) {
@@ -407,6 +411,7 @@ Bool Application::run_game ( const Settings& settings )
           render_to_window ( );
      }
 
+     LOG_INFO ( "Destroying game\n" );
      m_game_destroy_func ( );
 
      return 0;

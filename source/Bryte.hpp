@@ -72,7 +72,6 @@ namespace bryte
 
           Real32 attack_time;
           Real32 cooldown_time;
-
      };
 
      struct Lever {
@@ -91,7 +90,7 @@ namespace bryte
           Random ( ) : i_f ( 0 ), i_s ( 0 ) { }
 
           Void   seed     ( Uint32 value );
-          Uint32 generate ( Uint32 min, Uint32 max );
+          Uint32 generate ( Uint32 min, Uint32 max ); // not inclusive!
 
      public:
 

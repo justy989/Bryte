@@ -64,6 +64,12 @@ namespace bryte
                return true;
           }
 
+          // test A inside B center
+          if ( point_inside_rect ( a_left + a_width * 0.5f, a_bottom + a_height * 0.5f,
+                                   b_left, b_bottom, b_right, b_top ) ) {
+               return true;
+          }
+
           Real32 a_right = a_left + a_width;
           Real32 a_top = a_bottom + a_height;
 

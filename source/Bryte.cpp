@@ -41,16 +41,16 @@ Bool Character::attack_collides_with ( const Character& character )
      default:
           ASSERT ( 0 );
           break;
-     case Direction::left:
-     case Direction::right:
-          return rect_collides_with_rect ( attack_x, attack_y,
-                                           c_character_attack_height, c_character_attack_width,
-                                           character.position_x, character.position_y,
-                                           character.width, character.height );
      case Direction::up:
      case Direction::down:
           return rect_collides_with_rect ( attack_x, attack_y,
                                            c_character_attack_width, c_character_attack_height,
+                                           character.position_x, character.position_y,
+                                           character.width, character.height );
+     case Direction::left:
+     case Direction::right:
+          return rect_collides_with_rect ( attack_x, attack_y,
+                                           c_character_attack_height, c_character_attack_width,
                                            character.position_x, character.position_y,
                                            character.width, character.height );
      }
@@ -233,8 +233,6 @@ Bool GameState::initialize ( )
           enemies [ i ].state = Character::State::dead;
      }
 
-     // spawn a few
-
      lever.position_x      = Map::c_tile_dimension_in_meters * 4.0f;
      lever.position_y      = Map::c_tile_dimension_in_meters * 7.5f - c_lever_width * 0.5f;
      lever.activate_tile_x = 3;
@@ -304,8 +302,14 @@ Bool GameState::spawn_enemy ( Real32 x, Real32 y )
 // assuming A attacks B
 static Direction determine_damage_direction ( const Character& a, const Character& b )
 {
-     Real32 diff_x = b.position_x - a.position_x;
-     Real32 diff_y = b.position_y - a.position_y;
+     Real32 a_center_x = a.position_x + a.width * 0.5f;
+     Real32 a_center_y = a.position_y + a.collision_height * 0.5f;
+
+     Real32 b_center_x = b.position_x + b.width * 0.5f;
+     Real32 b_center_y = b.position_y + b.collision_height * 0.5f;
+
+     Real32 diff_x = b_center_x - a_center_x;
+     Real32 diff_y = b_center_y - a_center_y;
 
      Real32 abs_x = fabs ( diff_x );
      Real32 abs_y = fabs ( diff_y );
@@ -316,18 +320,29 @@ static Direction determine_damage_direction ( const Character& a, const Characte
           }
 
           return Direction::left;
-     } else if ( abs_y < abs_x ) {
+     } else if ( abs_y > abs_x ) {
           if ( diff_y > 0.0f ) {
                return Direction::up;
           }
 
           return Direction::down;
      } else {
-          if ( diff_y < 0.0f ) {
-               return Direction::down;
+          Direction valid_dirs [ 2 ];
+
+          if ( diff_x > 0.0f ) {
+               valid_dirs [ 0 ] = Direction::right;
+          } else {
+               valid_dirs [ 0 ] = Direction::left;
           }
 
-          return Direction::up;
+          if ( diff_y > 0.0f ) {
+               valid_dirs [ 1 ] = Direction::up;
+          } else {
+               valid_dirs [ 1 ] = Direction::down;
+          }
+
+          // coin flip between using the x or y direction
+          return valid_dirs [ Globals::g_memory_locations.game_state->random.generate ( 0, 2 ) ];
      }
 
      // the above cases should catch all
@@ -530,17 +545,17 @@ extern "C" Void bryte_update ( Real32 time_delta )
 
      if ( game_state->direction_keys [ Direction::down ] ) {
           game_state->player.velocity_y = -c_player_speed;
-          game_state->player.facing = Direction::down;
+          game_state->player.facing     = Direction::down;
      }
 
      if ( game_state->direction_keys [ Direction::right ] ) {
           game_state->player.velocity_x = c_player_speed;
-          game_state->player.facing = Direction::right;
+          game_state->player.facing     = Direction::right;
      }
 
      if ( game_state->direction_keys [ Direction::left ] ) {
           game_state->player.velocity_x = -c_player_speed;
-          game_state->player.facing = Direction::left;
+          game_state->player.facing     = Direction::left;
      }
 
      if ( game_state->attack_key ) {

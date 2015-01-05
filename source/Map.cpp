@@ -24,6 +24,9 @@ Void Map::build ( )
      Globals::g_memory_locations.rooms = Globals::g_game_memory.push_array<Room>( Map::c_max_rooms );
      auto* rooms                       = Globals::g_memory_locations.rooms;
 
+     LOG_INFO ( "Building Room: %d by %d\n", c_map_1_width, c_map_1_height );
+     LOG_INFO ( "Building Room: %d by %d\n", c_map_2_width, c_map_2_height );
+
      rooms [ 0 ].width  = c_map_1_width;
      rooms [ 0 ].height = c_map_1_height;
 

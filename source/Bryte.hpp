@@ -112,6 +112,7 @@ namespace bryte
      public:
 
           Bool initialize ( );
+          Void destroy    ( );
 
           Bool spawn_enemy ( Real32 x, Real32 y );
 

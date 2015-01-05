@@ -153,10 +153,10 @@ Bool Application::load_game_code ( const Char8* shared_library_path )
      void* game_funcs [ c_func_count ];
 
      for ( int i = 0; i < c_func_count; ++i ) {
-          game_funcs [ i ] = dlsym ( m_shared_library_handle, c_game_func_strs [ i ]);
+          LOG_INFO ( "Loading function: %s\n", c_game_func_strs [ i ] );
+          game_funcs [ i ] = dlsym ( m_shared_library_handle, c_game_func_strs [ i ] );
 
           if ( !game_funcs [ i ] ) {
-               printf ( "Failed to load: %s\n", c_game_func_strs [ i ] );
                PRINT_DL_ERROR ( "dlsym" );
                return false;
           }
@@ -184,7 +184,7 @@ Bool Application::allocate_game_memory ( )
      m_game_memory.memory = malloc ( m_game_memory.size );
 
      if ( !m_game_memory.memory ) {
-          printf ( "Failed to Allocate %d memory for game.\n", m_game_memory.size );
+          LOG_ERROR ( "Allocation of %d bytes failed, malloc() returned NULL.\n", m_game_memory.size );
           return false;
      }
 
@@ -386,7 +386,6 @@ Bool Application::run_game ( const Settings& settings )
      ASSERT ( m_game_render_func );
 
      LOG_INFO ( "Initializing game\n" );
-
      if ( !m_game_init_func ( m_game_memory) ) {
           return false;
      }

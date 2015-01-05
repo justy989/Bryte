@@ -34,6 +34,25 @@ Bool Stopwatch::tick ( Real32 time_delta )
      return false;
 }
 
+Void Random::seed ( Uint32 value )
+{
+     i_f = value;
+     i_s = value;
+}
+
+Uint32 Random::generate ( Uint32 min, Uint32 max )
+{
+     if ( min == max ) {
+          return min;
+     }
+
+     // simple RNG by George Marsaglia
+     i_f = 36969 * ( i_f & 65535 ) + ( i_f >> 16 );
+     i_s = 18000 * ( i_s & 65535 ) + ( i_s >> 16 );
+
+     return ( ( ( i_f << 16 ) + i_s ) % ( max - min ) ) + min;
+}
+
 Bool Character::collides_with ( const Character& character )
 {
      return rect_collides_with_rect ( position_x, position_y, width, collision_height,
@@ -198,30 +217,59 @@ Void Character::update ( Real32 time_delta )
           position_y = target_position_y;
      }
 
-
-
-
      velocity_x = 0.0f;
      velocity_y = 0.0f;
 }
 
-Void Random::seed ( Uint32 value )
+// assuming A attacks B
+static Direction determine_damage_direction ( const Character& a, const Character& b )
 {
-     i_f = value;
-     i_s = value;
-}
+     Real32 a_center_x = a.position_x + a.width * 0.5f;
+     Real32 a_center_y = a.position_y + a.collision_height * 0.5f;
 
-Uint32 Random::generate ( Uint32 min, Uint32 max )
-{
-     if ( min == max ) {
-          return min;
+     Real32 b_center_x = b.position_x + b.width * 0.5f;
+     Real32 b_center_y = b.position_y + b.collision_height * 0.5f;
+
+     Real32 diff_x = b_center_x - a_center_x;
+     Real32 diff_y = b_center_y - a_center_y;
+
+     Real32 abs_x = fabs ( diff_x );
+     Real32 abs_y = fabs ( diff_y );
+
+     if ( abs_x > abs_y ) {
+          if ( diff_x > 0.0f ) {
+               return Direction::right;
+          }
+
+          return Direction::left;
+     } else if ( abs_y > abs_x ) {
+          if ( diff_y > 0.0f ) {
+               return Direction::up;
+          }
+
+          return Direction::down;
+     } else {
+          Direction valid_dirs [ 2 ];
+
+          if ( diff_x > 0.0f ) {
+               valid_dirs [ 0 ] = Direction::right;
+          } else {
+               valid_dirs [ 0 ] = Direction::left;
+          }
+
+          if ( diff_y > 0.0f ) {
+               valid_dirs [ 1 ] = Direction::up;
+          } else {
+               valid_dirs [ 1 ] = Direction::down;
+          }
+
+          // coin flip between using the x or y direction
+          return valid_dirs [ Globals::g_memory_locations.game_state->random.generate ( 0, 2 ) ];
      }
 
-     // simple RNG by George Marsaglia
-     i_f = 36969 * ( i_f & 65535 ) + ( i_f >> 16 );
-     i_s = 18000 * ( i_s & 65535 ) + ( i_s >> 16 );
-
-     return ( ( ( i_f << 16 ) + i_s ) % ( max - min ) ) + min;
+     // the above cases should catch all
+     ASSERT ( 0 );
+     return Direction::left;
 }
 
 Bool GameState::initialize ( )
@@ -275,6 +323,12 @@ Bool GameState::initialize ( )
      return true;
 }
 
+Void GameState::destroy ( )
+{
+     LOG_INFO ( "Freeing tilesheet: %s\n", c_test_tilesheet_path );
+     SDL_FreeSurface ( tilesheet );
+}
+
 Bool GameState::spawn_enemy ( Real32 x, Real32 y )
 {
      Character* enemy = nullptr;
@@ -290,6 +344,8 @@ Bool GameState::spawn_enemy ( Real32 x, Real32 y )
           LOG_WARNING ( "Tried to spawn enemy when %d enemies already exist.\n", c_max_enemies );
           return false;
      }
+
+     LOG_INFO ( "Spawning enemy at: %f, %f\n", x, y );
 
      enemy->state  = Character::State::alive;
      enemy->facing = Direction::left;
@@ -318,57 +374,6 @@ Bool GameState::spawn_enemy ( Real32 x, Real32 y )
      enemy_count++;
 
      return true;
-}
-
-// assuming A attacks B
-static Direction determine_damage_direction ( const Character& a, const Character& b )
-{
-     Real32 a_center_x = a.position_x + a.width * 0.5f;
-     Real32 a_center_y = a.position_y + a.collision_height * 0.5f;
-
-     Real32 b_center_x = b.position_x + b.width * 0.5f;
-     Real32 b_center_y = b.position_y + b.collision_height * 0.5f;
-
-     Real32 diff_x = b_center_x - a_center_x;
-     Real32 diff_y = b_center_y - a_center_y;
-
-     Real32 abs_x = fabs ( diff_x );
-     Real32 abs_y = fabs ( diff_y );
-
-     if ( abs_x > abs_y ) {
-          if ( diff_x > 0.0f ) {
-               return Direction::right;
-          }
-
-          return Direction::left;
-     } else if ( abs_y > abs_x ) {
-          if ( diff_y > 0.0f ) {
-               return Direction::up;
-          }
-
-          return Direction::down;
-     } else {
-          Direction valid_dirs [ 2 ];
-
-          if ( diff_x > 0.0f ) {
-               valid_dirs [ 0 ] = Direction::right;
-          } else {
-               valid_dirs [ 0 ] = Direction::left;
-          }
-
-          if ( diff_y > 0.0f ) {
-               valid_dirs [ 1 ] = Direction::up;
-          } else {
-               valid_dirs [ 1 ] = Direction::down;
-          }
-
-          // coin flip between using the x or y direction
-          return valid_dirs [ Globals::g_memory_locations.game_state->random.generate ( 0, 2 ) ];
-     }
-
-     // the above cases should catch all
-     ASSERT ( 0 );
-     return Direction::left;
 }
 
 static Void render_character ( SDL_Surface* back_buffer, const Character& character,
@@ -496,7 +501,9 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
 
 extern "C" Void bryte_destroy ( )
 {
+     auto* game_state = Globals::g_memory_locations.game_state;
 
+     game_state->destroy ( );
 }
 
 extern "C" Void bryte_reload_memory ( GameMemory& game_memory )

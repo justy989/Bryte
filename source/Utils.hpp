@@ -42,9 +42,14 @@ namespace bryte
           return static_cast<Real32>( pixels ) / pixels_per_meter;
      }
 
-     inline Void convert_to_sdl_origin_for_surface ( SDL_Rect& rect, SDL_Surface* surface )
+     inline Void world_to_sdl ( SDL_Rect& rect, SDL_Surface* back_buffer, Real32 camera_x, Real32 camera_y )
      {
-          rect.y = ( surface->h - rect.y ) - rect.h;
+          // offset by the camera
+          rect.x += meters_to_pixels ( camera_x );
+          rect.y += meters_to_pixels ( camera_y );
+
+          // recalc the y so the bottom left is the origin
+          rect.y = ( back_buffer->h - rect.y ) - rect.h;
      }
 
      inline Bool point_inside_rect ( Real32 x, Real32 y, Real32 l, Real32 b, Real32 r, Real32 t )

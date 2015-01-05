@@ -379,10 +379,7 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
                                meters_to_pixels ( character.width ),
                                meters_to_pixels ( character.height ) };
 
-     character_rect.x += meters_to_pixels ( camera_x );
-     character_rect.y += meters_to_pixels ( camera_y );
-
-     convert_to_sdl_origin_for_surface ( character_rect, back_buffer );
+     world_to_sdl ( character_rect, back_buffer, camera_x, camera_y );
 
      SDL_FillRect ( back_buffer, &character_rect, color );
 }
@@ -404,10 +401,10 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
 
                clip_rect.x = tile_value * Map::c_tile_dimension_in_pixels;
 
-               tile_rect.x = x * Map::c_tile_dimension_in_pixels + meters_to_pixels ( camera_x );
-               tile_rect.y = y * Map::c_tile_dimension_in_pixels + meters_to_pixels ( camera_y );
+               tile_rect.x = x * Map::c_tile_dimension_in_pixels;
+               tile_rect.y = y * Map::c_tile_dimension_in_pixels;
 
-               convert_to_sdl_origin_for_surface ( tile_rect, back_buffer );
+               world_to_sdl ( tile_rect, back_buffer, camera_x, camera_y );
 
                SDL_BlitSurface ( tilesheet, &clip_rect, back_buffer, &tile_rect );
           }
@@ -421,10 +418,10 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
           SDL_Rect exit_rect { 0, 0,
                                Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-          exit_rect.x = exit.location_x * Map::c_tile_dimension_in_pixels + meters_to_pixels ( camera_x );
-          exit_rect.y = exit.location_y * Map::c_tile_dimension_in_pixels + meters_to_pixels ( camera_y );
+          exit_rect.x = exit.location_x * Map::c_tile_dimension_in_pixels;
+          exit_rect.y = exit.location_y * Map::c_tile_dimension_in_pixels;
 
-          convert_to_sdl_origin_for_surface ( exit_rect, back_buffer );
+          world_to_sdl ( exit_rect, back_buffer, camera_x, camera_y );
 
           SDL_FillRect ( back_buffer, &exit_rect, exit_color );
      }
@@ -679,10 +676,7 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
                            meters_to_pixels ( c_lever_width ),
                            meters_to_pixels ( c_lever_height ) };
 
-     lever_rect.x += meters_to_pixels ( game_state->camera_x );
-     lever_rect.y += meters_to_pixels ( game_state->camera_y );
-
-     convert_to_sdl_origin_for_surface ( lever_rect, back_buffer );
+     world_to_sdl ( lever_rect, back_buffer, game_state->camera_x, game_state->camera_y );
 
      SDL_FillRect ( back_buffer, &lever_rect, magenta );
 
@@ -709,10 +703,7 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
                attack_rect.h = meters_to_pixels ( c_character_attack_width );
           }
 
-          attack_rect.x += meters_to_pixels ( game_state->camera_x );
-          attack_rect.y += meters_to_pixels ( game_state->camera_y );
-
-          convert_to_sdl_origin_for_surface ( attack_rect, back_buffer );
+          world_to_sdl ( attack_rect, back_buffer, game_state->camera_x, game_state->camera_y );
 
           SDL_FillRect ( back_buffer, &attack_rect, green );
      }

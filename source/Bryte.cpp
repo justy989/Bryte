@@ -374,13 +374,13 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
           return;
      }
 
-     Real32 character_on_camera_x = character.position_x + camera_x;
-     Real32 character_on_camera_y = character.position_y + camera_y;
-
-     SDL_Rect character_rect { meters_to_pixels ( character_on_camera_x ),
-                               meters_to_pixels ( character_on_camera_y ),
+     SDL_Rect character_rect { meters_to_pixels ( character.position_x ),
+                               meters_to_pixels ( character.position_y ),
                                meters_to_pixels ( character.width ),
                                meters_to_pixels ( character.height ) };
+
+     character_rect.x += meters_to_pixels ( camera_x );
+     character_rect.y += meters_to_pixels ( camera_y );
 
      convert_to_sdl_origin_for_surface ( character_rect, back_buffer );
 
@@ -648,8 +648,8 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      Real32 camera_center_offset_x = pixels_to_meters ( back_buffer->w / 2 );
      Real32 camera_center_offset_y = pixels_to_meters ( back_buffer->h / 2 );
 
-     Real32 half_player_width = game_state->player.width / 2.0f;
-     Real32 half_player_height = game_state->player.height / 2.0f;
+     Real32 half_player_width = game_state->player.width * 0.5f;
+     Real32 half_player_height = game_state->player.height * 0.5f;
 
      game_state->camera_x = -( game_state->player.position_x + half_player_width - camera_center_offset_x );
      game_state->camera_y = -( game_state->player.position_y + half_player_height - camera_center_offset_y );
@@ -674,10 +674,13 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
 
      // draw lever
-     SDL_Rect lever_rect { meters_to_pixels ( game_state->lever.position_x + game_state->camera_x ),
-                           meters_to_pixels ( game_state->lever.position_y + game_state->camera_y ),
+     SDL_Rect lever_rect { meters_to_pixels ( game_state->lever.position_x ),
+                           meters_to_pixels ( game_state->lever.position_y ),
                            meters_to_pixels ( c_lever_width ),
                            meters_to_pixels ( c_lever_height ) };
+
+     lever_rect.x += meters_to_pixels ( game_state->camera_x );
+     lever_rect.y += meters_to_pixels ( game_state->camera_y );
 
      convert_to_sdl_origin_for_surface ( lever_rect, back_buffer );
 
@@ -694,8 +697,8 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 
      // draw player attack
      if ( game_state->player.state == Character::State::attacking ) {
-          SDL_Rect attack_rect { meters_to_pixels ( game_state->player.attack_x + game_state->camera_x ),
-                                 meters_to_pixels ( game_state->player.attack_y + game_state->camera_y ),
+          SDL_Rect attack_rect { meters_to_pixels ( game_state->player.attack_x ),
+                                 meters_to_pixels ( game_state->player.attack_y ),
                                  meters_to_pixels ( c_character_attack_width ),
                                  meters_to_pixels ( c_character_attack_height ) };
 
@@ -705,6 +708,9 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
                attack_rect.w = meters_to_pixels ( c_character_attack_height );
                attack_rect.h = meters_to_pixels ( c_character_attack_width );
           }
+
+          attack_rect.x += meters_to_pixels ( game_state->camera_x );
+          attack_rect.y += meters_to_pixels ( game_state->camera_y );
 
           convert_to_sdl_origin_for_surface ( attack_rect, back_buffer );
 

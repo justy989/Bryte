@@ -86,8 +86,8 @@ Int32 Map::position_to_tile_index ( Real32 x, Real32 y )
 
 Int32 Map::coordinate_to_tile_index ( Int32 tile_x, Int32 tile_y )
 {
-     ASSERT ( static_cast<Uint8>( tile_x ) < m_current_room->width );
-     ASSERT ( static_cast<Uint8>( tile_y ) < m_current_room->height );
+     ASSERT ( tile_x >= 0 && tile_x < m_current_room->width );
+     ASSERT ( tile_y >= 0 && tile_y < m_current_room->height );
 
      return tile_y * static_cast<Int32>( m_current_room->width ) + tile_x;
 }

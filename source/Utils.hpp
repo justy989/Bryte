@@ -24,11 +24,17 @@
 
 namespace bryte
 {
+     // does not work for negative reals
+     inline Int32 positive_real_to_int_round ( Real32 value )
+     {
+          return static_cast<Int32>( value + 1.5f );
+     }
+
      static const Real32 pixels_per_meter = 10.0f;
 
      inline Int32 meters_to_pixels ( Real32 meters )
      {
-          return static_cast<Int32>( meters * pixels_per_meter );
+          return positive_real_to_int_round ( meters * pixels_per_meter );
      }
 
      inline Real32 pixels_to_meters ( Int32 pixels )

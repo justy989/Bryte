@@ -22,9 +22,9 @@ private:
 #define LOG_WARNING( ... ) Log::warning ( __VA_ARGS__ );
 
 #ifdef DEBUG
-     #define LOG_DEBUG( format, ... ) Log::debug ( format, __VA_ARGS__ );
+     #define LOG_DEBUG( ... ) Log::debug ( __VA_ARGS__ );
 #else
-     #define LOG_DEBUG( format, ... )
+     #define LOG_DEBUG( ... )
 #endif
 
 #endif

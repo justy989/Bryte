@@ -8,6 +8,9 @@
 
 #include "Map.hpp"
 
+#include "StopWatch.hpp"
+#include "Random.hpp"
+
 #include <SDL2/SDL.h>
 
 namespace bryte
@@ -18,20 +21,6 @@ namespace bryte
           right,
           down,
           count
-     };
-
-     struct Stopwatch {
-     public:
-
-          Void reset ( Real32 remaining );
-
-          Void tick ( Real32 delta );
-
-          Bool expired ( ) const;
-
-     public:
-
-          Real32 remaining;
      };
 
      struct Character {
@@ -106,19 +95,6 @@ namespace bryte
           Bool available = false;
      };
 
-     struct Random {
-     public:
-
-          Random ( ) : i_f ( 0 ), i_s ( 0 ) { }
-
-          Void   seed     ( Uint32 value );
-          Uint32 generate ( Uint32 min, Uint32 max ); // not inclusive!
-
-     public:
-
-          Uint32 i_f;
-          Uint32 i_s;
-     };
 
      struct GameState {
      public:

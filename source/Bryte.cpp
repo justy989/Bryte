@@ -21,44 +21,6 @@ static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
 
 const Real32 HealthPickup::c_dimension = 0.4f;
 
-Void Stopwatch::reset ( Real32 remaining )
-{
-     this->remaining = remaining;
-}
-
-Void Stopwatch::tick ( Real32 time_delta )
-{
-     remaining -= time_delta;
-
-     if ( remaining <= 0.0f ) {
-          remaining = 0.0f;
-     }
-}
-
-Bool Stopwatch::expired ( ) const
-{
-     return remaining <= 0.0f;
-}
-
-Void Random::seed ( Uint32 value )
-{
-     i_f = value;
-     i_s = value;
-}
-
-Uint32 Random::generate ( Uint32 min, Uint32 max )
-{
-     if ( min == max ) {
-          return min;
-     }
-
-     // simple RNG by George Marsaglia
-     i_f = 36969 * ( i_f & 65535 ) + ( i_f >> 16 );
-     i_s = 18000 * ( i_s & 65535 ) + ( i_s >> 16 );
-
-     return ( ( ( i_f << 16 ) + i_s ) % ( max - min ) ) + min;
-}
-
 Bool Character::collides_with ( const Character& character )
 {
      return rect_collides_with_rect ( position_x, position_y, width, collision_height,
@@ -578,7 +540,7 @@ Bool GameState::spawn_enemy ( Real32 x, Real32 y )
 static Void render_character ( SDL_Surface* back_buffer, const Character& character,
                                Real32 camera_x, Real32 camera_y, Uint32 color )
 {
-     static const Int32 blink_length  = 3;
+     static const Int32 blink_length  = 4;
      static Bool        blink_on      = false;
      static Int32       blink_count   = 0;
 

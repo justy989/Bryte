@@ -96,6 +96,16 @@ namespace bryte
           Real32 activate_time;
      };
 
+     struct HealthPickup {
+
+          static const Real32 c_dimension;
+
+          Real32 position_x = 0.0f;
+          Real32 position_y = 0.0f;
+
+          Bool available = false;
+     };
+
      struct Random {
      public:
 
@@ -132,7 +142,8 @@ namespace bryte
           Character enemies [ c_max_enemies ];
           Uint32    enemy_count;
 
-          Lever     lever;
+          Lever        lever;
+          HealthPickup health_pickup;
 
           Bool      direction_keys [ Direction::count ];
           Bool      attack_key;

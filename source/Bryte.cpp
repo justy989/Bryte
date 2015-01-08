@@ -19,6 +19,8 @@ static const Real32 c_lever_height            = 0.5f;
 static const Real32 c_lever_activate_cooldown = 0.75f;
 static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
 
+const Real32 HealthPickup::c_dimension = 0.4f;
+
 Void Stopwatch::reset ( Real32 remaining )
 {
      this->remaining = remaining;
@@ -821,6 +823,28 @@ extern "C" Void bryte_update ( Real32 time_delta )
                game_state->player.attack_collides_with ( enemy ) ) {
                Direction damage_dir = determine_damage_direction ( game_state->player, enemy );
                enemy.damage ( 1, damage_dir );
+
+               if ( enemy.state == Character::State::dead ) {
+                    game_state->health_pickup.position_x = enemy.position_x;
+                    game_state->health_pickup.position_y = enemy.position_y;
+                    game_state->health_pickup.available = true;
+               }
+          }
+     }
+
+     if ( game_state->health_pickup.available ) {
+          if ( rect_collides_with_rect ( game_state->player.position_x, game_state->player.position_y,
+                                         game_state->player.width, game_state->player.height,
+                                         game_state->health_pickup.position_x,
+                                         game_state->health_pickup.position_y,
+                                         HealthPickup::c_dimension, HealthPickup::c_dimension ) ) {
+               game_state->health_pickup.available = false;
+
+               game_state->player.health += 5;
+
+               if ( game_state->player.health > game_state->player.max_health ) {
+                    game_state->player.health = game_state->player.max_health;
+               }
           }
      }
 
@@ -923,6 +947,17 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
           world_to_sdl ( attack_rect, back_buffer, game_state->camera_x, game_state->camera_y );
 
           SDL_FillRect ( back_buffer, &attack_rect, green );
+     }
+
+     if ( game_state->health_pickup.available ) {
+          SDL_Rect health_pickup_rect { meters_to_pixels ( game_state->health_pickup.position_x ),
+                                        meters_to_pixels ( game_state->health_pickup.position_y ),
+                                        meters_to_pixels ( HealthPickup::c_dimension ),
+                                        meters_to_pixels ( HealthPickup::c_dimension ) };
+
+          world_to_sdl ( health_pickup_rect, back_buffer, game_state->camera_x, game_state->camera_y );
+
+          SDL_FillRect ( back_buffer, &health_pickup_rect, red );
      }
 
      // draw player health bar

@@ -321,14 +321,53 @@ struct BitmapFileHeader {
 #pragma pack()
 
 #pragma pack(1)
+// only supporting Bitmap V4, only use fields up to the mask
 struct BitmapInfoHeader {
+
+     // expected value of the size field
+     static const Uint32 c_size = 124;
+
      Uint32 size;
+
      Int32  width;
      Int32  height;
+
      Uint16 planes;
      Uint16 bits_per_pixel;
+
+     Uint32 compression;
+     Uint32 size_of_bitmap;
+
+     Int32  horz_resolution;
+     Int32  vert_resolution;
+
+     Uint32 colors_used;
+     Uint32 colors_important;
+
+     Uint32 red_mask;
+     Uint32 green_mask;
+     Uint32 blue_mask;
+     Uint32 alpha_mask;
 };
 #pragma pack()
+
+struct Bitscan {
+     bool   found;
+     Uint32 bit;
+};
+
+Bitscan bitscan_forward ( Uint32 mask )
+{
+     static const Uint32 bit_count = sizeof ( mask ) * BITS_PER_BYTE;
+
+     for ( Uint32 i = 0; i < bit_count; ++i ) {
+          if ( ( 1 << i ) & mask ) {
+               return { true, i };
+          }
+     }
+
+     return { false, bit_count + 1 };
+}
 
 // save in gimp as 32 bit bitmap, do not have compatibility options checked on
 static SDL_Surface* load_bitmap ( const char* filepath )
@@ -365,6 +404,12 @@ static SDL_Surface* load_bitmap ( const char* filepath )
                         file_header->file_size, bitmap_contents.size );
      }
 
+     if ( info_header->size != BitmapInfoHeader::c_size ) {
+          LOG_ERROR ( "Info header size %d, expected %d. Unrecognized format\n",
+                      info_header->size, BitmapInfoHeader::c_size );
+          return nullptr;
+     }
+
      // create a surface to fill with pixels the width and height of the loaded bitmap
      SDL_Surface* surface = SDL_CreateRGBSurface ( 0, info_header->width, info_header->height, 32,
                                                    0, 0, 0, 0 );
@@ -383,6 +428,15 @@ static SDL_Surface* load_bitmap ( const char* filepath )
      Char8* surface_pixels  = reinterpret_cast<Char8*>( surface->pixels );
      Uint32 bitmap_pitch    = info_header->width * ( info_header->bits_per_pixel / BITS_PER_BYTE );
      Uint32 bytes_per_pixel = info_header->bits_per_pixel / BITS_PER_BYTE;
+     Bitscan red_shift      = bitscan_forward ( info_header->red_mask );
+     Bitscan green_shift    = bitscan_forward ( info_header->green_mask );
+     Bitscan blue_shift     = bitscan_forward ( info_header->blue_mask );
+
+     if ( !red_shift.found || !green_shift.found || !blue_shift.found ) {
+          LOG_ERROR ( "Failed to determine shift values, R: %d, G: %d, B: %d\n",
+                      red_shift.bit, green_shift.bit, blue_shift.bit );
+          return nullptr;
+     }
 
      // start at the bottom of the bitmap
      bitmap_pixels += bitmap_pitch * ( info_header->height - 1 );
@@ -390,27 +444,12 @@ static SDL_Surface* load_bitmap ( const char* filepath )
      for ( Int32 y = 0; y < info_header->height; ++y ) {
 
           for ( Int32 x = 0; x < info_header->width; ++x ) {
-               char* bitmap_pixel = bitmap_pixels + ( x * bytes_per_pixel );
+               Uint32 bitmap_pixel = *reinterpret_cast<Uint32*>( bitmap_pixels + ( x * bytes_per_pixel ) );
 
-               // bitmap alpha
-               bitmap_pixel++;
-
-               // red
-               *surface_pixels = *bitmap_pixel;
-               bitmap_pixel++;
-               surface_pixels++;
-
-               // green
-               *surface_pixels = *bitmap_pixel;
-               bitmap_pixel++;
-               surface_pixels++;
-
-               // blue
-               *surface_pixels = *bitmap_pixel;
-               surface_pixels++;
-
-               // surface alpha
-               *surface_pixels = 255; surface_pixels++;
+               *surface_pixels = bitmap_pixel >> blue_shift.bit;   surface_pixels++;
+               *surface_pixels = bitmap_pixel >> green_shift.bit; surface_pixels++;
+               *surface_pixels = bitmap_pixel >> red_shift.bit;  surface_pixels++;
+               *surface_pixels = 255;                         surface_pixels++;
           }
 
           bitmap_pixels -= bitmap_pitch;
@@ -462,9 +501,9 @@ Bool GameState::initialize ( )
      LOG_INFO ( "Loading tilesheet '%s'\n", c_test_tilesheet_path );
 
      tilesheet = load_bitmap ( c_test_tilesheet_path );
-
      if ( !tilesheet ) {
-          //LOG_ERROR ( "SDL_LoadBMP(): %s\n", SDL_GetError ( ) );
+
+          LOG_ERROR ( "SDL_LoadBMP(): %s\n", SDL_GetError ( ) );
           return false;
      }
 

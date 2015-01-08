@@ -369,6 +369,8 @@ Bitscan bitscan_forward ( Uint32 mask )
      return { false, bit_count + 1 };
 }
 
+static const Uint32 c_bitmap_color_key = 0xFF00FF;
+
 // save in gimp as 32 bit bitmap, do not have compatibility options checked on
 static SDL_Surface* load_bitmap ( const char* filepath )
 {
@@ -435,6 +437,7 @@ static SDL_Surface* load_bitmap ( const char* filepath )
      if ( !red_shift.found || !green_shift.found || !blue_shift.found ) {
           LOG_ERROR ( "Failed to determine shift values, R: %d, G: %d, B: %d\n",
                       red_shift.bit, green_shift.bit, blue_shift.bit );
+          SDL_FreeSurface ( surface );
           return nullptr;
      }
 
@@ -446,16 +449,24 @@ static SDL_Surface* load_bitmap ( const char* filepath )
           for ( Int32 x = 0; x < info_header->width; ++x ) {
                Uint32 bitmap_pixel = *reinterpret_cast<Uint32*>( bitmap_pixels + ( x * bytes_per_pixel ) );
 
-               *surface_pixels = bitmap_pixel >> blue_shift.bit;   surface_pixels++;
+               *surface_pixels = bitmap_pixel >> blue_shift.bit;  surface_pixels++;
                *surface_pixels = bitmap_pixel >> green_shift.bit; surface_pixels++;
-               *surface_pixels = bitmap_pixel >> red_shift.bit;  surface_pixels++;
-               *surface_pixels = 255;                         surface_pixels++;
+               *surface_pixels = bitmap_pixel >> red_shift.bit;   surface_pixels++;
+               *surface_pixels = 255;                             surface_pixels++;
           }
 
           bitmap_pixels -= bitmap_pitch;
      }
 
      SDL_UnlockSurface ( surface );
+
+#if 0 // do not set yet
+     if ( !SDL_SetColorKey ( surface, SDL_TRUE, c_bitmap_color_key ) ) {
+          LOG_ERROR ( "SDL_SetColorKey() Failed: %s\n", SDL_GetError ( ) );
+          SDL_FreeSurface ( surface );
+          return nullptr;
+     }
+#endif
 
      return surface;
 }
@@ -502,8 +513,6 @@ Bool GameState::initialize ( )
 
      tilesheet = load_bitmap ( c_test_tilesheet_path );
      if ( !tilesheet ) {
-
-          LOG_ERROR ( "SDL_LoadBMP(): %s\n", SDL_GetError ( ) );
           return false;
      }
 

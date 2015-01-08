@@ -274,7 +274,6 @@ static Direction determine_damage_direction ( const Character& a, const Characte
      return Direction::left;
 }
 
-#if 0
 struct FileContents {
      Char8* bytes = nullptr;
      Uint32 size  = 0;
@@ -322,66 +321,16 @@ struct BitmapFileHeader {
 #pragma pack()
 
 #pragma pack(1)
-struct BitmapInfoHeaderV1 {
-     Uint32 size;
-     Int16  width;
-     Int16  height;
-     Uint16 planes;
-     Uint16 bits_per_pixel;
-};
-#pragma pack()
-
-#pragma pack(1)
-struct BitmapInfoHeaderV2 {
+struct BitmapInfoHeader {
      Uint32 size;
      Int32  width;
      Int32  height;
      Uint16 planes;
      Uint16 bits_per_pixel;
-     Uint32 compression;
-     Uint32 size_of_bitmap;
-     Int32  horz_resolution;
-     Int32  vert_resolution;
-     Uint32 colors_used;
-     Uint32 colors_important;
 };
 #pragma pack()
 
-#pragma pack(1)
-struct BitmapInfoHeaderV3 {
-     Uint32 size;
-     Int32  width;
-     Int32  height;
-     Uint16 planes;
-     Uint16 bits_per_pixel;
-     Uint32 compression;
-     Uint32 size_of_bitmap;
-     Int32  horz_resolution;
-     Int32  vert_resolution;
-     Uint32 colors_used;
-     Uint32 colors_important;
-
-     Uint32 red_mask;
-     Uint32 green_mask;
-     Uint32 blue_mask;
-     Uint32 alpha_mask;
-     Uint32 cs_type;
-     Int32  red_x;
-
-     Int32  red_y;
-     Int32  red_z;
-     Int32  green_x;
-     Int32  green_y;
-     Int32  green_z;
-     Int32  blue_x;
-     Int32  blue_y;
-     Int32  blue_z;
-     Uint32 gamma_red;
-     Uint32 gamma_green;
-     Uint32 gamma_blue;
-};
-#pragma pack()
-
+// save in gimp as 32 bit bitmap, do not have compatibility options checked on
 static SDL_Surface* load_bitmap ( const char* filepath )
 {
      LOG_INFO ( "Loading bitmap '%s'\n", filepath );
@@ -394,48 +343,15 @@ static SDL_Surface* load_bitmap ( const char* filepath )
      }
 
      BitmapFileHeader* file_header  = reinterpret_cast<BitmapFileHeader*>( bitmap_contents.bytes );
-     char*  bitmap_info_header      = bitmap_contents.bytes + sizeof ( BitmapFileHeader );
-     Uint32 bitmap_info_header_size = *reinterpret_cast<Uint32*>( bitmap_info_header );
-
-     Uint32 bitmap_width   = 0;
-     Uint32 bitmap_height  = 0;
-     Uint16 bits_per_pixel = 0;
-
-     switch ( bitmap_info_header_size ) {
-     default:
-          LOG_ERROR ( "Bitmap Info Header Size %d is unsupported.\n", bitmap_info_header_size );
-          break;
-     case sizeof ( BitmapInfoHeaderV1 ):
-          {
-               BitmapInfoHeaderV1* bitmap_header = reinterpret_cast<BitmapInfoHeaderV1*> ( bitmap_info_header );
-
-               bitmap_width   = bitmap_header->width;
-               bitmap_height  = bitmap_header->height;
-               bits_per_pixel = bitmap_header->bits_per_pixel;
-          } break;
-     case sizeof ( BitmapInfoHeaderV2 ):
-          {
-               BitmapInfoHeaderV2* bitmap_header = reinterpret_cast<BitmapInfoHeaderV2*> ( bitmap_info_header );
-
-               bitmap_width   = bitmap_header->width;
-               bitmap_height  = bitmap_header->height;
-               bits_per_pixel = bitmap_header->bits_per_pixel;
-          } break;
-     case sizeof ( BitmapInfoHeaderV3 ):
-          {
-               BitmapInfoHeaderV3* bitmap_header = reinterpret_cast<BitmapInfoHeaderV3*> ( bitmap_info_header );
-
-               bitmap_width   = bitmap_header->width;
-               bitmap_height  = bitmap_header->height;
-               bits_per_pixel = bitmap_header->bits_per_pixel;
-          } break;
-     }
+     BitmapInfoHeader* info_header  = reinterpret_cast<BitmapInfoHeader*>( bitmap_contents.bytes +
+                                                                           sizeof ( BitmapFileHeader ) );
 
      LOG_DEBUG ( "'File Header' Type: %c%c Size: %u Bitmap Offset: %u\n",
                  bitmap_contents.bytes [ 0 ], bitmap_contents.bytes [ 1 ],
                  file_header->file_size, file_header->bitmap_offset );
      LOG_DEBUG ( "'Info Header' Size: %u Width: %d Height: %d Bits Per Pixel: %d\n",
-                 bitmap_info_header_size, bitmap_width, bitmap_height, bits_per_pixel );
+                 info_header->size, info_header->width, info_header->height,
+                 info_header->bits_per_pixel );
 
      // do some validation
      if ( bitmap_contents.bytes [ 0 ] != 'B' || bitmap_contents.bytes [ 1 ] != 'M' ) {
@@ -450,45 +366,60 @@ static SDL_Surface* load_bitmap ( const char* filepath )
      }
 
      // create a surface to fill with pixels the width and height of the loaded bitmap
-     SDL_Surface* surface = SDL_CreateRGBSurface ( 0, bitmap_width, bitmap_height, 32,
+     SDL_Surface* surface = SDL_CreateRGBSurface ( 0, info_header->width, info_header->height, 32,
                                                    0, 0, 0, 0 );
 
      if ( !surface ) {
           LOG_ERROR ( "SDL_CreateRGBSurface() failed: %s\n", SDL_GetError ( ) );
      }
 
-     LOG_DEBUG ( "Locking SDL surface\n" );
      if ( SDL_LockSurface ( surface ) ) {
           LOG_ERROR ( "SDL_LockSurface() failed: %s\n", SDL_GetError ( ) );
           SDL_FreeSurface ( surface );
           return nullptr;
      }
 
-     // copy in pixels
-     Char8* bitmap_pixels  = bitmap_contents.bytes + file_header->bitmap_offset;
-     Char8* surface_pixels = reinterpret_cast<Char8*>( surface->pixels );
-     Uint32 bitmap_pitch   = bitmap_width * bits_per_pixel;
+     Char8* bitmap_pixels   = bitmap_contents.bytes + file_header->bitmap_offset;
+     Char8* surface_pixels  = reinterpret_cast<Char8*>( surface->pixels );
+     Uint32 bitmap_pitch    = info_header->width * ( info_header->bits_per_pixel / BITS_PER_BYTE );
+     Uint32 bytes_per_pixel = info_header->bits_per_pixel / BITS_PER_BYTE;
 
-     LOG_DEBUG ( "Copying pixels to SDL surface\n" );
-     for ( Uint32 y = 0; y < bitmap_height; ++y ) {
-          for ( Uint32 x = 0; x < bitmap_width; ++x ) {
-               Uint32* bitmap_pixel = reinterpret_cast<Uint32*>( bitmap_pixels + ( x * bits_per_pixel ) );
-               Uint32* surface_pixel = reinterpret_cast<Uint32*>( surface_pixels +
-                                                                  ( x * surface->format->BitsPerPixel ) );
+     // start at the bottom of the bitmap
+     bitmap_pixels += bitmap_pitch * ( info_header->height - 1 );
 
-               *surface_pixel = *bitmap_pixel;
+     for ( Int32 y = 0; y < info_header->height; ++y ) {
+
+          for ( Int32 x = 0; x < info_header->width; ++x ) {
+               char* bitmap_pixel = bitmap_pixels + ( x * bytes_per_pixel );
+
+               // bitmap alpha
+               bitmap_pixel++;
+
+               // red
+               *surface_pixels = *bitmap_pixel;
+               bitmap_pixel++;
+               surface_pixels++;
+
+               // green
+               *surface_pixels = *bitmap_pixel;
+               bitmap_pixel++;
+               surface_pixels++;
+
+               // blue
+               *surface_pixels = *bitmap_pixel;
+               surface_pixels++;
+
+               // surface alpha
+               *surface_pixels = 255; surface_pixels++;
           }
 
-          bitmap_pixels  += bitmap_pitch;
-          surface_pixels += surface->pitch;
+          bitmap_pixels -= bitmap_pitch;
      }
 
-     LOG_DEBUG ( "Unlocking SDL surface\n" );
      SDL_UnlockSurface ( surface );
 
      return surface;
 }
-#endif
 
 Bool GameState::initialize ( )
 {
@@ -530,7 +461,7 @@ Bool GameState::initialize ( )
 
      LOG_INFO ( "Loading tilesheet '%s'\n", c_test_tilesheet_path );
 
-     tilesheet = SDL_LoadBMP ( c_test_tilesheet_path );
+     tilesheet = load_bitmap ( c_test_tilesheet_path );
 
      if ( !tilesheet ) {
           //LOG_ERROR ( "SDL_LoadBMP(): %s\n", SDL_GetError ( ) );

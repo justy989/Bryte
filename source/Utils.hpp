@@ -6,6 +6,7 @@
 
 #include <SDL2/SDL.h>
 
+#define BITS_PER_BYTE 8
 #define KILOBYTES( bytes ) bytes * 1024
 #define MEGABYTES( bytes ) KILOBYTES( bytes ) * 1024
 #define GIGABYTES( bytes ) MEGABYTES( bytes ) * 1024

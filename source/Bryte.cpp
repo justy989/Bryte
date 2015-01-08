@@ -24,16 +24,18 @@ Void Stopwatch::reset ( Real32 remaining )
      this->remaining = remaining;
 }
 
-Bool Stopwatch::tick ( Real32 time_delta )
+Void Stopwatch::tick ( Real32 time_delta )
 {
      remaining -= time_delta;
 
      if ( remaining <= 0.0f ) {
           remaining = 0.0f;
-          return true;
      }
+}
 
-     return false;
+Bool Stopwatch::expired ( ) const
+{
+     return remaining <= 0.0f;
 }
 
 Void Random::seed ( Uint32 value )
@@ -64,11 +66,11 @@ Bool Character::collides_with ( const Character& character )
 
 Void Character::attack ( )
 {
-     if ( state != State::alive || attack_time.remaining > 0.0f || cooldown_time.remaining > 0.0f ) {
+     if ( state != State::alive || !cooldown_watch.expired ( ) ) {
           return;
      }
 
-     attack_time.reset ( c_character_attack_time );
+     state_watch.reset ( c_character_attack_time );
 
      state = State::attacking;
 }
@@ -135,19 +137,16 @@ Bool Character::attack_collides_with ( const Character& character )
 Void Character::damage ( Int32 amount, Direction push )
 {
      health       -= amount;
-     damage_pushed = push;
-
-     damage_time.reset ( c_character_damage_time );
-     blink_time.reset ( c_character_blink_time );
 
      if ( health > 0 ) {
-          if ( state == State::attacking ) {
-               attack_time.reset ( 0.0f );
-               cooldown_time.reset ( c_character_cooldown_time );
-          }
+          damage_pushed = push;
+
+          damage_watch.reset ( c_character_damage_time );
+          state_watch.reset ( c_character_blink_time );
 
           state = State::blinking;
      } else {
+          // TODO: change to dying and handle transition to death
           state = State::dead;
      }
 }
@@ -159,9 +158,17 @@ Void Character::update ( Real32 time_delta )
      Real32 target_position_x = position_x + velocity_x * time_delta;
      Real32 target_position_y = position_y + velocity_y * time_delta;
 
+     // tick stopwatches
+     state_watch.tick ( time_delta );
+     cooldown_watch.tick ( time_delta );
+
+     // logic based on current state
      switch ( state ) {
      case State::blinking:
-          if ( !damage_time.tick ( time_delta ) ) {
+
+          damage_watch.tick ( time_delta );
+
+          if ( !damage_watch.expired ( ) ) {
                switch ( damage_pushed ) {
                default:
                     ASSERT ( 0 );
@@ -180,7 +187,7 @@ Void Character::update ( Real32 time_delta )
                }
           }
 
-          if ( blink_time.tick ( time_delta ) ) {
+          if ( state_watch.expired ( ) ) {
                if ( state != State::dead ) {
                     state = State::alive;
                }
@@ -188,8 +195,8 @@ Void Character::update ( Real32 time_delta )
 
           break;
      case State::attacking:
-          if ( attack_time.tick ( time_delta ) ) {
-               cooldown_time.reset ( c_character_cooldown_time );
+          if ( state_watch.expired ( ) ) {
+               cooldown_watch.reset ( c_character_cooldown_time );
                state = State::alive;
           }
 
@@ -197,8 +204,6 @@ Void Character::update ( Real32 time_delta )
      default:
           break;
      }
-
-     cooldown_time.tick ( time_delta );
 
      bool collided = false;
 
@@ -442,11 +447,9 @@ Bool GameState::initialize ( )
      player.collision_height = player.width;
 
      player.damage_pushed = Direction::left;
-     player.damage_time.reset ( 0.0f );
-     player.blink_time.reset ( 0.0f );
-
-     player.attack_time.reset ( 0.0f );
-     player.cooldown_time.reset ( 0.0f );
+     player.state_watch.reset ( 0.0f );
+     player.damage_watch.reset ( 0.0f );
+     player.cooldown_watch.reset ( 0.0f );
 
      // ensure all enemies start dead
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
@@ -513,11 +516,9 @@ Bool GameState::spawn_enemy ( Real32 x, Real32 y )
 
      enemy->damage_pushed = Direction::left;
 
-     enemy->damage_time.reset ( 0.0f );
-     enemy->blink_time.reset ( 0.0f );
-
-     enemy->attack_time.reset ( 0.0f );
-     enemy->cooldown_time.reset ( 0.0f );
+     enemy->state_watch.reset ( 0.0f );
+     enemy->damage_watch.reset ( 0.0f );
+     enemy->cooldown_watch.reset ( 0.0f );
 
      enemy_count++;
 

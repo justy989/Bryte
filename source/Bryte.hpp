@@ -25,7 +25,9 @@ namespace bryte
 
           Void reset ( Real32 remaining );
 
-          Bool tick ( Real32 delta );
+          Void tick ( Real32 delta );
+
+          Bool expired ( ) const;
 
      public:
 
@@ -62,6 +64,8 @@ namespace bryte
           State     state;
           Direction facing;
 
+          Stopwatch state_watch;
+
           Int32  health;
           Int32  max_health;
 
@@ -77,11 +81,9 @@ namespace bryte
           Real32 collision_height;
 
           Direction damage_pushed;
-          Stopwatch damage_time;
-          Stopwatch blink_time;
 
-          Stopwatch attack_time;
-          Stopwatch cooldown_time;
+          Stopwatch damage_watch;
+          Stopwatch cooldown_watch;
      };
 
      struct Lever {

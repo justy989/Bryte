@@ -58,6 +58,11 @@ Void Map::build ( )
                     }
                }
           }
+
+          tiles [ 0 ] = 11;
+          tiles [ width - 1 ] = 10;
+          tiles [ width * ( height - 1 ) ] = 8;
+          tiles [ width * height - 1 ] = 9;
      }
 
      rooms [ 0 ].exit_count = 1;
@@ -78,10 +83,11 @@ Void Map::build ( )
 
      m_current_room = rooms;
 
-     set_coordinate_value ( 1, 7, 4 );
-     set_coordinate_value ( 2, 7, 4 );
-     set_coordinate_value ( 3, 7, 4 );
-     set_coordinate_value ( 3, 8, 5 );
+     set_coordinate_value ( 1, 6, 4 );
+     set_coordinate_value ( 2, 6, 4 );
+     set_coordinate_value ( 3, 6, 13 );
+     set_coordinate_value ( 3, 8, 7 );
+     set_coordinate_value ( 3, 7, 7 );
 }
 
 Int32 Map::position_to_tile_index ( Real32 x, Real32 y )

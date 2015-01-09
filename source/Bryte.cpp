@@ -559,7 +559,7 @@ extern "C" Void bryte_update ( Real32 time_delta )
                     auto tile_value = game_state->map.get_coordinate_value ( lever.activate_tile_x,
                                                                              lever.activate_tile_y );
 
-                    Uint8 id = tile_value ? 0 : 5;
+                    Uint8 id = tile_value ? 0 : 7;
 
                     game_state->map.set_coordinate_value ( lever.activate_tile_x, lever.activate_tile_y, id );
 

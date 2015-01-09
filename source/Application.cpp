@@ -87,7 +87,7 @@ Bool Application::create_window ( const Char8* window_title, Int32 window_width,
      // create the window with the specified parameters
      LOG_INFO ( "Creating SDL window: '%s' %d, %d\n", window_title, window_width, window_height );
      m_window = SDL_CreateWindow ( window_title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                   window_width, window_height, 0 );
+                                   window_width, window_height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
 
      if ( !m_window ) {
           PRINT_SDL_ERROR ( "SDL_CreateWindow" );

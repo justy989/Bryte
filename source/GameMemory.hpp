@@ -16,6 +16,12 @@ struct GameMemory {
 
      template < typename T >
      T* push_object ( );
+
+     template < typename T >
+     Void pop_array ( Uint32 count );
+
+     template < typename T >
+     Void pop_object ( );
 };
 
 template < typename T >
@@ -32,6 +38,18 @@ template < typename T >
 T* GameMemory::push_object ( )
 {
      return push_array<T>( 1 );
+}
+
+template < typename T >
+Void GameMemory::pop_array ( Uint32 count )
+{
+     used -= sizeof ( T ) * count;
+}
+
+template < typename T >
+Void GameMemory::pop_object ( )
+{
+     pop_array<T>( 1 );
 }
 
 #endif

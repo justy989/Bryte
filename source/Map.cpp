@@ -9,7 +9,7 @@ const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimen
                                                                     pixels_per_meter );
 
 static const Uint8  c_map_1_width    = 20;
-static const Uint8  c_map_1_height   = 11;
+static const Uint8  c_map_1_height   = 10;
 static const Uint8  c_map_2_width    = 11;
 static const Uint8  c_map_2_height   = 24;
 
@@ -81,9 +81,6 @@ Void Map::build ( )
      set_coordinate_value ( 1, 7, 4 );
      set_coordinate_value ( 2, 7, 4 );
      set_coordinate_value ( 3, 7, 4 );
-     set_coordinate_value ( 1, 9, 6 );
-     set_coordinate_value ( 2, 9, 6 );
-     set_coordinate_value ( 3, 9, 6 );
      set_coordinate_value ( 3, 8, 5 );
 }
 

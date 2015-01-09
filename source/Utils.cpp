@@ -1,4 +1,5 @@
 #include "Utils.hpp"
+#include "Globals.hpp"
 
 #include <fstream>
 
@@ -20,7 +21,17 @@ extern "C" Bitscan bitscan_forward ( Uint32 mask )
      return result;
 }
 
-extern "C" FileContents load_entire_file ( const char* filepath )
+Void FileContents::free ( )
+{
+     if ( size && bytes ) {
+          Globals::g_game_memory.pop_array<Char8>( size );
+     }
+
+     size  = 0;
+     bytes = nullptr;
+}
+
+extern "C" FileContents load_entire_file ( const Char8* filepath )
 {
      LOG_DEBUG ( "Loading entire file '%s'\n", filepath );
      std::ifstream file ( filepath, std::ios::binary );
@@ -36,7 +47,7 @@ extern "C" FileContents load_entire_file ( const char* filepath )
      contents.size = file.tellg ( );
      file.seekg ( 0, file.beg );
 
-     contents.bytes = new char [ contents.size ];
+     contents.bytes = Globals::g_game_memory.push_array<Char8>( contents.size );
 
      if ( !contents.bytes ) {
           LOG_ERROR ( "Failed to allocate memory to read file '%s' into of size %d bytes\n",

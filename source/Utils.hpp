@@ -35,8 +35,11 @@ namespace bryte
      struct FileContents {
           Char8* bytes = nullptr;
           Uint32 size  = 0;
+
+          Void free ( );
      };
 
+     // allocates bytes using game memory
      extern "C" FileContents load_entire_file ( const char* filepath );
 
      // does not work for negative reals

@@ -1,63 +1,54 @@
 #include "Bitmap.hpp"
 #include "Utils.hpp"
+#include "Globals.hpp"
 
 using namespace bryte;
 
-extern "C" SDL_Surface* load_bitmap ( const char* filepath )
+static Bool read_bitmap_headers ( const FileContents& bitmap_contents, BitmapFileHeader** file_header,
+                                  BitmapInfoHeader** info_header )
 {
-     LOG_INFO ( "Loading bitmap '%s'\n", filepath );
-
-     FileContents bitmap_contents = load_entire_file ( filepath );
-
-     if ( !bitmap_contents.bytes ) {
-          LOG_ERROR ( "Failed to load bitmap '%s'\n", filepath );
-          return nullptr;
-     }
-
-     BitmapFileHeader* file_header  = reinterpret_cast<BitmapFileHeader*>( bitmap_contents.bytes );
-     BitmapInfoHeader* info_header  = reinterpret_cast<BitmapInfoHeader*>( bitmap_contents.bytes +
-                                                                           sizeof ( BitmapFileHeader ) );
+     auto* bitmap_file_header  = reinterpret_cast<BitmapFileHeader*>( bitmap_contents.bytes );
+     auto* bitmap_info_header  = reinterpret_cast<BitmapInfoHeader*>( bitmap_contents.bytes +
+                                                                      sizeof ( BitmapFileHeader ) );
 
      LOG_DEBUG ( "'File Header' Type: %c%c Size: %u Bitmap Offset: %u\n",
                  bitmap_contents.bytes [ 0 ], bitmap_contents.bytes [ 1 ],
-                 file_header->file_size, file_header->bitmap_offset );
+                 bitmap_file_header->file_size, bitmap_file_header->bitmap_offset );
      LOG_DEBUG ( "'Info Header' Size: %u Width: %d Height: %d Bits Per Pixel: %d\n",
-                 info_header->size, info_header->width, info_header->height,
-                 info_header->bits_per_pixel );
+                 bitmap_info_header->size, bitmap_info_header->width, bitmap_info_header->height,
+                 bitmap_info_header->bits_per_pixel );
 
      // do some validation
      if ( bitmap_contents.bytes [ 0 ] != 'B' || bitmap_contents.bytes [ 1 ] != 'M' ) {
           LOG_ERROR ( "Bitmap 'file_type' field '%c%c' but we expected 'BM'. Unknown file format.\n",
                       bitmap_contents.bytes [ 0 ], bitmap_contents.bytes [ 1 ] );
-          return nullptr;
+          return false;
      }
 
-     if ( bitmap_contents.size != file_header->file_size ) {
+     if ( bitmap_contents.size != bitmap_file_header->file_size ) {
           LOG_WARNING ( "Bitmap 'file_size' %d doesn't match the file size we expected %d\n",
-                        file_header->file_size, bitmap_contents.size );
+                        bitmap_file_header->file_size, bitmap_contents.size );
      }
 
-     if ( info_header->size != BitmapInfoHeader::c_size ) {
+     if ( bitmap_info_header->size != BitmapInfoHeader::c_size ) {
           LOG_ERROR ( "Info header size %d, expected %d. Unrecognized format\n",
-                      info_header->size, BitmapInfoHeader::c_size );
-          return nullptr;
+                      bitmap_info_header->size, BitmapInfoHeader::c_size );
+          return false;
      }
 
-     // create a surface to fill with pixels the width and height of the loaded bitmap
-     SDL_Surface* surface = SDL_CreateRGBSurface ( 0, info_header->width, info_header->height, 32,
-                                                   0, 0, 0, 0 );
+     *file_header = bitmap_file_header;
+     *info_header = bitmap_info_header;
 
-     if ( !surface ) {
-          LOG_ERROR ( "SDL_CreateRGBSurface() failed: %s\n", SDL_GetError ( ) );
-     }
+     return true;
+}
 
+static Bool fill_surface_pixels ( char* bitmap_pixels, BitmapInfoHeader* info_header, SDL_Surface* surface )
+{
      if ( SDL_LockSurface ( surface ) ) {
           LOG_ERROR ( "SDL_LockSurface() failed: %s\n", SDL_GetError ( ) );
-          SDL_FreeSurface ( surface );
-          return nullptr;
+          return false;
      }
 
-     Char8* bitmap_pixels   = bitmap_contents.bytes + file_header->bitmap_offset;
      Char8* surface_pixels  = reinterpret_cast<Char8*>( surface->pixels );
      Uint32 bitmap_pitch    = info_header->width * ( info_header->bits_per_pixel / BITS_PER_BYTE );
      Uint32 bytes_per_pixel = info_header->bits_per_pixel / BITS_PER_BYTE;
@@ -68,8 +59,7 @@ extern "C" SDL_Surface* load_bitmap ( const char* filepath )
      if ( !red_shift.found || !green_shift.found || !blue_shift.found ) {
           LOG_ERROR ( "Failed to determine shift values, R: %d, G: %d, B: %d\n",
                       red_shift.bit, green_shift.bit, blue_shift.bit );
-          SDL_FreeSurface ( surface );
-          return nullptr;
+          return false;
      }
 
      // start at the bottom of the bitmap
@@ -91,13 +81,43 @@ extern "C" SDL_Surface* load_bitmap ( const char* filepath )
 
      SDL_UnlockSurface ( surface );
 
-#if 0 // do not set yet
-     if ( !SDL_SetColorKey ( surface, SDL_TRUE, c_bitmap_color_key ) ) {
-          LOG_ERROR ( "SDL_SetColorKey() Failed: %s\n", SDL_GetError ( ) );
-          SDL_FreeSurface ( surface );
-          return nullptr;
+     return true;
+}
+
+extern "C" SDL_Surface* load_bitmap ( const char* filepath )
+{
+     LOG_DEBUG ( "Loading bitmap '%s'\n", filepath );
+
+     SDL_Surface* surface = nullptr;
+
+     FileContents bitmap_contents = load_entire_file ( filepath );
+
+     if ( !bitmap_contents.bytes ) {
+          return surface;
      }
-#endif
+
+     BitmapFileHeader* file_header = nullptr;
+     BitmapInfoHeader* info_header = nullptr;
+
+     if ( !read_bitmap_headers ( bitmap_contents, &file_header, &info_header ) ) {
+          bitmap_contents.free ( );
+          return surface;
+     }
+
+     // create a surface to fill with pixels the width and height of the loaded bitmap
+     surface = SDL_CreateRGBSurface ( 0, info_header->width, info_header->height, 32,
+                                      0, 0, 0, 0 );
+
+     if ( surface ) {
+          if ( !fill_surface_pixels ( bitmap_contents.bytes + file_header->bitmap_offset, info_header, surface ) ) {
+               SDL_FreeSurface ( surface );
+               surface = nullptr;
+          }
+     } else {
+          LOG_ERROR ( "SDL_CreateRGBSurface() failed: %s\n", SDL_GetError ( ) );
+     }
+
+     bitmap_contents.free ( );
 
      return surface;
 }

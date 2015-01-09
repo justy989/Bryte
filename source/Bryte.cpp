@@ -273,6 +273,10 @@ Bool GameState::initialize ( )
           enemies [ i ].state = Character::State::dead;
      }
 
+     for ( Uint32 i = 0; i < c_max_health_pickups; ++i ) {
+          health_pickups [ i ].available = false;
+     }
+
      lever.position_x      = Map::c_tile_dimension_in_meters * 4.0f;
      lever.position_y      = Map::c_tile_dimension_in_meters * 7.5f - c_lever_width * 0.5f;
      lever.activate_tile_x = 3;
@@ -316,8 +320,8 @@ Bool GameState::spawn_enemy ( Real32 x, Real32 y )
      enemy->state  = Character::State::alive;
      enemy->facing = Direction::left;
 
-     enemy->health     = 10;
-     enemy->max_health = 10;
+     enemy->health     = 3;
+     enemy->max_health = 3;
 
      enemy->position_x = x;
      enemy->position_y = y;
@@ -506,8 +510,10 @@ extern "C" Void bryte_user_input ( const GameInput& game_input )
                game_state->activate_key = key_change.down;
                break;
           case SDL_SCANCODE_8:
-               game_state->spawn_enemy ( game_state->player.position_x - game_state->player.width,
-                                         game_state->player.position_y );
+               if ( key_change.down ) {
+                    game_state->spawn_enemy ( game_state->player.position_x - game_state->player.width,
+                                              game_state->player.position_y );
+               }
                break;
           }
      }
@@ -588,25 +594,34 @@ extern "C" Void bryte_update ( Real32 time_delta )
                enemy.damage ( 1, damage_dir );
 
                if ( enemy.state == Character::State::dead ) {
-                    game_state->health_pickup.position_x = enemy.position_x;
-                    game_state->health_pickup.position_y = enemy.position_y;
-                    game_state->health_pickup.available = true;
+                    for ( Uint32 i = 0; i < GameState::c_max_health_pickups; ++i ) {
+                         HealthPickup& health_pickup = game_state->health_pickups [ i ];
+
+                         if ( !health_pickup.available ) {
+                              health_pickup.position_x = enemy.position_x;
+                              health_pickup.position_y = enemy.position_y;
+                              health_pickup.available = true;
+                              break;
+                         }
+                    }
                }
           }
      }
 
-     if ( game_state->health_pickup.available ) {
-          if ( rect_collides_with_rect ( game_state->player.position_x, game_state->player.position_y,
-                                         game_state->player.width, game_state->player.height,
-                                         game_state->health_pickup.position_x,
-                                         game_state->health_pickup.position_y,
-                                         HealthPickup::c_dimension, HealthPickup::c_dimension ) ) {
-               game_state->health_pickup.available = false;
+     for ( Uint32 i = 0; i < GameState::c_max_health_pickups; ++i ) {
+          HealthPickup& health_pickup = game_state->health_pickups [ i ];
 
-               game_state->player.health += 5;
+          if ( health_pickup.available ) {
+               if ( rect_collides_with_rect ( game_state->player.position_x, game_state->player.position_y,
+                                              game_state->player.width, game_state->player.height,
+                                              health_pickup.position_x, health_pickup.position_y,
+                                              HealthPickup::c_dimension, HealthPickup::c_dimension ) ) {
+                    health_pickup.available    = false;
+                    game_state->player.health += 5;
 
-               if ( game_state->player.health > game_state->player.max_health ) {
-                    game_state->player.health = game_state->player.max_health;
+                    if ( game_state->player.health > game_state->player.max_health ) {
+                         game_state->player.health = game_state->player.max_health;
+                    }
                }
           }
      }
@@ -698,16 +713,20 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
           SDL_FillRect ( back_buffer, &attack_rect, green );
      }
 
-     if ( game_state->health_pickup.available ) {
-          SDL_Rect health_pickup_rect = build_world_sdl_rect ( game_state->health_pickup.position_x,
-                                                               game_state->health_pickup.position_y,
-                                                               HealthPickup::c_dimension,
-                                                               HealthPickup::c_dimension );
+     for ( Uint32 i = 0; i < GameState::c_max_health_pickups; ++i ) {
+          HealthPickup& health_pickup = game_state->health_pickups [ i ];
+
+          if ( health_pickup.available ) {
+               SDL_Rect health_pickup_rect = build_world_sdl_rect ( health_pickup.position_x,
+                                                                    health_pickup.position_y,
+                                                                    HealthPickup::c_dimension,
+                                                                    HealthPickup::c_dimension );
 
 
-          world_to_sdl ( health_pickup_rect, back_buffer, game_state->camera_x, game_state->camera_y );
+               world_to_sdl ( health_pickup_rect, back_buffer, game_state->camera_x, game_state->camera_y );
 
-          SDL_FillRect ( back_buffer, &health_pickup_rect, red );
+               SDL_FillRect ( back_buffer, &health_pickup_rect, red );
+          }
      }
 
      // draw player health bar

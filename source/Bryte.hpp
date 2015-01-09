@@ -107,6 +107,7 @@ namespace bryte
      public:
 
           static const Uint32 c_max_enemies = 32;
+          static const Uint32 c_max_health_pickups = 8;
 
      public:
 
@@ -119,7 +120,8 @@ namespace bryte
           Uint32    enemy_count;
 
           Lever        lever;
-          HealthPickup health_pickup;
+
+          HealthPickup health_pickups [ c_max_health_pickups ];
 
           Bool      direction_keys [ Direction::count ];
           Bool      attack_key;

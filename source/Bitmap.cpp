@@ -109,7 +109,8 @@ extern "C" SDL_Surface* load_bitmap ( const char* filepath )
                                       0, 0, 0, 0 );
 
      if ( surface ) {
-          if ( !fill_surface_pixels ( bitmap_contents.bytes + file_header->bitmap_offset, info_header, surface ) ) {
+          if ( !fill_surface_pixels ( bitmap_contents.bytes + file_header->bitmap_offset,
+                                      info_header, surface ) ) {
                SDL_FreeSurface ( surface );
                surface = nullptr;
           }

@@ -252,10 +252,10 @@ Void Application::handle_input ( )
 
 Void Application::clear_back_buffer ( )
 {
-     Uint32    black      = SDL_MapRGB ( m_back_buffer_surface->format, 0, 0, 0 );
-     SDL_Rect  clear_rect { 0, 0, m_back_buffer_surface->w, m_back_buffer_surface->h };
+     Uint32    clear_color = SDL_MapRGB ( m_back_buffer_surface->format, 86, 156, 214 );
+     SDL_Rect  clear_rect  { 0, 0, m_back_buffer_surface->w, m_back_buffer_surface->h };
 
-     SDL_FillRect ( m_back_buffer_surface, &clear_rect, black );
+     SDL_FillRect ( m_back_buffer_surface, &clear_rect, clear_color );
 }
 
 Void Application::render_to_window ( )

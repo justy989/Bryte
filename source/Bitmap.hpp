@@ -49,8 +49,6 @@ namespace bryte
      };
 #pragma pack()
 
-     static const Uint32 c_bitmap_color_key = 0xFF00FF;
-
      // save in gimp as 32 bit bitmap, do not have compatibility options checked on
      extern "C" SDL_Surface* load_bitmap ( const char* filepath );
 

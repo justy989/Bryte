@@ -73,7 +73,7 @@ static Bool fill_surface_pixels ( char* bitmap_pixels, BitmapInfoHeader* info_he
                *surface_pixels = bitmap_pixel >> blue_shift.bit;  surface_pixels++;
                *surface_pixels = bitmap_pixel >> green_shift.bit; surface_pixels++;
                *surface_pixels = bitmap_pixel >> red_shift.bit;   surface_pixels++;
-               *surface_pixels = 255;                             surface_pixels++;
+               //*surface_pixels = 255;                             surface_pixels++;
           }
 
           bitmap_pixels -= bitmap_pitch;
@@ -105,7 +105,7 @@ extern "C" SDL_Surface* load_bitmap ( const char* filepath )
      }
 
      // create a surface to fill with pixels the width and height of the loaded bitmap
-     surface = SDL_CreateRGBSurface ( 0, info_header->width, info_header->height, 32,
+     surface = SDL_CreateRGBSurface ( 0, info_header->width, info_header->height, 24,
                                       0, 0, 0, 0 );
 
      if ( surface ) {
@@ -113,6 +113,10 @@ extern "C" SDL_Surface* load_bitmap ( const char* filepath )
                                       info_header, surface ) ) {
                SDL_FreeSurface ( surface );
                surface = nullptr;
+          } else {
+               if ( SDL_SetColorKey ( surface, SDL_TRUE, SDL_MapRGB ( surface->format, 255, 0, 255 ) ) ) {
+                    LOG_ERROR ( "Failed to set surface color key: %d\n" );
+               }
           }
      } else {
           LOG_ERROR ( "SDL_CreateRGBSurface() failed: %s\n", SDL_GetError ( ) );

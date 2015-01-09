@@ -25,6 +25,20 @@
 
 namespace bryte
 {
+     struct Bitscan {
+          bool   found = false;
+          Uint32 bit   = sizeof ( Uint32 ) * BITS_PER_BYTE + 1;
+     };
+
+     extern "C" Bitscan bitscan_forward ( Uint32 mask );
+
+     struct FileContents {
+          Char8* bytes = nullptr;
+          Uint32 size  = 0;
+     };
+
+     extern "C" FileContents load_entire_file ( const char* filepath );
+
      // does not work for negative reals
      inline Int32 positive_real_to_int_round ( Real32 value )
      {

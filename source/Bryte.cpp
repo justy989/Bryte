@@ -1,8 +1,7 @@
 #include "Bryte.hpp"
 #include "Utils.hpp"
+#include "Bitmap.hpp"
 #include "Globals.hpp"
-
-#include <fstream>
 
 using namespace bryte;
 
@@ -241,203 +240,6 @@ static Direction determine_damage_direction ( const Character& a, const Characte
      // the above cases should catch all
      ASSERT ( 0 );
      return Direction::left;
-}
-
-struct FileContents {
-     Char8* bytes = nullptr;
-     Uint32 size  = 0;
-};
-
-static FileContents load_entire_file ( const char* filepath )
-{
-     LOG_DEBUG ( "Loading entire file '%s'\n", filepath );
-     std::ifstream file ( filepath, std::ios::binary );
-
-     FileContents contents;
-
-     if ( !file.is_open ( ) ) {
-          LOG_ERROR ( "Failed to open file '%s' to load entire file\n", filepath );
-          return contents;
-     }
-
-     file.seekg ( 0, file.end );
-     contents.size = file.tellg ( );
-     file.seekg ( 0, file.beg );
-
-     contents.bytes = new char [ contents.size ];
-
-     if ( !contents.bytes ) {
-          LOG_ERROR ( "Failed to allocate memory to read file '%s' into of size %d bytes\n",
-                      filepath, contents.size );
-          contents.size = 0;
-          return contents;
-     }
-
-     file.read ( contents.bytes, contents.size );
-     file.close ( );
-
-     return contents;
-}
-
-#pragma pack(1)
-struct BitmapFileHeader {
-     Uint16 file_type;
-     Uint32 file_size;
-     Uint16 reserved_1;
-     Uint16 reserved_2;
-     Uint32 bitmap_offset;
-};
-#pragma pack()
-
-#pragma pack(1)
-// only supporting Bitmap V4, only use fields up to the mask
-struct BitmapInfoHeader {
-
-     // expected value of the size field
-     static const Uint32 c_size = 124;
-
-     Uint32 size;
-
-     Int32  width;
-     Int32  height;
-
-     Uint16 planes;
-     Uint16 bits_per_pixel;
-
-     Uint32 compression;
-     Uint32 size_of_bitmap;
-
-     Int32  horz_resolution;
-     Int32  vert_resolution;
-
-     Uint32 colors_used;
-     Uint32 colors_important;
-
-     Uint32 red_mask;
-     Uint32 green_mask;
-     Uint32 blue_mask;
-     Uint32 alpha_mask;
-};
-#pragma pack()
-
-struct Bitscan {
-     bool   found;
-     Uint32 bit;
-};
-
-Bitscan bitscan_forward ( Uint32 mask )
-{
-     static const Uint32 bit_count = sizeof ( mask ) * BITS_PER_BYTE;
-
-     for ( Uint32 i = 0; i < bit_count; ++i ) {
-          if ( ( 1 << i ) & mask ) {
-               return { true, i };
-          }
-     }
-
-     return { false, bit_count + 1 };
-}
-
-static const Uint32 c_bitmap_color_key = 0xFF00FF;
-
-// save in gimp as 32 bit bitmap, do not have compatibility options checked on
-static SDL_Surface* load_bitmap ( const char* filepath )
-{
-     LOG_INFO ( "Loading bitmap '%s'\n", filepath );
-
-     FileContents bitmap_contents = load_entire_file ( filepath );
-
-     if ( !bitmap_contents.bytes ) {
-          LOG_ERROR ( "Failed to load bitmap '%s'\n", filepath );
-          return nullptr;
-     }
-
-     BitmapFileHeader* file_header  = reinterpret_cast<BitmapFileHeader*>( bitmap_contents.bytes );
-     BitmapInfoHeader* info_header  = reinterpret_cast<BitmapInfoHeader*>( bitmap_contents.bytes +
-                                                                           sizeof ( BitmapFileHeader ) );
-
-     LOG_DEBUG ( "'File Header' Type: %c%c Size: %u Bitmap Offset: %u\n",
-                 bitmap_contents.bytes [ 0 ], bitmap_contents.bytes [ 1 ],
-                 file_header->file_size, file_header->bitmap_offset );
-     LOG_DEBUG ( "'Info Header' Size: %u Width: %d Height: %d Bits Per Pixel: %d\n",
-                 info_header->size, info_header->width, info_header->height,
-                 info_header->bits_per_pixel );
-
-     // do some validation
-     if ( bitmap_contents.bytes [ 0 ] != 'B' || bitmap_contents.bytes [ 1 ] != 'M' ) {
-          LOG_ERROR ( "Bitmap 'file_type' field '%c%c' but we expected 'BM'. Unknown file format.\n",
-                      bitmap_contents.bytes [ 0 ], bitmap_contents.bytes [ 1 ] );
-          return nullptr;
-     }
-
-     if ( bitmap_contents.size != file_header->file_size ) {
-          LOG_WARNING ( "Bitmap 'file_size' %d doesn't match the file size we expected %d\n",
-                        file_header->file_size, bitmap_contents.size );
-     }
-
-     if ( info_header->size != BitmapInfoHeader::c_size ) {
-          LOG_ERROR ( "Info header size %d, expected %d. Unrecognized format\n",
-                      info_header->size, BitmapInfoHeader::c_size );
-          return nullptr;
-     }
-
-     // create a surface to fill with pixels the width and height of the loaded bitmap
-     SDL_Surface* surface = SDL_CreateRGBSurface ( 0, info_header->width, info_header->height, 32,
-                                                   0, 0, 0, 0 );
-
-     if ( !surface ) {
-          LOG_ERROR ( "SDL_CreateRGBSurface() failed: %s\n", SDL_GetError ( ) );
-     }
-
-     if ( SDL_LockSurface ( surface ) ) {
-          LOG_ERROR ( "SDL_LockSurface() failed: %s\n", SDL_GetError ( ) );
-          SDL_FreeSurface ( surface );
-          return nullptr;
-     }
-
-     Char8* bitmap_pixels   = bitmap_contents.bytes + file_header->bitmap_offset;
-     Char8* surface_pixels  = reinterpret_cast<Char8*>( surface->pixels );
-     Uint32 bitmap_pitch    = info_header->width * ( info_header->bits_per_pixel / BITS_PER_BYTE );
-     Uint32 bytes_per_pixel = info_header->bits_per_pixel / BITS_PER_BYTE;
-     Bitscan red_shift      = bitscan_forward ( info_header->red_mask );
-     Bitscan green_shift    = bitscan_forward ( info_header->green_mask );
-     Bitscan blue_shift     = bitscan_forward ( info_header->blue_mask );
-
-     if ( !red_shift.found || !green_shift.found || !blue_shift.found ) {
-          LOG_ERROR ( "Failed to determine shift values, R: %d, G: %d, B: %d\n",
-                      red_shift.bit, green_shift.bit, blue_shift.bit );
-          SDL_FreeSurface ( surface );
-          return nullptr;
-     }
-
-     // start at the bottom of the bitmap
-     bitmap_pixels += bitmap_pitch * ( info_header->height - 1 );
-
-     for ( Int32 y = 0; y < info_header->height; ++y ) {
-
-          for ( Int32 x = 0; x < info_header->width; ++x ) {
-               Uint32 bitmap_pixel = *reinterpret_cast<Uint32*>( bitmap_pixels + ( x * bytes_per_pixel ) );
-
-               *surface_pixels = bitmap_pixel >> blue_shift.bit;  surface_pixels++;
-               *surface_pixels = bitmap_pixel >> green_shift.bit; surface_pixels++;
-               *surface_pixels = bitmap_pixel >> red_shift.bit;   surface_pixels++;
-               *surface_pixels = 255;                             surface_pixels++;
-          }
-
-          bitmap_pixels -= bitmap_pitch;
-     }
-
-     SDL_UnlockSurface ( surface );
-
-#if 0 // do not set yet
-     if ( !SDL_SetColorKey ( surface, SDL_TRUE, c_bitmap_color_key ) ) {
-          LOG_ERROR ( "SDL_SetColorKey() Failed: %s\n", SDL_GetError ( ) );
-          SDL_FreeSurface ( surface );
-          return nullptr;
-     }
-#endif
-
-     return surface;
 }
 
 Bool GameState::initialize ( )
@@ -846,20 +648,28 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      Real32 camera_center_offset_x = pixels_to_meters ( back_buffer->w / 2 );
      Real32 camera_center_offset_y = pixels_to_meters ( back_buffer->h / 2 );
 
-     Real32 half_player_width = game_state->player.width * 0.5f;
-     Real32 half_player_height = game_state->player.height * 0.5f;
+     Int32 map_width_in_pixels  = game_state->map.width ( ) * Map::c_tile_dimension_in_pixels;
+     Int32 map_height_in_pixels = game_state->map.height ( ) * Map::c_tile_dimension_in_pixels;
 
-     game_state->camera_x = -( game_state->player.position_x + half_player_width - camera_center_offset_x );
-     game_state->camera_y = -( game_state->player.position_y + half_player_height - camera_center_offset_y );
+     if ( map_width_in_pixels < back_buffer->w ) {
+          game_state->camera_x = -pixels_to_meters ( map_width_in_pixels / 2 ) + camera_center_offset_x;
+     } else {
+          Real32 map_width_in_meters  = pixels_to_meters ( map_width_in_pixels );
+          Real32 half_player_width = game_state->player.width * 0.5f;
+          game_state->camera_x = -( game_state->player.position_x + half_player_width - camera_center_offset_x );
+          Real32 min_camera_x = -( map_width_in_meters - pixels_to_meters ( back_buffer->w ) );
+          CLAMP ( game_state->camera_x, min_camera_x, 0 );
+     }
 
-     Real32 map_width  = game_state->map.width ( ) * Map::c_tile_dimension_in_meters;
-     Real32 map_height = game_state->map.height ( ) * Map::c_tile_dimension_in_meters;
-
-     Real32 min_camera_x = -( map_width - pixels_to_meters ( back_buffer->w ) );
-     Real32 min_camera_y = -( map_height - pixels_to_meters ( back_buffer->h ) );
-
-     CLAMP ( game_state->camera_x, min_camera_x, 0 );
-     CLAMP ( game_state->camera_y, min_camera_y, 0 );
+     if ( map_height_in_pixels < back_buffer->h ) {
+          game_state->camera_y = -pixels_to_meters ( map_height_in_pixels / 2 ) + camera_center_offset_y;
+     } else {
+          Real32 map_height_in_meters = pixels_to_meters ( map_height_in_pixels );
+          Real32 half_player_height = game_state->player.height * 0.5f;
+          game_state->camera_y = -( game_state->player.position_y + half_player_height - camera_center_offset_y );
+          Real32 min_camera_y = -( map_height_in_meters - pixels_to_meters ( back_buffer->h ) );
+          CLAMP ( game_state->camera_y, min_camera_y, 0 );
+     }
 
      // draw map
      render_map ( back_buffer, game_state->tilesheet, game_state->map,

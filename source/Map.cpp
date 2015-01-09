@@ -9,8 +9,8 @@ const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimen
                                                                     pixels_per_meter );
 
 static const Uint8  c_map_1_width    = 20;
-static const Uint8  c_map_1_height   = 16;
-static const Uint8  c_map_2_width    = 16;
+static const Uint8  c_map_1_height   = 11;
+static const Uint8  c_map_2_width    = 11;
 static const Uint8  c_map_2_height   = 24;
 
 Map::Map ( ) :
@@ -65,12 +65,12 @@ Void Map::build ( )
      rooms [ 0 ].exits [ 0 ].location_x    = 1;
      rooms [ 0 ].exits [ 0 ].location_y    = 8;
      rooms [ 0 ].exits [ 0 ].room_index    = 1;
-     rooms [ 0 ].exits [ 0 ].destination_x = 14;
+     rooms [ 0 ].exits [ 0 ].destination_x = 9;
      rooms [ 0 ].exits [ 0 ].destination_y = 1;
 
      rooms [ 1 ].exit_count = 1;
 
-     rooms [ 1 ].exits [ 0 ].location_x    = 14;
+     rooms [ 1 ].exits [ 0 ].location_x    = 9;
      rooms [ 1 ].exits [ 0 ].location_y    = 1;
      rooms [ 1 ].exits [ 0 ].room_index    = 0;
      rooms [ 1 ].exits [ 0 ].destination_x = 1;

@@ -407,8 +407,7 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
      for ( Uint8 d = 0; d < map.m_current_room->exit_count; ++d ) {
           auto& exit = map.m_current_room->exits [ d ];
 
-          SDL_Rect exit_rect { 0, 0,
-                               Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+          SDL_Rect exit_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
           exit_rect.x = exit.location_x * Map::c_tile_dimension_in_pixels;
           exit_rect.y = exit.location_y * Map::c_tile_dimension_in_pixels;
@@ -424,13 +423,12 @@ static Void setup_game_state_from_memory ( GameMemory& game_memory )
      ASSERT ( game_memory.memory );
      ASSERT ( game_memory.size );
 
-     Globals::g_game_memory.memory = game_memory.memory;
-     Globals::g_game_memory.size   = game_memory.size;
+     Globals::g_game_memory = game_memory;
 
-     Globals::g_memory_locations.game_state = Globals::g_game_memory.push_object<GameState> ( );
+     Globals::g_memory_locations.game_state = GAME_PUSH_MEMORY ( Globals::g_game_memory, GameState );
 }
 
-extern "C" Bool bryte_init ( GameMemory& game_memory )
+extern "C" Bool game_init ( GameMemory& game_memory )
 {
      setup_game_state_from_memory ( game_memory );
 
@@ -465,14 +463,14 @@ extern "C" Bool bryte_init ( GameMemory& game_memory )
      return true;
 }
 
-extern "C" Void bryte_destroy ( )
+extern "C" Void game_destroy ( )
 {
      auto* game_state = Globals::g_memory_locations.game_state;
 
      game_state->destroy ( );
 }
 
-extern "C" Void bryte_reload_memory ( GameMemory& game_memory )
+extern "C" Void game_reload_memory ( GameMemory& game_memory )
 {
      setup_game_state_from_memory ( game_memory );
 
@@ -481,7 +479,7 @@ extern "C" Void bryte_reload_memory ( GameMemory& game_memory )
      game_state->map.build ( );
 }
 
-extern "C" Void bryte_user_input ( const GameInput& game_input )
+extern "C" Void game_user_input ( const GameInput& game_input )
 {
      auto* game_state = Globals::g_memory_locations.game_state;
 
@@ -519,7 +517,7 @@ extern "C" Void bryte_user_input ( const GameInput& game_input )
      }
 }
 
-extern "C" Void bryte_update ( Real32 time_delta )
+extern "C" Void game_update ( Real32 time_delta )
 {
      auto* game_state = Globals::g_memory_locations.game_state;
 
@@ -656,7 +654,7 @@ extern "C" Void bryte_update ( Real32 time_delta )
      }
 }
 
-extern "C" Void bryte_render ( SDL_Surface* back_buffer )
+extern "C" Void game_render ( SDL_Surface* back_buffer )
 {
      auto* game_state = Globals::g_memory_locations.game_state;
 

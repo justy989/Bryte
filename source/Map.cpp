@@ -21,7 +21,8 @@ Map::Map ( ) :
 
 Void Map::build ( )
 {
-     Globals::g_memory_locations.rooms = Globals::g_game_memory.push_array<Room>( Map::c_max_rooms );
+     Globals::g_memory_locations.rooms = GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Room,
+                                                                  Map::c_max_rooms );
      auto* rooms                       = Globals::g_memory_locations.rooms;
 
      LOG_INFO ( "Building Room: %d by %d\n", c_map_1_width, c_map_1_height );
@@ -33,8 +34,8 @@ Void Map::build ( )
      rooms [ 1 ].width  = c_map_2_width;
      rooms [ 1 ].height = c_map_2_height;
 
-     rooms [ 0 ].tiles  = Globals::g_game_memory.push_array<Uint8>( c_map_1_width * c_map_1_height );
-     rooms [ 1 ].tiles  = Globals::g_game_memory.push_array<Uint8>( c_map_2_width * c_map_2_height );
+     rooms [ 0 ].tiles  = GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Uint8, c_map_1_width * c_map_1_height );
+     rooms [ 1 ].tiles  = GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Uint8, c_map_2_width * c_map_2_height );
 
      for ( Int32 i = 0; i < 2; ++i ) {
           auto*  tiles  = rooms [ i ].tiles;

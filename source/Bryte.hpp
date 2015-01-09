@@ -137,20 +137,20 @@ namespace bryte
 }
 
 // exported functions to be called by the application
-extern "C" Bool bryte_init ( GameMemory& );
-extern "C" Void bryte_destroy ( );
-extern "C" Void bryte_reload_memory ( GameMemory& );
-extern "C" Void bryte_user_input ( const GameInput& );
-extern "C" Void bryte_update ( Real32 );
-extern "C" Void bryte_render ( SDL_Surface* );
+extern "C" Bool game_init ( GameMemory& );
+extern "C" Void game_destroy ( );
+extern "C" Void game_reload_memory ( GameMemory& );
+extern "C" Void game_user_input ( const GameInput& );
+extern "C" Void game_update ( Real32 );
+extern "C" Void game_render ( SDL_Surface* );
 
 // exported function types
-using GameInitFunc         = decltype ( bryte_init )*;
-using GameDestroyFunc      = decltype ( bryte_destroy )*;
-using GameReloadMemoryFunc = decltype ( bryte_reload_memory )*;
-using GameUserInputFunc    = decltype ( bryte_user_input )*;
-using GameUpdateFunc       = decltype ( bryte_update )*;
-using GameRenderFunc       = decltype ( bryte_render )*;
+using GameInitFunc         = decltype ( game_init )*;
+using GameDestroyFunc      = decltype ( game_destroy )*;
+using GameReloadMemoryFunc = decltype ( game_reload_memory )*;
+using GameUserInputFunc    = decltype ( game_user_input )*;
+using GameUpdateFunc       = decltype ( game_update )*;
+using GameRenderFunc       = decltype ( game_render )*;
 
 #endif
 

@@ -24,7 +24,7 @@ extern "C" Bitscan bitscan_forward ( Uint32 mask )
 Void FileContents::free ( )
 {
      if ( size && bytes ) {
-          Globals::g_game_memory.pop_array<Char8>( size );
+          GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Char8, size );
      }
 
      size  = 0;
@@ -47,7 +47,7 @@ extern "C" FileContents load_entire_file ( const Char8* filepath )
      contents.size = file.tellg ( );
      file.seekg ( 0, file.beg );
 
-     contents.bytes = Globals::g_game_memory.push_array<Char8>( contents.size );
+     contents.bytes = GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Char8, contents.size );
 
      if ( !contents.bytes ) {
           LOG_ERROR ( "Failed to allocate memory to read file '%s' into of size %d bytes\n",

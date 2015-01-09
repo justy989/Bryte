@@ -50,7 +50,7 @@ private:
      Bool create_window        ( const Char8* window_title, Int32 window_width, Int32 window_height,
                                  Int32 back_buffer_width, Int32 back_buffer_height );
      Bool load_game_code       ( const Char8* shared_library_path );
-     Bool allocate_game_memory ( );
+     Bool allocate_game_memory ( Uint32 size );
 
      Bool save_game_memory      ( const Char8* save_path );
      Bool load_game_memory      ( const Char8* save_path );

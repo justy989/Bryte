@@ -14,12 +14,12 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 
 const Char8* Application::c_game_func_strs [ c_func_count ] = {
-     "bryte_init",
-     "bryte_destroy",
-     "bryte_reload_memory",
-     "bryte_user_input",
-     "bryte_update",
-     "bryte_render"
+     "game_init",
+     "game_destroy",
+     "game_reload_memory",
+     "game_user_input",
+     "game_update",
+     "game_render"
 };
 
 static const Char8* c_game_memory_filepath  = "bryte_memory.mem";
@@ -46,9 +46,10 @@ Application::Application ( ) :
 
 Application::~Application ( )
 {
-     if ( m_game_memory.memory ) {
+     if ( m_game_memory.location ( ) ) {
           LOG_INFO ( "Freeing allocated game memory.\n" );
-          free ( m_game_memory.memory );
+          free ( m_game_memory.location ( ) );
+          m_game_memory.clear ( );
      }
 
      if ( m_shared_library_handle ) {
@@ -173,20 +174,23 @@ Bool Application::load_game_code ( const Char8* shared_library_path )
      return true;
 }
 
-Bool Application::allocate_game_memory ( )
+Bool Application::allocate_game_memory ( Uint32 size )
 {
-     if ( m_game_memory.memory ) {
+     if ( m_game_memory.location ( ) ) {
           LOG_INFO ( "Freeing allocated game memory.\n" );
-          free ( m_game_memory.memory );
+          free ( m_game_memory.location ( ) );
+          m_game_memory.clear ( );
      }
 
-     LOG_INFO ( "Allocating game memory: %d bytes\n", m_game_memory.size );
-     m_game_memory.memory = malloc ( m_game_memory.size );
+     LOG_INFO ( "Allocating game memory: %d bytes\n", size );
+     Void* memory = malloc ( size );
 
-     if ( !m_game_memory.memory ) {
-          LOG_ERROR ( "Allocation of %d bytes failed, malloc() returned NULL.\n", m_game_memory.size );
+     if ( !memory ) {
+          LOG_ERROR ( "Allocation of %u bytes failed, malloc() returned NULL.\n", size );
           return false;
      }
+
+     m_game_memory = GameMemory ( memory, size );
 
      return true;
 }
@@ -202,11 +206,11 @@ Bool Application::save_game_memory ( const Char8* path )
           return false;
      }
 
-     file.write ( reinterpret_cast<char*>( m_game_memory.memory ), m_game_memory.size );
+     file.write ( reinterpret_cast<Char8*>( m_game_memory.location ( ) ), m_game_memory.size ( ) );
 
      if ( !file ) {
-          LOG_ERROR ( "Failed to write %d bytes to '%s' to save game memory.\n",
-                      path, m_game_memory.size );
+          LOG_ERROR ( "Failed to write %u bytes to '%s' to save game memory.\n",
+                      m_game_memory.size ( ), path );
      }
 
      file.close ( );
@@ -224,11 +228,11 @@ Bool Application::load_game_memory ( const Char8* path )
           return false;
      }
 
-     file.read ( reinterpret_cast<char*>( m_game_memory.memory ), m_game_memory.size );
+     file.read ( reinterpret_cast<Char8*>( m_game_memory.location ( ) ), m_game_memory.size ( ) );
 
      if ( !file ) {
-          LOG_ERROR ( "Failed to read %d bytes from '%s' to load game memory.\n",
-                      path, m_game_memory.size );
+          LOG_ERROR ( "Failed to read %u bytes from '%s' to load game memory.\n",
+                      m_game_memory.size ( ), path );
      }
 
      file.close ( );
@@ -370,9 +374,7 @@ Bool Application::run_game ( const Settings& settings )
           return false;
      }
 
-     m_game_memory.size = settings.game_memory_allocation_size;
-
-     if ( !allocate_game_memory ( ) ) {
+     if ( !allocate_game_memory ( settings.game_memory_allocation_size ) ) {
           return false;
      }
 

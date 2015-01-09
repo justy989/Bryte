@@ -2,54 +2,81 @@
 #define BRYTE_GAME_MEMORY_HPP
 
 #include "Types.hpp"
+#include "Utils.hpp"
 
-struct GameMemory {
+#define GAME_PUSH_MEMORY(appMem, type) reinterpret_cast<type*>( appMem.push( sizeof ( type ) ) );
+#define GAME_POP_MEMORY(appMem, type) appMem.pop( sizeof ( type ) );
 
-     GameMemory ( ) : memory ( nullptr ), size ( 0 ), used ( 0 ) { }
+#define GAME_PUSH_MEMORY_ARRAY(appMem, type, count) reinterpret_cast<type*>( appMem.push( sizeof ( type ) * count ) );
+#define GAME_POP_MEMORY_ARRAY(appMem, type, count) appMem.pop( sizeof ( type ) * count );
 
-     Void*  memory;
-     Uint32 size;
-     Uint32 used;
+class GameMemory {
+public:
 
-     template < typename T >
-     T* push_array ( Uint32 count );
+     inline GameMemory ( Void* location = nullptr, Uint32 size = 0 );
 
-     template < typename T >
-     T* push_object ( );
+     // push memory segment
+     inline Void* push ( Uint32 size );
 
-     template < typename T >
-     Void pop_array ( Uint32 count );
+     // return memory segment
+     inline Void pop ( Uint32 size );
 
-     template < typename T >
-     Void pop_object ( );
+     // clear memory pointer and return it
+     inline Void clear ( );
+
+     // accessor for the location of our memory
+     inline Void* location ( );
+
+     inline Uint32 size ( ) const;
+
+private:
+
+     Void*  m_memory;
+     Uint32 m_size;
+     Uint32 m_used;
 };
 
-template < typename T >
-T* GameMemory::push_array ( Uint32 count )
+inline GameMemory::GameMemory ( Void* location, Uint32 size ) :
+     m_memory ( location ),
+     m_size ( size ),
+     m_used ( 0 )
 {
-     auto* ptr = reinterpret_cast<Char8*>( memory ) + used;
 
-     used += sizeof ( T ) * count;
-
-     return reinterpret_cast<T*>( ptr );
 }
 
-template < typename T >
-T* GameMemory::push_object ( )
+inline Void* GameMemory::push ( Uint32 size )
 {
-     return push_array<T>( 1 );
+     ASSERT ( m_used + size < m_size );
+
+     Void* ptr = reinterpret_cast<Char8*>( m_memory ) + m_used;
+
+     m_used += size;
+
+     return ptr;
 }
 
-template < typename T >
-Void GameMemory::pop_array ( Uint32 count )
+inline Void GameMemory::pop ( Uint32 size )
 {
-     used -= sizeof ( T ) * count;
+     ASSERT ( size <= m_used );
+
+     m_used -= size;
 }
 
-template < typename T >
-Void GameMemory::pop_object ( )
+inline Void GameMemory::clear ( )
 {
-     pop_array<T>( 1 );
+     m_memory = nullptr;
+     m_size   = 0;
+     m_used   = 0;
+}
+
+inline Void* GameMemory::location ( )
+{
+     return m_memory;
+}
+
+inline Uint32 GameMemory::size ( ) const
+{
+     return m_size;
 }
 
 #endif

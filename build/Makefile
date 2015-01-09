@@ -9,7 +9,7 @@ CFLAGS   = -Wall -Werror -m64 -fPIC -std=c++11
 INCLUDE  = -I$(SOURCE_DIR)
 LINK     = -lSDL2 -ldl
 SO       = bryte_game.so
-SO_OBJS  = Log.o Globals.o Map.o Utils.o Bitmap.o
+SO_OBJS  = Log.o Globals.o Map.o Utils.o Bitmap.o Camera.o
 EXE      = bryte
 EXE_OBJS = Log.o InputRecorder.o GameInput.o Application.o
 

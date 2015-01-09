@@ -2,6 +2,7 @@
 #include "Utils.hpp"
 #include "Bitmap.hpp"
 #include "Globals.hpp"
+#include "Camera.hpp"
 
 using namespace bryte;
 
@@ -644,32 +645,11 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 {
      auto* game_state = Globals::g_memory_locations.game_state;
 
-     // calculate camera position based on player
-     Real32 camera_center_offset_x = pixels_to_meters ( back_buffer->w / 2 );
-     Real32 camera_center_offset_y = pixels_to_meters ( back_buffer->h / 2 );
+     game_state->camera_x = calculate_camera_position ( back_buffer->w, game_state->map.width ( ),
+                                                        game_state->player.position_x, game_state->player.width );
 
-     Int32 map_width_in_pixels  = game_state->map.width ( ) * Map::c_tile_dimension_in_pixels;
-     Int32 map_height_in_pixels = game_state->map.height ( ) * Map::c_tile_dimension_in_pixels;
-
-     if ( map_width_in_pixels < back_buffer->w ) {
-          game_state->camera_x = -pixels_to_meters ( map_width_in_pixels / 2 ) + camera_center_offset_x;
-     } else {
-          Real32 map_width_in_meters  = pixels_to_meters ( map_width_in_pixels );
-          Real32 half_player_width = game_state->player.width * 0.5f;
-          game_state->camera_x = -( game_state->player.position_x + half_player_width - camera_center_offset_x );
-          Real32 min_camera_x = -( map_width_in_meters - pixels_to_meters ( back_buffer->w ) );
-          CLAMP ( game_state->camera_x, min_camera_x, 0 );
-     }
-
-     if ( map_height_in_pixels < back_buffer->h ) {
-          game_state->camera_y = -pixels_to_meters ( map_height_in_pixels / 2 ) + camera_center_offset_y;
-     } else {
-          Real32 map_height_in_meters = pixels_to_meters ( map_height_in_pixels );
-          Real32 half_player_height = game_state->player.height * 0.5f;
-          game_state->camera_y = -( game_state->player.position_y + half_player_height - camera_center_offset_y );
-          Real32 min_camera_y = -( map_height_in_meters - pixels_to_meters ( back_buffer->h ) );
-          CLAMP ( game_state->camera_y, min_camera_y, 0 );
-     }
+     game_state->camera_y = calculate_camera_position ( back_buffer->h, game_state->map.height ( ),
+                                                        game_state->player.position_y, game_state->player.height );
 
      // draw map
      render_map ( back_buffer, game_state->tilesheet, game_state->map,

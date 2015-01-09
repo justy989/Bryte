@@ -561,10 +561,8 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
           return;
      }
 
-     SDL_Rect character_rect { meters_to_pixels ( character.position_x ),
-                               meters_to_pixels ( character.position_y ),
-                               meters_to_pixels ( character.width ),
-                               meters_to_pixels ( character.height ) };
+     SDL_Rect character_rect = build_world_sdl_rect ( character.position_x, character.position_y,
+                                                      character.width, character.height );
 
      world_to_sdl ( character_rect, back_buffer, camera_x, camera_y );
 
@@ -874,10 +872,9 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
 
      // draw lever
-     SDL_Rect lever_rect { meters_to_pixels ( game_state->lever.position_x ),
-                           meters_to_pixels ( game_state->lever.position_y ),
-                           meters_to_pixels ( c_lever_width ),
-                           meters_to_pixels ( c_lever_height ) };
+     SDL_Rect lever_rect = build_world_sdl_rect ( game_state->lever.position_x,
+                                                  game_state->lever.position_y,
+                                                  c_lever_width, c_lever_height );
 
      world_to_sdl ( lever_rect, back_buffer, game_state->camera_x, game_state->camera_y );
 
@@ -894,10 +891,10 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
 
      // draw player attack
      if ( game_state->player.state == Character::State::attacking ) {
-          SDL_Rect attack_rect { meters_to_pixels ( game_state->player.calc_attack_x ( ) ),
-                                 meters_to_pixels ( game_state->player.calc_attack_y ( ) ),
-                                 meters_to_pixels ( c_character_attack_width ),
-                                 meters_to_pixels ( c_character_attack_height ) };
+          SDL_Rect attack_rect = build_world_sdl_rect ( game_state->player.calc_attack_x ( ),
+                                                        game_state->player.calc_attack_y ( ),
+                                                        c_character_attack_width,
+                                                        c_character_attack_height );
 
           // swap width and height for facing left and right
           if ( game_state->player.facing == Direction::left ||
@@ -912,10 +909,11 @@ extern "C" Void bryte_render ( SDL_Surface* back_buffer )
      }
 
      if ( game_state->health_pickup.available ) {
-          SDL_Rect health_pickup_rect { meters_to_pixels ( game_state->health_pickup.position_x ),
-                                        meters_to_pixels ( game_state->health_pickup.position_y ),
-                                        meters_to_pixels ( HealthPickup::c_dimension ),
-                                        meters_to_pixels ( HealthPickup::c_dimension ) };
+          SDL_Rect health_pickup_rect = build_world_sdl_rect ( game_state->health_pickup.position_x,
+                                                               game_state->health_pickup.position_y,
+                                                               HealthPickup::c_dimension,
+                                                               HealthPickup::c_dimension );
+
 
           world_to_sdl ( health_pickup_rect, back_buffer, game_state->camera_x, game_state->camera_y );
 

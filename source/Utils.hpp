@@ -53,6 +53,14 @@ namespace bryte
           rect.y = ( back_buffer->h - rect.y ) - rect.h;
      }
 
+     inline SDL_Rect build_world_sdl_rect ( Real32 x, Real32 y, Real32 w, Real32 h )
+     {
+          SDL_Rect rect = { meters_to_pixels ( x ), meters_to_pixels ( y ),
+                            meters_to_pixels ( w ), meters_to_pixels ( h ) };
+
+          return rect;
+     }
+
      inline Bool point_inside_rect ( Real32 x, Real32 y, Real32 l, Real32 b, Real32 r, Real32 t )
      {
           return ( x >= l && x <= r && y >= b && y <= t );

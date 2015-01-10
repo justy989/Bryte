@@ -61,6 +61,9 @@ private:
      Void   clear_back_buffer   ( );
      Void   render_to_window    ( );
 
+     Int32 window_to_back_buffer ( Int32 pos, Int32 dimension, Int32 back_buffer_dimension );
+     Void translate_window_pos_to_back_buffer ( Int32 sx, Int32 sy, Int32* bx, Int32* by );
+
 private:
 
      static const Int32  c_func_count = 5;

@@ -15,6 +15,8 @@ namespace editor
           bryte::Map::Room room;
 
           SDL_Surface* tilesheet;
+
+          Uint8 current_tile;
      };
 
      struct MemoryLocations {

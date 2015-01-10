@@ -33,6 +33,8 @@ extern "C" Bool game_init ( GameMemory& game_memory )
           return false;
      }
 
+     state->current_tile = 1;
+
      return true;
 }
 
@@ -43,7 +45,36 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
 
 extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game_input )
 {
+     State* state = get_state ( game_memory );
 
+     for ( Uint32 i = 0; i < game_input.mouse_button_change_count; ++i ) {
+          auto change = game_input.mouse_button_changes [ i ];
+          if ( change.down && ( SDL_BUTTON(SDL_BUTTON_LEFT) & change.button ) ) {
+               Int32 tx = game_input.mouse_position_x / bryte::Map::c_tile_dimension_in_pixels;
+               Int32 ty = game_input.mouse_position_y / bryte::Map::c_tile_dimension_in_pixels;
+
+               state->map.set_coordinate_value ( tx, ty, state->current_tile );
+          }
+     }
+
+     for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
+          const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
+
+          switch ( key_change.scan_code ) {
+          default:
+               break;
+          case SDL_SCANCODE_Q:
+               if ( key_change.down ) {
+                    state->current_tile--;
+               }
+               break;
+          case SDL_SCANCODE_E:
+               if ( key_change.down ) {
+                    state->current_tile++;
+               }
+               break;
+          }
+     }
 }
 
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )

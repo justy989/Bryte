@@ -332,6 +332,26 @@ Bool Application::poll_sdl_events ( )
                     LOG_WARNING ( "Unable to handle more than %d keys per frame\n",
                                   GameInput::c_max_key_change_count );
                }
+          } else if ( sdl_event.type == SDL_MOUSEBUTTONDOWN ) {
+               auto button = sdl_event.button;
+               Int32 x, y;
+
+               translate_window_pos_to_back_buffer ( button.x, button.y, &x, &y );
+
+               if ( !m_game_input.add_mouse_button_change ( button.state, true, x, y ) ) {
+                    LOG_WARNING ( "Unable to handle more than %d mouse button clicks per frame\n",
+                                  GameInput::c_max_mouse_button_change_count );
+               }
+          } else if ( sdl_event.type == SDL_MOUSEBUTTONUP ) {
+               auto button = sdl_event.button;
+               Int32 x, y;
+
+               translate_window_pos_to_back_buffer ( button.x, button.y, &x, &y );
+
+               if ( !m_game_input.add_mouse_button_change ( button.state, false, x, y ) ) {
+                    LOG_WARNING ( "Unable to handle more than %d mouse button clicks per frame\n",
+                                  GameInput::c_max_mouse_button_change_count );
+               }
           }
      }
 
@@ -379,7 +399,6 @@ Bool Application::run_game ( const Settings& settings )
 
      ASSERT ( m_game_init_func );
      ASSERT ( m_game_destroy_func );
-     ASSERT ( m_game_reload_memory_func );
      ASSERT ( m_game_user_input_func );
      ASSERT ( m_game_update_func );
      ASSERT ( m_game_render_func );
@@ -413,5 +432,22 @@ Bool Application::run_game ( const Settings& settings )
      m_game_destroy_func ( m_game_memory );
 
      return 0;
+}
+
+Int32 Application::window_to_back_buffer ( Int32 pos, Int32 dimension, Int32 back_buffer_dimension )
+{
+     float pct = static_cast<float>( pos ) / static_cast<float>( dimension );
+
+     return static_cast<Int32>( static_cast<float>( back_buffer_dimension ) * pct );
+}
+
+Void Application::translate_window_pos_to_back_buffer ( Int32 sx, Int32 sy, Int32* bx, Int32* by )
+{
+     Int32 w, h;
+
+     SDL_GetWindowSize ( m_window, &w, &h );
+
+     *bx = window_to_back_buffer ( sx, w, m_back_buffer_surface->w );
+     *by = m_back_buffer_surface->h - window_to_back_buffer ( sy, h, m_back_buffer_surface->h );
 }
 

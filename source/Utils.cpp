@@ -1,5 +1,5 @@
 #include "Utils.hpp"
-#include "Globals.hpp"
+#include "BryteGlobals.hpp"
 
 #include <fstream>
 

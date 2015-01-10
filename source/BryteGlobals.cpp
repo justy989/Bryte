@@ -1,4 +1,4 @@
-#include "Globals.hpp"
+#include "BryteGlobals.hpp"
 
 using namespace bryte;
 

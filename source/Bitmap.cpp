@@ -1,6 +1,6 @@
 #include "Bitmap.hpp"
 #include "Utils.hpp"
-#include "Globals.hpp"
+#include "BryteGlobals.hpp"
 
 using namespace bryte;
 

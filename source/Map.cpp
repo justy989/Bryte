@@ -1,5 +1,5 @@
 #include "Map.hpp"
-#include "Globals.hpp"
+#include "BryteGlobals.hpp"
 #include "Utils.hpp"
 
 using namespace bryte;

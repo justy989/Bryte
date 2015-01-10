@@ -1,7 +1,7 @@
 #include "Bryte.hpp"
 #include "Utils.hpp"
 #include "Bitmap.hpp"
-#include "Globals.hpp"
+#include "BryteGlobals.hpp"
 #include "Camera.hpp"
 
 using namespace bryte;

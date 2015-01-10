@@ -1,9 +1,7 @@
 #include "Utils.hpp"
-#include "BryteGlobals.hpp"
+#include "GameMemory.hpp"
 
 #include <fstream>
-
-using namespace bryte;
 
 extern "C" Bitscan bitscan_forward ( Uint32 mask )
 {
@@ -21,17 +19,17 @@ extern "C" Bitscan bitscan_forward ( Uint32 mask )
      return result;
 }
 
-Void FileContents::free ( )
+Void FileContents::free ( GameMemory* game_memory )
 {
      if ( size && bytes ) {
-          GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Char8, size );
+          GAME_PUSH_MEMORY_ARRAY ( (*game_memory), Char8, size );
      }
 
      size  = 0;
      bytes = nullptr;
 }
 
-extern "C" FileContents load_entire_file ( const Char8* filepath )
+extern "C" FileContents load_entire_file ( const Char8* filepath, GameMemory* game_memory )
 {
      LOG_DEBUG ( "Loading entire file '%s'\n", filepath );
      std::ifstream file ( filepath, std::ios::binary );
@@ -47,7 +45,7 @@ extern "C" FileContents load_entire_file ( const Char8* filepath )
      contents.size = file.tellg ( );
      file.seekg ( 0, file.beg );
 
-     contents.bytes = GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Char8, contents.size );
+     contents.bytes = GAME_PUSH_MEMORY_ARRAY ( (*game_memory), Char8, contents.size );
 
      if ( !contents.bytes ) {
           LOG_ERROR ( "Failed to allocate memory to read file '%s' into of size %d bytes\n",

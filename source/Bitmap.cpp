@@ -2,8 +2,6 @@
 #include "Utils.hpp"
 #include "BryteGlobals.hpp"
 
-using namespace bryte;
-
 static Bool read_bitmap_headers ( const FileContents& bitmap_contents, BitmapFileHeader** file_header,
                                   BitmapInfoHeader** info_header )
 {
@@ -84,23 +82,18 @@ static Bool fill_surface_pixels ( char* bitmap_pixels, BitmapInfoHeader* info_he
      return true;
 }
 
-extern "C" SDL_Surface* load_bitmap ( const char* filepath )
+extern "C" SDL_Surface* load_bitmap ( const FileContents* bitmap_contents )
 {
-     LOG_DEBUG ( "Loading bitmap '%s'\n", filepath );
-
      SDL_Surface* surface = nullptr;
 
-     FileContents bitmap_contents = load_entire_file ( filepath );
-
-     if ( !bitmap_contents.bytes ) {
+     if ( !bitmap_contents->bytes ) {
           return surface;
      }
 
      BitmapFileHeader* file_header = nullptr;
      BitmapInfoHeader* info_header = nullptr;
 
-     if ( !read_bitmap_headers ( bitmap_contents, &file_header, &info_header ) ) {
-          bitmap_contents.free ( );
+     if ( !read_bitmap_headers ( *bitmap_contents, &file_header, &info_header ) ) {
           return surface;
      }
 
@@ -109,7 +102,7 @@ extern "C" SDL_Surface* load_bitmap ( const char* filepath )
                                       0, 0, 0, 0 );
 
      if ( surface ) {
-          if ( !fill_surface_pixels ( bitmap_contents.bytes + file_header->bitmap_offset,
+          if ( !fill_surface_pixels ( bitmap_contents->bytes + file_header->bitmap_offset,
                                       info_header, surface ) ) {
                SDL_FreeSurface ( surface );
                surface = nullptr;
@@ -121,8 +114,6 @@ extern "C" SDL_Surface* load_bitmap ( const char* filepath )
      } else {
           LOG_ERROR ( "SDL_CreateRGBSurface() failed: %s\n", SDL_GetError ( ) );
      }
-
-     bitmap_contents.free ( );
 
      return surface;
 }

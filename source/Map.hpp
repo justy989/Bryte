@@ -32,6 +32,10 @@ namespace bryte
 
           public:
 
+               void initialize ( Uint32 width, Uint32 height, Uint8* tiles );
+
+          public:
+
                Uint8* tiles;
 
                Uint8  width;
@@ -45,7 +49,7 @@ namespace bryte
 
           Map ( );
 
-          Void build  ( );
+          void set_current_room ( Room* room );
 
           Int32 position_to_tile_index     ( Real32 x, Real32 y );
 
@@ -57,7 +61,7 @@ namespace bryte
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
 
           Bool  is_position_solid   ( Real32 x, Real32 y );
-          Int32 check_position_exit ( Real32 x, Real32 y );
+          const Exit* check_position_exit ( Real32 x, Real32 y );
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
@@ -74,6 +78,11 @@ namespace bryte
           Room* m_current_room;
      };
 
+     inline void Map::set_current_room ( Room* room )
+     {
+          m_current_room = room;
+     }
+
      inline Int32 Map::width ( ) const
      {
           return m_current_room->width;
@@ -83,7 +92,6 @@ namespace bryte
      {
           return m_current_room->height;
      }
-
 }
 
 #endif

@@ -7,10 +7,14 @@
 #include "GameInput.hpp"
 #include "Map.hpp"
 
-namespace editor {
+namespace editor
+{
      struct State {
           bryte::Map map;
 
+          bryte::Map::Room room;
+
+          SDL_Surface* tilesheet;
      };
 }
 

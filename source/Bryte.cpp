@@ -3,6 +3,7 @@
 #include "Bitmap.hpp"
 #include "BryteGlobals.hpp"
 #include "Camera.hpp"
+#include "MapDisplay.hpp"
 
 using namespace bryte;
 
@@ -100,7 +101,7 @@ Bool Character::attack_collides_with ( const Character& character )
 
 Void Character::damage ( Int32 amount, Direction push )
 {
-     health       -= amount;
+     health -= amount;
 
      if ( health > 0 ) {
           damage_pushed = push;
@@ -285,7 +286,8 @@ Bool GameState::initialize ( )
 
      LOG_INFO ( "Loading tilesheet '%s'\n", c_test_tilesheet_path );
 
-     tilesheet = load_bitmap ( c_test_tilesheet_path );
+     FileContents bitmap_contents = load_entire_file ( c_test_tilesheet_path, &Globals::g_game_memory );
+     tilesheet = load_bitmap ( &bitmap_contents );
      if ( !tilesheet ) {
           return false;
      }
@@ -376,48 +378,6 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
      SDL_FillRect ( back_buffer, &character_rect, color );
 }
 
-static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& map,
-                         Real32 camera_x, Real32 camera_y )
-{
-     ASSERT ( map.m_current_room );
-
-     for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
-          for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
-
-               SDL_Rect tile_rect { 0, 0,
-                                    Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-               SDL_Rect clip_rect { 0, 0,
-                                    Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-
-               auto tile_value = map.get_coordinate_value ( x, y );
-
-               clip_rect.x = tile_value * Map::c_tile_dimension_in_pixels;
-
-               tile_rect.x = x * Map::c_tile_dimension_in_pixels;
-               tile_rect.y = y * Map::c_tile_dimension_in_pixels;
-
-               world_to_sdl ( tile_rect, back_buffer, camera_x, camera_y );
-
-               SDL_BlitSurface ( tilesheet, &clip_rect, back_buffer, &tile_rect );
-          }
-     }
-
-     Uint32 exit_color = SDL_MapRGB ( back_buffer->format, 0, 170, 0 );
-
-     for ( Uint8 d = 0; d < map.m_current_room->exit_count; ++d ) {
-          auto& exit = map.m_current_room->exits [ d ];
-
-          SDL_Rect exit_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-
-          exit_rect.x = exit.location_x * Map::c_tile_dimension_in_pixels;
-          exit_rect.y = exit.location_y * Map::c_tile_dimension_in_pixels;
-
-          world_to_sdl ( exit_rect, back_buffer, camera_x, camera_y );
-
-          SDL_FillRect ( back_buffer, &exit_rect, exit_color );
-     }
-}
-
 static Void setup_game_state_from_memory ( GameMemory& game_memory )
 {
      ASSERT ( game_memory.memory );
@@ -438,7 +398,47 @@ extern "C" Bool game_init ( GameMemory& game_memory )
           return false;
      }
 
-     game_state->map.build ( );
+     Globals::g_memory_locations.rooms = GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Map::Room,
+                                                                  Map::c_max_rooms );
+
+     auto* rooms                       = Globals::g_memory_locations.rooms;
+
+     static const Uint8  c_map_1_width    = 20;
+     static const Uint8  c_map_1_height   = 10;
+     static const Uint8  c_map_2_width    = 11;
+     static const Uint8  c_map_2_height   = 24;
+
+     rooms [ 0 ].initialize ( c_map_1_width, c_map_1_height,
+                              GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Uint8,
+                                                       c_map_1_width * c_map_1_height ) );
+
+     rooms [ 1 ].initialize ( c_map_2_width, c_map_2_height,
+                              GAME_PUSH_MEMORY_ARRAY ( Globals::g_game_memory, Uint8,
+                                                       c_map_2_width * c_map_2_height ) );
+
+     rooms [ 0 ].exit_count = 1;
+
+     rooms [ 0 ].exits [ 0 ].location_x    = 1;
+     rooms [ 0 ].exits [ 0 ].location_y    = 8;
+     rooms [ 0 ].exits [ 0 ].room_index    = 1;
+     rooms [ 0 ].exits [ 0 ].destination_x = 9;
+     rooms [ 0 ].exits [ 0 ].destination_y = 1;
+
+     rooms [ 1 ].exit_count = 1;
+
+     rooms [ 1 ].exits [ 0 ].location_x    = 9;
+     rooms [ 1 ].exits [ 0 ].location_y    = 1;
+     rooms [ 1 ].exits [ 0 ].room_index    = 0;
+     rooms [ 1 ].exits [ 0 ].destination_x = 1;
+     rooms [ 1 ].exits [ 0 ].destination_y = 8;
+
+     game_state->map.set_current_room ( rooms + 0 );
+
+     game_state->map.set_coordinate_value ( 1, 6, 4 );
+     game_state->map.set_coordinate_value ( 2, 6, 4 );
+     game_state->map.set_coordinate_value ( 3, 6, 13 );
+     game_state->map.set_coordinate_value ( 3, 8, 7 );
+     game_state->map.set_coordinate_value ( 3, 7, 7 );
 
      for ( Uint32 i = 0; i < 2; ++i ) {
           Int32 max_tries = 10;
@@ -473,10 +473,6 @@ extern "C" Void game_destroy ( )
 extern "C" Void game_reload_memory ( GameMemory& game_memory )
 {
      setup_game_state_from_memory ( game_memory );
-
-     auto* game_state = Globals::g_memory_locations.game_state;
-
-     game_state->map.build ( );
 }
 
 extern "C" Void game_user_input ( const GameInput& game_input )
@@ -629,15 +625,19 @@ extern "C" Void game_update ( Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-          player_exit = map.check_position_exit ( game_state->player.position_x,
-                                                  game_state->player.position_y );
+          const auto* exit = map.check_position_exit ( game_state->player.position_x,
+                                                       game_state->player.position_y );
 
-          if ( player_exit > 0 ) {
-               game_state->player.position_x = map.tile_index_to_coordinate_x ( player_exit );
-               game_state->player.position_y = map.tile_index_to_coordinate_y ( player_exit );
+          if ( exit ) {
+               game_state->player.position_x = exit->destination_x * Map::c_tile_dimension_in_meters;
+               game_state->player.position_y = exit->destination_y * Map::c_tile_dimension_in_meters;
 
-               game_state->player.position_x *= Map::c_tile_dimension_in_meters;
-               game_state->player.position_y *= Map::c_tile_dimension_in_meters;
+               game_state->map.set_current_room ( &Globals::g_memory_locations.rooms [ exit->room_index ] );
+
+               player_exit = map.position_to_tile_index ( game_state->player.position_x,
+                                                          game_state->player.position_y );
+
+               LOG_INFO ( "Exit: Player Tile Index: %d\n", player_exit );
           }
      } else {
           auto player_tile_index = map.position_to_tile_index ( game_state->player.position_x,
@@ -645,6 +645,7 @@ extern "C" Void game_update ( Real32 time_delta )
 
           // clear the exit destination if they've left the tile
           if ( player_exit != player_tile_index ) {
+               LOG_INFO ( "Reset Exit: Saved Tile Index: %d Current Tile Index: %d\n", player_exit, player_tile_index );
                player_exit = 0;
           }
      }
@@ -667,6 +668,9 @@ extern "C" Void game_render ( SDL_Surface* back_buffer )
      // draw map
      render_map ( back_buffer, game_state->tilesheet, game_state->map,
                   game_state->camera_x, game_state->camera_y );
+
+     render_map_exits ( back_buffer, game_state->map,
+                        game_state->camera_x, game_state->camera_y );
 
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 blue    = SDL_MapRGB ( back_buffer->format, 0, 0, 255 );

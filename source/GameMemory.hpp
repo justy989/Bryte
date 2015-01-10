@@ -4,11 +4,11 @@
 #include "Types.hpp"
 #include "Utils.hpp"
 
-#define GAME_PUSH_MEMORY(appMem, type) reinterpret_cast<type*>( appMem.push( sizeof ( type ) ) );
-#define GAME_POP_MEMORY(appMem, type) appMem.pop( sizeof ( type ) );
+#define GAME_PUSH_MEMORY(appMem, type) reinterpret_cast<type*>( appMem.push( sizeof ( type ) ) )
+#define GAME_POP_MEMORY(appMem, type) appMem.pop( sizeof ( type ) )
 
-#define GAME_PUSH_MEMORY_ARRAY(appMem, type, count) reinterpret_cast<type*>( appMem.push( sizeof ( type ) * count ) );
-#define GAME_POP_MEMORY_ARRAY(appMem, type, count) appMem.pop( sizeof ( type ) * count );
+#define GAME_PUSH_MEMORY_ARRAY(appMem, type, count) reinterpret_cast<type*>( appMem.push( sizeof ( type ) * count ) )
+#define GAME_POP_MEMORY_ARRAY(appMem, type, count) appMem.pop( sizeof ( type ) * count )
 
 class GameMemory {
 public:

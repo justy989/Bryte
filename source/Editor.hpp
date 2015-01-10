@@ -16,6 +16,10 @@ namespace editor
 
           SDL_Surface* tilesheet;
      };
+
+     struct MemoryLocations {
+          State* state;
+     };
 }
 
 // exported functions to be called by the application

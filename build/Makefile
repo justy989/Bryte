@@ -11,7 +11,7 @@ LINK           = -lSDL2 -ldl
 GAME_SO        = bryte_game.so
 GAME_SO_OBJS   = Log.o Utils.o Bitmap.o Map.o MapDisplay.o Character.o Camera.o
 EDITOR_SO      = bryte_editor.so
-EDITOR_SO_OBJS = Log.o EditorGlobals.o Utils.o Map.o Bitmap.o MapDisplay.o
+EDITOR_SO_OBJS = Log.o Utils.o Map.o Bitmap.o MapDisplay.o
 EXE            = bryte
 EXE_OBJS       = Log.o InputRecorder.o GameInput.o Application.o
 

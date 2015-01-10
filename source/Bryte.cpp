@@ -74,7 +74,7 @@ static Direction determine_damage_direction ( const Character& a, const Characte
 
 Bool State::initialize ( GameMemory& game_memory )
 {
-     random.seed ( 41490 );
+     random.seed ( 13371 );
 
      player.state  = Character::State::alive;
      player.facing = Direction::left;

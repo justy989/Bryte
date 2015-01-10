@@ -45,7 +45,7 @@ Map::Map ( ) :
 
 }
 
-Int32 Map::position_to_tile_index ( Real32 x, Real32 y )
+Int32 Map::position_to_tile_index ( Real32 x, Real32 y ) const
 {
      Int32 tile_x = x / c_tile_dimension_in_meters;
      Int32 tile_y = y / c_tile_dimension_in_meters;
@@ -53,7 +53,7 @@ Int32 Map::position_to_tile_index ( Real32 x, Real32 y )
      return coordinate_to_tile_index ( tile_x, tile_y );
 }
 
-Int32 Map::coordinate_to_tile_index ( Int32 tile_x, Int32 tile_y )
+Int32 Map::coordinate_to_tile_index ( Int32 tile_x, Int32 tile_y ) const
 {
      ASSERT ( tile_x >= 0 && tile_x < m_current_room->width );
      ASSERT ( tile_y >= 0 && tile_y < m_current_room->height );
@@ -61,17 +61,17 @@ Int32 Map::coordinate_to_tile_index ( Int32 tile_x, Int32 tile_y )
      return tile_y * static_cast<Int32>( m_current_room->width ) + tile_x;
 }
 
-Int32 Map::tile_index_to_coordinate_x ( Int32 tile_index )
+Int32 Map::tile_index_to_coordinate_x ( Int32 tile_index ) const
 {
      return tile_index % static_cast<Int32>( m_current_room->width );
 }
 
-Int32 Map::tile_index_to_coordinate_y ( Int32 tile_index )
+Int32 Map::tile_index_to_coordinate_y ( Int32 tile_index ) const
 {
      return tile_index / static_cast<Int32>( m_current_room->width );
 }
 
-Uint8 Map::get_coordinate_value ( Int32 tile_x, Int32 tile_y )
+Uint8 Map::get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const
 {
      return m_current_room->tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ];
 }
@@ -81,12 +81,12 @@ Void Map::set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value )
      m_current_room->tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ] = value;
 }
 
-Bool Map::is_position_solid ( Real32 x, Real32 y )
+Bool Map::is_position_solid ( Real32 x, Real32 y ) const
 {
      return m_current_room->tiles [ position_to_tile_index ( x, y ) ] > 0;
 }
 
-const Map::Exit* Map::check_position_exit ( Real32 x, Real32 y )
+const Map::Exit* Map::check_position_exit ( Real32 x, Real32 y ) const
 {
      Int32 player_tile_x = x / c_tile_dimension_in_meters;
      Int32 player_tile_y = y / c_tile_dimension_in_meters;

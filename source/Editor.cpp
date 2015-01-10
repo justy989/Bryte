@@ -37,27 +37,22 @@ extern "C" Bool game_init ( GameMemory& game_memory )
      return true;
 }
 
-extern "C" Void game_destroy ( )
+extern "C" Void game_destroy ( GameMemory& game_memory )
 {
 
 }
 
-extern "C" Void game_reload_memory ( GameMemory& game_memory )
-{
-     Globals::game_memory = game_memory;
-}
-
-extern "C" Void game_user_input ( const GameInput& game_input )
+extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game_input )
 {
 
 }
 
-extern "C" Void game_update ( Real32 time_delta )
+extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
 
 }
 
-extern "C" Void game_render ( SDL_Surface* back_buffer )
+extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      State* state = get_state ( );
 

@@ -63,7 +63,7 @@ private:
 
 private:
 
-     static const Int32  c_func_count = 6;
+     static const Int32  c_func_count = 5;
      static const Char8* c_game_func_strs [ c_func_count ];
 
      static const Uint32 c_max_key_changes_per_frame = 8;
@@ -83,7 +83,6 @@ private:
      // functions loaded from game shared library
      GameInitFunc         m_game_init_func;
      GameDestroyFunc      m_game_destroy_func;
-     GameReloadMemoryFunc m_game_reload_memory_func;
      GameUserInputFunc    m_game_user_input_func;
      GameUpdateFunc       m_game_update_func;
      GameRenderFunc       m_game_render_func;

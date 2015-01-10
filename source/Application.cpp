@@ -16,7 +16,6 @@ using std::chrono::milliseconds;
 const Char8* Application::c_game_func_strs [ c_func_count ] = {
      "game_init",
      "game_destroy",
-     "game_reload_memory",
      "game_user_input",
      "game_update",
      "game_render"
@@ -166,10 +165,9 @@ Bool Application::load_game_code ( const Char8* shared_library_path )
      // set the loaded functions
      m_game_init_func          = reinterpret_cast<GameInitFunc>( game_funcs [ 0 ] );
      m_game_destroy_func       = reinterpret_cast<GameDestroyFunc>( game_funcs [ 1 ] );
-     m_game_reload_memory_func = reinterpret_cast<GameReloadMemoryFunc>( game_funcs [ 2 ] );
-     m_game_user_input_func    = reinterpret_cast<GameUserInputFunc>( game_funcs [ 3 ] );
-     m_game_update_func        = reinterpret_cast<GameUpdateFunc>( game_funcs [ 4 ] );
-     m_game_render_func        = reinterpret_cast<GameRenderFunc>( game_funcs [ 5 ] );
+     m_game_user_input_func    = reinterpret_cast<GameUserInputFunc>( game_funcs [ 2 ] );
+     m_game_update_func        = reinterpret_cast<GameUpdateFunc>( game_funcs [ 3 ] );
+     m_game_render_func        = reinterpret_cast<GameRenderFunc>( game_funcs [ 4 ] );
 
      return true;
 }
@@ -251,7 +249,7 @@ Void Application::handle_input ( )
           }
      }
 
-     m_game_user_input_func ( m_game_input );
+     m_game_user_input_func ( m_game_memory, m_game_input );
 }
 
 Void Application::clear_back_buffer ( )
@@ -294,7 +292,6 @@ Bool Application::poll_sdl_events ( )
 
                if ( sc == SDL_SCANCODE_0 ) {
                     load_game_code ( m_shared_library_path );
-                    m_game_reload_memory_func ( m_game_memory );
                     continue;
                }
 
@@ -388,7 +385,7 @@ Bool Application::run_game ( const Settings& settings )
      ASSERT ( m_game_render_func );
 
      LOG_INFO ( "Initializing game\n" );
-     if ( !m_game_init_func ( m_game_memory) ) {
+     if ( !m_game_init_func ( m_game_memory ) ) {
           return false;
      }
 
@@ -405,15 +402,15 @@ Bool Application::run_game ( const Settings& settings )
 
           handle_input ( );
 
-          m_game_update_func ( time_delta );
+          m_game_update_func ( m_game_memory, time_delta );
 
           clear_back_buffer ( );
-          m_game_render_func ( m_back_buffer_surface );
+          m_game_render_func ( m_game_memory, m_back_buffer_surface );
           render_to_window ( );
      }
 
      LOG_INFO ( "Destroying game\n" );
-     m_game_destroy_func ( );
+     m_game_destroy_func ( m_game_memory );
 
      return 0;
 }

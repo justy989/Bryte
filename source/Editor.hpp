@@ -20,11 +20,10 @@ namespace editor
 
 // exported functions to be called by the application
 extern "C" Bool game_init ( GameMemory& );
-extern "C" Void game_destroy ( );
-extern "C" Void game_reload_memory ( GameMemory& );
-extern "C" Void game_user_input ( const GameInput& );
-extern "C" Void game_update ( Real32 );
-extern "C" Void game_render ( SDL_Surface* );
+extern "C" Void game_destroy ( GameMemory& );
+extern "C" Void game_user_input ( GameMemory&, const GameInput& );
+extern "C" Void game_update ( GameMemory&, Real32 );
+extern "C" Void game_render ( GameMemory&, SDL_Surface* );
 
 #endif
 

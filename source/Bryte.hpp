@@ -7,74 +7,14 @@
 #include "GameInput.hpp"
 
 #include "Map.hpp"
+#include "Character.hpp"
 
-#include "StopWatch.hpp"
 #include "Random.hpp"
 
 #include <SDL2/SDL.h>
 
 namespace bryte
 {
-     enum Direction {
-          left = 0,
-          up,
-          right,
-          down,
-          count
-     };
-
-     struct Character {
-     public:
-
-          enum State {
-               dead,
-               spawning,
-               alive,
-               blinking,
-               attacking,
-               dying,
-          };
-
-     public:
-
-          Bool collides_with ( const Character& character );
-          Bool attack_collides_with ( const Character& character );
-
-          Void attack ( );
-          Void damage ( Int32 amount, Direction push );
-
-          Void update ( Real32 time_delta );
-
-          Real32 calc_attack_x ( );
-          Real32 calc_attack_y ( );
-
-     public:
-
-          State     state;
-          Direction facing;
-
-          Stopwatch state_watch;
-
-          Int32  health;
-          Int32  max_health;
-
-          Real32 position_x;
-          Real32 position_y;
-
-          Real32 velocity_x;
-          Real32 velocity_y;
-
-          Real32 width;
-          Real32 height;
-
-          Real32 collision_height;
-
-          Direction damage_pushed;
-
-          Stopwatch damage_watch;
-          Stopwatch cooldown_watch;
-     };
-
      struct Lever {
           Real32 position_x;
           Real32 position_y;
@@ -95,11 +35,10 @@ namespace bryte
           Bool available = false;
      };
 
-
-     struct GameState {
+     struct State {
      public:
 
-          Bool initialize ( );
+          Bool initialize ( GameMemory& game_memory );
           Void destroy    ( );
 
           Bool spawn_enemy ( Real32 x, Real32 y );
@@ -134,20 +73,25 @@ namespace bryte
 
           SDL_Surface* tilesheet;
      };
+
+     struct MemoryLocations {
+          State*     state;
+          Map::Room* rooms;
+
+          Void calculate_locations ( GameMemory* memory );
+     };
 }
 
 // exported functions to be called by the application
 extern "C" Bool game_init ( GameMemory& );
-extern "C" Void game_destroy ( );
-extern "C" Void game_reload_memory ( GameMemory& );
-extern "C" Void game_user_input ( const GameInput& );
-extern "C" Void game_update ( Real32 );
-extern "C" Void game_render ( SDL_Surface* );
+extern "C" Void game_destroy ( GameMemory& );
+extern "C" Void game_user_input ( GameMemory&, const GameInput& );
+extern "C" Void game_update ( GameMemory&, Real32 );
+extern "C" Void game_render ( GameMemory&, SDL_Surface* );
 
 // exported function types
 using GameInitFunc         = decltype ( game_init )*;
 using GameDestroyFunc      = decltype ( game_destroy )*;
-using GameReloadMemoryFunc = decltype ( game_reload_memory )*;
 using GameUserInputFunc    = decltype ( game_user_input )*;
 using GameUpdateFunc       = decltype ( game_update )*;
 using GameRenderFunc       = decltype ( game_render )*;

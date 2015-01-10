@@ -51,17 +51,17 @@ namespace bryte
 
           void set_current_room ( Room* room );
 
-          Int32 position_to_tile_index     ( Real32 x, Real32 y );
+          Int32 position_to_tile_index     ( Real32 x, Real32 y ) const;
 
-          Int32 coordinate_to_tile_index   ( Int32 tile_x, Int32 tile_y );
-          Int32 tile_index_to_coordinate_x ( Int32 tile_index );
-          Int32 tile_index_to_coordinate_y ( Int32 tile_index );
+          Int32 coordinate_to_tile_index   ( Int32 tile_x, Int32 tile_y ) const;
+          Int32 tile_index_to_coordinate_x ( Int32 tile_index ) const;
+          Int32 tile_index_to_coordinate_y ( Int32 tile_index ) const;
 
-          Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y );
+          Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const;
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
 
-          Bool  is_position_solid   ( Real32 x, Real32 y );
-          const Exit* check_position_exit ( Real32 x, Real32 y );
+          Bool  is_position_solid   ( Real32 x, Real32 y ) const;
+          const Exit* check_position_exit ( Real32 x, Real32 y ) const;
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;

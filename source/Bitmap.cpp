@@ -1,6 +1,5 @@
 #include "Bitmap.hpp"
 #include "Utils.hpp"
-#include "BryteGlobals.hpp"
 
 static Bool read_bitmap_headers ( const FileContents& bitmap_contents, BitmapFileHeader** file_header,
                                   BitmapInfoHeader** info_header )

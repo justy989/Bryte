@@ -227,11 +227,11 @@ extern "C" Bool game_init ( GameMemory& game_memory )
      auto* rooms = memory_locations->rooms;
 
      rooms [ 0 ].initialize ( c_map_1_width, c_map_1_height,
-                              GAME_PUSH_MEMORY_ARRAY ( game_memory, Uint8,
+                              GAME_PUSH_MEMORY_ARRAY ( game_memory, Map::Tile,
                                                        c_map_1_width * c_map_1_height ) );
 
      rooms [ 1 ].initialize ( c_map_2_width, c_map_2_height,
-                              GAME_PUSH_MEMORY_ARRAY ( game_memory, Uint8,
+                              GAME_PUSH_MEMORY_ARRAY ( game_memory, Map::Tile,
                                                        c_map_2_width * c_map_2_height ) );
 
      rooms [ 0 ].exit_count = 1;
@@ -253,10 +253,19 @@ extern "C" Bool game_init ( GameMemory& game_memory )
      state->map.set_current_room ( rooms + 0 );
 
      state->map.set_coordinate_value ( 1, 6, 4 );
+     state->map.set_coordinate_solid ( 1, 6, true );
+
      state->map.set_coordinate_value ( 2, 6, 4 );
+     state->map.set_coordinate_solid ( 2, 6, true );
+
      state->map.set_coordinate_value ( 3, 6, 13 );
+     state->map.set_coordinate_solid ( 3, 6, true );
+
      state->map.set_coordinate_value ( 3, 8, 7 );
+     state->map.set_coordinate_solid ( 3, 8, true );
+
      state->map.set_coordinate_value ( 3, 7, 7 );
+     state->map.set_coordinate_solid ( 3, 7, true );
 
      for ( Uint32 i = 0; i < 2; ++i ) {
           Int32 max_tries = 10;
@@ -365,11 +374,16 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                                               lever.position_x, lever.position_y,
                                               c_lever_width, c_lever_height ) ) {
                     auto tile_value = state->map.get_coordinate_value ( lever.activate_tile_x,
-                                                                             lever.activate_tile_y );
+                                                                        lever.activate_tile_y );
+                    auto tile_solid = state->map.get_coordinate_solid ( lever.activate_tile_x,
+                                                                        lever.activate_tile_y );
 
-                    Uint8 id = tile_value ? 0 : 7;
+
+                    Uint8 id    = tile_value ? 0 : 7;
+                    Bool  solid = !tile_solid;
 
                     state->map.set_coordinate_value ( lever.activate_tile_x, lever.activate_tile_y, id );
+                    state->map.set_coordinate_value ( lever.activate_tile_x, lever.activate_tile_y, solid );
 
                     state->lever.activate_time = c_lever_activate_cooldown;
                }

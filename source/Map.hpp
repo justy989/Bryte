@@ -8,7 +8,10 @@ namespace bryte
      class Map {
      public:
 
-          struct Room;
+          struct Tile {
+               Uint8 value;
+               Bool  solid;
+          };
 
           struct Exit {
           public:
@@ -32,11 +35,14 @@ namespace bryte
 
           public:
 
-               void initialize ( Uint32 width, Uint32 height, Uint8* tiles );
+               void initialize ( Uint32 width, Uint32 height, Tile* tiles );
+
+               void save ( const Char8* filepath );
+               void load ( const Char8* filepath );
 
           public:
 
-               Uint8* tiles;
+               Tile* tiles;
 
                Uint8  width;
                Uint8  height;
@@ -58,7 +64,9 @@ namespace bryte
           Int32 tile_index_to_coordinate_y ( Int32 tile_index ) const;
 
           Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const;
+          Bool  get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const;
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
+          Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
 
           Bool  is_position_solid   ( Real32 x, Real32 y ) const;
           const Exit* check_position_exit ( Real32 x, Real32 y ) const;
@@ -68,10 +76,10 @@ namespace bryte
 
      public:
 
-          static const Int32 c_tile_dimension_in_pixels;
+          static const Int32  c_tile_dimension_in_pixels = 16;
           static const Real32 c_tile_dimension_in_meters;
 
-          static const Uint8 c_max_rooms = 8;
+          static const Uint8  c_max_rooms = 8;
 
      public:
 

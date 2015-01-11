@@ -22,7 +22,7 @@ extern "C" Bool game_init ( GameMemory& game_memory )
      Uint32 map_height = 14;
 
      state->room.initialize ( map_width, map_height,
-                              GAME_PUSH_MEMORY_ARRAY ( game_memory, Uint8,
+                              GAME_PUSH_MEMORY_ARRAY ( game_memory, bryte::Map::Tile,
                                                        map_width * map_height ) );
 
      state->map.set_current_room ( &state->room );
@@ -71,6 +71,16 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
           case SDL_SCANCODE_E:
                if ( key_change.down ) {
                     state->current_tile++;
+               }
+               break;
+          case SDL_SCANCODE_O:
+               if ( key_change.down ) {
+                    state->map.m_current_room->save ( "test.map" );
+               }
+               break;
+          case SDL_SCANCODE_I:
+               if ( key_change.down ) {
+                    state->map.m_current_room->load ( "test.map" );
                }
                break;
           }

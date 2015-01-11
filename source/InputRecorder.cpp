@@ -79,7 +79,20 @@ Void InputRecorder::write_frame ( const GameInput& game_input )
      ASSERT ( m_recording );
      ASSERT ( !m_playing_back );
 
-     m_file.write ( reinterpret_cast<const char*>( &game_input ), sizeof ( game_input ) );
+     m_file.write ( reinterpret_cast<const Char8*> ( &game_input.key_change_count ),
+                    sizeof ( game_input.key_change_count ) );
+     m_file.write ( reinterpret_cast<const Char8*> ( game_input.key_changes ),
+                    sizeof ( *game_input.key_changes ) * game_input.key_change_count );
+
+     m_file.write ( reinterpret_cast<const Char8*> ( &game_input.mouse_button_change_count ),
+                    sizeof ( game_input.mouse_button_change_count ) );
+     m_file.write ( reinterpret_cast<const Char8*> ( game_input.mouse_button_changes ),
+                    sizeof ( *game_input.mouse_button_changes ) * game_input.mouse_button_change_count );
+
+     m_file.write ( reinterpret_cast<const Char8*> ( &game_input.mouse_position_x ),
+                    sizeof ( game_input.mouse_position_x ) );
+     m_file.write ( reinterpret_cast<const Char8*> ( &game_input.mouse_position_y ),
+                    sizeof ( game_input.mouse_position_y ) );
 }
 
 Bool InputRecorder::read_frame ( GameInput& game_input )
@@ -87,17 +100,30 @@ Bool InputRecorder::read_frame ( GameInput& game_input )
      ASSERT ( !m_recording );
      ASSERT ( m_playing_back );
 
+     bool reached_eof = false;
+
      if ( m_file.eof ( ) ) {
           m_file.clear ( );
           m_file.seekg ( m_file.beg );
 
-          m_file.read ( reinterpret_cast<char*>( &game_input ), sizeof ( game_input ) );
-
-          return false;
+          reached_eof = true;
      }
 
-     m_file.read ( reinterpret_cast<char*>( &game_input ), sizeof ( game_input ) );
+     m_file.read ( reinterpret_cast<Char8*> ( &game_input.key_change_count ),
+                   sizeof ( game_input.key_change_count ) );
+     m_file.read ( reinterpret_cast<Char8*> ( game_input.key_changes ),
+                   sizeof ( *game_input.key_changes ) * game_input.key_change_count );
 
-     return true;
+     m_file.read ( reinterpret_cast<Char8*> ( &game_input.mouse_button_change_count ),
+                   sizeof ( game_input.mouse_button_change_count ) );
+     m_file.read ( reinterpret_cast<Char8*> ( game_input.mouse_button_changes ),
+                   sizeof ( *game_input.mouse_button_changes ) * game_input.mouse_button_change_count );
+
+     m_file.read ( reinterpret_cast<Char8*> ( &game_input.mouse_position_x ),
+                   sizeof ( game_input.mouse_position_x ) );
+     m_file.read ( reinterpret_cast<Char8*> ( &game_input.mouse_position_y ),
+                   sizeof ( game_input.mouse_position_y ) );
+
+     return !reached_eof;
 }
 

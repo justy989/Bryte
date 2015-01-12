@@ -9,7 +9,18 @@
 
 namespace editor
 {
+     struct Settings {
+          Int32 map_width;
+          Int32 map_height;
+
+          const char* map_tilesheet_filename;
+
+          const char* map_save_filename;
+     };
+
      struct State {
+          Settings* settings;
+
           bryte::Map map;
 
           bryte::Map::Room room;

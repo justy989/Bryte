@@ -37,7 +37,7 @@ public:
      Application ( );
      ~Application ( );
 
-     Bool run_game ( const Settings& settings );
+     Bool run_game ( const Settings& settings, void* game_settings );
 
 private:
 

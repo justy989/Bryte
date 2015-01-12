@@ -18,9 +18,9 @@ EXE_OBJS       = Log.o InputRecorder.o GameInput.o Application.o
 
 all: release
 release: CFLAGS += -O3
-release: $(GAME_SO)  $(GAME) $(EDITOR_SO) $(EDITOR)
+release: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
 debug: CFLAGS += -g3 -DDEBUG
-debug: $(GAME_SO) #(GAME) $(EDITOR_SO) $(EDITOR)
+debug: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
 
 clean:
 	rm -f $(EXE_OBJS) $(GAME_SO) $(GAME_SO_OBJS) $(GAME) $(EDITOR_SO) $(EDITOR_SO_OBJS) $(EDITOR)

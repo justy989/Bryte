@@ -39,6 +39,6 @@ int main ( int argc, char** argv )
 
      settings.locked_frames_per_second      = 30;
 
-     return application.run_game ( settings ) ? 0 : 1;
+     return application.run_game ( settings, nullptr ) ? 0 : 1;
 }
 

@@ -129,6 +129,8 @@ const Map::Exit* Map::check_position_exit ( Real32 x, Real32 y ) const
 
 void Map::Room::save ( const Char8* filepath )
 {
+     LOG_INFO ( "Saving Map '%s'\n", filepath );
+
      std::ofstream file ( filepath, std::ios::binary );
 
      if ( !file.is_open ( ) ) {
@@ -151,6 +153,8 @@ void Map::Room::save ( const Char8* filepath )
 
 void Map::Room::load ( const Char8* filepath )
 {
+     LOG_INFO ( "Loading Map '%s'\n", filepath );
+
      std::ifstream file ( filepath, std::ios::binary );
 
      if ( !file.is_open ( ) ) {

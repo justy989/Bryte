@@ -380,7 +380,7 @@ Real32 Application::time_and_limit_loop ( Int32 locked_frames_per_second )
      return static_cast<float>( dt_ms ) / 1000.0f;
 }
 
-Bool Application::run_game ( const Settings& settings )
+Bool Application::run_game ( const Settings& settings, void* game_settings )
 {
      if ( !create_window ( settings.window_title, settings.window_width, settings.window_height,
                            settings.back_buffer_width, settings.back_buffer_height ) ) {
@@ -404,7 +404,7 @@ Bool Application::run_game ( const Settings& settings )
      ASSERT ( m_game_render_func );
 
      LOG_INFO ( "Initializing game\n" );
-     if ( !m_game_init_func ( m_game_memory, nullptr ) ) {
+     if ( !m_game_init_func ( m_game_memory, game_settings ) ) {
           return false;
      }
 

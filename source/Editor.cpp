@@ -16,18 +16,17 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
      State* state = GAME_PUSH_MEMORY ( game_memory, State);
 
+     state->settings = reinterpret_cast<Settings*>( settings );
+
      memory_locations->state = state;
 
-     Uint32 map_width  = 14;
-     Uint32 map_height = 14;
-
-     state->room.initialize ( map_width, map_height,
+     state->room.initialize ( state->settings->map_width, state->settings->map_height,
                               GAME_PUSH_MEMORY_ARRAY ( game_memory, bryte::Map::Tile,
-                                                       map_width * map_height ) );
+                                                       state->settings->map_width * state->settings->map_height ) );
 
      state->map.set_current_room ( &state->room );
 
-     FileContents bitmap_contents = load_entire_file ( "castle_tilesheet.bmp", &game_memory );
+     FileContents bitmap_contents = load_entire_file ( state->settings->map_tilesheet_filename, &game_memory );
      state->tilesheet = load_bitmap ( &bitmap_contents );
      if ( !state->tilesheet ) {
           return false;
@@ -75,12 +74,12 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_O:
                if ( key_change.down ) {
-                    state->map.m_current_room->save ( "test.map" );
+                    state->map.m_current_room->save ( state->settings->map_save_filename );
                }
                break;
           case SDL_SCANCODE_I:
                if ( key_change.down ) {
-                    state->map.m_current_room->load ( "test.map" );
+                    state->map.m_current_room->load ( state->settings->map_save_filename );
                }
                break;
           }

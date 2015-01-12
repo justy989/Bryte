@@ -9,6 +9,7 @@ void print_help ( )
 {
      printf ( "Bryte Application\n" );
      printf ( "Usage: ./bryte [ options ]\n" );
+     printf ( "  -i filename of map to load\n" );
      printf ( "  -o when saved, output filename\n" );
      printf ( "  -s tilesheet to load\n" );
      printf ( "  -w initial map width ( tiles wide )\n" );
@@ -40,6 +41,7 @@ int main ( int argc, char** argv )
 
      editor_settings.map_tilesheet_filename = "castle_tilesheet.bmp";
      editor_settings.map_save_filename      = "map.brm";
+     editor_settings.map_load_filename      = nullptr;
 
      for ( int i = 1; i < argc; ++i ) {
           if ( strcmp ( argv [ i ], "-h" ) == 0 ) {
@@ -65,7 +67,12 @@ int main ( int argc, char** argv )
                     editor_settings.map_tilesheet_filename = argv [ i + 1 ];
                     ++i;
                }
-          }  else {
+          } else if ( strcmp ( argv [ i ], "-i" ) == 0 ) {
+               if ( argc >= i + 1 ) {
+                    editor_settings.map_load_filename = argv [ i + 1 ];
+                    ++i;
+               }
+          } else {
                printf ( "unrecognized option: %s, see help.\n", argv [ i ] );
                return 0;
           }

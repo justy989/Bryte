@@ -28,7 +28,15 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
-     state->map.initialize ( state->settings->map_width, state->settings->map_height );
+     if ( state->settings->map_load_filename ) {
+          if ( !state->settings->map_save_filename ) {
+               state->settings->map_save_filename = state->settings->map_load_filename;
+          }
+
+          state->map.load ( state->settings->map_load_filename );
+     } else {
+          state->map.initialize ( state->settings->map_width, state->settings->map_height );
+     }
 
      state->current_tile = 1;
 
@@ -49,17 +57,25 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 {
      State* state = get_state ( game_memory );
 
+     Int32 tx = game_input.mouse_position_x - meters_to_pixels ( state->camera_x );
+     Int32 ty = game_input.mouse_position_y - meters_to_pixels ( state->camera_y );
+
+     tx /= bryte::Map::c_tile_dimension_in_pixels;
+     ty /= bryte::Map::c_tile_dimension_in_pixels;
+
      for ( Uint32 i = 0; i < game_input.mouse_button_change_count; ++i ) {
           auto change = game_input.mouse_button_changes [ i ];
-          if ( change.down && ( SDL_BUTTON(SDL_BUTTON_LEFT) & change.button ) ) {
-               Int32 tx = game_input.mouse_position_x - meters_to_pixels ( state->camera_x );
-               Int32 ty = game_input.mouse_position_y - meters_to_pixels ( state->camera_y );
 
-               tx /= bryte::Map::c_tile_dimension_in_pixels;
-               ty /= bryte::Map::c_tile_dimension_in_pixels;
-
-               if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
-                    state->map.set_coordinate_value ( tx, ty, state->current_tile );
+          if ( change.down ) {
+               if ( change.button == SDL_BUTTON_LEFT ) {
+                    if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
+                        state->map.set_coordinate_value ( tx, ty, state->current_tile );
+                    }
+               } else if ( change.button == SDL_BUTTON_RIGHT ) {
+                    if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
+                         auto solid = state->map.get_coordinate_solid ( tx, ty );
+                         state->map.set_coordinate_solid ( tx, ty, !solid );
+                    }
                }
           }
      }
@@ -105,6 +121,11 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     state->map.load ( state->settings->map_save_filename );
                }
                break;
+          case SDL_SCANCODE_B:
+               if ( key_change.down ) {
+                    state->draw_solids = !state->draw_solids;
+               }
+               break;
           }
      }
 }
@@ -130,6 +151,48 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 }
 
+static Void render_map_solids ( SDL_Surface* back_buffer, bryte::Map& map, Real32 camera_x, Real32 camera_y )
+{
+     Uint32 red_color = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
+
+     for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
+          for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
+
+               bool is_solid = map.get_coordinate_solid ( x, y );
+
+               if ( !is_solid ) {
+                    continue;
+               }
+
+               SDL_Rect solid_rect_b { 0, 0, bryte::Map::c_tile_dimension_in_pixels, 1 };
+               SDL_Rect solid_rect_l { 0, 0, 1, bryte::Map::c_tile_dimension_in_pixels };
+               SDL_Rect solid_rect_t { 0, 0, bryte::Map::c_tile_dimension_in_pixels, 1 };
+               SDL_Rect solid_rect_r { 0, 0, 1, bryte::Map::c_tile_dimension_in_pixels };
+
+               solid_rect_b.x = x * bryte::Map::c_tile_dimension_in_pixels;
+               solid_rect_b.y = y * bryte::Map::c_tile_dimension_in_pixels;
+               solid_rect_l.x = x * bryte::Map::c_tile_dimension_in_pixels;
+               solid_rect_l.y = y * bryte::Map::c_tile_dimension_in_pixels;
+               solid_rect_t.x = x * bryte::Map::c_tile_dimension_in_pixels;
+               solid_rect_t.y = y * bryte::Map::c_tile_dimension_in_pixels +
+                                bryte::Map::c_tile_dimension_in_pixels - 1;
+               solid_rect_r.x = x * bryte::Map::c_tile_dimension_in_pixels +
+                                bryte::Map::c_tile_dimension_in_pixels - 1;
+               solid_rect_r.y = y * bryte::Map::c_tile_dimension_in_pixels;
+
+               world_to_sdl ( solid_rect_b, back_buffer, camera_x, camera_y );
+               world_to_sdl ( solid_rect_l, back_buffer, camera_x, camera_y );
+               world_to_sdl ( solid_rect_t, back_buffer, camera_x, camera_y );
+               world_to_sdl ( solid_rect_r, back_buffer, camera_x, camera_y );
+
+               SDL_FillRect ( back_buffer, &solid_rect_b, red_color );
+               SDL_FillRect ( back_buffer, &solid_rect_l, red_color );
+               SDL_FillRect ( back_buffer, &solid_rect_t, red_color );
+               SDL_FillRect ( back_buffer, &solid_rect_r, red_color );
+          }
+     }
+}
+
 static Void render_current_tile ( SDL_Surface* back_buffer, SDL_Surface* tilesheet,
                                   Int32 mouse_x, Int32 mouse_y, int current_tile )
 {
@@ -146,6 +209,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      State* state = get_state ( game_memory );
 
      render_map ( back_buffer, state->tilesheet, state->map, state->camera_x, state->camera_y );
+
+     if ( state->draw_solids ) {
+          render_map_solids ( back_buffer, state->map, state->camera_x, state->camera_y );
+     }
 
      render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
                            state->current_tile );

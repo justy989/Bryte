@@ -19,7 +19,7 @@ void Map::initialize ( Uint8 width, Uint8 height )
                auto index = y * width + x;
 
                m_tiles [ index ].value = 0;
-               m_tiles [ index ].solid = 0;
+               m_tiles [ index ].solid = false;
           }
      }
 }

@@ -338,7 +338,7 @@ Bool Application::poll_sdl_events ( )
 
                translate_window_pos_to_back_buffer ( button.x, button.y, &x, &y );
 
-               if ( !m_game_input.add_mouse_button_change ( button.state, true, x, y ) ) {
+               if ( !m_game_input.add_mouse_button_change ( button.button, true, x, y ) ) {
                     LOG_WARNING ( "Unable to handle more than %d mouse button clicks per frame\n",
                                   GameInput::c_max_mouse_button_change_count );
                }
@@ -348,7 +348,7 @@ Bool Application::poll_sdl_events ( )
 
                translate_window_pos_to_back_buffer ( button.x, button.y, &x, &y );
 
-               if ( !m_game_input.add_mouse_button_change ( button.state, false, x, y ) ) {
+               if ( !m_game_input.add_mouse_button_change ( button.button, false, x, y ) ) {
                     LOG_WARNING ( "Unable to handle more than %d mouse button clicks per frame\n",
                                   GameInput::c_max_mouse_button_change_count );
                }

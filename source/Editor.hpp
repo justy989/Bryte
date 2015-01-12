@@ -10,6 +10,8 @@
 namespace editor
 {
      struct Settings {
+          const char* map_load_filename;
+
           Int32 map_width;
           Int32 map_height;
 
@@ -40,6 +42,8 @@ namespace editor
           SDL_Surface* tilesheet;
 
           Uint8 current_tile;
+
+          Bool draw_solids;
      };
 
      struct MemoryLocations {

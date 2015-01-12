@@ -3,27 +3,18 @@
 #include <SDL2/SDL.h>
 
 #include "Application.hpp"
+#include "Bryte.hpp"
 
 void print_help ( )
 {
      printf ( "Bryte Application\n" );
      printf ( "Usage: ./bryte [ options ]\n" );
+     printf ( "  -i filename of map to load\n" );
      printf ( "  -h displays this helpful information\n\n" );
 }
 
 int main ( int argc, char** argv )
 {
-     for ( int i = 1; i < argc; ++i ) {
-          if ( strcmp ( argv [ i ], "-h" ) == 0 ) {
-               print_help ( );
-               return 0;
-          } else {
-               printf ( "unrecognized option: %s, see help.\n", argv [ i ] );
-               return 0;
-          }
-     }
-
-     Application application;
      Application::Settings settings;
 
      settings.window_title                  = "Bryte 0.01";
@@ -39,6 +30,27 @@ int main ( int argc, char** argv )
 
      settings.locked_frames_per_second      = 30;
 
-     return application.run_game ( settings, nullptr ) ? 0 : 1;
+     bryte::Settings bryte_settings;
+
+     bryte_settings.map_filename = nullptr;
+
+     for ( int i = 1; i < argc; ++i ) {
+          if ( strcmp ( argv [ i ], "-h" ) == 0 ) {
+               print_help ( );
+               return 0;
+          } else if ( strcmp ( argv [ i ], "-i" ) == 0 ) {
+               if ( argc >= i + 1 ) {
+                    bryte_settings.map_filename = argv [ i + 1 ];
+                    ++i;
+               }
+          } else {
+               printf ( "unrecognized option: %s, see help.\n", argv [ i ] );
+               return 0;
+          }
+     }
+
+     Application application;
+
+     return application.run_game ( settings, &bryte_settings ) ? 0 : 1;
 }
 

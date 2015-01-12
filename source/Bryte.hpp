@@ -35,6 +35,10 @@ namespace bryte
           Bool available = false;
      };
 
+     struct Settings {
+          const Char8* map_filename;
+     };
+
      struct State {
      public:
 

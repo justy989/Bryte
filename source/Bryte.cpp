@@ -114,8 +114,6 @@ Bool State::initialize ( GameMemory& game_memory )
           return false;
      }
 
-     map.initialize ( 15, 18 );
-
      return true;
 }
 
@@ -212,6 +210,10 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      if ( !state->initialize ( game_memory ) ) {
           return false;
      }
+
+     auto* state_settings = reinterpret_cast<Settings*>( settings );
+
+     state->map.load ( state_settings->map_filename );
 
      return true;
 }
@@ -427,9 +429,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      Uint32 blue    = SDL_MapRGB ( back_buffer->format, 0, 0, 255 );
      Uint32 green   = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
      Uint32 white   = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
-     Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
+     //Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
 
      // draw lever
+#if 0
      SDL_Rect lever_rect = build_world_sdl_rect ( state->lever.position_x,
                                                   state->lever.position_y,
                                                   c_lever_width, c_lever_height );
@@ -437,6 +440,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      world_to_sdl ( lever_rect, back_buffer, state->camera_x, state->camera_y );
 
      SDL_FillRect ( back_buffer, &lever_rect, magenta );
+#endif
 
      // draw enemies
      for ( Uint32 i = 0; i < state->enemy_count; ++i ) {

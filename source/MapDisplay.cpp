@@ -6,8 +6,6 @@ using namespace bryte;
 extern "C" Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& map,
                              Real32 camera_x, Real32 camera_y )
 {
-     ASSERT ( map.m_current_room );
-
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
 

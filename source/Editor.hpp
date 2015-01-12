@@ -5,7 +5,10 @@
 
 #include "GameMemory.hpp"
 #include "GameInput.hpp"
+
 #include "Map.hpp"
+
+#include "Text.hpp"
 
 namespace editor
 {
@@ -28,6 +31,8 @@ namespace editor
      public:
 
           Settings* settings;
+
+          Text text;
 
           bryte::Map map;
 

@@ -22,6 +22,17 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 
      memory_locations->state = state;
 
+     FileContents text_contents    = load_entire_file ( "text.bmp", &game_memory );
+
+     state->text.fontsheet         = load_bitmap ( &text_contents );
+     state->text.character_width   = 5;
+     state->text.character_height  = 8;
+     state->text.character_spacing = 1;
+
+     if ( !state->text.fontsheet ) {
+          return false;
+     }
+
      FileContents bitmap_contents = load_entire_file ( state->settings->map_tilesheet_filename, &game_memory );
      state->tilesheet = load_bitmap ( &bitmap_contents );
      if ( !state->tilesheet ) {
@@ -216,5 +227,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
                            state->current_tile );
+
+     state->text.render ( back_buffer, "HELLO", 10, 10 );
+     state->text.render ( back_buffer, "1234567890", 10, 20 );
 }
 

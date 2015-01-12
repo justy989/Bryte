@@ -68,6 +68,9 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
           }
      }
 
+     state->mouse_x = game_input.mouse_position_x;
+     state->mouse_y = game_input.mouse_position_y;
+
      for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
           const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
 
@@ -131,10 +134,24 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 }
 
+static Void render_current_tile ( SDL_Surface* back_buffer, SDL_Surface* tilesheet,
+                                  Int32 mouse_x, Int32 mouse_y, int current_tile )
+{
+     SDL_Rect tile_rect { mouse_x, back_buffer->h - mouse_y,
+                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
+     SDL_Rect clip_rect { current_tile * bryte::Map::c_tile_dimension_in_pixels, 0,
+                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
+
+     SDL_BlitSurface ( tilesheet, &clip_rect, back_buffer, &tile_rect );
+}
+
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      State* state = get_state ( game_memory );
 
      render_map ( back_buffer, state->tilesheet, state->map, state->camera_x, state->camera_y );
+
+     render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
+                           state->current_tile );
 }
 

@@ -10,48 +10,19 @@ const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimen
 
 void Map::Room::initialize ( Uint32 width, Uint32 height, Tile* tiles )
 {
-     LOG_INFO ( "Building Room: %d by %d\n", width, height );
-
      this->width  = width;
      this->height = height;
      this->tiles  = tiles;
 
+     // clear all tiles
      for ( Uint32 y = 0; y < height; ++y ) {
           for ( Uint32 x = 0; x < width; ++x ) {
                auto index = y * width + x;
 
-               if ( x == 0 ) {
-                    tiles [ index ].value = 7;
-                    tiles [ index ].solid = true;
-               } else if ( x == width - 1 ) {
-                    tiles [ index ].value = 5;
-                    tiles [ index ].solid = true;
-               } else if ( y == 0 ) {
-                    tiles [ index ].value = 6;
-                    tiles [ index ].solid = true;
-               } else if ( y == height - 1 ) {
-                    tiles [ index ].value = 4;
-                    tiles [ index ].solid = true;
-               } else {
-                    tiles [ index ].value = 0;
-                    tiles [ index ].solid = 0;
-               }
+               tiles [ index ].value = 0;
+               tiles [ index ].solid = 0;
           }
      }
-
-     Int32 bottom_left  = 0;
-     Int32 bottom_right = width - 1;
-     Int32 top_left     = width * ( height - 1 );
-     Int32 top_right    = width * height - 1;
-
-     tiles [ bottom_left ].value  = 11;
-     tiles [ bottom_left ].solid  = true;
-     tiles [ bottom_right ].value = 10;
-     tiles [ bottom_right ].solid = true;
-     tiles [ top_left ].value     = 8;
-     tiles [ top_left ].solid     = true;
-     tiles [ top_right ].value    = 9;
-     tiles [ top_right ].solid    = true;
 }
 
 Map::Map ( ) :

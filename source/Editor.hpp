@@ -31,6 +31,9 @@ namespace editor
 
           bryte::Map::Room room;
 
+          Int32  mouse_x;
+          Int32  mouse_y;
+
           Real32 camera_x;
           Real32 camera_y;
 

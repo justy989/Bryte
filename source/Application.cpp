@@ -352,6 +352,11 @@ Bool Application::poll_sdl_events ( )
                     LOG_WARNING ( "Unable to handle more than %d mouse button clicks per frame\n",
                                   GameInput::c_max_mouse_button_change_count );
                }
+          } else if ( sdl_event.type == SDL_MOUSEMOTION ) {
+               auto button = sdl_event.button;
+               translate_window_pos_to_back_buffer ( button.x, button.y,
+                                                     &m_game_input.mouse_position_x,
+                                                     &m_game_input.mouse_position_y );
           }
      }
 

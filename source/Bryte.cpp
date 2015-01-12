@@ -206,7 +206,7 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
      SDL_FillRect ( back_buffer, &character_rect, color );
 }
 
-extern "C" Bool game_init ( GameMemory& game_memory )
+extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
      State* state = GAME_PUSH_MEMORY ( game_memory, State );
@@ -373,17 +373,17 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                                               player.width, player.height,
                                               lever.position_x, lever.position_y,
                                               c_lever_width, c_lever_height ) ) {
+
                     auto tile_value = state->map.get_coordinate_value ( lever.activate_tile_x,
                                                                         lever.activate_tile_y );
                     auto tile_solid = state->map.get_coordinate_solid ( lever.activate_tile_x,
                                                                         lever.activate_tile_y );
 
-
                     Uint8 id    = tile_value ? 0 : 7;
                     Bool  solid = !tile_solid;
 
                     state->map.set_coordinate_value ( lever.activate_tile_x, lever.activate_tile_y, id );
-                    state->map.set_coordinate_value ( lever.activate_tile_x, lever.activate_tile_y, solid );
+                    state->map.set_coordinate_solid ( lever.activate_tile_x, lever.activate_tile_y, solid );
 
                     state->lever.activate_time = c_lever_activate_cooldown;
                }
@@ -464,8 +464,6 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                player_exit = map.position_to_tile_index ( state->player.position_x,
                                                           state->player.position_y );
-
-               LOG_INFO ( "Exit: Player Tile Index: %d\n", player_exit );
           }
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.position_x,
@@ -473,7 +471,6 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           // clear the exit destination if they've left the tile
           if ( player_exit != player_tile_index ) {
-               LOG_INFO ( "Reset Exit: Saved Tile Index: %d Current Tile Index: %d\n", player_exit, player_tile_index );
                player_exit = 0;
           }
      }

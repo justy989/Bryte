@@ -83,7 +83,7 @@ namespace bryte
 }
 
 // exported functions to be called by the application
-extern "C" Bool game_init ( GameMemory& );
+extern "C" Bool game_init ( GameMemory&, void* settings );
 extern "C" Void game_destroy ( GameMemory& );
 extern "C" Void game_user_input ( GameMemory&, const GameInput& );
 extern "C" Void game_update ( GameMemory&, Real32 );

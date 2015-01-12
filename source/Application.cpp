@@ -404,7 +404,7 @@ Bool Application::run_game ( const Settings& settings )
      ASSERT ( m_game_render_func );
 
      LOG_INFO ( "Initializing game\n" );
-     if ( !m_game_init_func ( m_game_memory ) ) {
+     if ( !m_game_init_func ( m_game_memory, nullptr ) ) {
           return false;
      }
 

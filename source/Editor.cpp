@@ -11,7 +11,7 @@ static State* get_state ( GameMemory& game_memory )
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
 }
 
-extern "C" Bool game_init ( GameMemory& game_memory )
+extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
      State* state = GAME_PUSH_MEMORY ( game_memory, State);

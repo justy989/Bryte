@@ -106,12 +106,6 @@ Bool State::initialize ( GameMemory& game_memory )
           health_pickups [ i ].available = false;
      }
 
-     lever.position_x      = Map::c_tile_dimension_in_meters * 4.0f;
-     lever.position_y      = Map::c_tile_dimension_in_meters * 7.5f - c_lever_width * 0.5f;
-     lever.activate_tile_x = 3;
-     lever.activate_tile_y = 8;
-     lever.activate_time   = 0.0f;
-
      LOG_INFO ( "Loading tilesheet '%s'\n", c_test_tilesheet_path );
 
      FileContents bitmap_contents = load_entire_file ( c_test_tilesheet_path, &game_memory );
@@ -119,6 +113,8 @@ Bool State::initialize ( GameMemory& game_memory )
      if ( !tilesheet ) {
           return false;
      }
+
+     map.initialize ( 15, 18 );
 
      return true;
 }
@@ -217,76 +213,6 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
-     memory_locations->rooms = GAME_PUSH_MEMORY_ARRAY ( game_memory, Map::Room, Map::c_max_rooms );
-
-     static const Uint8  c_map_1_width    = 20;
-     static const Uint8  c_map_1_height   = 10;
-     static const Uint8  c_map_2_width    = 11;
-     static const Uint8  c_map_2_height   = 24;
-
-     auto* rooms = memory_locations->rooms;
-
-     rooms [ 0 ].initialize ( c_map_1_width, c_map_1_height,
-                              GAME_PUSH_MEMORY_ARRAY ( game_memory, Map::Tile,
-                                                       c_map_1_width * c_map_1_height ) );
-
-     rooms [ 1 ].initialize ( c_map_2_width, c_map_2_height,
-                              GAME_PUSH_MEMORY_ARRAY ( game_memory, Map::Tile,
-                                                       c_map_2_width * c_map_2_height ) );
-
-     rooms [ 0 ].exit_count = 1;
-
-     rooms [ 0 ].exits [ 0 ].location_x    = 1;
-     rooms [ 0 ].exits [ 0 ].location_y    = 8;
-     rooms [ 0 ].exits [ 0 ].room_index    = 1;
-     rooms [ 0 ].exits [ 0 ].destination_x = 9;
-     rooms [ 0 ].exits [ 0 ].destination_y = 1;
-
-     rooms [ 1 ].exit_count = 1;
-
-     rooms [ 1 ].exits [ 0 ].location_x    = 9;
-     rooms [ 1 ].exits [ 0 ].location_y    = 1;
-     rooms [ 1 ].exits [ 0 ].room_index    = 0;
-     rooms [ 1 ].exits [ 0 ].destination_x = 1;
-     rooms [ 1 ].exits [ 0 ].destination_y = 8;
-
-     state->map.set_current_room ( rooms + 0 );
-
-     state->map.set_coordinate_value ( 1, 6, 4 );
-     state->map.set_coordinate_solid ( 1, 6, true );
-
-     state->map.set_coordinate_value ( 2, 6, 4 );
-     state->map.set_coordinate_solid ( 2, 6, true );
-
-     state->map.set_coordinate_value ( 3, 6, 13 );
-     state->map.set_coordinate_solid ( 3, 6, true );
-
-     state->map.set_coordinate_value ( 3, 8, 7 );
-     state->map.set_coordinate_solid ( 3, 8, true );
-
-     state->map.set_coordinate_value ( 3, 7, 7 );
-     state->map.set_coordinate_solid ( 3, 7, true );
-
-     for ( Uint32 i = 0; i < 2; ++i ) {
-          Int32 max_tries = 10;
-          Int32 random_tile_x = 0;
-          Int32 random_tile_y = 0;
-
-          while ( max_tries > 0 ) {
-               random_tile_x = state->random.generate ( 0, 16 );
-               random_tile_y = state->random.generate ( 0, 16 );
-
-               if ( !state->map.is_position_solid ( random_tile_x, random_tile_y ) ) {
-                    break;
-               }
-
-               max_tries--;
-          }
-
-          state->spawn_enemy ( Map::c_tile_dimension_in_meters * static_cast<Real32>( random_tile_x ),
-                                    Map::c_tile_dimension_in_meters * static_cast<Real32>( random_tile_y ) );
-     }
-
      return true;
 }
 
@@ -338,7 +264,6 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
      auto* state = get_state ( game_memory );
-     auto* memory_locations = reinterpret_cast<MemoryLocations*>( game_memory.location ( ) );
 
      if ( state->direction_keys [ Direction::up ] ) {
           state->player.velocity_y = c_player_speed;
@@ -460,7 +385,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->player.position_x = exit->destination_x * Map::c_tile_dimension_in_meters;
                state->player.position_y = exit->destination_y * Map::c_tile_dimension_in_meters;
 
-               state->map.set_current_room ( &memory_locations->rooms [ exit->room_index ] );
+               // TODO: load the next map
+               //state->map.set_current_room ( &memory_locations->rooms [ exit->room_index ] );
 
                player_exit = map.position_to_tile_index ( state->player.position_x,
                                                           state->player.position_y );

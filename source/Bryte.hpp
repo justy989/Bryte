@@ -76,7 +76,6 @@ namespace bryte
 
      struct MemoryLocations {
           State*     state;
-          Map::Room* rooms;
 
           Void calculate_locations ( GameMemory* memory );
      };

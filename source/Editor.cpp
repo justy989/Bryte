@@ -22,17 +22,13 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 
      memory_locations->state = state;
 
-     state->room.initialize ( state->settings->map_width, state->settings->map_height,
-                              GAME_PUSH_MEMORY_ARRAY ( game_memory, bryte::Map::Tile,
-                                                       state->settings->map_width * state->settings->map_height ) );
-
-     state->map.set_current_room ( &state->room );
-
      FileContents bitmap_contents = load_entire_file ( state->settings->map_tilesheet_filename, &game_memory );
      state->tilesheet = load_bitmap ( &bitmap_contents );
      if ( !state->tilesheet ) {
           return false;
      }
+
+     state->map.initialize ( state->settings->map_width, state->settings->map_height );
 
      state->current_tile = 1;
 
@@ -101,12 +97,12 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_O:
                if ( key_change.down ) {
-                    state->map.m_current_room->save ( state->settings->map_save_filename );
+                    state->map.save ( state->settings->map_save_filename );
                }
                break;
           case SDL_SCANCODE_I:
                if ( key_change.down ) {
-                    state->map.m_current_room->load ( state->settings->map_save_filename );
+                    state->map.load ( state->settings->map_save_filename );
                }
                break;
           }

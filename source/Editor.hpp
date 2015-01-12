@@ -29,8 +29,6 @@ namespace editor
 
           bryte::Map map;
 
-          bryte::Map::Room room;
-
           Int32  mouse_x;
           Int32  mouse_y;
 

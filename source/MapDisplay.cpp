@@ -34,8 +34,8 @@ extern "C" Void render_map_exits ( SDL_Surface* back_buffer, Map& map,
 {
      Uint32 exit_color = SDL_MapRGB ( back_buffer->format, 0, 170, 0 );
 
-     for ( Uint8 d = 0; d < map.m_current_room->exit_count; ++d ) {
-          auto& exit = map.m_current_room->exits [ d ];
+     for ( Uint8 d = 0; d < map.exit_count ( ); ++d ) {
+          auto& exit = map.exit ( d );
 
           SDL_Rect exit_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 

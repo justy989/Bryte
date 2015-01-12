@@ -2,6 +2,8 @@
 #define BRYTE_MAP_HPP
 
 #include "Types.hpp"
+#include "GameMemory.hpp"
+#include "Utils.hpp"
 
 namespace bryte
 {
@@ -25,37 +27,14 @@ namespace bryte
                Uint8 destination_y;
           };
 
-          struct Room {
-          public:
-
-               static const Uint8 c_max_width  = 255;
-               static const Uint8 c_max_height = 255;
-
-               static const Uint8 c_max_exits = 4;
-
-          public:
-
-               void initialize ( Uint32 width, Uint32 height, Tile* tiles );
-
-               void save ( const Char8* filepath );
-               void load ( const Char8* filepath );
-
-          public:
-
-               Tile* tiles;
-
-               Uint8  width;
-               Uint8  height;
-
-               Exit   exits [ c_max_exits ];
-               Uint8  exit_count;
-          };
-
      public:
 
           Map ( );
 
-          void set_current_room ( Room* room );
+          Void initialize ( Uint8 width, Uint8 height );
+
+          Void save ( const Char8* filepath );
+          Void load ( const Char8* filepath );
 
           Int32 position_to_tile_index     ( Real32 x, Real32 y ) const;
 
@@ -74,31 +53,48 @@ namespace bryte
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
 
+          inline Uint8 exit_count ( ) const;
+          inline Exit& exit ( Uint8 index );
+
      public:
 
           static const Int32  c_tile_dimension_in_pixels = 16;
           static const Real32 c_tile_dimension_in_meters;
 
-          static const Uint8  c_max_rooms = 8;
+          static const Uint32 c_max_tiles = 1024;
+          static const Uint32 c_max_exits = 4;
 
-     public:
+     private:
 
-          Room* m_current_room;
+          Tile m_tiles [ c_max_tiles ];
+
+          Uint8 m_width;
+          Uint8 m_height;
+
+          Exit   m_exits [ c_max_exits ];
+          Uint8  m_exit_count;
      };
-
-     inline void Map::set_current_room ( Room* room )
-     {
-          m_current_room = room;
-     }
 
      inline Int32 Map::width ( ) const
      {
-          return m_current_room->width;
+          return m_width;
      }
 
      inline Int32 Map::height ( ) const
      {
-          return m_current_room->height;
+          return m_height;
+     }
+
+     inline Uint8 Map::exit_count ( ) const
+     {
+          return m_exit_count;
+     }
+
+     inline Map::Exit& Map::exit ( Uint8 index )
+     {
+          ASSERT ( index < m_exit_count );
+
+          return m_exits [ index ];
      }
 }
 

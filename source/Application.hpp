@@ -1,8 +1,9 @@
 #ifndef APPLICATION_HPP
 #define APPLICATION_HPP
 
-#include "Bryte.hpp"
 #include "InputRecorder.hpp"
+#include "GameMemory.hpp"
+#include "GameFunction.hpp"
 
 #include <SDL2/SDL.h>
 

@@ -1,7 +1,7 @@
 #ifndef INPUT_RECORDER_HPP
 #define INPUT_RECORDER_HPP
 
-#include "Bryte.hpp"
+#include "GameInput.hpp"
 
 #include <fstream>
 

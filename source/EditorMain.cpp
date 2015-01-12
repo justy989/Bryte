@@ -42,5 +42,3 @@ int main ( int argc, char** argv )
      return application.run_game ( settings ) ? 0 : 1;
 }
 
-
-

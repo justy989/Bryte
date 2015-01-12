@@ -50,6 +50,8 @@ namespace bryte
           Bool  is_position_solid   ( Real32 x, Real32 y ) const;
           const Exit* check_position_exit ( Real32 x, Real32 y ) const;
 
+          Bool add_exit ( Uint8 location_x, Uint8 location_y );
+
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
 

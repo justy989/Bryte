@@ -91,6 +91,20 @@ const Map::Exit* Map::check_position_exit ( Real32 x, Real32 y ) const
      return nullptr;
 }
 
+Bool Map::add_exit ( Uint8 location_x, Uint8 location_y )
+{
+     if ( m_exit_count >= c_max_exits ) {
+          return false;
+     }
+
+     m_exits [ m_exit_count ].location_x = location_x;
+     m_exits [ m_exit_count ].location_y = location_y;
+
+     m_exit_count++;
+
+     return true;
+}
+
 void Map::save ( const Char8* filepath )
 {
      LOG_INFO ( "Saving Map '%s'\n", filepath );
@@ -109,9 +123,15 @@ void Map::save ( const Char8* filepath )
           for ( Int32 x = 0; x < m_width; ++x ) {
                auto& tile = m_tiles [ y * m_width + x ];
 
-               file.write ( reinterpret_cast<const Char8*> ( &tile.value ), sizeof ( tile.value ) );
-               file.write ( reinterpret_cast<const Char8*> ( &tile.solid ), sizeof ( tile.solid ) );
+               file.write ( reinterpret_cast<const Char8*> ( &tile ), sizeof ( tile ) );
           }
+     }
+
+     file.write ( reinterpret_cast<const Char8*>( &m_exit_count ), sizeof ( Exit ) );
+
+     for ( Int32 i = 0; i < m_exit_count; ++i ) {
+          auto& exit = m_exits [ i ];
+          file.write ( reinterpret_cast<const Char8*> ( &exit ), sizeof ( exit ) );
      }
 }
 
@@ -133,9 +153,16 @@ void Map::load ( const Char8* filepath )
           for ( Int32 x = 0; x < m_width; ++x ) {
                auto& tile = m_tiles [ y * m_width + x ];
 
-               file.read ( reinterpret_cast<Char8*> ( &tile.value ), sizeof ( tile.value ) );
-               file.read ( reinterpret_cast<Char8*> ( &tile.solid ), sizeof ( tile.solid ) );
+               file.read ( reinterpret_cast<Char8*> ( &tile ), sizeof ( tile ) );
           }
      }
+
+     file.read ( reinterpret_cast<Char8*>( &m_exit_count ), sizeof ( Exit ) );
+
+     for ( Int32 i = 0; i < m_exit_count; ++i ) {
+          auto& exit = m_exits [ i ];
+          file.read ( reinterpret_cast<Char8*> ( &exit ), sizeof ( exit ) );
+     }
+
 }
 

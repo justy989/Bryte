@@ -19,11 +19,22 @@ namespace editor
      };
 
      struct State {
+     public:
+
+          static const Real32 c_camera_speed;
+
+     public:
+
           Settings* settings;
 
           bryte::Map map;
 
           bryte::Map::Room room;
+
+          Real32 camera_x;
+          Real32 camera_y;
+
+          Bool camera_direction_keys [ 4 ];
 
           SDL_Surface* tilesheet;
 

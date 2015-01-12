@@ -6,6 +6,8 @@
 
 using namespace editor;
 
+const Real32 State::c_camera_speed = 20.0f;
+
 static State* get_state ( GameMemory& game_memory )
 {
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
@@ -34,12 +36,17 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 
      state->current_tile = 1;
 
+     state->camera_x = 0.0f;
+     state->camera_y = 0.0f;
+
      return true;
 }
 
 extern "C" Void game_destroy ( GameMemory& game_memory )
 {
+     State* state = get_state ( game_memory );
 
+     SDL_FreeSurface ( state->tilesheet );
 }
 
 extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game_input )
@@ -49,10 +56,15 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
      for ( Uint32 i = 0; i < game_input.mouse_button_change_count; ++i ) {
           auto change = game_input.mouse_button_changes [ i ];
           if ( change.down && ( SDL_BUTTON(SDL_BUTTON_LEFT) & change.button ) ) {
-               Int32 tx = game_input.mouse_position_x / bryte::Map::c_tile_dimension_in_pixels;
-               Int32 ty = game_input.mouse_position_y / bryte::Map::c_tile_dimension_in_pixels;
+               Int32 tx = game_input.mouse_position_x - meters_to_pixels ( state->camera_x );
+               Int32 ty = game_input.mouse_position_y - meters_to_pixels ( state->camera_y );
 
-               state->map.set_coordinate_value ( tx, ty, state->current_tile );
+               tx /= bryte::Map::c_tile_dimension_in_pixels;
+               ty /= bryte::Map::c_tile_dimension_in_pixels;
+
+               if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
+                    state->map.set_coordinate_value ( tx, ty, state->current_tile );
+               }
           }
      }
 
@@ -72,6 +84,18 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     state->current_tile++;
                }
                break;
+          case SDL_SCANCODE_W:
+               state->camera_direction_keys [ 0 ] = key_change.down;
+               break;
+          case SDL_SCANCODE_S:
+               state->camera_direction_keys [ 1 ] = key_change.down;
+               break;
+          case SDL_SCANCODE_D:
+               state->camera_direction_keys [ 2 ] = key_change.down;
+               break;
+          case SDL_SCANCODE_A:
+               state->camera_direction_keys [ 3 ] = key_change.down;
+               break;
           case SDL_SCANCODE_O:
                if ( key_change.down ) {
                     state->map.m_current_room->save ( state->settings->map_save_filename );
@@ -88,13 +112,29 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
+     State* state = get_state ( game_memory );
 
+     if ( state->camera_direction_keys [ 0 ] ) {
+          state->camera_y -= State::c_camera_speed * time_delta;
+     }
+
+     if ( state->camera_direction_keys [ 1 ] ) {
+          state->camera_y += State::c_camera_speed * time_delta;
+     }
+
+     if ( state->camera_direction_keys [ 2 ] ) {
+          state->camera_x -= State::c_camera_speed * time_delta;
+     }
+
+     if ( state->camera_direction_keys [ 3 ] ) {
+          state->camera_x += State::c_camera_speed * time_delta;
+     }
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      State* state = get_state ( game_memory );
 
-     render_map ( back_buffer, state->tilesheet, state->map, 0.0f, 0.0f );
+     render_map ( back_buffer, state->tilesheet, state->map, state->camera_x, state->camera_y );
 }
 

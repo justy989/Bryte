@@ -272,13 +272,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           ASSERT ( 0 );
           break;
      case Mode::tile:
-          state->text.render ( back_buffer, "MODE: TILE", 10, 10 );
+          state->text.render ( back_buffer, "TILE MODE", 10, 10 );
           break;
      case Mode::solid:
-          state->text.render ( back_buffer, "MODE: SOLID", 10, 10 );
+          state->text.render ( back_buffer, "SOLID MODE", 10, 10 );
           break;
      case Mode::exit:
-          state->text.render ( back_buffer, "MODE: EXIT", 10, 10 );
+          state->text.render ( back_buffer, "EXIT MODE", 10, 10 );
           break;
      }
 }

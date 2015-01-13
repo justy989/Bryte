@@ -43,6 +43,8 @@ namespace editor
           Real32 camera_y;
 
           Bool camera_direction_keys [ 4 ];
+          Bool left_button_down;
+          Bool right_button_down;
 
           SDL_Surface* tilesheet;
 

@@ -54,6 +54,9 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      state->camera_x = 0.0f;
      state->camera_y = 0.0f;
 
+     state->left_button_down = true;
+     state->right_button_down = true;
+
      return true;
 }
 
@@ -68,28 +71,18 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 {
      State* state = get_state ( game_memory );
 
-     Int32 sx = game_input.mouse_position_x - meters_to_pixels ( state->camera_x );
-     Int32 sy = game_input.mouse_position_y - meters_to_pixels ( state->camera_y );
-
-     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
-     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
-
      for ( Uint32 i = 0; i < game_input.mouse_button_change_count; ++i ) {
           auto change = game_input.mouse_button_changes [ i ];
 
-          if ( change.down ) {
-               if ( change.button == SDL_BUTTON_LEFT ) {
-                    if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
-                        state->map.set_coordinate_value ( tx, ty, state->current_tile );
-                    }
-               } else if ( change.button == SDL_BUTTON_RIGHT ) {
-                    if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
-                         auto solid = state->map.get_coordinate_solid ( tx, ty );
-                         state->map.set_coordinate_solid ( tx, ty, !solid );
-                    }
-               } else if ( change.button == SDL_BUTTON_MIDDLE ) {
-                    state->map.add_exit ( tx, ty );
-               }
+          switch ( change.button ) {
+          default:
+               break;
+          case SDL_BUTTON_LEFT:
+               state->left_button_down = change.down;
+               break;
+          case SDL_BUTTON_RIGHT:
+               state->right_button_down = change.down;
+               break;
           }
      }
 
@@ -162,6 +155,25 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      if ( state->camera_direction_keys [ 3 ] ) {
           state->camera_x += State::c_camera_speed * time_delta;
      }
+
+     Int32 sx = state->mouse_x - meters_to_pixels ( state->camera_x );
+     Int32 sy = state->mouse_y - meters_to_pixels ( state->camera_y );
+
+     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
+     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
+
+     if ( state->left_button_down ) {
+          if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
+              state->map.set_coordinate_value ( tx, ty, state->current_tile );
+          }
+     }
+
+     if ( state->right_button_down ) {
+          if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
+               auto solid = state->map.get_coordinate_solid ( tx, ty );
+               state->map.set_coordinate_solid ( tx, ty, !solid );
+          }
+     }
 }
 
 static Void render_map_solids ( SDL_Surface* back_buffer, bryte::Map& map, Real32 camera_x, Real32 camera_y )
@@ -230,8 +242,5 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
                            state->current_tile );
-
-     state->text.render ( back_buffer, "HELLO", 10, 10 );
-     state->text.render ( back_buffer, "1234567890", 10, 20 );
 }
 

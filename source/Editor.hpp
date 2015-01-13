@@ -23,6 +23,13 @@ namespace editor
           const char* map_save_filename;
      };
 
+     enum Mode {
+          tile = 0,
+          solid,
+          exit,
+          count
+     };
+
      struct State {
      public:
 
@@ -35,6 +42,8 @@ namespace editor
           Text text;
 
           bryte::Map map;
+
+          Mode mode;
 
           Int32  mouse_x;
           Int32  mouse_y;

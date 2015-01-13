@@ -54,8 +54,10 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      state->camera_x = 0.0f;
      state->camera_y = 0.0f;
 
-     state->left_button_down = true;
-     state->right_button_down = true;
+     state->left_button_down = false;
+     state->right_button_down = false;
+
+     state->mode = Mode::tile;
 
      return true;
 }
@@ -103,6 +105,12 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
           case SDL_SCANCODE_E:
                if ( key_change.down ) {
                     state->current_tile++;
+               }
+               break;
+          case SDL_SCANCODE_M:
+               if ( key_change.down ) {
+                    state->mode = static_cast<Mode>( static_cast<int>( state->mode ) + 1 );
+                    state->mode = static_cast<Mode>( static_cast<int>( state->mode ) % Mode::count );
                }
                break;
           case SDL_SCANCODE_W:
@@ -162,17 +170,33 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
      Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
 
-     if ( state->left_button_down ) {
-          if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
-              state->map.set_coordinate_value ( tx, ty, state->current_tile );
+     switch ( state->mode ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Mode::tile:
+          if ( state->left_button_down ) {
+               if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
+                   state->map.set_coordinate_value ( tx, ty, state->current_tile );
+               }
           }
-     }
+          break;
+     case Mode::solid:
+          if ( state->left_button_down ) {
+               if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
+                    auto solid = state->map.get_coordinate_solid ( tx, ty );
+                    state->map.set_coordinate_solid ( tx, ty, !solid );
+               }
+          }
+          break;
+     case Mode::exit:
+          if ( state->left_button_down ) {
+               if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
+                    state->map.add_exit ( tx, ty );
+               }
 
-     if ( state->right_button_down ) {
-          if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
-               auto solid = state->map.get_coordinate_solid ( tx, ty );
-               state->map.set_coordinate_solid ( tx, ty, !solid );
           }
+          break;
      }
 }
 
@@ -242,5 +266,20 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
                            state->current_tile );
+
+     switch ( state->mode ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Mode::tile:
+          state->text.render ( back_buffer, "MODE: TILE", 10, 10 );
+          break;
+     case Mode::solid:
+          state->text.render ( back_buffer, "MODE: SOLID", 10, 10 );
+          break;
+     case Mode::exit:
+          state->text.render ( back_buffer, "MODE: EXIT", 10, 10 );
+          break;
+     }
 }
 

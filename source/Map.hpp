@@ -21,10 +21,8 @@ namespace bryte
                Uint8 location_x;
                Uint8 location_y;
 
-               Uint8 room_index;
-
-               Uint8 destination_x;
-               Uint8 destination_y;
+               Uint8 map_index;
+               Uint8 exit_index;
           };
 
      public:
@@ -48,7 +46,7 @@ namespace bryte
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
 
           Bool  is_position_solid   ( Real32 x, Real32 y ) const;
-          const Exit* check_position_exit ( Real32 x, Real32 y ) const;
+          Exit* check_position_exit ( Uint8 x, Uint8 y );
 
           Bool add_exit ( Uint8 location_x, Uint8 location_y );
 

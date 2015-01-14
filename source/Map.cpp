@@ -75,15 +75,12 @@ Bool Map::is_position_solid ( Real32 x, Real32 y ) const
      return m_tiles [ position_to_tile_index ( x, y ) ].solid;
 }
 
-const Map::Exit* Map::check_position_exit ( Real32 x, Real32 y ) const
+Map::Exit* Map::check_position_exit ( Uint8 x, Uint8 y )
 {
-     Int32 player_tile_x = x / c_tile_dimension_in_meters;
-     Int32 player_tile_y = y / c_tile_dimension_in_meters;
-
      for ( Uint8 d = 0; d < m_exit_count; ++d ) {
           auto& exit = m_exits [ d ];
 
-          if ( exit.location_x == player_tile_x && exit.location_y == player_tile_y ) {
+          if ( exit.location_x == x && exit.location_y == y ) {
                return &exit;
           }
      }

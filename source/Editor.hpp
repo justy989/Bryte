@@ -60,6 +60,8 @@ namespace editor
           Uint8 current_tile;
 
           Bool draw_solids;
+
+          char message_buffer [ 128 ];
      };
 
      struct MemoryLocations {

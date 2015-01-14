@@ -380,18 +380,13 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-          const auto* exit = map.check_position_exit ( state->player.position_x,
-                                                       state->player.position_y );
+          auto* exit = map.check_position_exit ( state->player.position_x / Map::c_tile_dimension_in_meters,
+                                                 state->player.position_y / Map::c_tile_dimension_in_meters );
 
           if ( exit ) {
-               state->player.position_x = exit->destination_x * Map::c_tile_dimension_in_meters;
-               state->player.position_y = exit->destination_y * Map::c_tile_dimension_in_meters;
-
                // TODO: load the next map
-               //state->map.set_current_room ( &memory_locations->rooms [ exit->room_index ] );
-
-               player_exit = map.position_to_tile_index ( state->player.position_x,
-                                                          state->player.position_y );
+               // TODO: update the player's position
+               // TODO: save the player_exit
           }
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.position_x,

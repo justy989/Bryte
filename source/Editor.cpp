@@ -148,6 +148,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
      State* state = get_state ( game_memory );
 
+     // reset the message buffer
+     state->message_buffer [ 0 ] = '\0';
+
      if ( state->camera_direction_keys [ 0 ] ) {
           state->camera_y -= State::c_camera_speed * time_delta;
      }
@@ -190,12 +193,30 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
           break;
      case Mode::exit:
+          bryte::Map::Exit* exit = state->map.check_position_exit ( tx, ty );
+
           if ( state->left_button_down ) {
+               if ( exit ) {
+                    exit->map_index++;
+                    break;
+               }
+
                if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
                     state->map.add_exit ( tx, ty );
                }
-
           }
+
+          if ( state->right_button_down ) {
+               if ( exit ) {
+                    exit->map_index--;
+                    break;
+               }
+          }
+
+          if ( exit ) {
+               sprintf ( state->message_buffer, "MAP %d EXIT %d", exit->map_index, exit->exit_index );
+          }
+
           break;
      }
 }
@@ -281,5 +302,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           state->text.render ( back_buffer, "EXIT MODE", 10, 10 );
           break;
      }
+
+     state->text.render ( back_buffer, state->message_buffer, 10, 20 );
 }
 

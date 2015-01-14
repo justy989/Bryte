@@ -29,10 +29,13 @@ namespace bryte
 
           Map ( );
 
+          Bool load_master_list ( const Char8* filepath );
+
           Void initialize ( Uint8 width, Uint8 height );
 
           Void save ( const Char8* filepath );
           Void load ( const Char8* filepath );
+          Void load_from_master_list ( Uint8 map_index );
 
           Int32 position_to_tile_index     ( Real32 x, Real32 y ) const;
 
@@ -59,6 +62,9 @@ namespace bryte
 
      public:
 
+          static const Uint32 c_max_map_name_size = 32;
+          static const Uint32 c_max_maps = 32;
+
           static const Int32  c_tile_dimension_in_pixels = 16;
           static const Real32 c_tile_dimension_in_meters;
 
@@ -67,10 +73,13 @@ namespace bryte
 
      private:
 
-          Tile m_tiles [ c_max_tiles ];
+          Char8  m_master_list [ c_max_maps ][ c_max_map_name_size ];
+          Uint8  m_master_count;
 
-          Uint8 m_width;
-          Uint8 m_height;
+          Tile   m_tiles [ c_max_tiles ];
+
+          Uint8  m_width;
+          Uint8  m_height;
 
           Exit   m_exits [ c_max_exits ];
           Uint8  m_exit_count;

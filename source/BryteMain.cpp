@@ -9,7 +9,7 @@ void print_help ( )
 {
      printf ( "Bryte Application\n" );
      printf ( "Usage: ./bryte [ options ]\n" );
-     printf ( "  -i filename of map to load\n" );
+     printf ( "  -m filename of master map list\n" );
      printf ( "  -h displays this helpful information\n\n" );
 }
 
@@ -32,15 +32,15 @@ int main ( int argc, char** argv )
 
      bryte::Settings bryte_settings;
 
-     bryte_settings.map_filename = nullptr;
+     bryte_settings.map_master_list_filename = "map_list.txt";
 
      for ( int i = 1; i < argc; ++i ) {
           if ( strcmp ( argv [ i ], "-h" ) == 0 ) {
                print_help ( );
                return 0;
-          } else if ( strcmp ( argv [ i ], "-i" ) == 0 ) {
+          } else if ( strcmp ( argv [ i ], "-m" ) == 0 ) {
                if ( argc >= i + 1 ) {
-                    bryte_settings.map_filename = argv [ i + 1 ];
+                    bryte_settings.map_master_list_filename = argv [ i + 1 ];
                     ++i;
                }
           } else {

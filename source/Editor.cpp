@@ -82,10 +82,12 @@ void State::option_button_changed_down ( bool up )
      {
           bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
 
-          if ( up ) {
-               exit->map_index--;
-          } else {
-               exit->map_index++;
+          if ( exit ) {
+               if ( up ) {
+                    exit->map_index--;
+               } else {
+                    exit->map_index++;
+               }
           }
      } break;
      }
@@ -350,15 +352,15 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_map_solids ( back_buffer, state->map, state->camera_x, state->camera_y );
      }
 
-     render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
-                           state->current_tile );
-
      switch ( state->mode ) {
      default:
           ASSERT ( 0 );
           break;
      case Mode::tile:
-          state->text.render ( back_buffer, "TILE MODE", 10, 10 );
+          render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
+                                state->current_tile );
+
+         state->text.render ( back_buffer, "TILE MODE", 10, 10 );
           break;
      case Mode::exit:
           state->text.render ( back_buffer, "EXIT MODE", 10, 10 );

@@ -36,7 +36,7 @@ namespace bryte
      };
 
      struct Settings {
-          const Char8* map_filename;
+          const Char8* map_master_list_filename;
      };
 
      struct State {

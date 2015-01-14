@@ -8,6 +8,28 @@ using namespace bryte;
 const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimension_in_pixels /
                                                                     pixels_per_meter );
 
+Bool Map::load_master_list ( const Char8* filepath )
+{
+     std::ifstream file ( filepath );
+
+     if ( !file.is_open ( ) ) {
+          LOG_ERROR ( "Failed to load master map list '%s'\n", filepath );
+          return false;
+     }
+
+     m_master_count = 0;
+
+     while ( !file.eof ( ) ) {
+          ASSERT ( m_master_count < c_max_maps );
+
+          file.getline ( m_master_list [ m_master_count ], c_max_map_name_size );
+
+          m_master_count++;
+     }
+
+     return true;
+}
+
 void Map::initialize ( Uint8 width, Uint8 height )
 {
      m_width  = width;
@@ -116,6 +138,16 @@ Void Map::remove_exit ( Exit* exit )
      }
 
      m_exit_count--;
+}
+
+Void Map::load_from_master_list ( Uint8 map_index )
+{
+     if ( map_index >= m_master_count ) {
+          LOG_ERROR ( "Failed to load map. Invalid map index %d\n", map_index );
+          return;
+     }
+
+     load ( m_master_list [ map_index ] );
 }
 
 void Map::save ( const Char8* filepath )

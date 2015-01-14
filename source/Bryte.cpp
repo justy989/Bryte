@@ -114,6 +114,9 @@ Bool State::initialize ( GameMemory& game_memory )
           return false;
      }
 
+     map.load_master_list ( "map_list.txt" );
+     map.load_from_master_list ( 0 );
+
      return true;
 }
 
@@ -213,7 +216,8 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 
      auto* state_settings = reinterpret_cast<Settings*>( settings );
 
-     state->map.load ( state_settings->map_filename );
+     state->map.load_master_list ( state_settings->map_master_list_filename );
+     state->map.load_from_master_list ( 0 );
 
      return true;
 }
@@ -384,9 +388,17 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                                                  state->player.position_y / Map::c_tile_dimension_in_meters );
 
           if ( exit ) {
-               // TODO: load the next map
-               // TODO: update the player's position
-               // TODO: save the player_exit
+               Uint8 exit_index = exit->exit_index;
+
+               map.load_from_master_list ( exit->map_index );
+
+               auto& dest_exit = map.exit ( exit_index );
+               state->player.position_x = dest_exit.location_x * Map::c_tile_dimension_in_meters;
+               state->player.position_y = dest_exit.location_y * Map::c_tile_dimension_in_meters;
+
+               player_exit = map.position_to_tile_index ( state->player.position_x,
+                                                          state->player.position_y );
+
           }
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.position_x,

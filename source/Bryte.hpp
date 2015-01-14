@@ -37,6 +37,8 @@ namespace bryte
 
      struct Settings {
           const Char8* map_master_list_filename;
+
+          Uint32       map_index;
      };
 
      struct State {

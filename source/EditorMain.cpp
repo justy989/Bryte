@@ -12,8 +12,8 @@ void print_help ( )
      printf ( "  -i filename of map to load\n" );
      printf ( "  -o when saved, output filename\n" );
      printf ( "  -s tilesheet to load\n" );
-     printf ( "  -w initial map width ( tiles wide )\n" );
-     printf ( "  -t initial map height ( tiles tall )\n" );
+     printf ( "  -w starting map tiles wide\n" );
+     printf ( "  -t starting map tiles tall\n" );
      printf ( "  -h displays this helpful information\n\n" );
 }
 
@@ -47,12 +47,12 @@ int main ( int argc, char** argv )
           if ( strcmp ( argv [ i ], "-h" ) == 0 ) {
                print_help ( );
                return 0;
-          } else if ( strcmp ( argv [ i ], "-w" ) == 0 ) {
+          } else if ( strcmp ( argv [ i ], "-x" ) == 0 ) {
                if ( argc >= i + 1 ) {
                     editor_settings.map_width = atoi ( argv [ i + 1 ] );
                     ++i;
                }
-          } else if ( strcmp ( argv [ i ], "-t" ) == 0 ) {
+          } else if ( strcmp ( argv [ i ], "-y" ) == 0 ) {
                if ( argc >= i + 1 ) {
                     editor_settings.map_height = atoi ( argv [ i + 1 ] );
                     ++i;

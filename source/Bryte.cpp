@@ -114,9 +114,6 @@ Bool State::initialize ( GameMemory& game_memory )
           return false;
      }
 
-     map.load_master_list ( "map_list.txt" );
-     map.load_from_master_list ( 0 );
-
      return true;
 }
 
@@ -217,7 +214,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      auto* state_settings = reinterpret_cast<Settings*>( settings );
 
      state->map.load_master_list ( state_settings->map_master_list_filename );
-     state->map.load_from_master_list ( 0 );
+     state->map.load_from_master_list ( state_settings->map_index );
 
      return true;
 }

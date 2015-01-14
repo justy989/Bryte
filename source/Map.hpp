@@ -12,6 +12,7 @@ namespace bryte
 
           struct Tile {
                Uint8 value;
+               Uint8 decor;
                Bool  solid;
           };
 
@@ -45,8 +46,11 @@ namespace bryte
 
           Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const;
           Bool  get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const;
+          Uint8 get_coordinate_decor ( Int32 tile_x, Int32 tile_y ) const;
+
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
+          Void  set_coordinate_decor ( Int32 tile_x, Int32 tile_y, Uint8 decor );
 
           Bool  is_position_solid   ( Real32 x, Real32 y ) const;
           Exit* check_position_exit ( Uint8 x, Uint8 y );

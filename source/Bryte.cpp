@@ -13,6 +13,7 @@ static const Real32 c_lever_height            = 0.5f;
 static const Real32 c_lever_activate_cooldown = 0.75f;
 
 static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
+static const Char8* c_test_decorsheet_path     = "castle_decorsheet.bmp";
 
 const Real32 HealthPickup::c_dimension = 0.4f;
 
@@ -113,6 +114,16 @@ Bool State::initialize ( GameMemory& game_memory )
      if ( !tilesheet ) {
           return false;
      }
+
+     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
+
+     bitmap_contents = load_entire_file ( c_test_decorsheet_path, &game_memory );
+     decorsheet = load_bitmap ( &bitmap_contents );
+     if ( !decorsheet ) {
+          return false;
+     }
+
+     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
 
      return true;
 }
@@ -425,6 +436,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // draw map
      render_map ( back_buffer, state->tilesheet, state->map,
                   state->camera_x, state->camera_y );
+     render_map_decor ( back_buffer, state->decorsheet, state->map,
+                        state->camera_x, state->camera_y );
 
      render_map_exits ( back_buffer, state->map,
                         state->camera_x, state->camera_y );

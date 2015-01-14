@@ -82,6 +82,11 @@ Bool Map::get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const
      return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid;
 }
 
+Uint8 Map::get_coordinate_decor ( Int32 tile_x, Int32 tile_y ) const
+{
+     return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].decor;
+}
+
 Void Map::set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value )
 {
      m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].value = value;
@@ -90,6 +95,11 @@ Void Map::set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value )
 Void Map::set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid )
 {
      m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid = solid;
+}
+
+Void Map::set_coordinate_decor ( Int32 tile_x, Int32 tile_y, Uint8 decor )
+{
+     m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].decor = decor;
 }
 
 Bool Map::is_position_solid ( Real32 x, Real32 y ) const

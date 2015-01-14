@@ -39,9 +39,10 @@ int main ( int argc, char** argv )
      editor_settings.map_width  = 8;
      editor_settings.map_height = 8;
 
-     editor_settings.map_tilesheet_filename = "castle_tilesheet.bmp";
-     editor_settings.map_save_filename      = "map.brm";
-     editor_settings.map_load_filename      = nullptr;
+     editor_settings.map_tilesheet_filename  = "castle_tilesheet.bmp";
+     editor_settings.map_decorsheet_filename = "castle_decorsheet.bmp";
+     editor_settings.map_save_filename       = "map.brm";
+     editor_settings.map_load_filename       = nullptr;
 
      for ( int i = 1; i < argc; ++i ) {
           if ( strcmp ( argv [ i ], "-h" ) == 0 ) {

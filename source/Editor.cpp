@@ -26,7 +26,6 @@ void State::mouse_button_changed_down ( bool left )
           ASSERT ( 0 );
           break;
      case Mode::tile:
-     {
           // on right click, set solids
           if ( !left ) {
                if ( tx >= 0 && tx < map.width ( ) &&
@@ -35,7 +34,15 @@ void State::mouse_button_changed_down ( bool left )
                     map.set_coordinate_solid ( tx, ty, !solid );
                }
           }
-     } break;
+          break;
+     case Mode::decor:
+          if ( left ) {
+               if ( tx >= 0 && tx < map.width ( ) &&
+                    ty >= 0 && ty < map.height ( ) ) {
+                    map.set_coordinate_decor ( tx, ty, current_decor );
+               }
+          }
+          break;
      case Mode::exit:
      {
           bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
@@ -70,7 +77,6 @@ void State::option_button_changed_down ( bool up )
           ASSERT ( 0 );
           break;
      case Mode::tile:
-     {
           if ( up ) {
                if ( current_tile > 0 ) {
                     current_tile--;
@@ -80,7 +86,18 @@ void State::option_button_changed_down ( bool up )
                     current_tile++;
                }
           }
-     } break;
+          break;
+     case Mode::decor:
+          if ( up ) {
+               if ( current_decor > 0 ) {
+                    current_decor--;
+               }
+          } else {
+               if ( current_decor < decorsheet->w / bryte::Map::c_tile_dimension_in_pixels ) {
+                    current_decor++;
+               }
+          }
+          break;
      case Mode::exit:
      {
           bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
@@ -122,6 +139,16 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      if ( !state->tilesheet ) {
           return false;
      }
+
+     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
+
+     bitmap_contents = load_entire_file ( state->settings->map_decorsheet_filename, &game_memory );
+     state->decorsheet = load_bitmap ( &bitmap_contents );
+     if ( !state->decorsheet ) {
+          return false;
+     }
+
+     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
 
      if ( state->settings->map_load_filename ) {
           if ( !state->settings->map_save_filename ) {
@@ -275,7 +302,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                if ( state->left_button_down ) {
                     state->map.set_coordinate_value ( tx, ty, state->current_tile );
                }
-         }
+          }
+          break;
+     case Mode::decor:
           break;
      case Mode::exit:
      {
@@ -341,11 +370,29 @@ static Void render_current_tile ( SDL_Surface* back_buffer, SDL_Surface* tileshe
      SDL_BlitSurface ( tilesheet, &clip_rect, back_buffer, &tile_rect );
 }
 
+static Void render_current_decor ( SDL_Surface* back_buffer, SDL_Surface* decorsheet,
+                                   Int32 mouse_x, Int32 mouse_y, int current_decor )
+{
+     if ( current_decor <= 0 ) {
+          return;
+     }
+
+     current_decor--;
+
+     SDL_Rect tile_rect { mouse_x, back_buffer->h - mouse_y,
+                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
+     SDL_Rect clip_rect { current_decor * bryte::Map::c_tile_dimension_in_pixels, 0,
+                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
+
+     SDL_BlitSurface ( decorsheet, &clip_rect, back_buffer, &tile_rect );
+}
+
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      State* state = get_state ( game_memory );
 
      render_map ( back_buffer, state->tilesheet, state->map, state->camera_x, state->camera_y );
+     render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera_x, state->camera_y );
      render_map_exits ( back_buffer, state->map, state->camera_x, state->camera_y );
 
      if ( state->draw_solids ) {
@@ -360,7 +407,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
                                 state->current_tile );
 
-         state->text.render ( back_buffer, "TILE MODE", 10, 10 );
+          state->text.render ( back_buffer, "TILE MODE", 10, 10 );
+          break;
+     case Mode::decor:
+          render_current_decor ( back_buffer, state->decorsheet, state->mouse_x, state->mouse_y,
+                                state->current_decor );
+
+          state->text.render ( back_buffer, "DECOR MODE", 10, 10 );
           break;
      case Mode::exit:
           state->text.render ( back_buffer, "EXIT MODE", 10, 10 );

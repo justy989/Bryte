@@ -78,6 +78,7 @@ namespace bryte
           Real32    camera_y;
 
           SDL_Surface* tilesheet;
+          SDL_Surface* decorsheet;
      };
 
      struct MemoryLocations {

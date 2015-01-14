@@ -19,12 +19,14 @@ namespace editor
           Int32 map_height;
 
           const char* map_tilesheet_filename;
+          const char* map_decorsheet_filename;
 
           const char* map_save_filename;
      };
 
      enum Mode {
           tile = 0,
+          decor,
           exit,
           count
      };
@@ -58,8 +60,10 @@ namespace editor
           Bool right_button_down;
 
           SDL_Surface* tilesheet;
+          SDL_Surface* decorsheet;
 
           Uint8 current_tile;
+          Uint8 current_decor;
 
           Bool draw_solids;
 

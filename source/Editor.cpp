@@ -13,6 +13,85 @@ static State* get_state ( GameMemory& game_memory )
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
 }
 
+void State::mouse_button_changed_down ( bool left )
+{
+     Int32 sx = mouse_x - meters_to_pixels ( camera_x );
+     Int32 sy = mouse_y - meters_to_pixels ( camera_y );
+
+     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
+     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
+
+     switch ( mode ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Mode::tile:
+     {
+          // on right click, set solids
+          if ( !left ) {
+               auto solid = map.get_coordinate_solid ( tx, ty );
+               map.set_coordinate_solid ( tx, ty, !solid );
+          }
+     } break;
+     case Mode::exit:
+     {
+          bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
+
+          if ( left ) {
+               if ( exit ) {
+                    map.remove_exit ( exit );
+               } else {
+                    if ( tx >= 0 && tx < map.width ( ) &&
+                         ty >= 0 && ty < map.height ( ) ) {
+                         map.add_exit ( tx, ty );
+                    }
+               }
+          } else {
+               exit->exit_index++;
+               exit->exit_index %= bryte::Map::c_max_exits;
+          }
+     } break;
+     }
+}
+
+void State::option_button_changed_down ( bool up )
+{
+     Int32 sx = mouse_x - meters_to_pixels ( camera_x );
+     Int32 sy = mouse_y - meters_to_pixels ( camera_y );
+
+     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
+     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
+
+     switch ( mode ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Mode::tile:
+     {
+          if ( up ) {
+               if ( current_tile > 0 ) {
+                    current_tile--;
+               }
+          } else {
+               if ( current_tile < tilesheet->w / bryte::Map::c_tile_dimension_in_pixels ) {
+                    current_tile++;
+               }
+          }
+     } break;
+     case Mode::exit:
+     {
+          bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
+
+          if ( up ) {
+               exit->map_index--;
+          } else {
+               exit->map_index++;
+          }
+     } break;
+     }
+
+}
+
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
@@ -81,9 +160,17 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_BUTTON_LEFT:
                state->left_button_down = change.down;
+
+               if ( state->left_button_down ) {
+                    state->mouse_button_changed_down ( true );
+               }
                break;
           case SDL_BUTTON_RIGHT:
                state->right_button_down = change.down;
+
+               if ( state->right_button_down ) {
+                    state->mouse_button_changed_down ( false );
+               }
                break;
           }
      }
@@ -99,12 +186,12 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_Q:
                if ( key_change.down ) {
-                    state->current_tile--;
+                    state->option_button_changed_down ( true );
                }
                break;
           case SDL_SCANCODE_E:
                if ( key_change.down ) {
-                    state->current_tile++;
+                    state->option_button_changed_down ( false );
                }
                break;
           case SDL_SCANCODE_M:
@@ -178,46 +265,24 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           ASSERT ( 0 );
           break;
      case Mode::tile:
-          if ( state->left_button_down ) {
-               if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
-                   state->map.set_coordinate_value ( tx, ty, state->current_tile );
+          if ( tx >= 0 && tx < state->map.width ( ) &&
+               ty >= 0 && ty < state->map.height ( ) ) {
+               if ( state->left_button_down ) {
+                    state->map.set_coordinate_value ( tx, ty, state->current_tile );
                }
-          }
-          break;
-     case Mode::solid:
-          if ( state->left_button_down ) {
-               if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
-                    auto solid = state->map.get_coordinate_solid ( tx, ty );
-                    state->map.set_coordinate_solid ( tx, ty, !solid );
+
+               if ( state->right_button_down ) {
                }
           }
           break;
      case Mode::exit:
+     {
           bryte::Map::Exit* exit = state->map.check_position_exit ( tx, ty );
-
-          if ( state->left_button_down ) {
-               if ( exit ) {
-                    exit->map_index++;
-                    break;
-               }
-
-               if ( tx >= 0 && tx < state->map.width ( ) && ty >= 0 && ty < state->map.height ( ) ) {
-                    state->map.add_exit ( tx, ty );
-               }
-          }
-
-          if ( state->right_button_down ) {
-               if ( exit ) {
-                    exit->map_index--;
-                    break;
-               }
-          }
 
           if ( exit ) {
                sprintf ( state->message_buffer, "MAP %d EXIT %d", exit->map_index, exit->exit_index );
           }
-
-          break;
+     } break;
      }
 }
 
@@ -294,9 +359,6 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::tile:
           state->text.render ( back_buffer, "TILE MODE", 10, 10 );
-          break;
-     case Mode::solid:
-          state->text.render ( back_buffer, "SOLID MODE", 10, 10 );
           break;
      case Mode::exit:
           state->text.render ( back_buffer, "EXIT MODE", 10, 10 );

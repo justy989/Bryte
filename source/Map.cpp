@@ -102,6 +102,22 @@ Bool Map::add_exit ( Uint8 location_x, Uint8 location_y )
      return true;
 }
 
+Void Map::remove_exit ( Exit* exit )
+{
+     ASSERT ( exit >= m_exits && exit < m_exits + c_max_exits );
+
+     Exit* last = m_exits + ( m_exit_count - 1 );
+
+     // slide down all the elements after it
+     while ( exit <= last ) {
+          Exit* next = exit + 1;
+          *exit = *next;
+          exit = next;
+     }
+
+     m_exit_count--;
+}
+
 void Map::save ( const Char8* filepath )
 {
      LOG_INFO ( "Saving Map '%s'\n", filepath );

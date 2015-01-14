@@ -49,6 +49,7 @@ namespace bryte
           Exit* check_position_exit ( Uint8 x, Uint8 y );
 
           Bool add_exit ( Uint8 location_x, Uint8 location_y );
+          Void remove_exit ( Exit* exit );
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;

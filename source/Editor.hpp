@@ -25,7 +25,6 @@ namespace editor
 
      enum Mode {
           tile = 0,
-          solid,
           exit,
           count
      };
@@ -34,6 +33,9 @@ namespace editor
      public:
 
           static const Real32 c_camera_speed;
+
+          Void mouse_button_changed_down ( bool left );
+          Void option_button_changed_down ( bool up );
 
      public:
 

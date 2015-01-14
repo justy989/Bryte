@@ -29,8 +29,11 @@ void State::mouse_button_changed_down ( bool left )
      {
           // on right click, set solids
           if ( !left ) {
-               auto solid = map.get_coordinate_solid ( tx, ty );
-               map.set_coordinate_solid ( tx, ty, !solid );
+               if ( tx >= 0 && tx < map.width ( ) &&
+                    ty >= 0 && ty < map.height ( ) ) {
+                    auto solid = map.get_coordinate_solid ( tx, ty );
+                    map.set_coordinate_solid ( tx, ty, !solid );
+               }
           }
      } break;
      case Mode::exit:
@@ -272,10 +275,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                if ( state->left_button_down ) {
                     state->map.set_coordinate_value ( tx, ty, state->current_tile );
                }
-
-               if ( state->right_button_down ) {
-               }
-          }
+         }
           break;
      case Mode::exit:
      {

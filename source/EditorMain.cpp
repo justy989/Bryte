@@ -48,12 +48,12 @@ int main ( int argc, char** argv )
           if ( strcmp ( argv [ i ], "-h" ) == 0 ) {
                print_help ( );
                return 0;
-          } else if ( strcmp ( argv [ i ], "-x" ) == 0 ) {
+          } else if ( strcmp ( argv [ i ], "-w" ) == 0 ) {
                if ( argc >= i + 1 ) {
                     editor_settings.map_width = atoi ( argv [ i + 1 ] );
                     ++i;
                }
-          } else if ( strcmp ( argv [ i ], "-y" ) == 0 ) {
+          } else if ( strcmp ( argv [ i ], "-t" ) == 0 ) {
                if ( argc >= i + 1 ) {
                     editor_settings.map_height = atoi ( argv [ i + 1 ] );
                     ++i;

@@ -1,4 +1,2 @@
-map.brm
 first.brm
 second.brm
-third.brm

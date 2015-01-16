@@ -11,6 +11,8 @@
 
 #include "Random.hpp"
 
+#include "Vector.hpp"
+
 #include <SDL2/SDL.h>
 
 namespace bryte
@@ -29,8 +31,7 @@ namespace bryte
 
           static const Real32 c_dimension;
 
-          Real32 position_x = 0.0f;
-          Real32 position_y = 0.0f;
+          Vector position;
 
           Bool available = false;
      };
@@ -74,8 +75,7 @@ namespace bryte
 
           Map       map;
 
-          Real32    camera_x;
-          Real32    camera_y;
+          Vector    camera;
 
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;

@@ -359,8 +359,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          HealthPickup& health_pickup = state->health_pickups [ i ];
 
                          if ( !health_pickup.available ) {
-                              health_pickup.position_x = enemy.position_x;
-                              health_pickup.position_y = enemy.position_y;
+                              health_pickup.position.set ( enemy.position_x, enemy.position_y );
                               health_pickup.available = true;
                               break;
                          }
@@ -375,7 +374,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( health_pickup.available ) {
                if ( rect_collides_with_rect ( state->player.position_x, state->player.position_y,
                                               state->player.width, state->player.height,
-                                              health_pickup.position_x, health_pickup.position_y,
+                                              health_pickup.position.x ( ), health_pickup.position.y ( ),
                                               HealthPickup::c_dimension, HealthPickup::c_dimension ) ) {
                     health_pickup.available    = false;
                     state->player.health += 5;
@@ -427,20 +426,20 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 {
      auto* state = get_state ( game_memory );
 
-     state->camera_x = calculate_camera_position ( back_buffer->w, state->map.width ( ),
-                                                   state->player.position_x, state->player.width );
+     state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
+                                                       state->player.position_x, state->player.width ) );
 
-     state->camera_y = calculate_camera_position ( back_buffer->h, state->map.height ( ),
-                                                   state->player.position_y, state->player.height );
+     state->camera.set_y ( calculate_camera_position ( back_buffer->h, state->map.height ( ),
+                                                       state->player.position_y, state->player.height ) );
 
      // draw map
      render_map ( back_buffer, state->tilesheet, state->map,
-                  state->camera_x, state->camera_y );
+                  state->camera.x ( ), state->camera.y ( ) );
      render_map_decor ( back_buffer, state->decorsheet, state->map,
-                        state->camera_x, state->camera_y );
+                        state->camera.x ( ), state->camera.y ( ) );
 
      render_map_exits ( back_buffer, state->map,
-                        state->camera_x, state->camera_y );
+                        state->camera.x ( ), state->camera.y ( ) );
 
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 blue    = SDL_MapRGB ( back_buffer->format, 0, 0, 255 );
@@ -454,7 +453,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                                   state->lever.position_y,
                                                   c_lever_width, c_lever_height );
 
-     world_to_sdl ( lever_rect, back_buffer, state->camera_x, state->camera_y );
+     world_to_sdl ( lever_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
 
      SDL_FillRect ( back_buffer, &lever_rect, magenta );
 #endif
@@ -462,11 +461,11 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // draw enemies
      for ( Uint32 i = 0; i < state->enemy_count; ++i ) {
           render_character ( back_buffer, state->enemies [ i ],
-                             state->camera_x, state->camera_y, blue );
+                             state->camera.x ( ), state->camera.y ( ), blue );
      }
 
      // draw player
-     render_character ( back_buffer, state->player, state->camera_x, state->camera_y, red );
+     render_character ( back_buffer, state->player, state->camera.x ( ), state->camera.y ( ), red );
 
      // draw player attack
      if ( state->player.state == Character::State::attacking ) {
@@ -482,7 +481,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                attack_rect.h = meters_to_pixels ( Character::c_attack_width );
           }
 
-          world_to_sdl ( attack_rect, back_buffer, state->camera_x, state->camera_y );
+          world_to_sdl ( attack_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
 
           SDL_FillRect ( back_buffer, &attack_rect, green );
      }
@@ -491,13 +490,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           HealthPickup& health_pickup = state->health_pickups [ i ];
 
           if ( health_pickup.available ) {
-               SDL_Rect health_pickup_rect = build_world_sdl_rect ( health_pickup.position_x,
-                                                                    health_pickup.position_y,
+               SDL_Rect health_pickup_rect = build_world_sdl_rect ( health_pickup.position.x ( ),
+                                                                    health_pickup.position.y ( ),
                                                                     HealthPickup::c_dimension,
                                                                     HealthPickup::c_dimension );
 
 
-               world_to_sdl ( health_pickup_rect, back_buffer, state->camera_x, state->camera_y );
+               world_to_sdl ( health_pickup_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
 
                SDL_FillRect ( back_buffer, &health_pickup_rect, red );
           }

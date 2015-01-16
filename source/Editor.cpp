@@ -15,8 +15,8 @@ static State* get_state ( GameMemory& game_memory )
 
 void State::mouse_button_changed_down ( bool left )
 {
-     Int32 sx = mouse_x - meters_to_pixels ( camera_x );
-     Int32 sy = mouse_y - meters_to_pixels ( camera_y );
+     Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
+     Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
 
      Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
      Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
@@ -66,8 +66,8 @@ void State::mouse_button_changed_down ( bool left )
 
 void State::option_button_changed_down ( bool up )
 {
-     Int32 sx = mouse_x - meters_to_pixels ( camera_x );
-     Int32 sy = mouse_y - meters_to_pixels ( camera_y );
+     Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
+     Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
 
      Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
      Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
@@ -162,8 +162,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 
      state->current_tile = 1;
 
-     state->camera_x = 0.0f;
-     state->camera_y = 0.0f;
+     state->camera.set ( 0.0f, 0.0f );
 
      state->left_button_down = false;
      state->right_button_down = false;
@@ -266,28 +265,31 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
      State* state = get_state ( game_memory );
+     Vector camera_velocity;
 
      // reset the message buffer
      state->message_buffer [ 0 ] = '\0';
 
      if ( state->camera_direction_keys [ 0 ] ) {
-          state->camera_y -= State::c_camera_speed * time_delta;
+          camera_velocity.set_y ( -State::c_camera_speed );
      }
 
      if ( state->camera_direction_keys [ 1 ] ) {
-          state->camera_y += State::c_camera_speed * time_delta;
+          camera_velocity.set_y ( State::c_camera_speed );
      }
 
      if ( state->camera_direction_keys [ 2 ] ) {
-          state->camera_x -= State::c_camera_speed * time_delta;
+          camera_velocity.set_x ( -State::c_camera_speed );
      }
 
      if ( state->camera_direction_keys [ 3 ] ) {
-          state->camera_x += State::c_camera_speed * time_delta;
+          camera_velocity.set_x ( State::c_camera_speed );
      }
 
-     Int32 sx = state->mouse_x - meters_to_pixels ( state->camera_x );
-     Int32 sy = state->mouse_y - meters_to_pixels ( state->camera_y );
+     state->camera += camera_velocity * time_delta;
+
+     Int32 sx = state->mouse_x - meters_to_pixels ( state->camera.x ( ) );
+     Int32 sy = state->mouse_y - meters_to_pixels ( state->camera.y ( ) );
 
      Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
      Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
@@ -391,12 +393,12 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 {
      State* state = get_state ( game_memory );
 
-     render_map ( back_buffer, state->tilesheet, state->map, state->camera_x, state->camera_y );
-     render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera_x, state->camera_y );
-     render_map_exits ( back_buffer, state->map, state->camera_x, state->camera_y );
+     render_map ( back_buffer, state->tilesheet, state->map, state->camera.x ( ), state->camera.y ( ) );
+     render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
+     render_map_exits ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      if ( state->draw_solids ) {
-          render_map_solids ( back_buffer, state->map, state->camera_x, state->camera_y );
+          render_map_solids ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
      }
 
      switch ( state->mode ) {

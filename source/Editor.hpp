@@ -9,6 +9,7 @@
 #include "Map.hpp"
 
 #include "Text.hpp"
+#include "Vector.hpp"
 
 namespace editor
 {
@@ -52,8 +53,7 @@ namespace editor
           Int32  mouse_x;
           Int32  mouse_y;
 
-          Real32 camera_x;
-          Real32 camera_y;
+          Vector camera;
 
           Bool camera_direction_keys [ 4 ];
           Bool left_button_down;

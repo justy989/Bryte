@@ -1,7 +1,7 @@
 #ifndef BRYTE_CHARACTER_HPP
 #define BRYTE_CHARACTER_HPP
 
-#include "Types.hpp"
+#include "Vector.hpp"
 #include "StopWatch.hpp"
 
 namespace bryte
@@ -61,11 +61,9 @@ namespace bryte
           Int32  health;
           Int32  max_health;
 
-          Real32 position_x;
-          Real32 position_y;
-
-          Real32 velocity_x;
-          Real32 velocity_y;
+          Vector position;
+          Vector velocity;
+          Vector acceleration;
 
           Real32 width;
           Real32 height;

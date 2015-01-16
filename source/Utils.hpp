@@ -23,6 +23,11 @@
 
 #define CLAMP( value, min, max ) if ( value < min ) { value = min; } else if ( value > max ) { value = max; }
 
+inline Real32 square ( Real32 value )
+{
+     return value * value;
+}
+
 // forward declaration for load_entire_file
 class GameMemory;
 

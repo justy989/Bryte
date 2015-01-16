@@ -14,8 +14,8 @@ const Real32 Character::c_cooldown_time = 0.25f;
 
 Bool Character::collides_with ( const Character& character )
 {
-     return rect_collides_with_rect ( position_x, position_y, width, collision_height,
-                                      character.position_x, character.position_y,
+     return rect_collides_with_rect ( position.x ( ), position.y ( ), width, collision_height,
+                                      character.position.x ( ), character.position.y ( ),
                                       character.width, character.collision_height );
 }
 
@@ -36,13 +36,13 @@ Real32 Character::calc_attack_x ( )
      default:
           ASSERT ( 0 );
      case Direction::left:
-          return position_x - Character::c_attack_height;
+          return position.x ( ) - Character::c_attack_height;
      case Direction::right:
-          return position_x + width;
+          return position.x ( ) + width;
      case Direction::up:
-          return position_x + width * 0.33f;
+          return position.x ( ) + width * 0.33f;
      case Direction::down:
-          return position_x + width * 0.33f;
+          return position.x ( ) + width * 0.33f;
      }
 
      return 0.0f;
@@ -54,13 +54,13 @@ Real32 Character::calc_attack_y ( )
      default:
           ASSERT ( 0 );
      case Direction::left:
-          return position_y + height * 0.5f;
+          return position.y ( ) + height * 0.5f;
      case Direction::right:
-          return position_y + height * 0.5f;
+          return position.y ( ) + height * 0.5f;
      case Direction::up:
-          return position_y + height;
+          return position.y ( ) + height;
      case Direction::down:
-          return position_y - height * 0.5f;
+          return position.y ( ) - height * 0.5f;
      }
 
      return 0.0f;
@@ -76,13 +76,13 @@ Bool Character::attack_collides_with ( const Character& character )
      case Direction::down:
           return rect_collides_with_rect ( calc_attack_x ( ), calc_attack_y ( ),
                                            Character::c_attack_width, Character::c_attack_height,
-                                           character.position_x, character.position_y,
+                                           character.position.x ( ), character.position.y ( ),
                                            character.width, character.height );
      case Direction::left:
      case Direction::right:
           return rect_collides_with_rect ( calc_attack_x ( ), calc_attack_y ( ),
                                            Character::c_attack_height, Character::c_attack_width,
-                                           character.position_x, character.position_y,
+                                           character.position.x ( ), character.position.y ( ),
                                            character.width, character.height );
      }
 
@@ -108,8 +108,11 @@ Void Character::damage ( Int32 amount, Direction push )
 
 Void Character::update ( Real32 time_delta, const Map& map )
 {
-     Real32 target_position_x = position_x + velocity_x * time_delta;
-     Real32 target_position_y = position_y + velocity_y * time_delta;
+     // TEMPORARY, slow character down
+     acceleration += velocity * -2.0f;
+
+     Vector target_position = position + ( velocity * time_delta ) + ( acceleration * ( 0.5f * square ( time_delta ) ) );
+     velocity = acceleration * time_delta + velocity;
 
      // tick stopwatches
      state_watch.tick ( time_delta );
@@ -118,6 +121,8 @@ Void Character::update ( Real32 time_delta, const Map& map )
      // logic based on current state
      switch ( state ) {
      case State::blinking:
+     {
+          Vector damage_velocity;
 
           damage_watch.tick ( time_delta );
 
@@ -126,26 +131,28 @@ Void Character::update ( Real32 time_delta, const Map& map )
                default:
                     ASSERT ( 0 );
                case Direction::left:
-                    target_position_x -= Character::c_damage_speed * time_delta;
+                    damage_velocity.set_x ( -Character::c_damage_speed );
                     break;
                case Direction::right:
-                    target_position_x += Character::c_damage_speed * time_delta;
+                    damage_velocity.set_x ( Character::c_damage_speed );
                     break;
                case Direction::up:
-                    target_position_y += Character::c_damage_speed * time_delta;
+                    damage_velocity.set_y ( Character::c_damage_speed );
                     break;
                case Direction::down:
-                    target_position_y -= Character::c_damage_speed * time_delta;
+                    damage_velocity.set_y ( -Character::c_damage_speed );
                     break;
                }
           }
+
+          target_position += damage_velocity * time_delta;
 
           if ( state_watch.expired ( ) ) {
                if ( state != State::dead ) {
                     state = State::alive;
                }
           }
-
+     }
           break;
      case State::attacking:
           if ( state_watch.expired ( ) ) {
@@ -161,18 +168,17 @@ Void Character::update ( Real32 time_delta, const Map& map )
      bool collided = false;
 
      // collision with tile map
-     if ( map.is_position_solid ( target_position_x, target_position_y ) ||
-          map.is_position_solid ( target_position_x + width, target_position_y ) ||
-          map.is_position_solid ( target_position_x, target_position_y + collision_height ) ||
-          map.is_position_solid ( target_position_x + width, target_position_y + collision_height ) ) {
+     if ( map.is_position_solid ( target_position.x ( ), target_position.y ( ) ) ||
+          map.is_position_solid ( target_position.x ( ) + width, target_position.y ( ) ) ||
+          map.is_position_solid ( target_position.x ( ), target_position.y ( ) + collision_height ) ||
+          map.is_position_solid ( target_position.x ( ) + width, target_position.y ( ) + collision_height ) ) {
           collided = true;
      }
 
      if ( !collided ) {
-          position_x = target_position_x;
-          position_y = target_position_y;
+          position = target_position;
      }
 
-     velocity_x = 0.0f;
-     velocity_y = 0.0f;
+     acceleration.zero ( );
 }
+

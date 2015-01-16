@@ -6,7 +6,7 @@
 
 using namespace bryte;
 
-static const Real32 c_player_speed            = 3.0f;
+static const Real32 c_player_accel            = 7.0f;
 
 static const Real32 c_lever_width             = 0.5f;
 static const Real32 c_lever_height            = 0.5f;
@@ -25,11 +25,11 @@ static State* get_state ( GameMemory& game_memory )
 // assuming A attacks B
 static Direction determine_damage_direction ( const Character& a, const Character& b, Random& random )
 {
-     Real32 a_center_x = a.position_x + a.width * 0.5f;
-     Real32 a_center_y = a.position_y + a.collision_height * 0.5f;
+     Real32 a_center_x = a.position.x ( ) + a.width * 0.5f;
+     Real32 a_center_y = a.position.y ( ) + a.collision_height * 0.5f;
 
-     Real32 b_center_x = b.position_x + b.width * 0.5f;
-     Real32 b_center_y = b.position_y + b.collision_height * 0.5f;
+     Real32 b_center_x = b.position.x ( ) + b.width * 0.5f;
+     Real32 b_center_y = b.position.y ( ) + b.collision_height * 0.5f;
 
      Real32 diff_x = b_center_x - a_center_x;
      Real32 diff_y = b_center_y - a_center_y;
@@ -83,11 +83,9 @@ Bool State::initialize ( GameMemory& game_memory )
      player.health           = 25;
      player.max_health       = 25;
 
-     player.position_x       = Map::c_tile_dimension_in_meters * 2.0f;
-     player.position_y       = Map::c_tile_dimension_in_meters * 2.0f;
+     player.position.set ( Map::c_tile_dimension_in_meters * 2.0f, Map::c_tile_dimension_in_meters * 2.0f );
 
-     player.velocity_x       = 0.0f;
-     player.velocity_y       = 0.0f;
+     player.velocity.zero ( );
 
      player.width            = 1.3f;
      player.height           = player.width * 1.5f;
@@ -158,11 +156,9 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
      enemy->health     = 3;
      enemy->max_health = 3;
 
-     enemy->position_x = x;
-     enemy->position_y = y;
+     enemy->position.set ( x, y );
 
-     enemy->velocity_x = 0.0f;
-     enemy->velocity_y = 0.0f;
+     enemy->velocity.zero ( );
 
      enemy->width            = 1.0f;
      enemy->height           = enemy->width * 1.5f;
@@ -203,7 +199,7 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
           return;
      }
 
-     SDL_Rect character_rect = build_world_sdl_rect ( character.position_x, character.position_y,
+     SDL_Rect character_rect = build_world_sdl_rect ( character.position.x ( ), character.position.y ( ),
                                                       character.width, character.height );
 
      world_to_sdl ( character_rect, back_buffer, camera_x, camera_y );
@@ -267,8 +263,8 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_8:
                if ( key_change.down ) {
-                    state->spawn_enemy ( state->player.position_x - state->player.width,
-                                              state->player.position_y );
+                    state->spawn_enemy ( state->player.position.x ( ) - state->player.width,
+                                         state->player.position.y ( ) );
                }
                break;
           }
@@ -280,23 +276,23 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      auto* state = get_state ( game_memory );
 
      if ( state->direction_keys [ Direction::up ] ) {
-          state->player.velocity_y = c_player_speed;
-          state->player.facing     = Direction::up;
+          state->player.acceleration.set_y ( c_player_accel );
+          state->player.facing = Direction::up;
      }
 
      if ( state->direction_keys [ Direction::down ] ) {
-          state->player.velocity_y = -c_player_speed;
-          state->player.facing     = Direction::down;
+          state->player.acceleration.set_y ( -c_player_accel );
+          state->player.facing = Direction::down;
      }
 
      if ( state->direction_keys [ Direction::right ] ) {
-          state->player.velocity_x = c_player_speed;
-          state->player.facing     = Direction::right;
+          state->player.acceleration.set_x ( c_player_accel );
+          state->player.facing = Direction::right;
      }
 
      if ( state->direction_keys [ Direction::left ] ) {
-          state->player.velocity_x = -c_player_speed;
-          state->player.facing     = Direction::left;
+          state->player.acceleration.set_x ( -c_player_accel );
+          state->player.facing = Direction::left;
      }
 
      if ( state->attack_key ) {
@@ -308,7 +304,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                auto& player = state->player;
                auto& lever  = state->lever;
 
-               if ( rect_collides_with_rect ( player.position_x, player.position_y,
+               if ( rect_collides_with_rect ( player.position.x ( ), player.position.y ( ),
                                               player.width, player.height,
                                               lever.position_x, lever.position_y,
                                               c_lever_width, c_lever_height ) ) {
@@ -359,7 +355,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          HealthPickup& health_pickup = state->health_pickups [ i ];
 
                          if ( !health_pickup.available ) {
-                              health_pickup.position.set ( enemy.position_x, enemy.position_y );
+                              health_pickup.position.set ( enemy.position.x ( ), enemy.position.y ( ) );
                               health_pickup.available = true;
                               break;
                          }
@@ -372,7 +368,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           HealthPickup& health_pickup = state->health_pickups [ i ];
 
           if ( health_pickup.available ) {
-               if ( rect_collides_with_rect ( state->player.position_x, state->player.position_y,
+               if ( rect_collides_with_rect ( state->player.position.x ( ), state->player.position.y ( ),
                                               state->player.width, state->player.height,
                                               health_pickup.position.x ( ), health_pickup.position.y ( ),
                                               HealthPickup::c_dimension, HealthPickup::c_dimension ) ) {
@@ -391,8 +387,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-          auto* exit = map.check_position_exit ( state->player.position_x / Map::c_tile_dimension_in_meters,
-                                                 state->player.position_y / Map::c_tile_dimension_in_meters );
+          auto* exit = map.check_position_exit ( state->player.position.x ( ) / Map::c_tile_dimension_in_meters,
+                                                 state->player.position.y ( ) / Map::c_tile_dimension_in_meters );
 
           if ( exit ) {
                Uint8 exit_index = exit->exit_index;
@@ -400,16 +396,16 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                map.load_from_master_list ( exit->map_index );
 
                auto& dest_exit = map.exit ( exit_index );
-               state->player.position_x = dest_exit.location_x * Map::c_tile_dimension_in_meters;
-               state->player.position_y = dest_exit.location_y * Map::c_tile_dimension_in_meters;
+               state->player.position.set ( dest_exit.location_x * Map::c_tile_dimension_in_meters,
+                                            dest_exit.location_y * Map::c_tile_dimension_in_meters );
 
-               player_exit = map.position_to_tile_index ( state->player.position_x,
-                                                          state->player.position_y );
+               player_exit = map.position_to_tile_index ( state->player.position.x ( ),
+                                                          state->player.position.y ( ) );
 
           }
      } else {
-          auto player_tile_index = map.position_to_tile_index ( state->player.position_x,
-                                                                state->player.position_y );
+          auto player_tile_index = map.position_to_tile_index ( state->player.position.x ( ),
+                                                                state->player.position.y ( ) );
 
           // clear the exit destination if they've left the tile
           if ( player_exit != player_tile_index ) {
@@ -427,10 +423,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      auto* state = get_state ( game_memory );
 
      state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
-                                                       state->player.position_x, state->player.width ) );
+                                                       state->player.position.x ( ), state->player.width ) );
 
      state->camera.set_y ( calculate_camera_position ( back_buffer->h, state->map.height ( ),
-                                                       state->player.position_y, state->player.height ) );
+                                                       state->player.position.y ( ), state->player.height ) );
 
      // draw map
      render_map ( back_buffer, state->tilesheet, state->map,

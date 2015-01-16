@@ -17,12 +17,14 @@ public:
      inline Vector& operator-= ( const Vector& v );
      inline Vector& operator*= ( Real32 scale );
 
+     inline void zero ( );
+
      inline void set ( Real32 x, Real32 y );
      inline void set_x ( Real32 x );
      inline void set_y ( Real32 y );
 
-     Real32 x ( ) const;
-     Real32 y ( ) const;
+     inline Real32 x ( ) const;
+     inline Real32 y ( ) const;
 
 private:
 
@@ -74,6 +76,12 @@ inline Vector& Vector::operator*= ( Real32 scale )
      m_y *= scale;
 
      return *this;
+}
+
+inline void Vector::zero ( )
+{
+     m_x = 0.0f;
+     m_y = 0.0f;
 }
 
 inline void Vector::set ( Real32 x, Real32 y )

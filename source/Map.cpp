@@ -44,6 +44,9 @@ void Map::initialize ( Uint8 width, Uint8 height )
                m_tiles [ index ].solid = false;
           }
      }
+
+     m_base_light_value = 128;
+     clear_light ( );
 }
 
 Int32 Map::position_to_tile_index ( Real32 x, Real32 y ) const
@@ -87,6 +90,11 @@ Uint8 Map::get_coordinate_decor ( Int32 tile_x, Int32 tile_y ) const
      return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].decor;
 }
 
+Uint8 Map::get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const
+{
+     return m_light [ coordinate_to_tile_index ( tile_x, tile_y ) ];
+}
+
 Void Map::set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value )
 {
      m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].value = value;
@@ -118,6 +126,64 @@ Map::Exit* Map::check_position_exit ( Uint8 x, Uint8 y )
      }
 
      return nullptr;
+}
+
+Uint8 Map::base_light_value ( ) const
+{
+     return m_base_light_value;
+}
+
+Void Map::add_to_base_light ( Uint8 delta )
+{
+     m_base_light_value += delta;
+}
+
+Void Map::subtract_from_base_light ( Uint8 delta )
+{
+     m_base_light_value -= delta;
+}
+
+Void Map::add_light ( Real32 x, Real32 y, Uint8 value )
+{
+     Int32 tile_radius = ( static_cast<Int32>( value ) - static_cast<Int32>( m_base_light_value ) ) / c_light_decay;
+
+     if ( tile_radius < 0 ) {
+          return;
+     }
+
+     Int32 tile_x      = meters_to_pixels ( x ) / c_tile_dimension_in_pixels;
+     Int32 tile_y      = meters_to_pixels ( y ) / c_tile_dimension_in_pixels;
+     Int32 min_tile_x  = tile_x - tile_radius;
+     Int32 max_tile_x  = tile_x + tile_radius;
+     Int32 min_tile_y  = tile_y - tile_radius;
+     Int32 max_tile_y  = tile_y + tile_radius;
+
+     CLAMP ( min_tile_x, 0, m_width - 1 );
+     CLAMP ( max_tile_x, 0, m_width - 1 );
+     CLAMP ( min_tile_y, 0, m_height - 1 );
+     CLAMP ( max_tile_y, 0, m_height - 1 );
+
+     for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
+          for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
+               Int32 manhattan_distance = abs ( tile_x - x ) + abs ( tile_y - y );
+
+               Uint8& light_value     = m_light [ coordinate_to_tile_index ( x, y ) ];
+               Uint8  new_light_value = value - ( manhattan_distance * c_light_decay );
+
+               if ( light_value < new_light_value ) {
+                    light_value = new_light_value;
+               }
+          }
+     }
+}
+
+Void Map::clear_light ( )
+{
+     for ( Int32 y = 0; y < m_height; ++y ) {
+          for ( Int32 x = 0; x < m_width; ++x ) {
+               m_light [ coordinate_to_tile_index ( x, y ) ] = m_base_light_value;
+          }
+     }
 }
 
 Bool Map::add_exit ( Uint8 location_x, Uint8 location_y )
@@ -188,6 +254,8 @@ void Map::save ( const Char8* filepath )
           auto& exit = m_exits [ i ];
           file.write ( reinterpret_cast<const Char8*> ( &exit ), sizeof ( exit ) );
      }
+
+     file.write ( reinterpret_cast<const Char8*> ( &m_base_light_value ), sizeof ( m_base_light_value ) );
 }
 
 void Map::load ( const Char8* filepath )
@@ -219,5 +287,7 @@ void Map::load ( const Char8* filepath )
           file.read ( reinterpret_cast<Char8*> ( &exit ), sizeof ( exit ) );
      }
 
+     file.read ( reinterpret_cast<Char8*> ( &m_base_light_value ), sizeof ( m_base_light_value ) );
+     clear_light ( );
 }
 

@@ -43,6 +43,8 @@ void State::mouse_button_changed_down ( bool left )
                }
           }
           break;
+     case Mode::light:
+          break;
      case Mode::exit:
      {
           bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
@@ -97,6 +99,15 @@ void State::option_button_changed_down ( bool up )
                     current_decor++;
                }
           }
+          break;
+     case Mode::light:
+          if ( up ) {
+               map.add_to_base_light ( 4 );
+          } else {
+               map.subtract_from_base_light ( 4 );
+          }
+
+          map.clear_light ( );
           break;
      case Mode::exit:
      {
@@ -308,6 +319,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           break;
      case Mode::decor:
           break;
+     case Mode::light:
+          sprintf ( state->message_buffer, "BASE %d", state->map.base_light_value ( ) );
+          break;
      case Mode::exit:
      {
           bryte::Map::Exit* exit = state->map.check_position_exit ( tx, ty );
@@ -397,9 +411,14 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_exits ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
+     render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+
      if ( state->draw_solids ) {
           render_map_solids ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
      }
+
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, 20 };
+     SDL_FillRect ( back_buffer, &hud_rect, SDL_MapRGB ( back_buffer->format, 255, 255, 255 ) );
 
      switch ( state->mode ) {
      default:
@@ -417,11 +436,14 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
           state->text.render ( back_buffer, "DECOR MODE", 10, 10 );
           break;
+     case Mode::light:
+          state->text.render ( back_buffer, "LIGHT MODE", 10, 10 );
+          break;
      case Mode::exit:
           state->text.render ( back_buffer, "EXIT MODE", 10, 10 );
           break;
      }
 
-     state->text.render ( back_buffer, state->message_buffer, 10, 20 );
+     state->text.render ( back_buffer, state->message_buffer, 80, 10 );
 }
 

@@ -87,7 +87,7 @@ Bool State::initialize ( GameMemory& game_memory )
 
      player.velocity.zero ( );
 
-     player.width            = 1.3f;
+     player.width            = 1.0f;
      player.height           = player.width * 1.5f;
      player.collision_height = player.width;
 
@@ -115,6 +115,8 @@ Bool State::initialize ( GameMemory& game_memory )
 
      GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
 
+     LOG_INFO ( "Loading decorsheet '%s'\n", c_test_decorsheet_path );
+
      bitmap_contents = load_entire_file ( c_test_decorsheet_path, &game_memory );
      decorsheet = load_bitmap ( &bitmap_contents );
      if ( !decorsheet ) {
@@ -130,6 +132,9 @@ Void State::destroy ( )
 {
      LOG_INFO ( "Freeing tilesheet: %s\n", c_test_tilesheet_path );
      SDL_FreeSurface ( tilesheet );
+
+     LOG_INFO ( "Freeing decorsheet: %s\n", c_test_decorsheet_path );
+     SDL_FreeSurface ( decorsheet );
 }
 
 Bool State::spawn_enemy ( Real32 x, Real32 y )
@@ -160,7 +165,7 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
 
      enemy->velocity.zero ( );
 
-     enemy->width            = 1.0f;
+     enemy->width            = 0.8f;
      enemy->height           = enemy->width * 1.5f;
      enemy->collision_height = enemy->width;
 
@@ -416,6 +421,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      if ( state->lever.activate_time > 0.0f ) {
           state->lever.activate_time -= time_delta;
      }
+
+     map.add_light ( 5.0f, 5.0f, 255 );
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -497,6 +504,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                SDL_FillRect ( back_buffer, &health_pickup_rect, red );
           }
      }
+
+     render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      // draw player health bar
      Real32 pct = static_cast<Real32>( state->player.health ) /

@@ -16,6 +16,7 @@ namespace bryte
      extern "C" Void render_map_exits ( SDL_Surface* back_buffer, Map& map,
                                         Real32 camera_x, Real32 camera_y );
 
+     extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y );
 }
 
 #endif

@@ -28,6 +28,7 @@ namespace editor
      enum Mode {
           tile = 0,
           decor,
+          light,
           exit,
           count
      };

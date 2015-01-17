@@ -47,6 +47,7 @@ namespace bryte
           Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const;
           Bool  get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const;
           Uint8 get_coordinate_decor ( Int32 tile_x, Int32 tile_y ) const;
+          Uint8 get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const;
 
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
@@ -54,6 +55,13 @@ namespace bryte
 
           Bool  is_position_solid   ( Real32 x, Real32 y ) const;
           Exit* check_position_exit ( Uint8 x, Uint8 y );
+
+          Uint8 base_light_value ( ) const;
+          Void  add_to_base_light ( Uint8 delta );
+          Void  subtract_from_base_light ( Uint8 delta );
+
+          Void add_light ( Real32 x, Real32 y, Uint8 value );
+          Void clear_light ( );
 
           Bool add_exit ( Uint8 location_x, Uint8 location_y );
           Void remove_exit ( Exit* exit );
@@ -75,6 +83,9 @@ namespace bryte
           static const Uint32 c_max_tiles = 1024;
           static const Uint32 c_max_exits = 4;
 
+          static const Uint32 c_max_light = c_max_tiles;
+          static const Int32  c_light_decay = 32;
+
      private:
 
           Char8  m_master_list [ c_max_maps ][ c_max_map_name_size ];
@@ -84,6 +95,9 @@ namespace bryte
 
           Uint8  m_width;
           Uint8  m_height;
+
+          Uint8  m_base_light_value;
+          Uint8  m_light [ c_max_light ];
 
           Exit   m_exits [ c_max_exits ];
           Uint8  m_exit_count;

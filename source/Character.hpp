@@ -33,6 +33,7 @@ namespace bryte
           Bool collides_with ( const Character& character );
           Bool attack_collides_with ( const Character& character );
 
+          Void walk ( Direction dir );
           Void attack ( );
           Void damage ( Int32 amount, Direction push );
 
@@ -50,6 +51,7 @@ namespace bryte
           static const Real32 c_attack_height;
           static const Real32 c_attack_time;
           static const Real32 c_cooldown_time;
+          static const Real32 c_accel;
 
      public:
 

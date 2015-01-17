@@ -8,6 +8,7 @@
 
 #include "Map.hpp"
 #include "Character.hpp"
+#include "Enemy.hpp"
 
 #include "Random.hpp"
 
@@ -62,8 +63,8 @@ namespace bryte
           Character player;
           Int32     player_exit_tile_index;
 
-          Character enemies [ c_max_enemies ];
-          Uint32    enemy_count;
+          Enemy  enemies [ c_max_enemies ];
+          Uint32 enemy_count;
 
           Lever        lever;
 
@@ -80,6 +81,8 @@ namespace bryte
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
+
+          SDL_Surface* rat_surface;
      };
 
      struct MemoryLocations {

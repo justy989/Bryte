@@ -6,8 +6,6 @@
 
 using namespace bryte;
 
-static const Real32 c_player_accel            = 7.0f;
-
 static const Real32 c_lever_width             = 0.5f;
 static const Real32 c_lever_height            = 0.5f;
 static const Real32 c_lever_activate_cooldown = 0.75f;
@@ -15,6 +13,7 @@ static const Real32 c_lever_activate_cooldown = 0.75f;
 static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
 static const Char8* c_test_decorsheet_path    = "castle_decorsheet.bmp";
 static const Char8* c_test_lampsheet_path     = "castle_lampsheet.bmp";
+static const Char8* c_test_rat_path           = "test_rat.bmp";
 
 const Real32 HealthPickup::c_dimension = 0.4f;
 
@@ -125,6 +124,12 @@ Bool State::initialize ( GameMemory& game_memory )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( rat_surface, game_memory,
+                                          c_test_rat_path ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", c_test_lampsheet_path );
+          return false;
+     }
+
      return true;
 }
 
@@ -139,7 +144,7 @@ Void State::destroy ( )
 
 Bool State::spawn_enemy ( Real32 x, Real32 y )
 {
-     Character* enemy = nullptr;
+     Enemy* enemy = nullptr;
 
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
           if ( enemies [ i ].state == Character::State::dead ) {
@@ -157,6 +162,7 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
 
      enemy->state  = Character::State::alive;
      enemy->facing = Direction::left;
+     enemy->type   = Enemy::Type::rat;
 
      enemy->health     = 3;
      enemy->max_health = 3;
@@ -165,8 +171,8 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
 
      enemy->velocity.zero ( );
 
-     enemy->width            = 0.8f;
-     enemy->height           = enemy->width * 1.5f;
+     enemy->width            = pixels_to_meters ( 16 );
+     enemy->height           = enemy->width;
      enemy->collision_height = enemy->width;
 
      enemy->damage_pushed = Direction::left;
@@ -210,6 +216,45 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
      world_to_sdl ( character_rect, back_buffer, camera_x, camera_y );
 
      SDL_FillRect ( back_buffer, &character_rect, color );
+}
+
+static Void render_enemy ( SDL_Surface* back_buffer, const Enemy& enemy,
+                           SDL_Surface* enemy_surface,
+                           Real32 camera_x, Real32 camera_y, Uint32 color )
+{
+     static const Int32 blink_length  = 4;
+     static Bool        blink_on      = false;
+     static Int32       blink_count   = 0;
+
+     // do not draw if dead
+     if ( enemy.state == Enemy::State::dead ) {
+          return;
+     }
+
+     // update blinking
+     if ( blink_count <= 0 ) {
+          blink_count = blink_length;
+          blink_on = !blink_on;
+     } else {
+          blink_count--;
+     }
+
+     if ( !blink_on && enemy.state == Enemy::State::blinking ) {
+          return;
+     }
+
+     SDL_Rect dest_rect = build_world_sdl_rect ( enemy.position.x ( ), enemy.position.y ( ),
+                                                 enemy.width, enemy.height );
+
+     //SDL_Rect clip_rect = build_world_sdl_rect ( 0, enemy.height, enemy.width, enemy.height );
+     //clip_rect.y *= static_cast<Int32>( enemy.facing );
+     SDL_Rect clip_rect = {
+          0, static_cast<Int32>( enemy.facing ) * 16, 16, 16
+     };
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( enemy_surface, &clip_rect, back_buffer, &dest_rect );
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
@@ -281,23 +326,19 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      auto* state = get_state ( game_memory );
 
      if ( state->direction_keys [ Direction::up ] ) {
-          state->player.acceleration.set_y ( c_player_accel );
-          state->player.facing = Direction::up;
+          state->player.walk ( Direction::up );
      }
 
      if ( state->direction_keys [ Direction::down ] ) {
-          state->player.acceleration.set_y ( -c_player_accel );
-          state->player.facing = Direction::down;
+          state->player.walk ( Direction::down );
      }
 
      if ( state->direction_keys [ Direction::right ] ) {
-          state->player.acceleration.set_x ( c_player_accel );
-          state->player.facing = Direction::right;
+          state->player.walk ( Direction::right );
      }
 
      if ( state->direction_keys [ Direction::left ] ) {
-          state->player.acceleration.set_x ( -c_player_accel );
-          state->player.facing = Direction::left;
+          state->player.walk ( Direction::left );
      }
 
      if ( state->attack_key ) {
@@ -339,6 +380,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                continue;
           }
 
+          enemy.think ( state->player.position, state->random, time_delta );
           enemy.update ( time_delta, state->map );
 
           // check collision between player and enemy
@@ -465,8 +507,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // draw enemies
      for ( Uint32 i = 0; i < state->enemy_count; ++i ) {
-          render_character ( back_buffer, state->enemies [ i ],
-                             state->camera.x ( ), state->camera.y ( ), blue );
+          render_enemy ( back_buffer, state->enemies [ i ], state->rat_surface,
+                         state->camera.x ( ), state->camera.y ( ), blue );
      }
 
      // draw player

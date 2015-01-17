@@ -83,6 +83,8 @@ namespace bryte
           SDL_Surface* lampsheet;
 
           SDL_Surface* rat_surface;
+
+          SDL_Surface* player_surface;
      };
 
      struct MemoryLocations {

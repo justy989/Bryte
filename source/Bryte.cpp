@@ -13,6 +13,7 @@ static const Real32 c_lever_activate_cooldown = 0.75f;
 static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
 static const Char8* c_test_decorsheet_path    = "castle_decorsheet.bmp";
 static const Char8* c_test_lampsheet_path     = "castle_lampsheet.bmp";
+static const Char8* c_test_player_path        = "test_hero.bmp";
 static const Char8* c_test_rat_path           = "test_rat.bmp";
 
 const Real32 HealthPickup::c_dimension = 0.4f;
@@ -126,7 +127,13 @@ Bool State::initialize ( GameMemory& game_memory )
 
      if ( !load_bitmap_with_game_memory ( rat_surface, game_memory,
                                           c_test_rat_path ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", c_test_lampsheet_path );
+          LOG_ERROR ( "Failed to load: '%s'\n", c_test_rat_path );
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( player_surface, game_memory,
+                                          c_test_player_path ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", c_test_player_path );
           return false;
      }
 
@@ -135,11 +142,12 @@ Bool State::initialize ( GameMemory& game_memory )
 
 Void State::destroy ( )
 {
-     LOG_INFO ( "Freeing tilesheet: %s\n", c_test_tilesheet_path );
      SDL_FreeSurface ( tilesheet );
-
-     LOG_INFO ( "Freeing decorsheet: %s\n", c_test_decorsheet_path );
      SDL_FreeSurface ( decorsheet );
+     SDL_FreeSurface ( lampsheet );
+
+     SDL_FreeSurface ( rat_surface );
+     SDL_FreeSurface ( player_surface );
 }
 
 Bool State::spawn_enemy ( Real32 x, Real32 y )
@@ -186,15 +194,16 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
      return true;
 }
 
-static Void render_character ( SDL_Surface* back_buffer, const Character& character,
-                               Real32 camera_x, Real32 camera_y, Uint32 color )
+static Void render_player ( SDL_Surface* back_buffer, const Character& player,
+                            SDL_Surface* player_surface,
+                            Real32 camera_x, Real32 camera_y )
 {
      static const Int32 blink_length  = 4;
      static Bool        blink_on      = false;
      static Int32       blink_count   = 0;
 
      // do not draw if dead
-     if ( character.state == Character::State::dead ) {
+     if ( player.state == Character::State::dead ) {
           return;
      }
 
@@ -206,16 +215,20 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
           blink_count--;
      }
 
-     if ( !blink_on && character.state == Character::State::blinking ) {
+     if ( !blink_on && player.state == Character::State::blinking ) {
           return;
      }
 
-     SDL_Rect character_rect = build_world_sdl_rect ( character.position.x ( ), character.position.y ( ),
-                                                      character.width, character.height );
+     SDL_Rect dest_rect = build_world_sdl_rect ( player.position.x ( ), player.position.y ( ),
+                                                 player.width, player.height );
 
-     world_to_sdl ( character_rect, back_buffer, camera_x, camera_y );
+     SDL_Rect clip_rect = {
+          0, static_cast<Int32>( player.facing ) * 16, 16, 16
+     };
 
-     SDL_FillRect ( back_buffer, &character_rect, color );
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( player_surface, &clip_rect, back_buffer, &dest_rect );
 }
 
 static Void render_enemy ( SDL_Surface* back_buffer, const Enemy& enemy,
@@ -246,8 +259,6 @@ static Void render_enemy ( SDL_Surface* back_buffer, const Enemy& enemy,
      SDL_Rect dest_rect = build_world_sdl_rect ( enemy.position.x ( ), enemy.position.y ( ),
                                                  enemy.width, enemy.height );
 
-     //SDL_Rect clip_rect = build_world_sdl_rect ( 0, enemy.height, enemy.width, enemy.height );
-     //clip_rect.y *= static_cast<Int32>( enemy.facing );
      SDL_Rect clip_rect = {
           0, static_cast<Int32>( enemy.facing ) * 16, 16, 16
      };
@@ -512,7 +523,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      }
 
      // draw player
-     render_character ( back_buffer, state->player, state->camera.x ( ), state->camera.y ( ), red );
+     render_player ( back_buffer, state->player, state->player_surface,
+                     state->camera.x ( ), state->camera.y ( ) );
 
      // draw player attack
      if ( state->player.state == Character::State::attacking ) {

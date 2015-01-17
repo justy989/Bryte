@@ -167,7 +167,7 @@ Void Character::update ( Real32 time_delta, const Map& map )
 
      bool collided = false;
 
-     // collision with tile map
+     // check collision with tile map
      if ( map.is_position_solid ( target_position.x ( ), target_position.y ( ) ) ||
           map.is_position_solid ( target_position.x ( ) + width, target_position.y ( ) ) ||
           map.is_position_solid ( target_position.x ( ), target_position.y ( ) + collision_height ) ||
@@ -175,8 +175,34 @@ Void Character::update ( Real32 time_delta, const Map& map )
           collided = true;
      }
 
+     // which tile did our target_position end up in
+     Int32 starting_tile_left   = position.x ( ) / Map::c_tile_dimension_in_meters;
+     Int32 starting_tile_right  = ( position.x ( ) + width ) / Map::c_tile_dimension_in_meters;
+     Int32 starting_tile_bottom =  position.y ( ) / Map::c_tile_dimension_in_meters;
+     Int32 starting_tile_top    = ( position.y ( ) + collision_height ) / Map::c_tile_dimension_in_meters;
+     Int32 target_tile_left     = target_position.x ( ) / Map::c_tile_dimension_in_meters;
+     Int32 target_tile_right    = ( target_position.x ( ) + width ) / Map::c_tile_dimension_in_meters;
+     Int32 target_tile_bottom   = target_position.y ( ) / Map::c_tile_dimension_in_meters;
+     Int32 target_tile_top      = ( target_position.y ( ) + collision_height ) / Map::c_tile_dimension_in_meters;
+
+     Vector wall;
+
+     if ( starting_tile_left - target_tile_left > 0 ) {
+          wall.set ( 1.0f, 0.0f );
+     } else if ( starting_tile_right - target_tile_right < 0 ) {
+          wall.set ( -1.0f, 0.0f );
+     }
+
+     if ( starting_tile_bottom - target_tile_bottom > 0 ) {
+          wall.set ( 0.0f, 1.0f );
+     } else if ( starting_tile_top - target_tile_top < 0 ) {
+          wall.set ( 0.0f, -1.0f );
+     }
+
      if ( !collided ) {
           position = target_position;
+     } else {
+          velocity = velocity - ( wall * velocity.inner_product ( wall ) );
      }
 
      acceleration.zero ( );

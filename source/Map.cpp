@@ -89,11 +89,6 @@ Bool Map::get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const
      return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid;
 }
 
-Uint8 Map::get_coordinate_decor ( Int32 tile_x, Int32 tile_y ) const
-{
-     return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].decor;
-}
-
 Uint8 Map::get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const
 {
      return m_light [ coordinate_to_tile_index ( tile_x, tile_y ) ];
@@ -109,17 +104,12 @@ Void Map::set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid )
      m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid = solid;
 }
 
-Void Map::set_coordinate_decor ( Int32 tile_x, Int32 tile_y, Uint8 decor )
-{
-     m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].decor = decor;
-}
-
 Bool Map::is_position_solid ( Real32 x, Real32 y ) const
 {
      return m_tiles [ position_to_tile_index ( x, y ) ].solid;
 }
 
-Map::Exit* Map::check_position_exit ( Uint8 x, Uint8 y )
+Map::Exit* Map::check_coordinates_for_exit ( Uint8 x, Uint8 y )
 {
      for ( Uint8 d = 0; d < m_exit_count; ++d ) {
           auto& exit = m_exits [ d ];
@@ -132,17 +122,28 @@ Map::Exit* Map::check_position_exit ( Uint8 x, Uint8 y )
      return nullptr;
 }
 
-Map::Lamp* Map::check_position_lamp ( Uint8 x, Uint8 y )
+Map::Fixture* Map::check_coordinates_for_fixture ( Map::Fixture* fixture_array, Uint8 fixture_count,
+                                                   Uint8 x, Uint8 y )
 {
-     for ( Uint8 d = 0; d < m_lamp_count; ++d ) {
-          auto& lamp = m_lamps [ d ];
+     for ( Uint8 d = 0; d < fixture_count; ++d ) {
+          auto& fixture = fixture_array [ d ];
 
-          if ( lamp.location_x == x && lamp.location_y == y ) {
-               return &lamp;
+          if ( fixture.location_x == x && fixture.location_y == y ) {
+               return &fixture;
           }
      }
 
      return nullptr;
+}
+
+Map::Fixture* Map::check_coordinates_for_decor ( Uint8 x, Uint8 y )
+{
+     return check_coordinates_for_fixture ( m_decors, m_decor_count, x, y );
+}
+
+Map::Fixture* Map::check_coordinates_for_lamp ( Uint8 x, Uint8 y )
+{
+     return check_coordinates_for_fixture ( m_lamps, m_lamp_count, x, y );
 }
 
 Uint8 Map::base_light_value ( ) const
@@ -164,7 +165,7 @@ Void Map::illuminate ( Real32 x, Real32 y, Uint8 value )
 {
      Int32 tile_radius = ( static_cast<Int32>( value ) - static_cast<Int32>( m_base_light_value ) ) / c_light_decay;
 
-     if ( tile_radius < 0 ) {
+     if ( tile_radius <= 0 ) {
           return;
      }
 
@@ -183,6 +184,10 @@ Void Map::illuminate ( Real32 x, Real32 y, Uint8 value )
      for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
           for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
                Int32 manhattan_distance = abs ( tile_x - x ) + abs ( tile_y - y );
+
+               if ( manhattan_distance > tile_radius ) {
+                    continue;
+               }
 
                Uint8& light_value     = m_light [ coordinate_to_tile_index ( x, y ) ];
                Uint8  new_light_value = value - ( manhattan_distance * c_light_decay );
@@ -210,35 +215,57 @@ Void Map::reset_light ( )
      }
 }
 
-Bool Map::add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id )
+Bool Map::add_fixture ( Map::Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
+                        Uint8 location_x, Uint8 location_y, Uint8 id )
 {
-     if ( m_lamp_count >= c_max_lamps ) {
+     if ( *fixture_count >= max_fixtures ) {
           return false;
      }
 
-     m_lamps [ m_lamp_count ].location_x = location_x;
-     m_lamps [ m_lamp_count ].location_y = location_y;
-     m_lamps [ m_lamp_count ].id         = id;
+     fixture_array [ *fixture_count ].location_x = location_x;
+     fixture_array [ *fixture_count ].location_y = location_y;
+     fixture_array [ *fixture_count ].id         = id;
 
-     m_lamp_count++;
+     (*fixture_count)++;
 
      return true;
 }
 
-Void Map::remove_lamp ( Lamp* lamp )
+Void Map::remove_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
+                           Fixture* fixture )
 {
-     ASSERT ( lamp >= m_lamps && lamp < m_lamps + c_max_lamps );
+     ASSERT ( fixture >= fixture_array && fixture < fixture_array + max_fixtures );
 
-     Lamp* last = m_lamps + ( m_lamp_count - 1 );
+     Fixture* last = fixture_array + ( *fixture_count - 1 );
 
      // slide down all the elements after it
-     while ( lamp <= last ) {
-          Lamp* next = lamp + 1;
-          *lamp = *next;
-          lamp = next;
+     while ( fixture <= last ) {
+          Fixture* next = fixture + 1;
+          *fixture = *next;
+          fixture = next;
      }
 
-     m_lamp_count--;
+     (*fixture_count)--;
+}
+
+Bool Map::add_decor ( Uint8 location_x, Uint8 location_y, Uint8 id )
+{
+     return add_fixture ( m_decors, &m_decor_count, c_max_decors, location_x, location_y, id );
+}
+
+Void Map::remove_decor ( Fixture* decor )
+{
+     remove_fixture ( m_decors, &m_decor_count, c_max_decors, decor );
+}
+
+Bool Map::add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id )
+{
+     return add_fixture ( m_lamps, &m_lamp_count, c_max_lamps, location_x, location_y, id );
+}
+
+Void Map::remove_lamp ( Fixture* lamp )
+{
+     remove_fixture ( m_lamps, &m_lamp_count, c_max_lamps, lamp );
 }
 
 Bool Map::add_exit ( Uint8 location_x, Uint8 location_y )
@@ -303,11 +330,25 @@ void Map::save ( const Char8* filepath )
           }
      }
 
-     file.write ( reinterpret_cast<const Char8*>( &m_exit_count ), sizeof ( Exit ) );
+     file.write ( reinterpret_cast<const Char8*>( &m_exit_count ), sizeof ( m_exit_count ) );
 
      for ( Int32 i = 0; i < m_exit_count; ++i ) {
           auto& exit = m_exits [ i ];
           file.write ( reinterpret_cast<const Char8*> ( &exit ), sizeof ( exit ) );
+     }
+
+     file.write ( reinterpret_cast<const Char8*>( &m_decor_count ), sizeof ( m_decor_count ) );
+
+     for ( Int32 i = 0; i < m_decor_count; ++i ) {
+          auto& decor = m_decors [ i ];
+          file.write ( reinterpret_cast<const Char8*> ( &decor ), sizeof ( decor ) );
+     }
+
+     file.write ( reinterpret_cast<const Char8*>( &m_lamp_count ), sizeof ( m_lamp_count ) );
+
+     for ( Int32 i = 0; i < m_lamp_count; ++i ) {
+          auto& lamp = m_lamps [ i ];
+          file.write ( reinterpret_cast<const Char8*> ( &lamp ), sizeof ( lamp ) );
      }
 
      file.write ( reinterpret_cast<const Char8*> ( &m_base_light_value ), sizeof ( m_base_light_value ) );
@@ -335,11 +376,25 @@ void Map::load ( const Char8* filepath )
           }
      }
 
-     file.read ( reinterpret_cast<Char8*>( &m_exit_count ), sizeof ( Exit ) );
+     file.read ( reinterpret_cast<Char8*>( &m_exit_count ), sizeof ( m_exit_count ) );
 
      for ( Int32 i = 0; i < m_exit_count; ++i ) {
           auto& exit = m_exits [ i ];
           file.read ( reinterpret_cast<Char8*> ( &exit ), sizeof ( exit ) );
+     }
+
+     file.read ( reinterpret_cast<Char8*>( &m_decor_count ), sizeof ( m_decor_count ) );
+
+     for ( Int32 i = 0; i < m_decor_count; ++i ) {
+          auto& decor = m_decors [ i ];
+          file.read ( reinterpret_cast<Char8*> ( &decor ), sizeof ( decor ) );
+     }
+
+     file.read ( reinterpret_cast<Char8*>( &m_lamp_count ), sizeof ( m_lamp_count ) );
+
+     for ( Int32 i = 0; i < m_lamp_count; ++i ) {
+          auto& lamp = m_lamps [ i ];
+          file.read ( reinterpret_cast<Char8*> ( &lamp ), sizeof ( lamp ) );
      }
 
      file.read ( reinterpret_cast<Char8*> ( &m_base_light_value ), sizeof ( m_base_light_value ) );

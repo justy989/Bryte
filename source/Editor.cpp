@@ -36,16 +36,25 @@ void State::mouse_button_changed_down ( bool left )
           }
           break;
      case Mode::decor:
+     {
+          bryte::Map::Fixture* decor = map.check_coordinates_for_decor ( tx, ty );
+
           if ( left ) {
-               if ( tx >= 0 && tx < map.width ( ) &&
-                    ty >= 0 && ty < map.height ( ) ) {
-                    map.set_coordinate_decor ( tx, ty, current_decor );
+               if ( decor ) {
+                    map.remove_decor ( decor );
+               } else {
+                    if ( tx >= 0 && tx < map.width ( ) &&
+                         ty >= 0 && ty < map.height ( ) ) {
+                         map.add_decor ( tx, ty, current_decor );
+                    }
                }
+
+               map.reset_light ( );
           }
-          break;
+     } break;
      case Mode::light:
      {
-          bryte::Map::Lamp* lamp = map.check_position_lamp ( tx, ty );
+          bryte::Map::Fixture* lamp = map.check_coordinates_for_lamp ( tx, ty );
 
           if ( left ) {
                if ( lamp ) {
@@ -65,7 +74,7 @@ void State::mouse_button_changed_down ( bool left )
      } break;
      case Mode::exit:
      {
-          bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
+          bryte::Map::Exit* exit = map.check_coordinates_for_exit ( tx, ty );
 
           if ( left ) {
                if ( exit ) {
@@ -129,7 +138,7 @@ void State::option_button_changed_down ( bool up )
           break;
      case Mode::exit:
      {
-          bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
+          bryte::Map::Exit* exit = map.check_coordinates_for_exit ( tx, ty );
 
           if ( exit ) {
                if ( up ) {
@@ -199,6 +208,9 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      state->right_button_down = false;
 
      state->mode = Mode::tile;
+
+     state->draw_solids = false;
+     state->draw_light  = false;
 
      return true;
 }
@@ -284,9 +296,14 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     state->map.load ( state->settings->map_save_filename );
                }
                break;
-          case SDL_SCANCODE_B:
+          case SDL_SCANCODE_C:
                if ( key_change.down ) {
                     state->draw_solids = !state->draw_solids;
+               }
+               break;
+          case SDL_SCANCODE_L:
+               if ( key_change.down ) {
+                    state->draw_light = !state->draw_light;
                }
                break;
           }
@@ -344,7 +361,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           break;
      case Mode::exit:
      {
-          bryte::Map::Exit* exit = state->map.check_position_exit ( tx, ty );
+          bryte::Map::Exit* exit = state->map.check_coordinates_for_exit ( tx, ty );
 
           if ( exit ) {
                sprintf ( state->message_buffer, "MAP %d EXIT %d", exit->map_index, exit->exit_index );
@@ -395,43 +412,15 @@ static Void render_map_solids ( SDL_Surface* back_buffer, bryte::Map& map, Real3
      }
 }
 
-static Void render_current_tile ( SDL_Surface* back_buffer, SDL_Surface* tilesheet,
-                                  Int32 mouse_x, Int32 mouse_y, int current_tile )
+static Void render_current_icon ( SDL_Surface* back_buffer, SDL_Surface* sheet,
+                                  Int32 mouse_x, Int32 mouse_y, Int32 current_id )
 {
-     SDL_Rect tile_rect { mouse_x, back_buffer->h - mouse_y,
+     SDL_Rect dest_rect { mouse_x, back_buffer->h - mouse_y,
                           bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
-     SDL_Rect clip_rect { current_tile * bryte::Map::c_tile_dimension_in_pixels, 0,
-                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
-
-     SDL_BlitSurface ( tilesheet, &clip_rect, back_buffer, &tile_rect );
-}
-
-static Void render_current_decor ( SDL_Surface* back_buffer, SDL_Surface* decorsheet,
-                                   Int32 mouse_x, Int32 mouse_y, int current_decor )
-{
-     if ( current_decor <= 0 ) {
-          return;
-     }
-
-     current_decor--;
-
-     SDL_Rect tile_rect { mouse_x, back_buffer->h - mouse_y,
-                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
-     SDL_Rect clip_rect { current_decor * bryte::Map::c_tile_dimension_in_pixels, 0,
+     SDL_Rect clip_rect { current_id * bryte::Map::c_tile_dimension_in_pixels, 0,
                           bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
 
-     SDL_BlitSurface ( decorsheet, &clip_rect, back_buffer, &tile_rect );
-}
-
-static Void render_current_lamp ( SDL_Surface* back_buffer, SDL_Surface* lampsheet,
-                                  Int32 mouse_x, Int32 mouse_y, int current_lamp )
-{
-     SDL_Rect tile_rect { mouse_x, back_buffer->h - mouse_y,
-                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
-     SDL_Rect clip_rect { current_lamp * bryte::Map::c_tile_dimension_in_pixels, 0,
-                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
-
-     SDL_BlitSurface ( lampsheet, &clip_rect, back_buffer, &tile_rect );
+     SDL_BlitSurface ( sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -443,13 +432,15 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_map_lamps ( back_buffer, state->lampsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_exits ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
-     render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+     if ( state->draw_light ) {
+          render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+     }
 
      if ( state->draw_solids ) {
           render_map_solids ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
      }
 
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, 20 };
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, state->text.character_height + 4 };
      SDL_FillRect ( back_buffer, &hud_rect, SDL_MapRGB ( back_buffer->format, 255, 255, 255 ) );
 
      switch ( state->mode ) {
@@ -457,28 +448,28 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           ASSERT ( 0 );
           break;
      case Mode::tile:
-          render_current_tile ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
+          render_current_icon ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
                                 state->current_tile );
 
-          state->text.render ( back_buffer, "TILE MODE", 10, 10 );
+          state->text.render ( back_buffer, "TILE MODE", 1, 2 );
           break;
      case Mode::decor:
-          render_current_decor ( back_buffer, state->decorsheet, state->mouse_x, state->mouse_y,
-                                 state->current_decor );
+          render_current_icon ( back_buffer, state->decorsheet, state->mouse_x, state->mouse_y,
+                                state->current_decor );
 
-          state->text.render ( back_buffer, "DECOR MODE", 10, 10 );
+          state->text.render ( back_buffer, "DECOR MODE", 1, 2 );
           break;
      case Mode::light:
-          render_current_lamp ( back_buffer, state->lampsheet, state->mouse_x, state->mouse_y,
+          render_current_icon ( back_buffer, state->lampsheet, state->mouse_x, state->mouse_y,
                                  state->current_lamp );
 
-          state->text.render ( back_buffer, "LIGHT MODE", 10, 10 );
+          state->text.render ( back_buffer, "LIGHT MODE", 1, 2 );
           break;
      case Mode::exit:
-          state->text.render ( back_buffer, "EXIT MODE", 10, 10 );
+          state->text.render ( back_buffer, "EXIT MODE", 1, 2 );
           break;
      }
 
-     state->text.render ( back_buffer, state->message_buffer, 80, 10 );
+     state->text.render ( back_buffer, state->message_buffer, 13 * ( state->text.character_width + state->text.character_spacing ), 2 );
 }
 

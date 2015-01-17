@@ -70,6 +70,7 @@ namespace editor
           Uint8 current_lamp;
 
           Bool draw_solids;
+          Bool draw_light;
 
           char message_buffer [ 128 ];
      };

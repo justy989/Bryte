@@ -32,34 +32,21 @@ extern "C" Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, M
 extern "C" Void render_map_decor ( SDL_Surface* back_buffer, SDL_Surface* decorsheet, Map& map,
                                    Real32 camera_x, Real32 camera_y )
 {
-     // TODO: optimize to only draw to the part of the back buffer we can see
-     for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
-          for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
+     for ( Uint8 i = 0; i < map.decor_count ( ); ++i ) {
+          auto& decor = map.decor ( i );
 
-               SDL_Rect decor_rect { 0, 0,
-                                     Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-               SDL_Rect clip_rect { 0, 0,
-                                    Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+          SDL_Rect decor_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+          SDL_Rect clip_rect { decor.id * Map::c_tile_dimension_in_pixels, 0,
+                               Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-               auto decor_value = map.get_coordinate_decor ( x, y );
+          decor_rect.x = decor.location_x * Map::c_tile_dimension_in_pixels;
+          decor_rect.y = decor.location_y * Map::c_tile_dimension_in_pixels;
 
-               if ( decor_value == 0 ) {
-                    continue;
-               }
+          world_to_sdl ( decor_rect, back_buffer, camera_x, camera_y );
 
-               // shift down values by 1
-               decor_value -= 1;
-
-               clip_rect.x = decor_value * Map::c_tile_dimension_in_pixels;
-
-               decor_rect.x = x * Map::c_tile_dimension_in_pixels;
-               decor_rect.y = y * Map::c_tile_dimension_in_pixels;
-
-               world_to_sdl ( decor_rect, back_buffer, camera_x, camera_y );
-
-               SDL_BlitSurface ( decorsheet, &clip_rect, back_buffer, &decor_rect );
-          }
+          SDL_BlitSurface ( decorsheet, &clip_rect, back_buffer, &decor_rect );
      }
+
 }
 
 extern "C" Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lampsheet, Map& map,

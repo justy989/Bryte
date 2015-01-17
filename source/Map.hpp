@@ -12,25 +12,22 @@ namespace bryte
 
           struct Tile {
                Uint8 value;
-               Uint8 decor;
                Bool  solid;
           };
 
-          struct Exit {
-          public:
+          struct Fixture {
+               Uint8 location_x;
+               Uint8 location_y;
 
+               Uint8 id;
+          };
+
+          struct Exit {
                Uint8 location_x;
                Uint8 location_y;
 
                Uint8 map_index;
                Uint8 exit_index;
-          };
-
-          struct Lamp {
-               Uint8 location_x;
-               Uint8 location_y;
-
-               Uint8 id;
           };
 
      public:
@@ -53,16 +50,15 @@ namespace bryte
 
           Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const;
           Bool  get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const;
-          Uint8 get_coordinate_decor ( Int32 tile_x, Int32 tile_y ) const;
           Uint8 get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const;
 
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
-          Void  set_coordinate_decor ( Int32 tile_x, Int32 tile_y, Uint8 decor );
 
-          Bool  is_position_solid   ( Real32 x, Real32 y ) const;
-          Lamp* check_position_lamp ( Uint8 x, Uint8 y );
-          Exit* check_position_exit ( Uint8 x, Uint8 y );
+          Bool     is_position_solid           ( Real32 x, Real32 y ) const;
+          Fixture* check_coordinates_for_decor ( Uint8 x, Uint8 y );
+          Fixture* check_coordinates_for_lamp  ( Uint8 x, Uint8 y );
+          Exit*    check_coordinates_for_exit  ( Uint8 x, Uint8 y );
 
           Uint8 base_light_value ( ) const;
           Void  add_to_base_light ( Uint8 delta );
@@ -71,8 +67,11 @@ namespace bryte
           Void illuminate ( Real32 x, Real32 y, Uint8 value );
           Void reset_light ( );
 
+          Bool add_decor ( Uint8 location_x, Uint8 location_y, Uint8 id );
+          Void remove_decor ( Fixture* decor );
+
           Bool add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id );
-          Void remove_lamp ( Lamp* exit );
+          Void remove_lamp ( Fixture* lamp );
 
           Bool add_exit ( Uint8 location_x, Uint8 location_y );
           Void remove_exit ( Exit* exit );
@@ -80,11 +79,22 @@ namespace bryte
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
 
+          inline Uint8 decor_count ( ) const;
+          inline Fixture& decor ( Uint8 index );
+
           inline Uint8 lamp_count ( ) const;
-          inline Lamp& lamp ( Uint8 index );
+          inline Fixture& lamp ( Uint8 index );
 
           inline Uint8 exit_count ( ) const;
           inline Exit& exit ( Uint8 index );
+
+     private:
+
+          Bool add_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
+                             Uint8 location_x, Uint8 location_y, Uint8 id );
+          Void remove_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
+                                Fixture* fixture );
+          Fixture* check_coordinates_for_fixture ( Fixture* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y );
 
      public:
 
@@ -99,6 +109,8 @@ namespace bryte
 
           static const Uint32 c_max_light = c_max_tiles;
           static const Int32  c_light_decay = 32;
+
+          static const Uint32 c_max_decors = 64;
 
           static const Uint32 c_max_lamps = 32;
           static const Uint32 c_unique_lamp_count = 4;
@@ -117,8 +129,11 @@ namespace bryte
           Uint8  m_base_light_value;
           Uint8  m_light [ c_max_light ];
 
-          Lamp   m_lamps [ c_max_lamps ];
-          Uint8  m_lamp_count;;
+          Fixture m_decors [ c_max_decors ];
+          Uint8   m_decor_count;
+
+          Fixture m_lamps [ c_max_lamps ];
+          Uint8   m_lamp_count;
 
           Exit   m_exits [ c_max_exits ];
           Uint8  m_exit_count;
@@ -134,6 +149,30 @@ namespace bryte
           return m_height;
      }
 
+     inline Uint8 Map::lamp_count ( ) const
+     {
+          return m_lamp_count;
+     }
+
+     inline Map::Fixture& Map::decor ( Uint8 index )
+     {
+          ASSERT ( index < m_decor_count );
+
+          return m_decors [ index ];
+     }
+
+     inline Uint8 Map::decor_count ( ) const
+     {
+          return m_decor_count;
+     }
+
+     inline Map::Fixture& Map::lamp ( Uint8 index )
+     {
+          ASSERT ( index < m_lamp_count );
+
+          return m_lamps [ index ];
+     }
+
      inline Uint8 Map::exit_count ( ) const
      {
           return m_exit_count;
@@ -144,18 +183,6 @@ namespace bryte
           ASSERT ( index < m_exit_count );
 
           return m_exits [ index ];
-     }
-
-     inline Uint8 Map::lamp_count ( ) const
-     {
-          return m_lamp_count;
-     }
-
-     inline Map::Lamp& Map::lamp ( Uint8 index )
-     {
-          ASSERT ( index < m_lamp_count );
-
-          return m_lamps [ index ];
      }
 }
 

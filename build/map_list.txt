@@ -1,2 +1,1 @@
-first.brm
-second.brm
+light_test.brm

@@ -392,8 +392,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-          auto* exit = map.check_position_exit ( state->player.position.x ( ) / Map::c_tile_dimension_in_meters,
-                                                 state->player.position.y ( ) / Map::c_tile_dimension_in_meters );
+          auto* exit = map.check_coordinates_for_exit ( state->player.position.x ( ) / Map::c_tile_dimension_in_meters,
+                                                        state->player.position.y ( ) / Map::c_tile_dimension_in_meters );
 
           if ( exit ) {
                Uint8 exit_index = exit->exit_index;
@@ -440,7 +440,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                   state->camera.x ( ), state->camera.y ( ) );
      render_map_decor ( back_buffer, state->decorsheet, state->map,
                         state->camera.x ( ), state->camera.y ( ) );
-     render_map_decor ( back_buffer, state->lampsheet, state->map,
+     render_map_lamps ( back_buffer, state->lampsheet, state->map,
                         state->camera.x ( ), state->camera.y ( ) );
 
      render_map_exits ( back_buffer, state->map,

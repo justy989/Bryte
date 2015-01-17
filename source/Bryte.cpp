@@ -13,7 +13,8 @@ static const Real32 c_lever_height            = 0.5f;
 static const Real32 c_lever_activate_cooldown = 0.75f;
 
 static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
-static const Char8* c_test_decorsheet_path     = "castle_decorsheet.bmp";
+static const Char8* c_test_decorsheet_path    = "castle_decorsheet.bmp";
+static const Char8* c_test_lampsheet_path     = "castle_lampsheet.bmp";
 
 const Real32 HealthPickup::c_dimension = 0.4f;
 
@@ -105,25 +106,24 @@ Bool State::initialize ( GameMemory& game_memory )
           health_pickups [ i ].available = false;
      }
 
-     LOG_INFO ( "Loading tilesheet '%s'\n", c_test_tilesheet_path );
-
-     FileContents bitmap_contents = load_entire_file ( c_test_tilesheet_path, &game_memory );
-     tilesheet = load_bitmap ( &bitmap_contents );
-     if ( !tilesheet ) {
+     // load test graphics
+     if ( !load_bitmap_with_game_memory ( tilesheet, game_memory,
+                                          c_test_tilesheet_path ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", c_test_tilesheet_path );
           return false;
      }
 
-     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
-
-     LOG_INFO ( "Loading decorsheet '%s'\n", c_test_decorsheet_path );
-
-     bitmap_contents = load_entire_file ( c_test_decorsheet_path, &game_memory );
-     decorsheet = load_bitmap ( &bitmap_contents );
-     if ( !decorsheet ) {
+     if ( !load_bitmap_with_game_memory ( decorsheet, game_memory,
+                                          c_test_decorsheet_path ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", c_test_decorsheet_path );
           return false;
      }
 
-     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
+     if ( !load_bitmap_with_game_memory ( lampsheet, game_memory,
+                                          c_test_lampsheet_path ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", c_test_lampsheet_path );
+          return false;
+     }
 
      return true;
 }
@@ -422,7 +422,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           state->lever.activate_time -= time_delta;
      }
 
-     map.add_light ( 5.0f, 5.0f, 255 );
+     map.illuminate ( 5.0f, 5.0f, 255 );
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -439,6 +439,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_map ( back_buffer, state->tilesheet, state->map,
                   state->camera.x ( ), state->camera.y ( ) );
      render_map_decor ( back_buffer, state->decorsheet, state->map,
+                        state->camera.x ( ), state->camera.y ( ) );
+     render_map_decor ( back_buffer, state->lampsheet, state->map,
                         state->camera.x ( ), state->camera.y ( ) );
 
      render_map_exits ( back_buffer, state->map,

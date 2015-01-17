@@ -26,6 +26,13 @@ namespace bryte
                Uint8 exit_index;
           };
 
+          struct Lamp {
+               Uint8 location_x;
+               Uint8 location_y;
+
+               Uint8 id;
+          };
+
      public:
 
           Map ( );
@@ -54,20 +61,27 @@ namespace bryte
           Void  set_coordinate_decor ( Int32 tile_x, Int32 tile_y, Uint8 decor );
 
           Bool  is_position_solid   ( Real32 x, Real32 y ) const;
+          Lamp* check_position_lamp ( Uint8 x, Uint8 y );
           Exit* check_position_exit ( Uint8 x, Uint8 y );
 
           Uint8 base_light_value ( ) const;
           Void  add_to_base_light ( Uint8 delta );
           Void  subtract_from_base_light ( Uint8 delta );
 
-          Void add_light ( Real32 x, Real32 y, Uint8 value );
-          Void clear_light ( );
+          Void illuminate ( Real32 x, Real32 y, Uint8 value );
+          Void reset_light ( );
+
+          Bool add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id );
+          Void remove_lamp ( Lamp* exit );
 
           Bool add_exit ( Uint8 location_x, Uint8 location_y );
           Void remove_exit ( Exit* exit );
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
+
+          inline Uint8 lamp_count ( ) const;
+          inline Lamp& lamp ( Uint8 index );
 
           inline Uint8 exit_count ( ) const;
           inline Exit& exit ( Uint8 index );
@@ -86,6 +100,10 @@ namespace bryte
           static const Uint32 c_max_light = c_max_tiles;
           static const Int32  c_light_decay = 32;
 
+          static const Uint32 c_max_lamps = 32;
+          static const Uint32 c_unique_lamp_count = 4;
+          static const Uint8  c_unique_lamps_light [ c_unique_lamp_count ];
+
      private:
 
           Char8  m_master_list [ c_max_maps ][ c_max_map_name_size ];
@@ -98,6 +116,9 @@ namespace bryte
 
           Uint8  m_base_light_value;
           Uint8  m_light [ c_max_light ];
+
+          Lamp   m_lamps [ c_max_lamps ];
+          Uint8  m_lamp_count;;
 
           Exit   m_exits [ c_max_exits ];
           Uint8  m_exit_count;
@@ -123,6 +144,18 @@ namespace bryte
           ASSERT ( index < m_exit_count );
 
           return m_exits [ index ];
+     }
+
+     inline Uint8 Map::lamp_count ( ) const
+     {
+          return m_lamp_count;
+     }
+
+     inline Map::Lamp& Map::lamp ( Uint8 index )
+     {
+          ASSERT ( index < m_lamp_count );
+
+          return m_lamps [ index ];
      }
 }
 

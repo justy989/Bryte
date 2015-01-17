@@ -44,7 +44,25 @@ void State::mouse_button_changed_down ( bool left )
           }
           break;
      case Mode::light:
-          break;
+     {
+          bryte::Map::Lamp* lamp = map.check_position_lamp ( tx, ty );
+
+          if ( left ) {
+               if ( lamp ) {
+                    map.remove_lamp ( lamp );
+               } else {
+                    if ( tx >= 0 && tx < map.width ( ) &&
+                         ty >= 0 && ty < map.height ( ) ) {
+                         map.add_lamp ( tx, ty, current_lamp );
+                    }
+               }
+
+               map.reset_light ( );
+          } else {
+               current_lamp++;
+               current_lamp %= bryte::Map::c_unique_lamp_count;
+          }
+     } break;
      case Mode::exit:
      {
           bryte::Map::Exit* exit = map.check_position_exit ( tx, ty );
@@ -102,12 +120,12 @@ void State::option_button_changed_down ( bool up )
           break;
      case Mode::light:
           if ( up ) {
-               map.add_to_base_light ( 4 );
-          } else {
                map.subtract_from_base_light ( 4 );
+          } else {
+               map.add_to_base_light ( 4 );
           }
 
-          map.clear_light ( );
+          map.reset_light ( );
           break;
      case Mode::exit:
      {
@@ -145,21 +163,23 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
-     FileContents bitmap_contents = load_entire_file ( state->settings->map_tilesheet_filename, &game_memory );
-     state->tilesheet = load_bitmap ( &bitmap_contents );
-     if ( !state->tilesheet ) {
+     if ( !load_bitmap_with_game_memory ( state->tilesheet,  game_memory,
+                                          state->settings->map_tilesheet_filename ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_tilesheet_filename );
           return false;
      }
 
-     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
-
-     bitmap_contents = load_entire_file ( state->settings->map_decorsheet_filename, &game_memory );
-     state->decorsheet = load_bitmap ( &bitmap_contents );
-     if ( !state->decorsheet ) {
+     if ( !load_bitmap_with_game_memory ( state->decorsheet, game_memory,
+                                          state->settings->map_decorsheet_filename ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_decorsheet_filename );
           return false;
      }
 
-     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
+     if ( !load_bitmap_with_game_memory ( state->lampsheet, game_memory,
+                                          state->settings->map_lampsheet_filename ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_lampsheet_filename );
+          return false;
+     }
 
      if ( state->settings->map_load_filename ) {
           if ( !state->settings->map_save_filename ) {
@@ -403,12 +423,24 @@ static Void render_current_decor ( SDL_Surface* back_buffer, SDL_Surface* decors
      SDL_BlitSurface ( decorsheet, &clip_rect, back_buffer, &tile_rect );
 }
 
+static Void render_current_lamp ( SDL_Surface* back_buffer, SDL_Surface* lampsheet,
+                                  Int32 mouse_x, Int32 mouse_y, int current_lamp )
+{
+     SDL_Rect tile_rect { mouse_x, back_buffer->h - mouse_y,
+                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
+     SDL_Rect clip_rect { current_lamp * bryte::Map::c_tile_dimension_in_pixels, 0,
+                          bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
+
+     SDL_BlitSurface ( lampsheet, &clip_rect, back_buffer, &tile_rect );
+}
+
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      State* state = get_state ( game_memory );
 
      render_map ( back_buffer, state->tilesheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
+     render_map_lamps ( back_buffer, state->lampsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_exits ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
@@ -432,11 +464,14 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::decor:
           render_current_decor ( back_buffer, state->decorsheet, state->mouse_x, state->mouse_y,
-                                state->current_decor );
+                                 state->current_decor );
 
           state->text.render ( back_buffer, "DECOR MODE", 10, 10 );
           break;
      case Mode::light:
+          render_current_lamp ( back_buffer, state->lampsheet, state->mouse_x, state->mouse_y,
+                                 state->current_lamp );
+
           state->text.render ( back_buffer, "LIGHT MODE", 10, 10 );
           break;
      case Mode::exit:

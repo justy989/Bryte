@@ -1,5 +1,6 @@
 #include "Bitmap.hpp"
 #include "Utils.hpp"
+#include "GameMemory.hpp"
 
 static Bool read_bitmap_headers ( const FileContents& bitmap_contents, BitmapFileHeader** file_header,
                                   BitmapInfoHeader** info_header )
@@ -115,5 +116,17 @@ extern "C" SDL_Surface* load_bitmap ( const FileContents* bitmap_contents )
      }
 
      return surface;
+}
+
+Bool load_bitmap_with_game_memory ( SDL_Surface*& surface, GameMemory& game_memory, const Char8* filepath )
+{
+     FileContents bitmap_contents = load_entire_file ( filepath, &game_memory );
+     surface = load_bitmap ( &bitmap_contents );
+     if ( !surface ) {
+          return false;
+     }
+
+     GAME_POP_MEMORY_ARRAY ( game_memory, Char8, bitmap_contents.size );
+     return true;
 }
 

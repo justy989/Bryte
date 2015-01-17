@@ -8,6 +8,10 @@ using namespace bryte;
 const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimension_in_pixels /
                                                                     pixels_per_meter );
 
+const Uint8 Map::c_unique_lamps_light [ Map::c_unique_lamp_count ] = {
+     255, 255 - ( 2 * c_light_decay ), 255 - c_light_decay, 0
+};
+
 Bool Map::load_master_list ( const Char8* filepath )
 {
      std::ifstream file ( filepath );
@@ -46,7 +50,7 @@ void Map::initialize ( Uint8 width, Uint8 height )
      }
 
      m_base_light_value = 128;
-     clear_light ( );
+     reset_light ( );
 }
 
 Int32 Map::position_to_tile_index ( Real32 x, Real32 y ) const
@@ -128,6 +132,19 @@ Map::Exit* Map::check_position_exit ( Uint8 x, Uint8 y )
      return nullptr;
 }
 
+Map::Lamp* Map::check_position_lamp ( Uint8 x, Uint8 y )
+{
+     for ( Uint8 d = 0; d < m_lamp_count; ++d ) {
+          auto& lamp = m_lamps [ d ];
+
+          if ( lamp.location_x == x && lamp.location_y == y ) {
+               return &lamp;
+          }
+     }
+
+     return nullptr;
+}
+
 Uint8 Map::base_light_value ( ) const
 {
      return m_base_light_value;
@@ -143,7 +160,7 @@ Void Map::subtract_from_base_light ( Uint8 delta )
      m_base_light_value -= delta;
 }
 
-Void Map::add_light ( Real32 x, Real32 y, Uint8 value )
+Void Map::illuminate ( Real32 x, Real32 y, Uint8 value )
 {
      Int32 tile_radius = ( static_cast<Int32>( value ) - static_cast<Int32>( m_base_light_value ) ) / c_light_decay;
 
@@ -177,13 +194,51 @@ Void Map::add_light ( Real32 x, Real32 y, Uint8 value )
      }
 }
 
-Void Map::clear_light ( )
+Void Map::reset_light ( )
 {
      for ( Int32 y = 0; y < m_height; ++y ) {
           for ( Int32 x = 0; x < m_width; ++x ) {
                m_light [ coordinate_to_tile_index ( x, y ) ] = m_base_light_value;
           }
      }
+
+     for ( Uint8 i = 0; i < m_lamp_count; ++i ) {
+          auto& lamp = m_lamps [ i ];
+          illuminate ( pixels_to_meters ( lamp.location_x ) * c_tile_dimension_in_pixels,
+                       pixels_to_meters ( lamp.location_y ) * c_tile_dimension_in_pixels,
+                       c_unique_lamps_light [ lamp.id ] );
+     }
+}
+
+Bool Map::add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id )
+{
+     if ( m_lamp_count >= c_max_lamps ) {
+          return false;
+     }
+
+     m_lamps [ m_lamp_count ].location_x = location_x;
+     m_lamps [ m_lamp_count ].location_y = location_y;
+     m_lamps [ m_lamp_count ].id         = id;
+
+     m_lamp_count++;
+
+     return true;
+}
+
+Void Map::remove_lamp ( Lamp* lamp )
+{
+     ASSERT ( lamp >= m_lamps && lamp < m_lamps + c_max_lamps );
+
+     Lamp* last = m_lamps + ( m_lamp_count - 1 );
+
+     // slide down all the elements after it
+     while ( lamp <= last ) {
+          Lamp* next = lamp + 1;
+          *lamp = *next;
+          lamp = next;
+     }
+
+     m_lamp_count--;
 }
 
 Bool Map::add_exit ( Uint8 location_x, Uint8 location_y )
@@ -288,6 +343,7 @@ void Map::load ( const Char8* filepath )
      }
 
      file.read ( reinterpret_cast<Char8*> ( &m_base_light_value ), sizeof ( m_base_light_value ) );
-     clear_light ( );
+
+     reset_light ( );
 }
 

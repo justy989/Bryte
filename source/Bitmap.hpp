@@ -49,6 +49,7 @@ struct BitmapInfoHeader {
 
 // save in gimp as 32 bit bitmap, do not have compatibility options checked on
 extern "C" SDL_Surface* load_bitmap ( const FileContents* file_contents );
+extern "C" Bool load_bitmap_with_game_memory ( SDL_Surface*& surface, GameMemory& game_memory, const Char8* filepath );
 
 #endif
 

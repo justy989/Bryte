@@ -62,6 +62,25 @@ extern "C" Void render_map_decor ( SDL_Surface* back_buffer, SDL_Surface* decors
      }
 }
 
+extern "C" Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lampsheet, Map& map,
+                                   Real32 camera_x, Real32 camera_y )
+{
+     for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
+          auto& lamp = map.lamp ( i );
+
+          SDL_Rect lamp_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+          SDL_Rect clip_rect { lamp.id * Map::c_tile_dimension_in_pixels, 0,
+                               Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+          lamp_rect.x = lamp.location_x * Map::c_tile_dimension_in_pixels;
+          lamp_rect.y = lamp.location_y * Map::c_tile_dimension_in_pixels;
+
+          world_to_sdl ( lamp_rect, back_buffer, camera_x, camera_y );
+
+          SDL_BlitSurface ( lampsheet, &clip_rect, back_buffer, &lamp_rect );
+     }
+}
+
 extern "C" Void render_map_exits ( SDL_Surface* back_buffer, Map& map,
                                    Real32 camera_x, Real32 camera_y )
 {

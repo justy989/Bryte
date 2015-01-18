@@ -50,6 +50,7 @@ namespace bryte
           Void destroy    ( );
 
           Bool spawn_enemy ( Real32 x, Real32 y );
+          //Void reset_player ( );
 
      public:
 

@@ -7,8 +7,8 @@ using namespace bryte;
 const Real32 Character::c_damage_speed  = 10.0f;
 const Real32 Character::c_damage_time   = 0.15f;
 const Real32 Character::c_blink_time    = 1.5f;
-const Real32 Character::c_attack_width  = 0.6f;
-const Real32 Character::c_attack_height = 1.2f;
+const Real32 Character::c_attack_width  = 0.3f;
+const Real32 Character::c_attack_height = 0.7f;
 const Real32 Character::c_attack_time   = 0.35f;
 const Real32 Character::c_cooldown_time = 0.25f;
 const Real32 Character::c_accel         = 7.0f;
@@ -55,9 +55,9 @@ Real32 Character::calc_attack_y ( )
      default:
           ASSERT ( 0 );
      case Direction::left:
-          return position.y ( ) + height * 0.5f;
+          return position.y ( ) + height * 0.2f;
      case Direction::right:
-          return position.y ( ) + height * 0.5f;
+          return position.y ( ) + height * 0.2f;
      case Direction::up:
           return position.y ( ) + height;
      case Direction::down:

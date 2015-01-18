@@ -146,6 +146,11 @@ Map::Fixture* Map::check_coordinates_for_lamp ( Uint8 x, Uint8 y )
      return check_coordinates_for_fixture ( m_lamps, m_lamp_count, x, y );
 }
 
+Map::Fixture* Map::check_coordinates_for_enemy_spawn ( Uint8 x, Uint8 y )
+{
+     return check_coordinates_for_fixture ( m_enemy_spawns, m_enemy_spawn_count, x, y );
+}
+
 Uint8 Map::base_light_value ( ) const
 {
      return m_base_light_value;
@@ -268,6 +273,16 @@ Void Map::remove_lamp ( Fixture* lamp )
      remove_fixture ( m_lamps, &m_lamp_count, c_max_lamps, lamp );
 }
 
+Bool Map::add_enemy_spawn ( Uint8 location_x, Uint8 location_y, Uint8 id )
+{
+     return add_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, location_x, location_y, id );
+}
+
+Void Map::remove_enemy_spawn ( Fixture* enemy_spawn )
+{
+     remove_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
+}
+
 Bool Map::add_exit ( Uint8 location_x, Uint8 location_y )
 {
      if ( m_exit_count >= c_max_exits ) {
@@ -352,6 +367,13 @@ void Map::save ( const Char8* filepath )
      }
 
      file.write ( reinterpret_cast<const Char8*> ( &m_base_light_value ), sizeof ( m_base_light_value ) );
+
+     file.write ( reinterpret_cast<const Char8*>( &m_enemy_spawn_count ), sizeof ( m_enemy_spawn_count ) );
+
+     for ( Int32 i = 0; i < m_lamp_count; ++i ) {
+          auto& enemy_spawn = m_enemy_spawns [ i ];
+          file.write ( reinterpret_cast<const Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
+     }
 }
 
 void Map::load ( const Char8* filepath )

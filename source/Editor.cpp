@@ -90,6 +90,21 @@ void State::mouse_button_changed_down ( bool left )
                exit->exit_index %= bryte::Map::c_max_exits;
           }
      } break;
+     case Mode::enemy:
+     {
+          bryte::Map::Fixture* enemy_spawn = map.check_coordinates_for_enemy_spawn ( tx, ty );
+
+          if ( left ) {
+               if ( enemy_spawn ) {
+                    map.remove_enemy_spawn ( enemy_spawn );
+               } else {
+                    if ( tx >= 0 && tx < map.width ( ) &&
+                         ty >= 0 && ty < map.height ( ) ) {
+                         map.add_enemy_spawn ( tx, ty, 1 );
+                    }
+               }
+          }
+     } break;
      }
 }
 
@@ -187,6 +202,18 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      if ( !load_bitmap_with_game_memory ( state->lampsheet, game_memory,
                                           state->settings->map_lampsheet_filename ) ) {
           LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_lampsheet_filename );
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->rat_surface, game_memory,
+                                          state->settings->map_rat_filename ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_rat_filename );
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->mode_icons_surface, game_memory,
+                                          "editor_mode_icons.bmp" ) ) {
+          LOG_ERROR ( "Failed to load: '%s'\n", "editor_mode_icons.bmp" );
           return false;
      }
 
@@ -412,6 +439,29 @@ static Void render_map_solids ( SDL_Surface* back_buffer, bryte::Map& map, Real3
      }
 }
 
+static Void render_enemy_spawns ( SDL_Surface* back_buffer, SDL_Surface* enemy_sheet, bryte::Map& map,
+                                  Real32 camera_x, Real32 camera_y )
+{
+     for ( Uint8 i = 0; i < map.enemy_spawn_count ( ); ++i ) {
+          auto& enemy_spawn = map.enemy_spawn ( i );
+
+          SDL_Rect enemy_spawn_rect { enemy_spawn.location_x * bryte::Map::c_tile_dimension_in_pixels,
+                                      enemy_spawn.location_y * bryte::Map::c_tile_dimension_in_pixels,
+                                      bryte::Map::c_tile_dimension_in_pixels,
+                                      bryte::Map::c_tile_dimension_in_pixels };
+          SDL_Rect clip_rect { 0, 0,
+                               bryte::Map::c_tile_dimension_in_pixels,
+                               bryte::Map::c_tile_dimension_in_pixels };
+
+          enemy_spawn_rect.x = enemy_spawn.location_x * bryte::Map::c_tile_dimension_in_pixels;
+          enemy_spawn_rect.y = enemy_spawn.location_y * bryte::Map::c_tile_dimension_in_pixels;
+
+          world_to_sdl ( enemy_spawn_rect, back_buffer, camera_x, camera_y );
+
+          SDL_BlitSurface ( enemy_sheet, &clip_rect, back_buffer, &enemy_spawn_rect );
+     }
+}
+
 static Void render_current_icon ( SDL_Surface* back_buffer, SDL_Surface* sheet,
                                   Int32 mouse_x, Int32 mouse_y, Int32 current_id )
 {
@@ -423,6 +473,44 @@ static Void render_current_icon ( SDL_Surface* back_buffer, SDL_Surface* sheet,
      SDL_BlitSurface ( sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
+static Void render_mode_icons ( SDL_Surface* back_buffer, SDL_Surface* icon_surface, Mode mode )
+{
+     static const Int32 c_icon_dimension = 11;
+     static const Int32 c_icon_start_x   = c_icon_dimension + 2;
+
+     for ( int i = 0; i < Mode::count; ++i ) {
+          SDL_Rect dest_rect { i * c_icon_start_x + 1, 3, c_icon_dimension, c_icon_dimension };
+          SDL_Rect clip_rect { i * c_icon_dimension, 0, c_icon_dimension, c_icon_dimension };
+
+          SDL_BlitSurface ( icon_surface, &clip_rect, back_buffer, &dest_rect );
+     }
+
+     static const Int32 c_border_dimension = c_icon_dimension + 1;
+
+     Int32 x = ( static_cast<Int32>( mode ) * c_icon_start_x );
+     Int32 y = 2;
+     Uint32 red_color = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
+
+     SDL_Rect mode_rect_b { 0, 0, c_border_dimension, 1 };
+     SDL_Rect mode_rect_l { 0, 0, 1, c_border_dimension };
+     SDL_Rect mode_rect_t { 0, 0, c_border_dimension + 1, 1 };
+     SDL_Rect mode_rect_r { 0, 0, 1, c_border_dimension };
+
+     mode_rect_b.x = x;
+     mode_rect_b.y = y;
+     mode_rect_l.x = x;
+     mode_rect_l.y = y;
+     mode_rect_t.x = x;
+     mode_rect_t.y = y + c_border_dimension;
+     mode_rect_r.x = x + c_border_dimension;
+     mode_rect_r.y = y;
+
+     SDL_FillRect ( back_buffer, &mode_rect_b, red_color );
+     SDL_FillRect ( back_buffer, &mode_rect_l, red_color );
+     SDL_FillRect ( back_buffer, &mode_rect_t, red_color );
+     SDL_FillRect ( back_buffer, &mode_rect_r, red_color );
+}
+
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      State* state = get_state ( game_memory );
@@ -431,6 +519,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_lamps ( back_buffer, state->lampsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_exits ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+     render_enemy_spawns ( back_buffer, state->rat_surface, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      if ( state->draw_light ) {
           render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
@@ -440,8 +529,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_map_solids ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
      }
 
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, state->text.character_height + 4 };
-     SDL_FillRect ( back_buffer, &hud_rect, SDL_MapRGB ( back_buffer->format, 255, 255, 255 ) );
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, 17 };
+     SDL_FillRect ( back_buffer, &hud_rect, SDL_MapRGB ( back_buffer->format, 0, 0, 0 ) );
+
+     render_mode_icons ( back_buffer, state->mode_icons_surface, state->mode );
 
      switch ( state->mode ) {
      default:
@@ -450,26 +541,22 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      case Mode::tile:
           render_current_icon ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
                                 state->current_tile );
-
-          state->text.render ( back_buffer, "TILE MODE", 1, 2 );
           break;
      case Mode::decor:
           render_current_icon ( back_buffer, state->decorsheet, state->mouse_x, state->mouse_y,
                                 state->current_decor );
-
-          state->text.render ( back_buffer, "DECOR MODE", 1, 2 );
           break;
      case Mode::light:
           render_current_icon ( back_buffer, state->lampsheet, state->mouse_x, state->mouse_y,
                                  state->current_lamp );
-
-          state->text.render ( back_buffer, "LIGHT MODE", 1, 2 );
           break;
      case Mode::exit:
-          state->text.render ( back_buffer, "EXIT MODE", 1, 2 );
+          break;
+     case Mode::enemy:
+          render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0 );
           break;
      }
 
-     state->text.render ( back_buffer, state->message_buffer, 13 * ( state->text.character_width + state->text.character_spacing ), 2 );
+     state->text.render ( back_buffer, state->message_buffer, 13 * ( state->text.character_width + state->text.character_spacing ), 4 );
 }
 

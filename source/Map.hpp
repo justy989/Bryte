@@ -59,6 +59,7 @@ namespace bryte
           Fixture* check_coordinates_for_decor ( Uint8 x, Uint8 y );
           Fixture* check_coordinates_for_lamp  ( Uint8 x, Uint8 y );
           Exit*    check_coordinates_for_exit  ( Uint8 x, Uint8 y );
+          Fixture* check_coordinates_for_enemy_spawn ( Uint8 x, Uint8 y );
 
           Uint8 base_light_value ( ) const;
           Void  add_to_base_light ( Uint8 delta );
@@ -72,6 +73,9 @@ namespace bryte
 
           Bool add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id );
           Void remove_lamp ( Fixture* lamp );
+
+          Bool add_enemy_spawn ( Uint8 location_x, Uint8 location_y, Uint8 id );
+          Void remove_enemy_spawn ( Fixture* enemy_spawn );
 
           Bool add_exit ( Uint8 location_x, Uint8 location_y );
           Void remove_exit ( Exit* exit );
@@ -87,6 +91,9 @@ namespace bryte
 
           inline Uint8 exit_count ( ) const;
           inline Exit& exit ( Uint8 index );
+
+          inline Uint8 enemy_spawn_count ( ) const;
+          inline Fixture& enemy_spawn ( Uint8 index );
 
      private:
 
@@ -116,6 +123,8 @@ namespace bryte
           static const Uint32 c_unique_lamp_count = 4;
           static const Uint8  c_unique_lamps_light [ c_unique_lamp_count ];
 
+          static const Uint32 c_max_enemy_spawns = 32;
+
      private:
 
           Char8  m_master_list [ c_max_maps ][ c_max_map_name_size ];
@@ -137,6 +146,9 @@ namespace bryte
 
           Exit   m_exits [ c_max_exits ];
           Uint8  m_exit_count;
+
+          Fixture m_enemy_spawns [ c_max_enemy_spawns ];
+          Uint8   m_enemy_spawn_count;
      };
 
      inline Int32 Map::width ( ) const
@@ -154,6 +166,13 @@ namespace bryte
           return m_lamp_count;
      }
 
+     inline Map::Fixture& Map::lamp ( Uint8 index )
+     {
+          ASSERT ( index < m_lamp_count );
+
+          return m_lamps [ index ];
+     }
+
      inline Map::Fixture& Map::decor ( Uint8 index )
      {
           ASSERT ( index < m_decor_count );
@@ -166,13 +185,6 @@ namespace bryte
           return m_decor_count;
      }
 
-     inline Map::Fixture& Map::lamp ( Uint8 index )
-     {
-          ASSERT ( index < m_lamp_count );
-
-          return m_lamps [ index ];
-     }
-
      inline Uint8 Map::exit_count ( ) const
      {
           return m_exit_count;
@@ -183,6 +195,18 @@ namespace bryte
           ASSERT ( index < m_exit_count );
 
           return m_exits [ index ];
+     }
+
+     inline Uint8 Map::enemy_spawn_count ( ) const
+     {
+          return m_enemy_spawn_count;
+     }
+
+     inline Map::Fixture& Map::enemy_spawn ( Uint8 index )
+     {
+          ASSERT ( index < m_enemy_spawn_count );
+
+          return m_enemy_spawns [ index ];
      }
 }
 

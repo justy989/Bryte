@@ -23,6 +23,8 @@ namespace editor
           const char* map_decorsheet_filename;
           const char* map_lampsheet_filename;
 
+          const char* map_rat_filename;
+
           const char* map_save_filename;
      };
 
@@ -31,6 +33,7 @@ namespace editor
           decor,
           light,
           exit,
+          enemy,
           count
      };
 
@@ -61,9 +64,13 @@ namespace editor
           Bool left_button_down;
           Bool right_button_down;
 
+          SDL_Surface* mode_icons_surface;
+
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
+
+          SDL_Surface* rat_surface;
 
           Uint8 current_tile;
           Uint8 current_decor;

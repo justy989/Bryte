@@ -22,10 +22,7 @@ namespace bryte
                Uint8 id;
           };
 
-          struct Exit {
-               Uint8 location_x;
-               Uint8 location_y;
-
+          struct Exit : public Fixture {
                Uint8 map_index;
                Uint8 exit_index;
           };
@@ -56,6 +53,7 @@ namespace bryte
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
 
           Bool     is_position_solid           ( Real32 x, Real32 y ) const;
+
           Fixture* check_coordinates_for_decor ( Uint8 x, Uint8 y );
           Fixture* check_coordinates_for_lamp  ( Uint8 x, Uint8 y );
           Exit*    check_coordinates_for_exit  ( Uint8 x, Uint8 y );
@@ -77,7 +75,7 @@ namespace bryte
           Bool add_enemy_spawn ( Uint8 location_x, Uint8 location_y, Uint8 id );
           Void remove_enemy_spawn ( Fixture* enemy_spawn );
 
-          Bool add_exit ( Uint8 location_x, Uint8 location_y );
+          Bool add_exit ( Uint8 location_x, Uint8 location_y, Uint8 id );
           Void remove_exit ( Exit* exit );
 
           inline Int32 width ( ) const;

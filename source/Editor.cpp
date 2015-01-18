@@ -82,7 +82,7 @@ void State::mouse_button_changed_down ( bool left )
                } else {
                     if ( tx >= 0 && tx < map.width ( ) &&
                          ty >= 0 && ty < map.height ( ) ) {
-                         map.add_exit ( tx, ty );
+                         map.add_exit ( tx, ty, current_exit );
                     }
                }
           } else {
@@ -161,6 +161,14 @@ void State::option_button_changed_down ( bool up )
                } else {
                     exit->map_index++;
                }
+          } else {
+               if ( up ) {
+                    current_exit++;
+               } else {
+                    current_exit--;
+               }
+
+               current_exit %= 4;
           }
      } break;
      }
@@ -207,6 +215,11 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( state->exitsheet, game_memory,
+                                          state->settings->map_exitsheet_filename ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( state->rat_surface, game_memory,
                                           state->settings->map_rat_filename ) ) {
           return false;
@@ -246,6 +259,7 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
      SDL_FreeSurface ( state->tilesheet );
      SDL_FreeSurface ( state->decorsheet );
      SDL_FreeSurface ( state->lampsheet );
+     SDL_FreeSurface ( state->exitsheet );
 
      SDL_FreeSurface ( state->rat_surface );
 }
@@ -521,7 +535,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_map ( back_buffer, state->tilesheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_lamps ( back_buffer, state->lampsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
-     render_map_exits ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+     render_map_exits ( back_buffer, state->exitsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_enemy_spawns ( back_buffer, state->rat_surface, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      if ( state->draw_light ) {
@@ -551,9 +565,11 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::light:
           render_current_icon ( back_buffer, state->lampsheet, state->mouse_x, state->mouse_y,
-                                 state->current_lamp );
+                                state->current_lamp );
           break;
      case Mode::exit:
+          render_current_icon ( back_buffer, state->exitsheet, state->mouse_x, state->mouse_y,
+                                state->current_exit );
           break;
      case Mode::enemy:
           render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0 );

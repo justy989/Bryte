@@ -13,6 +13,7 @@ static const Real32 c_lever_activate_cooldown = 0.75f;
 static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
 static const Char8* c_test_decorsheet_path    = "castle_decorsheet.bmp";
 static const Char8* c_test_lampsheet_path     = "castle_lampsheet.bmp";
+static const Char8* c_test_exitsheet_path     = "castle_exitsheet.bmp";
 static const Char8* c_test_player_path        = "test_hero.bmp";
 static const Char8* c_test_rat_path           = "test_rat.bmp";
 
@@ -127,6 +128,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( exitsheet, game_memory,
+                                          c_test_exitsheet_path ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( rat_surface, game_memory,
                                           c_test_rat_path ) ) {
           return false;
@@ -170,7 +176,7 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
           return false;
      }
 
-     LOG_INFO ( "Spawning enemy at: %f, %f\n", x, y );
+     LOG_DEBUG ( "Spawning enemy at: %f, %f\n", x, y );
 
      enemy->state  = Character::State::alive;
      enemy->facing = Direction::left;
@@ -509,8 +515,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                         state->camera.x ( ), state->camera.y ( ) );
      render_map_lamps ( back_buffer, state->lampsheet, state->map,
                         state->camera.x ( ), state->camera.y ( ) );
-
-     render_map_exits ( back_buffer, state->map,
+     render_map_exits ( back_buffer, state->exitsheet, state->map,
                         state->camera.x ( ), state->camera.y ( ) );
 
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );

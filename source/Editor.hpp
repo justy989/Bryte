@@ -22,6 +22,7 @@ namespace editor
           const char* map_tilesheet_filename;
           const char* map_decorsheet_filename;
           const char* map_lampsheet_filename;
+          const char* map_exitsheet_filename;
 
           const char* map_rat_filename;
 
@@ -69,11 +70,13 @@ namespace editor
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
+          SDL_Surface* exitsheet;
 
           SDL_Surface* rat_surface;
 
           Uint8 current_tile;
           Uint8 current_decor;
+          Uint8 current_exit;
           Uint8 current_lamp;
           Bool  current_solid;
 

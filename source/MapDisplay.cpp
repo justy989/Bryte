@@ -68,22 +68,22 @@ extern "C" Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lampsh
      }
 }
 
-extern "C" Void render_map_exits ( SDL_Surface* back_buffer, Map& map,
+extern "C" Void render_map_exits ( SDL_Surface* back_buffer, SDL_Surface* exit_surface, Map& map,
                                    Real32 camera_x, Real32 camera_y )
 {
-     Uint32 exit_color = SDL_MapRGB ( back_buffer->format, 0, 170, 0 );
-
-     for ( Uint8 d = 0; d < map.exit_count ( ); ++d ) {
-          auto& exit = map.exit ( d );
+     for ( Uint8 i = 0; i < map.exit_count ( ); ++i ) {
+          auto& exit = map.exit ( i );
 
           SDL_Rect exit_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+          SDL_Rect clip_rect { exit.id * Map::c_tile_dimension_in_pixels, 0,
+                               Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
           exit_rect.x = exit.location_x * Map::c_tile_dimension_in_pixels;
           exit_rect.y = exit.location_y * Map::c_tile_dimension_in_pixels;
 
           world_to_sdl ( exit_rect, back_buffer, camera_x, camera_y );
 
-          SDL_FillRect ( back_buffer, &exit_rect, exit_color );
+          SDL_BlitSurface ( exit_surface, &clip_rect, back_buffer, &exit_rect );
      }
 }
 

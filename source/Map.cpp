@@ -283,7 +283,7 @@ Void Map::remove_enemy_spawn ( Fixture* enemy_spawn )
      remove_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
 }
 
-Bool Map::add_exit ( Uint8 location_x, Uint8 location_y )
+Bool Map::add_exit ( Uint8 location_x, Uint8 location_y, Uint8 id )
 {
      if ( m_exit_count >= c_max_exits ) {
           return false;
@@ -291,6 +291,7 @@ Bool Map::add_exit ( Uint8 location_x, Uint8 location_y )
 
      m_exits [ m_exit_count ].location_x = location_x;
      m_exits [ m_exit_count ].location_y = location_y;
+     m_exits [ m_exit_count ].id = id;
 
      m_exit_count++;
 

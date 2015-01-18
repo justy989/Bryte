@@ -4,7 +4,7 @@
 
 using namespace bryte;
 
-const Real32 Character::c_damage_accel  = 40.0f;
+const Real32 Character::c_damage_accel  = 80.0f;
 const Real32 Character::c_damage_time   = 0.15f;
 const Real32 Character::c_blink_time    = 1.5f;
 const Real32 Character::c_attack_width  = 0.7f;
@@ -189,21 +189,24 @@ Void Character::update ( Real32 time_delta, const Map& map )
           map.is_position_solid ( collision_x ( target_position.x ( ) ) + collision_width ( ),
                                   collision_y ( target_position.y ( ) ) ) ||
           map.is_position_solid ( collision_x ( target_position.x ( ) ),
-                                  collision_y ( target_position.y ( ) ) + collision_width ( ) ) ||
-          map.is_position_solid ( collision_x ( target_position.x ( ) ) + collision_height ( ),
+                                  collision_y ( target_position.y ( ) ) + collision_height ( ) ) ||
+          map.is_position_solid ( collision_x ( target_position.x ( ) ) + collision_width ( ),
                                   collision_y ( target_position.y ( ) ) + collision_height ( ) ) ) {
           collided = true;
      }
 
      // which tile did our target_position end up in
-     Int32 starting_tile_left   = position.x ( ) / Map::c_tile_dimension_in_meters;
-     Int32 starting_tile_right  = ( position.x ( ) + dimension.x ( ) ) / Map::c_tile_dimension_in_meters;
-     Int32 starting_tile_bottom =  position.y ( ) / Map::c_tile_dimension_in_meters;
-     Int32 starting_tile_top    = ( position.y ( ) + collision_dimension.y ( ) ) / Map::c_tile_dimension_in_meters;
-     Int32 target_tile_left     = target_position.x ( ) / Map::c_tile_dimension_in_meters;
-     Int32 target_tile_right    = ( target_position.x ( ) + dimension.x ( ) ) / Map::c_tile_dimension_in_meters;
-     Int32 target_tile_bottom   = target_position.y ( ) / Map::c_tile_dimension_in_meters;
-     Int32 target_tile_top      = ( target_position.y ( ) + collision_dimension.y ( ) ) / Map::c_tile_dimension_in_meters;
+     Int32 starting_tile_left   = collision_x ( ) / Map::c_tile_dimension_in_meters;
+     Int32 starting_tile_right  = ( collision_x ( ) + collision_width ( ) ) / Map::c_tile_dimension_in_meters;
+     Int32 starting_tile_bottom =  collision_y ( ) / Map::c_tile_dimension_in_meters;
+     Int32 starting_tile_top    = ( collision_y ( ) + collision_height ( ) ) / Map::c_tile_dimension_in_meters;
+
+     Int32 target_tile_left     = collision_x ( target_position.x ( ) ) / Map::c_tile_dimension_in_meters;
+     Int32 target_tile_right    = ( collision_x ( target_position.x ( ) ) + collision_width ( ) ) /
+                                  Map::c_tile_dimension_in_meters;
+     Int32 target_tile_bottom   = collision_y ( target_position.y ( ) ) / Map::c_tile_dimension_in_meters;
+     Int32 target_tile_top      = ( collision_y ( target_position.y ( ) ) + collision_height ( ) ) /
+                                  Map::c_tile_dimension_in_meters;
 
      Vector wall;
 
@@ -222,7 +225,8 @@ Void Character::update ( Real32 time_delta, const Map& map )
      if ( !collided ) {
           position = target_position;
      } else {
-          velocity = velocity - ( wall * velocity.inner_product ( wall ) );
+          velocity = velocity - ( wall * velocity.inner_product ( wall ) ); // slidy
+          //velocity = velocity - ( wall * velocity.inner_product ( wall ) * 2.0f ); // bouncy
      }
 
      acceleration.zero ( );

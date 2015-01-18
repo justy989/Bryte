@@ -25,7 +25,7 @@ Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
           if ( timer.expired ( ) ) {
                // choose a new direction, and start moving
                facing = static_cast<Direction>( random.generate ( 0, Direction::count ) );
-               timer.reset ( random.generate ( 0, 3 ) );
+               timer.reset ( random.generate ( 0, 4 ) );
                moving = true;
           }
      } else {
@@ -33,8 +33,8 @@ Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
 
           timer.tick ( time_delta );
 
-          if ( timer.expired ( ) ) {
-               timer.reset ( random.generate ( 0, 2 ) );
+          if ( timer.expired ( ) || state == State::blinking ) {
+               timer.reset ( random.generate ( 0, 3 ) );
                moving = false;
           }
      }

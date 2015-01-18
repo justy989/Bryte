@@ -370,7 +370,7 @@ void Map::save ( const Char8* filepath )
 
      file.write ( reinterpret_cast<const Char8*>( &m_enemy_spawn_count ), sizeof ( m_enemy_spawn_count ) );
 
-     for ( Int32 i = 0; i < m_lamp_count; ++i ) {
+     for ( Int32 i = 0; i < m_enemy_spawn_count; ++i ) {
           auto& enemy_spawn = m_enemy_spawns [ i ];
           file.write ( reinterpret_cast<const Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
      }
@@ -422,5 +422,12 @@ void Map::load ( const Char8* filepath )
      file.read ( reinterpret_cast<Char8*> ( &m_base_light_value ), sizeof ( m_base_light_value ) );
 
      reset_light ( );
+
+     file.read ( reinterpret_cast<Char8*>( &m_enemy_spawn_count ), sizeof ( m_enemy_spawn_count ) );
+
+     for ( Int32 i = 0; i < m_enemy_spawn_count; ++i ) {
+          auto& enemy_spawn = m_enemy_spawns [ i ];
+          file.read ( reinterpret_cast<Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
+     }
 }
 

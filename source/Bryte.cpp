@@ -194,6 +194,49 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
      return true;
 }
 
+Void State::spawn_map_enemies ( )
+{
+     for ( int i = 0; i < map.enemy_spawn_count ( ); ++i ) {
+          auto& enemy_spawn = map.enemy_spawn ( i );
+
+          spawn_enemy ( pixels_to_meters ( enemy_spawn.location_x * Map::c_tile_dimension_in_pixels ),
+                        pixels_to_meters ( enemy_spawn.location_y * Map::c_tile_dimension_in_pixels ) );
+     }
+}
+
+Void State::clear_enemies ( )
+{
+     for ( Uint32 i = 0; i < enemy_count; ++i ) {
+          enemies [ i ].state = Character::State::dead;
+     }
+
+     enemy_count = 0;
+}
+
+Void State::player_death ( )
+{
+     player.state  = Character::State::alive;
+     player.facing = Direction::left;
+
+     player.health           = 25;
+     player.max_health       = 25;
+
+     player.position.set ( Map::c_tile_dimension_in_meters * 2.0f, Map::c_tile_dimension_in_meters * 2.0f );
+
+     player.velocity.zero ( );
+
+     player.damage_pushed = Direction::left;
+     player.state_watch.reset ( 0.0f );
+     player.damage_watch.reset ( 0.0f );
+     player.cooldown_watch.reset ( 0.0f );
+
+     // load the first map
+     map.load_from_master_list ( 0 );
+
+     clear_enemies ( );
+     spawn_map_enemies ( );
+}
+
 static Void render_player ( SDL_Surface* back_buffer, const Character& player,
                             SDL_Surface* player_surface,
                             Real32 camera_x, Real32 camera_y )
@@ -283,6 +326,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 
      state->map.load_master_list ( state_settings->map_master_list_filename );
      state->map.load_from_master_list ( state_settings->map_index );
+     state->spawn_map_enemies ( );
 
      return true;
 }
@@ -399,6 +443,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->player.collides_with ( enemy ) ) {
                Direction damage_dir = determine_damage_direction ( enemy, state->player, state->random );
                state->player.damage ( 1, damage_dir );
+
+               if ( state->player.state == Character::State::dead ) {
+                    state->player_death ( );
+               }
           }
 
           // attacking enemy
@@ -452,6 +500,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                Uint8 exit_index = exit->exit_index;
 
                map.load_from_master_list ( exit->map_index );
+
+               state->clear_enemies ( );
+               state->spawn_map_enemies ( );
 
                auto& dest_exit = map.exit ( exit_index );
                state->player.position.set ( dest_exit.location_x * Map::c_tile_dimension_in_meters,

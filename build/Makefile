@@ -16,12 +16,14 @@ EDITOR_SO_OBJS = Log.o Utils.o Map.o Bitmap.o Text.o MapDisplay.o
 EDITOR         = bryte_editor
 EXE_OBJS       = Log.o InputRecorder.o GameInput.o Application.o
 
+# targets
 all: release
 release: CFLAGS += -O3
 release: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
 debug: CFLAGS += -g3 -DDEBUG
 debug: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
 
+# rules
 clean:
 	rm -f $(EXE_OBJS) $(GAME_SO) $(GAME_SO_OBJS) $(GAME) $(EDITOR_SO) $(EDITOR_SO_OBJS) $(EDITOR)
 

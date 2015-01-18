@@ -8,7 +8,7 @@ using namespace bryte;
 
 static const Real32 c_lever_width             = 0.5f;
 static const Real32 c_lever_height            = 0.5f;
-static const Real32 c_lever_activate_cooldown = 0.75f;
+static const Real32 c_lever_cooldown          = 0.75f;
 
 static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
 static const Char8* c_test_decorsheet_path    = "castle_decorsheet.bmp";
@@ -73,6 +73,63 @@ static Direction determine_damage_direction ( const Character& a, const Characte
      // the above cases should catch all
      ASSERT ( 0 );
      return Direction::left;
+}
+
+Void Interactive::activate ( Map& map )
+{
+     switch ( type ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Type::lever:
+          activate_lever ( map );
+          break;
+     }
+}
+
+Void Interactive::update ( float time_delta )
+{
+     switch ( type ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Type::lever:
+          update_lever ( time_delta );
+          break;
+     }
+}
+
+Void Interactive::activate_lever ( Map& map )
+{
+     if ( !lever_state.cooldown_watch.expired ( ) ) {
+          return;
+     }
+
+     auto tile_value = map.get_coordinate_value ( lever_state.change_tile_coordinate_x,
+                                                  lever_state.change_tile_coordinate_y );
+     auto tile_solid = map.get_coordinate_solid ( lever_state.change_tile_coordinate_x,
+                                                  lever_state.change_tile_coordinate_y );
+
+     // toggle
+     lever_state.on = !lever_state.on;
+
+     map.set_coordinate_value ( lever_state.change_tile_coordinate_x,
+                                lever_state.change_tile_coordinate_y,
+                                lever_state.change_tile_value );
+
+     map.set_coordinate_solid ( lever_state.change_tile_coordinate_x,
+                                lever_state.change_tile_coordinate_y,
+                                !tile_solid );
+
+     lever_state.change_tile_value = tile_value;
+
+     // reset the stopwatch
+     lever_state.cooldown_watch.reset ( c_lever_cooldown );
+}
+
+Void Interactive::update_lever ( float time_delta )
+{
+     lever_state.cooldown_watch.tick ( time_delta );
 }
 
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
@@ -147,6 +204,18 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      map.load_from_master_list ( settings->map_index );
      spawn_map_enemies ( );
 
+     interactive.type       = Interactive::Type::lever;
+     interactive.location_x = 4;
+     interactive.location_y = 4;
+
+     Interactive::LeverState& lever_state = interactive.lever_state;
+
+     lever_state.cooldown_watch.reset ( 0.0f );
+     lever_state.on                       = false;
+     lever_state.change_tile_coordinate_x = 5;
+     lever_state.change_tile_coordinate_y = 5;
+     lever_state.change_tile_value        = 5;
+
      return true;
 }
 
@@ -155,6 +224,7 @@ Void State::destroy ( )
      SDL_FreeSurface ( tilesheet );
      SDL_FreeSurface ( decorsheet );
      SDL_FreeSurface ( lampsheet );
+     SDL_FreeSurface ( exitsheet );
 
      SDL_FreeSurface ( rat_surface );
      SDL_FreeSurface ( player_surface );
@@ -370,30 +440,19 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      if ( state->activate_key ) {
-          if ( state->lever.activate_time <= 0.0f ) {
-               auto& player = state->player;
-               auto& lever  = state->lever;
+          auto& player = state->player;
+          auto& lever  = state->interactive;
 
-               if ( rect_collides_with_rect ( player.position.x ( ), player.position.y ( ),
-                                              player.width ( ), player.height ( ),
-                                              lever.position_x, lever.position_y,
-                                              c_lever_width, c_lever_height ) ) {
-
-                    auto tile_value = state->map.get_coordinate_value ( lever.activate_tile_x,
-                                                                        lever.activate_tile_y );
-                    auto tile_solid = state->map.get_coordinate_solid ( lever.activate_tile_x,
-                                                                        lever.activate_tile_y );
-
-                    Uint8 id    = tile_value ? 0 : 7;
-                    Bool  solid = !tile_solid;
-
-                    state->map.set_coordinate_value ( lever.activate_tile_x, lever.activate_tile_y, id );
-                    state->map.set_coordinate_solid ( lever.activate_tile_x, lever.activate_tile_y, solid );
-
-                    state->lever.activate_time = c_lever_activate_cooldown;
-               }
+          if ( rect_collides_with_rect ( player.collision_x ( ), player.collision_y ( ),
+                                         player.collision_width ( ), player.collision_height ( ),
+                                         pixels_to_meters ( lever.location_x * Map::c_tile_dimension_in_pixels ),
+                                         pixels_to_meters ( lever.location_y * Map::c_tile_dimension_in_pixels ),
+                                         c_lever_width, c_lever_height ) ) {
+               lever.activate ( state->map );
           }
      }
+
+     state->interactive.update ( time_delta );
 
      state->player.update ( time_delta, state->map );
 
@@ -490,12 +549,6 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                player_exit = 0;
           }
      }
-
-     if ( state->lever.activate_time > 0.0f ) {
-          state->lever.activate_time -= time_delta;
-     }
-
-     map.illuminate ( 5.0f, 5.0f, 255 );
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -521,18 +574,16 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 green   = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
      Uint32 white   = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
-     //Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
+     Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
 
      // draw lever
-#if 0
-     SDL_Rect lever_rect = build_world_sdl_rect ( state->lever.position_x,
-                                                  state->lever.position_y,
+     SDL_Rect lever_rect = build_world_sdl_rect ( pixels_to_meters ( state->interactive.location_x * Map::c_tile_dimension_in_pixels ),
+                                                  pixels_to_meters ( state->interactive.location_y * Map::c_tile_dimension_in_pixels ),
                                                   c_lever_width, c_lever_height );
 
      world_to_sdl ( lever_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
 
      SDL_FillRect ( back_buffer, &lever_rect, magenta );
-#endif
 
      // draw enemies
      for ( Uint32 i = 0; i < state->enemy_count; ++i ) {

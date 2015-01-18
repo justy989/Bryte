@@ -18,16 +18,6 @@
 
 namespace bryte
 {
-     struct Lever {
-          Real32 position_x;
-          Real32 position_y;
-
-          Int32  activate_tile_x;
-          Int32  activate_tile_y;
-
-          Real32 activate_time;
-     };
-
      struct HealthPickup {
 
           static const Real32 c_dimension;
@@ -44,6 +34,44 @@ namespace bryte
 
           Int32        player_spawn_tile_x;
           Int32        player_spawn_tile_y;
+     };
+
+     struct Interactive {
+     public:
+
+          enum Type {
+               none,
+               lever
+          };
+
+          struct LeverState {
+               Stopwatch cooldown_watch;
+               Bool      on;
+               Int32     change_tile_coordinate_x;
+               Int32     change_tile_coordinate_y;
+               Int32     change_tile_value;
+          };
+
+     public:
+
+          Void activate ( Map& map );
+          Void update ( float time_delta );
+
+     private:
+
+          Void activate_lever ( Map& map );
+          Void update_lever ( float time_delta );
+
+     public:
+
+          Type type;
+
+          Uint8 location_x;
+          Uint8 location_y;
+
+          union {
+               LeverState lever_state;
+          };
      };
 
      struct State {
@@ -74,7 +102,7 @@ namespace bryte
           Enemy  enemies [ c_max_enemies ];
           Uint32 enemy_count;
 
-          Lever        lever;
+          Interactive interactive;
 
           HealthPickup health_pickups [ c_max_health_pickups ];
 

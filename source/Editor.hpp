@@ -75,6 +75,7 @@ namespace editor
           Uint8 current_tile;
           Uint8 current_decor;
           Uint8 current_lamp;
+          Bool  current_solid;
 
           Bool draw_solids;
           Bool draw_light;

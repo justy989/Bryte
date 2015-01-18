@@ -30,8 +30,8 @@ void State::mouse_button_changed_down ( bool left )
           if ( !left ) {
                if ( tx >= 0 && tx < map.width ( ) &&
                     ty >= 0 && ty < map.height ( ) ) {
-                    auto solid = map.get_coordinate_solid ( tx, ty );
-                    map.set_coordinate_solid ( tx, ty, !solid );
+                    current_solid = !map.get_coordinate_solid ( tx, ty );
+                    map.set_coordinate_solid ( tx, ty, current_solid );
                }
           }
           break;
@@ -378,6 +378,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                ty >= 0 && ty < state->map.height ( ) ) {
                if ( state->left_button_down ) {
                     state->map.set_coordinate_value ( tx, ty, state->current_tile );
+               } else if ( state->right_button_down ) {
+                    state->map.set_coordinate_solid ( tx, ty, state->current_solid );
                }
           }
           break;

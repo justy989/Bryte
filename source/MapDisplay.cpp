@@ -29,61 +29,43 @@ extern "C" Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, M
      }
 }
 
-extern "C" Void render_map_decor ( SDL_Surface* back_buffer, SDL_Surface* decorsheet, Map& map,
+static Void render_fixture ( SDL_Surface* back_buffer, SDL_Surface* fixture_sheet, Map::Fixture* fixture,
+                             Real32 camera_x, Real32 camera_y )
+{
+     SDL_Rect dest_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+     SDL_Rect clip_rect { fixture->id * Map::c_tile_dimension_in_pixels, 0,
+                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     dest_rect.x = fixture->location_x * Map::c_tile_dimension_in_pixels;
+     dest_rect.y = fixture->location_y * Map::c_tile_dimension_in_pixels;
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( fixture_sheet, &clip_rect, back_buffer, &dest_rect );
+}
+
+extern "C" Void render_map_decor ( SDL_Surface* back_buffer, SDL_Surface* decor_sheet, Map& map,
                                    Real32 camera_x, Real32 camera_y )
 {
      for ( Uint8 i = 0; i < map.decor_count ( ); ++i ) {
-          auto& decor = map.decor ( i );
-
-          SDL_Rect decor_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-          SDL_Rect clip_rect { decor.id * Map::c_tile_dimension_in_pixels, 0,
-                               Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-
-          decor_rect.x = decor.location_x * Map::c_tile_dimension_in_pixels;
-          decor_rect.y = decor.location_y * Map::c_tile_dimension_in_pixels;
-
-          world_to_sdl ( decor_rect, back_buffer, camera_x, camera_y );
-
-          SDL_BlitSurface ( decorsheet, &clip_rect, back_buffer, &decor_rect );
+          render_fixture ( back_buffer, decor_sheet, &map.decor ( i ), camera_x, camera_y );
      }
 
 }
 
-extern "C" Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lampsheet, Map& map,
+extern "C" Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lamp_sheet, Map& map,
                                    Real32 camera_x, Real32 camera_y )
 {
      for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
-          auto& lamp = map.lamp ( i );
-
-          SDL_Rect lamp_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-          SDL_Rect clip_rect { lamp.id * Map::c_tile_dimension_in_pixels, 0,
-                               Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-
-          lamp_rect.x = lamp.location_x * Map::c_tile_dimension_in_pixels;
-          lamp_rect.y = lamp.location_y * Map::c_tile_dimension_in_pixels;
-
-          world_to_sdl ( lamp_rect, back_buffer, camera_x, camera_y );
-
-          SDL_BlitSurface ( lampsheet, &clip_rect, back_buffer, &lamp_rect );
+          render_fixture ( back_buffer, lamp_sheet, &map.lamp ( i ), camera_x, camera_y );
      }
 }
 
-extern "C" Void render_map_exits ( SDL_Surface* back_buffer, SDL_Surface* exit_surface, Map& map,
+extern "C" Void render_map_exits ( SDL_Surface* back_buffer, SDL_Surface* exit_sheet, Map& map,
                                    Real32 camera_x, Real32 camera_y )
 {
      for ( Uint8 i = 0; i < map.exit_count ( ); ++i ) {
-          auto& exit = map.exit ( i );
-
-          SDL_Rect exit_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-          SDL_Rect clip_rect { exit.id * Map::c_tile_dimension_in_pixels, 0,
-                               Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-
-          exit_rect.x = exit.location_x * Map::c_tile_dimension_in_pixels;
-          exit_rect.y = exit.location_y * Map::c_tile_dimension_in_pixels;
-
-          world_to_sdl ( exit_rect, back_buffer, camera_x, camera_y );
-
-          SDL_BlitSurface ( exit_surface, &clip_rect, back_buffer, &exit_rect );
+          render_fixture ( back_buffer, exit_sheet, &map.exit ( i ), camera_x, camera_y );
      }
 }
 
@@ -99,8 +81,11 @@ static Void blend_light ( SDL_Surface* back_buffer, const SDL_Rect& dest_rect, R
      CLAMP ( max_x, 0, back_buffer->w - 1 );
      CLAMP ( max_y, 0, back_buffer->h - 1 );
 
+     // loop over the clamped region
      for ( Int32 y = min_y; y < max_y; ++y ) {
           for ( Int32 x = min_x; x < max_x; ++x ) {
+
+               // get the current pixel location
                Uint32* p_pixel = reinterpret_cast<Uint32*>( back_buffer->pixels ) + x + ( y * back_buffer->w );
 
                // read pixels
@@ -142,6 +127,7 @@ extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera
           }
      }
 
+     // we are done accessing the back buffer's pixels directly
      SDL_UnlockSurface ( back_buffer );
 }
 

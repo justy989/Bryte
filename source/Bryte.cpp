@@ -26,11 +26,11 @@ static State* get_state ( GameMemory& game_memory )
 // assuming A attacks B
 static Direction determine_damage_direction ( const Character& a, const Character& b, Random& random )
 {
-     Real32 a_center_x = a.position.x ( ) + a.width * 0.5f;
-     Real32 a_center_y = a.position.y ( ) + a.collision_height * 0.5f;
+     Real32 a_center_x = a.position.x ( ) + a.width ( ) * 0.5f;
+     Real32 a_center_y = a.position.y ( ) + a.collision_dimension.y ( ) * 0.5f;
 
-     Real32 b_center_x = b.position.x ( ) + b.width * 0.5f;
-     Real32 b_center_y = b.position.y ( ) + b.collision_height * 0.5f;
+     Real32 b_center_x = b.position.x ( ) + b.width ( ) * 0.5f;
+     Real32 b_center_y = b.position.y ( ) + b.collision_dimension.x ( ) * 0.5f;
 
      Real32 diff_x = b_center_x - a_center_x;
      Real32 diff_y = b_center_y - a_center_y;
@@ -92,9 +92,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      player.velocity.zero ( );
 
-     player.width            = 1.0f;
-     player.height           = player.width * 1.5f;
-     player.collision_height = player.width;
+     player.dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
+     player.collision_offset.set ( pixels_to_meters ( 5 ), pixels_to_meters ( 0 ) );
+     player.collision_dimension.set ( pixels_to_meters ( 6 ), pixels_to_meters ( 7 ) );
+     player.rotate_collision = false;
 
      player.damage_pushed = Direction::left;
      player.state_watch.reset ( 0.0f );
@@ -182,9 +183,10 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
 
      enemy->velocity.zero ( );
 
-     enemy->width            = pixels_to_meters ( 16 );
-     enemy->height           = enemy->width;
-     enemy->collision_height = enemy->width;
+     enemy->dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
+     enemy->collision_offset.set ( pixels_to_meters ( 1 ), pixels_to_meters ( 4 ) );
+     enemy->collision_dimension.set ( pixels_to_meters ( 14 ), pixels_to_meters ( 6 ) );
+     enemy->rotate_collision = true;
 
      enemy->damage_pushed = Direction::left;
 
@@ -267,7 +269,7 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
      }
 
      SDL_Rect dest_rect = build_world_sdl_rect ( character.position.x ( ), character.position.y ( ),
-                                                 character.width, character.height );
+                                                 character.width ( ), character.height ( ) );
 
      SDL_Rect clip_rect = {
           0, static_cast<Int32>( character.facing ) * 16, 16, 16
@@ -329,7 +331,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_8:
                if ( key_change.down ) {
-                    state->spawn_enemy ( state->player.position.x ( ) - state->player.width,
+                    state->spawn_enemy ( state->player.position.x ( ) - state->player.width ( ),
                                          state->player.position.y ( ) );
                }
                break;
@@ -367,7 +369,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                auto& lever  = state->lever;
 
                if ( rect_collides_with_rect ( player.position.x ( ), player.position.y ( ),
-                                              player.width, player.height,
+                                              player.width ( ), player.height ( ),
                                               lever.position_x, lever.position_y,
                                               c_lever_width, c_lever_height ) ) {
 
@@ -436,7 +438,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           if ( health_pickup.available ) {
                if ( rect_collides_with_rect ( state->player.position.x ( ), state->player.position.y ( ),
-                                              state->player.width, state->player.height,
+                                              state->player.width ( ), state->player.height ( ),
                                               health_pickup.position.x ( ), health_pickup.position.y ( ),
                                               HealthPickup::c_dimension, HealthPickup::c_dimension ) ) {
                     health_pickup.available    = false;
@@ -495,10 +497,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      auto* state = get_state ( game_memory );
 
      state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
-                                                       state->player.position.x ( ), state->player.width ) );
+                                                       state->player.position.x ( ), state->player.width ( ) ) );
 
      state->camera.set_y ( calculate_camera_position ( back_buffer->h, state->map.height ( ),
-                                                       state->player.position.y ( ), state->player.height ) );
+                                                       state->player.position.y ( ), state->player.height ( ) ) );
 
      // draw map
      render_map ( back_buffer, state->tilesheet, state->map,
@@ -539,17 +541,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // draw player attack
      if ( state->player.state == Character::State::attacking ) {
-          SDL_Rect attack_rect = build_world_sdl_rect ( state->player.calc_attack_x ( ),
-                                                        state->player.calc_attack_y ( ),
-                                                        Character::c_attack_width,
-                                                        Character::c_attack_height );
-
-          // swap width and height for facing left and right
-          if ( state->player.facing == Direction::left ||
-               state->player.facing == Direction::right ) {
-               attack_rect.w = meters_to_pixels ( Character::c_attack_height );
-               attack_rect.h = meters_to_pixels ( Character::c_attack_width );
-          }
+          SDL_Rect attack_rect = build_world_sdl_rect ( state->player.attack_x ( ),
+                                                        state->player.attack_y ( ),
+                                                        state->player.attack_width ( ),
+                                                        state->player.attack_height ( ) );
 
           world_to_sdl ( attack_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
 

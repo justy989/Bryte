@@ -39,12 +39,24 @@ namespace bryte
 
           Void update ( Real32 time_delta, const Map& map );
 
-          Real32 calc_attack_x ( );
-          Real32 calc_attack_y ( );
+          Real32 attack_x ( ) const;
+          Real32 attack_y ( ) const;
+          Real32 attack_width ( ) const;
+          Real32 attack_height ( ) const;
+
+          inline Real32 width ( ) const;
+          inline Real32 height ( ) const;
+
+          Real32 collision_x ( ) const;
+          Real32 collision_y ( ) const;
+          Real32 collision_x ( Real32 start_position ) const;
+          Real32 collision_y ( Real32 start_position ) const;
+          Real32 collision_width ( ) const;
+          Real32 collision_height ( ) const;
 
      public:
 
-          static const Real32 c_damage_speed;
+          static const Real32 c_damage_accel;
           static const Real32 c_damage_time;
           static const Real32 c_blink_time;
           static const Real32 c_attack_width;
@@ -64,19 +76,32 @@ namespace bryte
           Int32  max_health;
 
           Vector position;
+          Vector dimension;
           Vector velocity;
           Vector acceleration;
 
-          Real32 width;
-          Real32 height;
+          Vector collision_offset;
+          Vector collision_dimension;
 
-          Real32 collision_height;
+          Bool rotate_collision;
 
           Direction damage_pushed;
 
           Stopwatch damage_watch;
           Stopwatch cooldown_watch;
      };
+
+     inline Real32 Character::width ( ) const
+     {
+          return dimension.x ( );
+     }
+
+     inline Real32 Character::height ( ) const
+     {
+          return dimension.y ( );
+     }
+
+
 }
 
 #endif

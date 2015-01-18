@@ -74,9 +74,15 @@ static Direction determine_damage_direction ( const Character& a, const Characte
      return Direction::left;
 }
 
-Bool State::initialize ( GameMemory& game_memory )
+Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
      random.seed ( 13371 );
+
+     player_spawn_tile_x = settings->player_spawn_tile_x;
+     player_spawn_tile_y = settings->player_spawn_tile_y;
+
+     player.position.set ( pixels_to_meters ( player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
+                           pixels_to_meters ( player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
 
      player.state  = Character::State::alive;
      player.facing = Direction::left;
@@ -107,33 +113,32 @@ Bool State::initialize ( GameMemory& game_memory )
      // load test graphics
      if ( !load_bitmap_with_game_memory ( tilesheet, game_memory,
                                           c_test_tilesheet_path ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", c_test_tilesheet_path );
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( decorsheet, game_memory,
                                           c_test_decorsheet_path ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", c_test_decorsheet_path );
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( lampsheet, game_memory,
                                           c_test_lampsheet_path ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", c_test_lampsheet_path );
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( rat_surface, game_memory,
                                           c_test_rat_path ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", c_test_rat_path );
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( player_surface, game_memory,
                                           c_test_player_path ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", c_test_player_path );
           return false;
      }
+
+     map.load_master_list ( settings->map_master_list_filename );
+     map.load_from_master_list ( settings->map_index );
+     spawn_map_enemies ( );
 
      return true;
 }
@@ -280,21 +285,9 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 
      memory_locations->state = state;
 
-     if ( !state->initialize ( game_memory ) ) {
+     if ( !state->initialize ( game_memory, reinterpret_cast<Settings*>( settings ) ) ) {
           return false;
      }
-
-     auto* state_settings = reinterpret_cast<Settings*>( settings );
-
-     state->player_spawn_tile_x = state_settings->player_spawn_tile_x;
-     state->player_spawn_tile_y = state_settings->player_spawn_tile_y;
-
-     state->player.position.set ( pixels_to_meters ( state->player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
-                                  pixels_to_meters ( state->player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
-
-     state->map.load_master_list ( state_settings->map_master_list_filename );
-     state->map.load_from_master_list ( state_settings->map_index );
-     state->spawn_map_enemies ( );
 
      return true;
 }

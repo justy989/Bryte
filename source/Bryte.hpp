@@ -49,7 +49,7 @@ namespace bryte
      struct State {
      public:
 
-          Bool initialize ( GameMemory& game_memory );
+          Bool initialize ( GameMemory& game_memory, Settings* settings );
           Void destroy    ( );
 
           Bool spawn_enemy ( Real32 x, Real32 y );

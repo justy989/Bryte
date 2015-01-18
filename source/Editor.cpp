@@ -187,33 +187,28 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( state->mode_icons_surface, game_memory,
+                                          "editor_mode_icons.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( state->tilesheet,  game_memory,
                                           state->settings->map_tilesheet_filename ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_tilesheet_filename );
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( state->decorsheet, game_memory,
                                           state->settings->map_decorsheet_filename ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_decorsheet_filename );
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( state->lampsheet, game_memory,
                                           state->settings->map_lampsheet_filename ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_lampsheet_filename );
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( state->rat_surface, game_memory,
                                           state->settings->map_rat_filename ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", state->settings->map_rat_filename );
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->mode_icons_surface, game_memory,
-                                          "editor_mode_icons.bmp" ) ) {
-          LOG_ERROR ( "Failed to load: '%s'\n", "editor_mode_icons.bmp" );
           return false;
      }
 
@@ -246,7 +241,13 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
 {
      State* state = get_state ( game_memory );
 
+     SDL_FreeSurface ( state->mode_icons_surface );
+
      SDL_FreeSurface ( state->tilesheet );
+     SDL_FreeSurface ( state->decorsheet );
+     SDL_FreeSurface ( state->lampsheet );
+
+     SDL_FreeSurface ( state->rat_surface );
 }
 
 extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game_input )

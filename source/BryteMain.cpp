@@ -11,6 +11,8 @@ void print_help ( )
      printf ( "Usage: ./bryte [ options ]\n" );
      printf ( "  -m filename of master map list\n" );
      printf ( "  -i map index to load from master list\n" );
+     printf ( "  -x tile x to spawn player on\n" );
+     printf ( "  -y tile y to spawn player on\n" );
      printf ( "  -h displays this helpful information\n\n" );
 }
 
@@ -35,6 +37,8 @@ int main ( int argc, char** argv )
 
      bryte_settings.map_master_list_filename = "map_list.txt";
      bryte_settings.map_index = 0;
+     bryte_settings.player_spawn_tile_x = 2;
+     bryte_settings.player_spawn_tile_y = 2;
 
      for ( int i = 1; i < argc; ++i ) {
           if ( strcmp ( argv [ i ], "-h" ) == 0 ) {
@@ -48,6 +52,16 @@ int main ( int argc, char** argv )
           } else if ( strcmp ( argv [ i ], "-i" ) == 0 ) {
                if ( argc >= i + 1 ) {
                     bryte_settings.map_index = atoi ( argv [ i + 1 ] );
+                    ++i;
+               }
+          } else if ( strcmp ( argv [ i ], "-x" ) == 0 ) {
+               if ( argc >= i + 1 ) {
+                    bryte_settings.player_spawn_tile_x = atoi ( argv [ i + 1 ] );
+                    ++i;
+               }
+          } else if ( strcmp ( argv [ i ], "-y" ) == 0 ) {
+               if ( argc >= i + 1 ) {
+                    bryte_settings.player_spawn_tile_y = atoi ( argv [ i + 1 ] );
                     ++i;
                }
           } else {

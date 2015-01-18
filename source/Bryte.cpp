@@ -84,8 +84,6 @@ Bool State::initialize ( GameMemory& game_memory )
      player.health           = 25;
      player.max_health       = 25;
 
-     player.position.set ( Map::c_tile_dimension_in_meters * 2.0f, Map::c_tile_dimension_in_meters * 2.0f );
-
      player.velocity.zero ( );
 
      player.width            = 1.0f;
@@ -221,7 +219,8 @@ Void State::player_death ( )
      player.health           = 25;
      player.max_health       = 25;
 
-     player.position.set ( Map::c_tile_dimension_in_meters * 2.0f, Map::c_tile_dimension_in_meters * 2.0f );
+     player.position.set ( pixels_to_meters ( player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
+                           pixels_to_meters ( player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
 
      player.velocity.zero ( );
 
@@ -323,6 +322,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      }
 
      auto* state_settings = reinterpret_cast<Settings*>( settings );
+
+     state->player_spawn_tile_x = state_settings->player_spawn_tile_x;
+     state->player_spawn_tile_y = state_settings->player_spawn_tile_y;
+
+     state->player.position.set ( pixels_to_meters ( state->player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
+                                  pixels_to_meters ( state->player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
 
      state->map.load_master_list ( state_settings->map_master_list_filename );
      state->map.load_from_master_list ( state_settings->map_index );

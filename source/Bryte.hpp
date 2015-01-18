@@ -41,6 +41,9 @@ namespace bryte
           const Char8* map_master_list_filename;
 
           Uint32       map_index;
+
+          Int32        player_spawn_tile_x;
+          Int32        player_spawn_tile_y;
      };
 
      struct State {
@@ -90,6 +93,9 @@ namespace bryte
           SDL_Surface* rat_surface;
 
           SDL_Surface* player_surface;
+
+          Int32        player_spawn_tile_x;
+          Int32        player_spawn_tile_y;
      };
 
      struct MemoryLocations {

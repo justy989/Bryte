@@ -1,20 +1,13 @@
 #ifndef BRYTE_CHARACTER_HPP
 #define BRYTE_CHARACTER_HPP
 
+#include "Direction.hpp"
 #include "Vector.hpp"
 #include "StopWatch.hpp"
 
 namespace bryte
 {
      class Map;
-
-     enum Direction {
-          left = 0,
-          up,
-          right,
-          down,
-          count
-     };
 
      struct Character {
      public:

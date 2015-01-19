@@ -148,11 +148,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      interactives.reset ( map.width ( ), map.height ( ) );
 
-     Interactive& interactive = interactives.interactive ( 8, 8 );
-
-     interactive.type = Interactive::Type::pushable_block;
-
-     //PushableBlock& pushable_block = interactive.interactive_pushable_block;
+     interactives.add ( Interactive::Type::pushable_block, 8, 8 );
 
      return true;
 }
@@ -294,7 +290,7 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
      SDL_BlitSurface ( character_surface, &clip_rect, back_buffer, &dest_rect );
 }
 
-static Void render_interactive ( SDL_Surface* back_buffer, Interactive& interactive,
+static Void render_interactive ( SDL_Surface* back_buffer, const Interactive& interactive,
                                  Int32 tile_x, Int32 tile_y, Real32 camera_x, Real32 camera_y )
 {
      if ( interactive.type == Interactive::Type::none ) {
@@ -303,9 +299,10 @@ static Void render_interactive ( SDL_Surface* back_buffer, Interactive& interact
 
      Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
 
-     SDL_Rect interactive_rect = build_world_sdl_rect ( pixels_to_meters ( tile_x * Map::c_tile_dimension_in_pixels ),
-                                                        pixels_to_meters ( tile_y * Map::c_tile_dimension_in_pixels ),
-                                                        Map::c_tile_dimension_in_meters, Map::c_tile_dimension_in_meters );
+     SDL_Rect interactive_rect { tile_x * Map::c_tile_dimension_in_pixels,
+                                 tile_y * Map::c_tile_dimension_in_pixels,
+                                 Map::c_tile_dimension_in_pixels,
+                                 Map::c_tile_dimension_in_pixels };
 
      world_to_sdl ( interactive_rect, back_buffer, camera_x, camera_y );
 
@@ -424,7 +421,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      state->push_block.update ( time_delta );
 #endif
 
-     state->player.update ( time_delta, state->map );
+     state->player.update ( time_delta, state->map, state->interactives );
 
      for ( Uint32 i = 0; i < State::c_max_enemies; ++i ) {
           auto& enemy = state->enemies [ i ];
@@ -434,7 +431,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
 
           enemy.think ( state->player.position, state->random, time_delta );
-          enemy.update ( time_delta, state->map );
+          enemy.update ( time_delta, state->map, state->interactives );
 
           // check collision between player and enemy
           if ( state->player.state != Character::State::blinking &&
@@ -467,6 +464,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                }
           }
      }
+
+     // update interactives
+     state->interactives.update ( time_delta );
 
      for ( Uint32 i = 0; i < State::c_max_health_pickups; ++i ) {
           HealthPickup& health_pickup = state->health_pickups [ i ];

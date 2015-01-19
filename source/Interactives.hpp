@@ -8,7 +8,11 @@
 
 namespace bryte
 {
+     class Interactives;
+
      struct Lever {
+          Void reset ( );
+
           Void update ( float time_delta );
 
           Void activate ( Map& map );
@@ -27,9 +31,11 @@ namespace bryte
                moving
           };
 
+          Void reset ( );
+
           Void update ( float time_delta );
 
-          Void push ( Direction direction );
+          Direction push ( Direction direction );
 
           State     state;
           Stopwatch cooldown_watch;
@@ -45,10 +51,12 @@ namespace bryte
                pushable_block,
           };
 
-          Void update   ( float time_delta );
+          Void      reset    ( );
 
-          Void activate ( Map& map );
-          Void push     ( Direction direction );
+          Void      update   ( float time_delta );
+
+          Void      activate ( Map& map );
+          Direction push     ( Direction direction );
 
           Bool is_solid ( ) const;
 
@@ -65,10 +73,20 @@ namespace bryte
 
           Void reset ( Int32 width, Int32 height );
 
-          Interactive& interactive ( Int32 tile_x, Int32 tile_y );
+          Void add ( Interactive::Type type, Int32 tile_x, Int32 tile_y );
+
+          Void update ( float time_delta );
+
+          Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
+
+          const Interactive& interactive ( Int32 tile_x, Int32 tile_y ) const;
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
+
+     private:
+
+          Interactive& get_interactive ( Int32 tile_x, Int32 tile_y );
 
      public:
 

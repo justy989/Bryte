@@ -8,6 +8,7 @@
 namespace bryte
 {
      class Map;
+     class Interactives;
 
      struct Character {
      public:
@@ -30,7 +31,7 @@ namespace bryte
           Void attack ( );
           Void damage ( Int32 amount, Direction push );
 
-          Void update ( Real32 time_delta, const Map& map );
+          Void update ( Real32 time_delta, const Map& map, Interactives& interactives );
 
           Real32 attack_x ( ) const;
           Real32 attack_y ( ) const;

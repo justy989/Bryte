@@ -76,6 +76,7 @@ namespace bryte
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
           SDL_Surface* exitsheet;
+          SDL_Surface* interactivesheet;
 
           SDL_Surface* rat_surface;
 

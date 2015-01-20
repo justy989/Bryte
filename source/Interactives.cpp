@@ -34,12 +34,14 @@ Void Interactives::reset ( Int32 width, Int32 height )
      }
 }
 
-Void Interactives::add ( Interactive::Type type, Int32 tile_x, Int32 tile_y )
+Interactive& Interactives::add ( Interactive::Type type, Int32 tile_x, Int32 tile_y )
 {
      auto& i = get_interactive ( tile_x, tile_y );
 
      i.type = type;
      i.reset ( );
+
+     return i;
 }
 
 Void Interactives::update ( float time_delta )
@@ -84,6 +86,13 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           dest_i = i;
           i.type = Interactive::Type::none;
      }
+}
+
+Void Interactives::activate ( Int32 tile_x, Int32 tile_y, Map& map )
+{
+     Interactive& i = get_interactive ( tile_x, tile_y );
+
+     i.activate ( map );
 }
 
 Bool Interactive::is_solid ( ) const

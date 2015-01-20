@@ -9,12 +9,13 @@ using namespace bryte;
 static const Real32 c_lever_width             = 0.5f;
 static const Real32 c_lever_height            = 0.5f;
 
-static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
-static const Char8* c_test_decorsheet_path    = "castle_decorsheet.bmp";
-static const Char8* c_test_lampsheet_path     = "castle_lampsheet.bmp";
-static const Char8* c_test_exitsheet_path     = "castle_exitsheet.bmp";
-static const Char8* c_test_player_path        = "test_hero.bmp";
-static const Char8* c_test_rat_path           = "test_rat.bmp";
+static const Char8* c_test_tilesheet_path        = "castle_tilesheet.bmp";
+static const Char8* c_test_decorsheet_path       = "castle_decorsheet.bmp";
+static const Char8* c_test_lampsheet_path        = "castle_lampsheet.bmp";
+static const Char8* c_test_exitsheet_path        = "castle_exitsheet.bmp";
+static const Char8* c_test_interactivesheet_path = "castle_interactivesheet.bmp";
+static const Char8* c_test_player_path           = "test_hero.bmp";
+static const Char8* c_test_rat_path              = "test_rat.bmp";
 
 const Real32 HealthPickup::c_dimension = 0.4f;
 
@@ -132,6 +133,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( interactivesheet, game_memory,
+                                          c_test_interactivesheet_path ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( rat_surface, game_memory,
                                           c_test_rat_path ) ) {
           return false;
@@ -149,6 +155,13 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      interactives.reset ( map.width ( ), map.height ( ) );
 
      interactives.add ( Interactive::Type::pushable_block, 8, 8 );
+     interactives.add ( Interactive::Type::pushable_block, 9, 9 );
+
+     auto& lever = interactives.add ( Interactive::Type::lever, 5, 4 ).interactive_lever;
+
+     lever.change_tile_coordinate_x = 1;
+     lever.change_tile_coordinate_y = 2;
+     lever.change_tile_value = 9;
 
      return true;
 }
@@ -159,6 +172,7 @@ Void State::destroy ( )
      SDL_FreeSurface ( decorsheet );
      SDL_FreeSurface ( lampsheet );
      SDL_FreeSurface ( exitsheet );
+     SDL_FreeSurface ( interactivesheet );
 
      SDL_FreeSurface ( rat_surface );
      SDL_FreeSurface ( player_surface );
@@ -282,7 +296,8 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
                                                  character.width ( ), character.height ( ) );
 
      SDL_Rect clip_rect = {
-          0, static_cast<Int32>( character.facing ) * 16, 16, 16
+          0, static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels,
+          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
      };
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -291,22 +306,39 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
 }
 
 static Void render_interactive ( SDL_Surface* back_buffer, const Interactive& interactive,
-                                 Int32 tile_x, Int32 tile_y, Real32 camera_x, Real32 camera_y )
+                                 SDL_Surface* interactive_surface, Int32 tile_x, Int32 tile_y,
+                                 Real32 camera_x, Real32 camera_y )
 {
      if ( interactive.type == Interactive::Type::none ) {
           return;
      }
-
-     Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
 
      SDL_Rect interactive_rect { tile_x * Map::c_tile_dimension_in_pixels,
                                  tile_y * Map::c_tile_dimension_in_pixels,
                                  Map::c_tile_dimension_in_pixels,
                                  Map::c_tile_dimension_in_pixels };
 
+     SDL_Rect clip_rect = {
+          0, 0, 16, 16
+     };
+
+     switch ( interactive.type ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Interactive::Type::lever:
+          if ( interactive.interactive_lever.on ) {
+               clip_rect.x = Map::c_tile_dimension_in_pixels;
+          }
+          break;
+     case Interactive::Type::pushable_block:
+          clip_rect.y = Map::c_tile_dimension_in_pixels;
+          break;
+     }
+
      world_to_sdl ( interactive_rect, back_buffer, camera_x, camera_y );
 
-     SDL_FillRect ( back_buffer, &interactive_rect, magenta );
+     SDL_BlitSurface ( interactive_surface, &clip_rect, back_buffer, &interactive_rect );
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
@@ -392,35 +424,6 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           state->player.attack ( );
      }
 
-#if 0
-     auto& player = state->player;
-
-     if ( state->activate_key ) {
-          auto& lever  = state->interactive;
-
-          if ( rect_collides_with_rect ( player.collision_x ( ), player.collision_y ( ),
-                                         player.collision_width ( ), player.collision_height ( ),
-                                         pixels_to_meters ( lever.location_x * Map::c_tile_dimension_in_pixels ),
-                                         pixels_to_meters ( lever.location_y * Map::c_tile_dimension_in_pixels ),
-                                         c_lever_width, c_lever_height ) ) {
-               lever.activate ( state->map );
-          }
-     }
-
-     auto& push_block = state->push_block;
-
-     if ( rect_collides_with_rect ( player.collision_x ( ), player.collision_y ( ),
-                                    player.collision_width ( ), player.collision_height ( ),
-                                    pixels_to_meters ( push_block.location_x * Map::c_tile_dimension_in_pixels ),
-                                    pixels_to_meters ( push_block.location_y * Map::c_tile_dimension_in_pixels ),
-                                    Map::c_tile_dimension_in_meters, Map::c_tile_dimension_in_meters ) ) {
-          push_block.push ( Direction::up );
-     }
-
-     state->interactive.update ( time_delta );
-     state->push_block.update ( time_delta );
-#endif
-
      state->player.update ( time_delta, state->map, state->interactives );
 
      for ( Uint32 i = 0; i < State::c_max_enemies; ++i ) {
@@ -467,6 +470,12 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // update interactives
      state->interactives.update ( time_delta );
+
+     if ( state->activate_key ) {
+          state->interactives.activate ( meters_to_pixels ( state->player.position.x ( ) ) / Map::c_tile_dimension_in_pixels,
+                                         meters_to_pixels ( state->player.position.y ( ) ) / Map::c_tile_dimension_in_pixels,
+                                         state->map );
+     }
 
      for ( Uint32 i = 0; i < State::c_max_health_pickups; ++i ) {
           HealthPickup& health_pickup = state->health_pickups [ i ];
@@ -544,7 +553,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      for ( int y = 0; y < state->interactives.height ( ); ++y ) {
           for ( int x = 0; x < state->interactives.width ( ); ++x ) {
-               render_interactive ( back_buffer, state->interactives.interactive ( x, y ), x, y,
+               render_interactive ( back_buffer, state->interactives.interactive ( x, y ),
+                                    state->interactivesheet, x, y,
                                     state->camera.x ( ), state->camera.y ( ) );
           }
      }

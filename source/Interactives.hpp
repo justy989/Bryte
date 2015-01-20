@@ -73,11 +73,12 @@ namespace bryte
 
           Void reset ( Int32 width, Int32 height );
 
-          Void add ( Interactive::Type type, Int32 tile_x, Int32 tile_y );
+          Interactive& add ( Interactive::Type type, Int32 tile_x, Int32 tile_y );
 
           Void update ( float time_delta );
 
           Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
+          Void activate ( Int32 tile_x, Int32 tile_y, Map& map );
 
           const Interactive& interactive ( Int32 tile_x, Int32 tile_y ) const;
 

@@ -44,11 +44,31 @@ namespace bryte
           Int32     moving_offset;
      };
 
+     struct Exit {
+          enum State {
+               open,
+               closed,
+               locked
+          };
+
+          Void reset ( );
+
+          Void update ( float time_delta );
+
+          Void activate ( Map& map );
+
+          Direction direction;
+          State     state;
+          Uint8     map_index;
+          Uint8     exit_index;
+     };
+
      struct Interactive {
           enum Type {
                none,
                lever,
                pushable_block,
+               exit,
           };
 
           Void      reset    ( );
@@ -65,6 +85,7 @@ namespace bryte
           union {
                Lever         interactive_lever;
                PushableBlock interactive_pushable_block;
+               Exit          interactive_exit;
           };
      };
 

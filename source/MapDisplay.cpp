@@ -36,8 +36,8 @@ static Void render_fixture ( SDL_Surface* back_buffer, SDL_Surface* fixture_shee
      SDL_Rect clip_rect { fixture->id * Map::c_tile_dimension_in_pixels, 0,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-     dest_rect.x = fixture->location_x * Map::c_tile_dimension_in_pixels;
-     dest_rect.y = fixture->location_y * Map::c_tile_dimension_in_pixels;
+     dest_rect.x = fixture->location.x * Map::c_tile_dimension_in_pixels;
+     dest_rect.y = fixture->location.y * Map::c_tile_dimension_in_pixels;
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 

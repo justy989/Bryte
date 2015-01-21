@@ -10,15 +10,23 @@ namespace bryte
      class Map {
      public:
 
+          struct Coordinates {
+               Int32 x;
+               Int32 y;
+          };
+
+          struct Location {
+               Uint8 x;
+               Uint8 y;
+          };
+
           struct Tile {
                Uint8 value;
                Bool  solid;
           };
 
           struct Fixture {
-               Uint8 location_x;
-               Uint8 location_y;
-
+               Location location;
                Uint8 id;
           };
 
@@ -52,51 +60,45 @@ namespace bryte
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
 
-          Bool     is_position_solid           ( Real32 x, Real32 y ) const;
+          Fixture* check_coordinates_for_decor ( Int32 x, Int32 y );
+          Fixture* check_coordinates_for_lamp  ( Int32 x, Int32 y );
+          Exit*    check_coordinates_for_exit  ( Int32 x, Int32 y );
+          Fixture* check_coordinates_for_enemy_spawn ( Int32 x, Int32 y );
 
-          Fixture* check_coordinates_for_decor ( Uint8 x, Uint8 y );
-          Fixture* check_coordinates_for_lamp  ( Uint8 x, Uint8 y );
-          Exit*    check_coordinates_for_exit  ( Uint8 x, Uint8 y );
-          Fixture* check_coordinates_for_enemy_spawn ( Uint8 x, Uint8 y );
-
-          Uint8 base_light_value ( ) const;
-          Void  add_to_base_light ( Uint8 delta );
+          Uint8 base_light_value         ( ) const;
+          Void  add_to_base_light        ( Uint8 delta );
           Void  subtract_from_base_light ( Uint8 delta );
 
-          Void illuminate ( Real32 x, Real32 y, Uint8 value );
+          Void illuminate  ( Int32 x, Int32 y, Uint8 value );
           Void reset_light ( );
 
-          Bool add_decor ( Uint8 location_x, Uint8 location_y, Uint8 id );
-          Void remove_decor ( Fixture* decor );
+          Bool add_decor       ( Int32 location_x, Int32 location_y, Uint8 id );
+          Bool add_lamp        ( Int32 location_x, Int32 location_y, Uint8 id );
+          Bool add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id );
+          Bool add_exit        ( Int32 location_x, Int32 location_y, Uint8 id );
 
-          Bool add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id );
-          Void remove_lamp ( Fixture* lamp );
-
-          Bool add_enemy_spawn ( Uint8 location_x, Uint8 location_y, Uint8 id );
+          Void remove_decor       ( Fixture* decor );
+          Void remove_lamp        ( Fixture* lamp );
           Void remove_enemy_spawn ( Fixture* enemy_spawn );
+          Void remove_exit        ( Exit* exit );
 
-          Bool add_exit ( Uint8 location_x, Uint8 location_y, Uint8 id );
-          Void remove_exit ( Exit* exit );
-
-          inline Int32 width ( ) const;
+          inline Int32 width  ( ) const;
           inline Int32 height ( ) const;
 
-          inline Uint8 decor_count ( ) const;
-          inline Fixture& decor ( Uint8 index );
-
-          inline Uint8 lamp_count ( ) const;
-          inline Fixture& lamp ( Uint8 index );
-
-          inline Uint8 exit_count ( ) const;
-          inline Exit& exit ( Uint8 index );
-
+          inline Uint8 decor_count       ( ) const;
+          inline Uint8 lamp_count        ( ) const;
+          inline Uint8 exit_count        ( ) const;
           inline Uint8 enemy_spawn_count ( ) const;
+
+          inline Fixture& decor       ( Uint8 index );
+          inline Fixture& lamp        ( Uint8 index );
+          inline Exit& exit           ( Uint8 index );
           inline Fixture& enemy_spawn ( Uint8 index );
 
      private:
 
           Bool add_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
-                             Uint8 location_x, Uint8 location_y, Uint8 id );
+                             Int32 location_x, Int32 location_y, Uint8 id );
           Void remove_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
                                 Fixture* fixture );
           Fixture* check_coordinates_for_fixture ( Fixture* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y );

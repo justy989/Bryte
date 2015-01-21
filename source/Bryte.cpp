@@ -228,8 +228,8 @@ Void State::spawn_map_enemies ( )
      for ( int i = 0; i < map.enemy_spawn_count ( ); ++i ) {
           auto& enemy_spawn = map.enemy_spawn ( i );
 
-          spawn_enemy ( pixels_to_meters ( enemy_spawn.location_x * Map::c_tile_dimension_in_pixels ),
-                        pixels_to_meters ( enemy_spawn.location_y * Map::c_tile_dimension_in_pixels ) );
+          spawn_enemy ( pixels_to_meters ( enemy_spawn.location.x * Map::c_tile_dimension_in_pixels ),
+                        pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ) );
      }
 }
 
@@ -513,8 +513,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->interactives.reset ( map.width ( ), map.height ( ) );
 
                auto& dest_exit = map.exit ( exit_index );
-               state->player.position.set ( dest_exit.location_x * Map::c_tile_dimension_in_meters,
-                                            dest_exit.location_y * Map::c_tile_dimension_in_meters );
+               state->player.position.set ( dest_exit.location.x * Map::c_tile_dimension_in_meters,
+                                            dest_exit.location.y * Map::c_tile_dimension_in_meters );
 
                player_exit = map.position_to_tile_index ( state->player.collision_x ( ),
                                                           state->player.collision_y ( ) );

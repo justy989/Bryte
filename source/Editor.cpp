@@ -462,16 +462,16 @@ static Void render_enemy_spawns ( SDL_Surface* back_buffer, SDL_Surface* enemy_s
      for ( Uint8 i = 0; i < map.enemy_spawn_count ( ); ++i ) {
           auto& enemy_spawn = map.enemy_spawn ( i );
 
-          SDL_Rect enemy_spawn_rect { enemy_spawn.location_x * bryte::Map::c_tile_dimension_in_pixels,
-                                      enemy_spawn.location_y * bryte::Map::c_tile_dimension_in_pixels,
+          SDL_Rect enemy_spawn_rect { enemy_spawn.location.x * bryte::Map::c_tile_dimension_in_pixels,
+                                      enemy_spawn.location.y * bryte::Map::c_tile_dimension_in_pixels,
                                       bryte::Map::c_tile_dimension_in_pixels,
                                       bryte::Map::c_tile_dimension_in_pixels };
           SDL_Rect clip_rect { 0, 0,
                                bryte::Map::c_tile_dimension_in_pixels,
                                bryte::Map::c_tile_dimension_in_pixels };
 
-          enemy_spawn_rect.x = enemy_spawn.location_x * bryte::Map::c_tile_dimension_in_pixels;
-          enemy_spawn_rect.y = enemy_spawn.location_y * bryte::Map::c_tile_dimension_in_pixels;
+          enemy_spawn_rect.x = enemy_spawn.location.x * bryte::Map::c_tile_dimension_in_pixels;
+          enemy_spawn_rect.y = enemy_spawn.location.y * bryte::Map::c_tile_dimension_in_pixels;
 
           world_to_sdl ( enemy_spawn_rect, back_buffer, camera_x, camera_y );
 

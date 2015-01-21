@@ -104,19 +104,6 @@ Void Map::set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid )
      m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid = solid;
 }
 
-Map::Exit* Map::check_coordinates_for_exit ( Int32 x, Int32 y )
-{
-     for ( Uint8 d = 0; d < m_exit_count; ++d ) {
-          auto& exit = m_exits [ d ];
-
-          if ( exit.location.x == x && exit.location.y == y ) {
-               return &exit;
-          }
-     }
-
-     return nullptr;
-}
-
 Map::Fixture* Map::check_coordinates_for_fixture ( Map::Fixture* fixture_array, Uint8 fixture_count,
                                                    Uint8 x, Uint8 y )
 {
@@ -278,37 +265,6 @@ Void Map::remove_enemy_spawn ( Fixture* enemy_spawn )
      remove_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
 }
 
-Bool Map::add_exit ( Int32 location_x, Int32 location_y, Uint8 id )
-{
-     if ( m_exit_count >= c_max_exits ) {
-          return false;
-     }
-
-     m_exits [ m_exit_count ].location.x = location_x;
-     m_exits [ m_exit_count ].location.y = location_y;
-     m_exits [ m_exit_count ].id = id;
-
-     m_exit_count++;
-
-     return true;
-}
-
-Void Map::remove_exit ( Exit* exit )
-{
-     ASSERT ( exit >= m_exits && exit < m_exits + c_max_exits );
-
-     Exit* last = m_exits + ( m_exit_count - 1 );
-
-     // slide down all the elements after it
-     while ( exit <= last ) {
-          Exit* next = exit + 1;
-          *exit = *next;
-          exit = next;
-     }
-
-     m_exit_count--;
-}
-
 Void Map::load_from_master_list ( Uint8 map_index )
 {
      if ( map_index >= m_master_count ) {
@@ -339,13 +295,6 @@ void Map::save ( const Char8* filepath )
 
                file.write ( reinterpret_cast<const Char8*> ( &tile ), sizeof ( tile ) );
           }
-     }
-
-     file.write ( reinterpret_cast<const Char8*>( &m_exit_count ), sizeof ( m_exit_count ) );
-
-     for ( Int32 i = 0; i < m_exit_count; ++i ) {
-          auto& exit = m_exits [ i ];
-          file.write ( reinterpret_cast<const Char8*> ( &exit ), sizeof ( exit ) );
      }
 
      file.write ( reinterpret_cast<const Char8*>( &m_decor_count ), sizeof ( m_decor_count ) );
@@ -392,13 +341,6 @@ void Map::load ( const Char8* filepath )
 
                file.read ( reinterpret_cast<Char8*> ( &tile ), sizeof ( tile ) );
           }
-     }
-
-     file.read ( reinterpret_cast<Char8*>( &m_exit_count ), sizeof ( m_exit_count ) );
-
-     for ( Int32 i = 0; i < m_exit_count; ++i ) {
-          auto& exit = m_exits [ i ];
-          file.read ( reinterpret_cast<Char8*> ( &exit ), sizeof ( exit ) );
      }
 
      file.read ( reinterpret_cast<Char8*>( &m_decor_count ), sizeof ( m_decor_count ) );

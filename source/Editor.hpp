@@ -7,6 +7,7 @@
 #include "GameInput.hpp"
 
 #include "Map.hpp"
+#include "Interactives.hpp"
 
 #include "Text.hpp"
 #include "Vector.hpp"

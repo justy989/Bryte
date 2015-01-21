@@ -30,11 +30,6 @@ namespace bryte
                Uint8 id;
           };
 
-          struct Exit : public Fixture {
-               Uint8 map_index;
-               Uint8 exit_index;
-          };
-
      public:
 
           Map ( );
@@ -62,7 +57,6 @@ namespace bryte
 
           Fixture* check_coordinates_for_decor ( Int32 x, Int32 y );
           Fixture* check_coordinates_for_lamp  ( Int32 x, Int32 y );
-          Exit*    check_coordinates_for_exit  ( Int32 x, Int32 y );
           Fixture* check_coordinates_for_enemy_spawn ( Int32 x, Int32 y );
 
           Uint8 base_light_value         ( ) const;
@@ -75,12 +69,10 @@ namespace bryte
           Bool add_decor       ( Int32 location_x, Int32 location_y, Uint8 id );
           Bool add_lamp        ( Int32 location_x, Int32 location_y, Uint8 id );
           Bool add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id );
-          Bool add_exit        ( Int32 location_x, Int32 location_y, Uint8 id );
 
           Void remove_decor       ( Fixture* decor );
           Void remove_lamp        ( Fixture* lamp );
           Void remove_enemy_spawn ( Fixture* enemy_spawn );
-          Void remove_exit        ( Exit* exit );
 
           inline Int32 width  ( ) const;
           inline Int32 height ( ) const;
@@ -92,7 +84,6 @@ namespace bryte
 
           inline Fixture& decor       ( Uint8 index );
           inline Fixture& lamp        ( Uint8 index );
-          inline Exit& exit           ( Uint8 index );
           inline Fixture& enemy_spawn ( Uint8 index );
 
      private:
@@ -112,7 +103,6 @@ namespace bryte
           static const Real32 c_tile_dimension_in_meters;
 
           static const Uint32 c_max_tiles = 1024;
-          static const Uint32 c_max_exits = 4;
 
           static const Uint32 c_max_light = c_max_tiles;
           static const Int32  c_light_decay = 32;
@@ -143,9 +133,6 @@ namespace bryte
 
           Fixture m_lamps [ c_max_lamps ];
           Uint8   m_lamp_count;
-
-          Exit   m_exits [ c_max_exits ];
-          Uint8  m_exit_count;
 
           Fixture m_enemy_spawns [ c_max_enemy_spawns ];
           Uint8   m_enemy_spawn_count;
@@ -183,18 +170,6 @@ namespace bryte
      inline Uint8 Map::decor_count ( ) const
      {
           return m_decor_count;
-     }
-
-     inline Uint8 Map::exit_count ( ) const
-     {
-          return m_exit_count;
-     }
-
-     inline Map::Exit& Map::exit ( Uint8 index )
-     {
-          ASSERT ( index < m_exit_count );
-
-          return m_exits [ index ];
      }
 
      inline Uint8 Map::enemy_spawn_count ( ) const

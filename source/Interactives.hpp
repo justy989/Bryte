@@ -51,11 +51,7 @@ namespace bryte
                locked
           };
 
-          Void reset ( );
-
-          Void update ( float time_delta );
-
-          Void activate ( Map& map );
+          Void activate ( );
 
           Direction direction;
           State     state;

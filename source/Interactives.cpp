@@ -102,6 +102,8 @@ Bool Interactive::is_solid ( ) const
           break;
      case pushable_block:
           return true;
+     case exit:
+          return interactive_exit.state != Exit::State::open;
      }
 
      return false;
@@ -111,7 +113,6 @@ Void Interactive::reset ( )
 {
      switch ( type ) {
      default:
-          ASSERT ( 0 );
           break;
      case Type::lever:
           interactive_lever.reset ( );
@@ -126,7 +127,6 @@ Void Interactive::activate ( Map& map )
 {
      switch ( type ) {
      default:
-          ASSERT ( 0 );
           break;
      case Type::lever:
           interactive_lever.activate ( map );
@@ -138,7 +138,6 @@ Direction Interactive::push ( Direction direction )
 {
      switch ( type ) {
      default:
-          ASSERT ( 0 );
           break;
      case Type::pushable_block:
           return interactive_pushable_block.push ( direction );
@@ -158,6 +157,8 @@ Void Interactive::update ( float time_delta )
           break;
      case Type::pushable_block:
           interactive_pushable_block.update ( time_delta );
+          break;
+     case Type::exit:
           break;
      }
 }
@@ -257,5 +258,12 @@ Direction PushableBlock::push ( Direction direction )
      }
 
      return Direction::count;
+}
+
+Void Exit::activate ( )
+{
+     if ( state == State::closed || state == State::locked ) {
+          state = State::open;
+     }
 }
 

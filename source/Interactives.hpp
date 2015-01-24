@@ -48,7 +48,8 @@ namespace bryte
           enum State {
                open,
                closed,
-               locked
+               locked,
+               count
           };
 
           Void activate ( );
@@ -65,6 +66,7 @@ namespace bryte
                lever,
                pushable_block,
                exit,
+               count
           };
 
           Void      reset    ( );
@@ -97,14 +99,10 @@ namespace bryte
           Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
           Void activate ( Int32 tile_x, Int32 tile_y, Map& map );
 
-          const Interactive& interactive ( Int32 tile_x, Int32 tile_y ) const;
+          Interactive& interactive ( Int32 tile_x, Int32 tile_y );
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
-
-     private:
-
-          Interactive& get_interactive ( Int32 tile_x, Int32 tile_y );
 
      public:
 

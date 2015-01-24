@@ -15,6 +15,8 @@
 
 #include "Vector.hpp"
 
+#include "InteractivesDisplay.hpp"
+
 #include <SDL2/SDL.h>
 
 namespace bryte
@@ -75,12 +77,12 @@ namespace bryte
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
-          SDL_Surface* exitsheet;
-          SDL_Surface* interactivesheet;
 
           SDL_Surface* rat_surface;
 
           SDL_Surface* player_surface;
+
+          InteractivesDisplay interactives_display;
 
           Bool         direction_keys [ Direction::count ];
           Bool         attack_key;

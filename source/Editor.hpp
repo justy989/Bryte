@@ -12,6 +12,8 @@
 #include "Text.hpp"
 #include "Vector.hpp"
 
+#include "InteractivesDisplay.hpp"
+
 namespace editor
 {
      struct Settings {
@@ -54,6 +56,7 @@ namespace editor
           Text text;
 
           bryte::Map map;
+          bryte::Interactives interactives;
 
           Mode mode;
 
@@ -71,9 +74,10 @@ namespace editor
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
-          SDL_Surface* exitsheet;
 
           SDL_Surface* rat_surface;
+
+          bryte::InteractivesDisplay interactives_display;
 
           Uint8 current_tile;
           Uint8 current_decor;

@@ -74,20 +74,28 @@ void State::mouse_button_changed_down ( bool left )
      } break;
      case Mode::exit:
      {
-          bryte::Map::Exit* exit = map.check_coordinates_for_exit ( tx, ty );
+          if ( tx < 0 || tx >= map.width ( ) ||
+               ty < 0 || ty >= map.height ( ) ) {
+               break;
+          }
+
+          bryte::Interactive& interactive = interactives.interactive ( tx, ty );
 
           if ( left ) {
-               if ( exit ) {
-                    map.remove_exit ( exit );
+               if ( interactive.type == bryte::Interactive::Type::exit ) {
+                    interactive.type = bryte::Interactive::Type::none;
                } else {
-                    if ( tx >= 0 && tx < map.width ( ) &&
-                         ty >= 0 && ty < map.height ( ) ) {
-                         map.add_exit ( tx, ty, current_exit );
-                    }
+                    interactive.type = bryte::Interactive::Type::exit;
+                    interactive.interactive_exit.direction  = static_cast<bryte::Direction>( current_exit );
+                    interactive.interactive_exit.state      = bryte::Exit::State::open;
+                    interactive.interactive_exit.map_index  = 0;
+                    interactive.interactive_exit.exit_index = 0;
                }
           } else {
-               exit->exit_index++;
-               exit->exit_index %= bryte::Map::c_max_exits;
+               if ( interactive.type == bryte::Interactive::Type::exit ) {
+                    interactive.interactive_exit.state = static_cast<bryte::Exit::State>(
+                         ( static_cast<Int32>(exit) + 1 ) % bryte::Exit::State::count );
+               }
           }
      } break;
      case Mode::enemy:
@@ -110,11 +118,11 @@ void State::mouse_button_changed_down ( bool left )
 
 void State::option_button_changed_down ( bool up )
 {
-     Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
-     Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
+     //Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
+     //Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
 
-     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
-     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
+     //Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
+     //Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
 
      switch ( mode ) {
      default:
@@ -153,6 +161,7 @@ void State::option_button_changed_down ( bool up )
           break;
      case Mode::exit:
      {
+#if 0
           bryte::Map::Exit* exit = map.check_coordinates_for_exit ( tx, ty );
 
           if ( exit ) {
@@ -170,6 +179,7 @@ void State::option_button_changed_down ( bool up )
 
                current_exit %= 4;
           }
+#endif
      } break;
      }
 
@@ -215,13 +225,26 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->exitsheet, game_memory,
-                                          state->settings->map_exitsheet_filename ) ) {
+     if ( !load_bitmap_with_game_memory ( state->rat_surface, game_memory,
+                                          state->settings->map_rat_filename ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->rat_surface, game_memory,
-                                          state->settings->map_rat_filename ) ) {
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ bryte::Interactive::Type::lever ],
+                                          game_memory,
+                                          "castle_leversheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ bryte::Interactive::Type::pushable_block ],
+                                          game_memory,
+                                          "castle_pushableblocksheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ bryte::Interactive::Type::exit ],
+                                          game_memory,
+                                          "castle_exitsheet.bmp" ) ) {
           return false;
      }
 
@@ -259,7 +282,6 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
      SDL_FreeSurface ( state->tilesheet );
      SDL_FreeSurface ( state->decorsheet );
      SDL_FreeSurface ( state->lampsheet );
-     SDL_FreeSurface ( state->exitsheet );
 
      SDL_FreeSurface ( state->rat_surface );
 }
@@ -405,10 +427,11 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           break;
      case Mode::exit:
      {
-          bryte::Map::Exit* exit = state->map.check_coordinates_for_exit ( tx, ty );
+          auto& interactive = state->interactives.interactive ( tx, ty );
 
-          if ( exit ) {
-               sprintf ( state->message_buffer, "MAP %d EXIT %d", exit->map_index, exit->exit_index );
+          if ( interactive.type == bryte::Interactive::Type::exit ) {
+               auto& exit = interactive.interactive_exit;
+               sprintf ( state->message_buffer, "MAP %d EXIT %d", exit.map_index, exit.exit_index );
           }
      } break;
      }
@@ -535,8 +558,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_map ( back_buffer, state->tilesheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_lamps ( back_buffer, state->lampsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
-     render_map_exits ( back_buffer, state->exitsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_enemy_spawns ( back_buffer, state->rat_surface, state->map, state->camera.x ( ), state->camera.y ( ) );
+
+     state->interactives_display.render_interactives ( back_buffer, state->interactives,
+                                                       state->camera.x ( ), state->camera.y ( ) );
 
      if ( state->draw_light ) {
           render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
@@ -568,8 +593,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->current_lamp );
           break;
      case Mode::exit:
-          render_current_icon ( back_buffer, state->exitsheet, state->mouse_x, state->mouse_y,
-                                state->current_exit );
+          //render_current_icon ( back_buffer, state->exitsheet, state->mouse_x, state->mouse_y,
+          //                      state->current_exit );
           break;
      case Mode::enemy:
           render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0 );

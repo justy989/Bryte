@@ -6,15 +6,7 @@ using namespace bryte;
 static const Real32 c_lever_cooldown     = 0.75f;
 static const Real32 c_lean_on_block_time = 0.6f;
 
-const Interactive& Interactives::interactive ( Int32 tile_x, Int32 tile_y ) const
-{
-     ASSERT ( tile_x >= 0 && tile_x < m_width );
-     ASSERT ( tile_y >= 0 && tile_y < m_height );
-
-     return m_interactives [ tile_y * m_width + tile_x ];
-}
-
-Interactive& Interactives::get_interactive ( Int32 tile_x, Int32 tile_y )
+Interactive& Interactives::interactive ( Int32 tile_x, Int32 tile_y )
 {
      ASSERT ( tile_x >= 0 && tile_x < m_width );
      ASSERT ( tile_y >= 0 && tile_y < m_height );
@@ -36,7 +28,7 @@ Void Interactives::reset ( Int32 width, Int32 height )
 
 Interactive& Interactives::add ( Interactive::Type type, Int32 tile_x, Int32 tile_y )
 {
-     auto& i = get_interactive ( tile_x, tile_y );
+     auto& i = interactive ( tile_x, tile_y );
 
      i.type = type;
      i.reset ( );
@@ -55,7 +47,7 @@ Void Interactives::update ( float time_delta )
 
 Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
-     Interactive& i = get_interactive ( tile_x, tile_y );
+     Interactive& i = interactive ( tile_x, tile_y );
 
      Direction result_dir = i.push ( dir );
 
@@ -79,7 +71,7 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           break;
      }
 
-     Interactive& dest_i = get_interactive ( dest_x, dest_y );
+     Interactive& dest_i = interactive ( dest_x, dest_y );
 
      if ( dest_i.type == Interactive::Type::none &&
           !map.get_coordinate_solid ( dest_x, dest_y ) ) {
@@ -90,7 +82,7 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
 
 Void Interactives::activate ( Int32 tile_x, Int32 tile_y, Map& map )
 {
-     Interactive& i = get_interactive ( tile_x, tile_y );
+     Interactive& i = interactive ( tile_x, tile_y );
 
      i.activate ( map );
 }

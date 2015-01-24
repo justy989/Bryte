@@ -61,14 +61,6 @@ extern "C" Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lamp_s
      }
 }
 
-extern "C" Void render_map_exits ( SDL_Surface* back_buffer, SDL_Surface* exit_sheet, Map& map,
-                                   Real32 camera_x, Real32 camera_y )
-{
-     for ( Uint8 i = 0; i < map.exit_count ( ); ++i ) {
-          render_fixture ( back_buffer, exit_sheet, &map.exit ( i ), camera_x, camera_y );
-     }
-}
-
 static Void blend_light ( SDL_Surface* back_buffer, const SDL_Rect& dest_rect, Real32 light )
 {
      Int32 min_x = dest_rect.x;

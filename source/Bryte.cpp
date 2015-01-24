@@ -12,8 +12,6 @@ static const Real32 c_lever_height            = 0.5f;
 static const Char8* c_test_tilesheet_path        = "castle_tilesheet.bmp";
 static const Char8* c_test_decorsheet_path       = "castle_decorsheet.bmp";
 static const Char8* c_test_lampsheet_path        = "castle_lampsheet.bmp";
-static const Char8* c_test_exitsheet_path        = "castle_exitsheet.bmp";
-static const Char8* c_test_interactivesheet_path = "castle_interactivesheet.bmp";
 static const Char8* c_test_player_path           = "test_hero.bmp";
 static const Char8* c_test_rat_path              = "test_rat.bmp";
 
@@ -128,16 +126,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( exitsheet, game_memory,
-                                          c_test_exitsheet_path ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactivesheet, game_memory,
-                                          c_test_interactivesheet_path ) ) {
-          return false;
-     }
-
      if ( !load_bitmap_with_game_memory ( rat_surface, game_memory,
                                           c_test_rat_path ) ) {
           return false;
@@ -145,6 +133,24 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      if ( !load_bitmap_with_game_memory ( player_surface, game_memory,
                                           c_test_player_path ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::lever ],
+                                          game_memory,
+                                          "castle_leversheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::pushable_block ],
+                                          game_memory,
+                                          "castle_pushableblocksheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::exit ],
+                                          game_memory,
+                                          "castle_exitsheet.bmp" ) ) {
           return false;
      }
 
@@ -171,8 +177,6 @@ Void State::destroy ( )
      SDL_FreeSurface ( tilesheet );
      SDL_FreeSurface ( decorsheet );
      SDL_FreeSurface ( lampsheet );
-     SDL_FreeSurface ( exitsheet );
-     SDL_FreeSurface ( interactivesheet );
 
      SDL_FreeSurface ( rat_surface );
      SDL_FreeSurface ( player_surface );
@@ -303,42 +307,6 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      SDL_BlitSurface ( character_surface, &clip_rect, back_buffer, &dest_rect );
-}
-
-static Void render_interactive ( SDL_Surface* back_buffer, const Interactive& interactive,
-                                 SDL_Surface* interactive_surface, Int32 tile_x, Int32 tile_y,
-                                 Real32 camera_x, Real32 camera_y )
-{
-     if ( interactive.type == Interactive::Type::none ) {
-          return;
-     }
-
-     SDL_Rect interactive_rect { tile_x * Map::c_tile_dimension_in_pixels,
-                                 tile_y * Map::c_tile_dimension_in_pixels,
-                                 Map::c_tile_dimension_in_pixels,
-                                 Map::c_tile_dimension_in_pixels };
-
-     SDL_Rect clip_rect = {
-          0, 0, 16, 16
-     };
-
-     switch ( interactive.type ) {
-     default:
-          ASSERT ( 0 );
-          break;
-     case Interactive::Type::lever:
-          if ( interactive.interactive_lever.on ) {
-               clip_rect.x = Map::c_tile_dimension_in_pixels;
-          }
-          break;
-     case Interactive::Type::pushable_block:
-          clip_rect.y = Map::c_tile_dimension_in_pixels;
-          break;
-     }
-
-     world_to_sdl ( interactive_rect, back_buffer, camera_x, camera_y );
-
-     SDL_BlitSurface ( interactive_surface, &clip_rect, back_buffer, &interactive_rect );
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
@@ -500,6 +468,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
+#if 0
           auto* exit = map.check_coordinates_for_exit ( state->player.collision_x ( ) / Map::c_tile_dimension_in_meters,
                                                         state->player.collision_y ( ) / Map::c_tile_dimension_in_meters );
 
@@ -518,8 +487,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                player_exit = map.position_to_tile_index ( state->player.collision_x ( ),
                                                           state->player.collision_y ( ) );
-
           }
+#endif
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.collision_x ( ),
                                                                 state->player.collision_y ( ) );
@@ -548,16 +517,9 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                         state->camera.x ( ), state->camera.y ( ) );
      render_map_lamps ( back_buffer, state->lampsheet, state->map,
                         state->camera.x ( ), state->camera.y ( ) );
-     render_map_exits ( back_buffer, state->exitsheet, state->map,
-                        state->camera.x ( ), state->camera.y ( ) );
 
-     for ( int y = 0; y < state->interactives.height ( ); ++y ) {
-          for ( int x = 0; x < state->interactives.width ( ); ++x ) {
-               render_interactive ( back_buffer, state->interactives.interactive ( x, y ),
-                                    state->interactivesheet, x, y,
-                                    state->camera.x ( ), state->camera.y ( ) );
-          }
-     }
+    state->interactives_display.render_interactives ( back_buffer, state->interactives,
+                                               state->camera.x ( ), state->camera.y ( ) );
 
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 green   = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );

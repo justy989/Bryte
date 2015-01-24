@@ -10,6 +10,23 @@ namespace bryte
 {
      class Interactives;
 
+     struct Exit {
+          enum State {
+               open,
+               closed,
+               locked,
+               count
+          };
+
+          Void activate ( );
+
+          Direction direction;
+          State     state;
+          Uint8     map_index;
+          Uint8     exit_index_x;
+          Uint8     exit_index_y;
+     };
+
      struct Lever {
           Void reset ( );
 
@@ -17,11 +34,10 @@ namespace bryte
 
           Void activate ( Map& map );
 
-          Stopwatch cooldown_watch;
           Bool      on;
-          Int32     change_tile_coordinate_x;
-          Int32     change_tile_coordinate_y;
-          Int32     change_tile_value;
+          Stopwatch cooldown_watch;
+          Uint8     activate_coordinate_x;
+          Uint8     activate_coordinate_y;
      };
 
      struct PushableBlock {
@@ -41,32 +57,15 @@ namespace bryte
           Stopwatch cooldown_watch;
           Direction move_direction;
           Bool      pushed_last_update;
-          Int32     moving_offset;
-     };
-
-     struct Exit {
-          enum State {
-               open,
-               closed,
-               locked,
-               count
-          };
-
-          Void activate ( );
-
-          Direction direction;
-          State     state;
-          Uint8     map_index;
-          Uint8     exit_index_x;
-          Uint8     exit_index_y;
+          // Int32     moving_offset;
      };
 
      struct Interactive {
           enum Type {
                none,
+               exit,
                lever,
                pushable_block,
-               exit,
                count
           };
 

@@ -15,12 +15,6 @@ static State* get_state ( GameMemory& game_memory )
 
 void State::mouse_button_changed_down ( bool left )
 {
-     Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
-     Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
-
-     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
-     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
-
      switch ( mode ) {
      default:
           ASSERT ( 0 );
@@ -28,24 +22,24 @@ void State::mouse_button_changed_down ( bool left )
      case Mode::tile:
           // on right click, set solids
           if ( !left ) {
-               if ( tx >= 0 && tx < map.width ( ) &&
-                    ty >= 0 && ty < map.height ( ) ) {
-                    current_solid = !map.get_coordinate_solid ( tx, ty );
-                    map.set_coordinate_solid ( tx, ty, current_solid );
+               if ( mouse_tile_x >= 0 && mouse_tile_x < map.width ( ) &&
+                    mouse_tile_y >= 0 && mouse_tile_y < map.height ( ) ) {
+                    current_solid = !map.get_coordinate_solid ( mouse_tile_x, mouse_tile_y );
+                    map.set_coordinate_solid ( mouse_tile_x, mouse_tile_y, current_solid );
                }
           }
           break;
      case Mode::decor:
      {
-          bryte::Map::Fixture* decor = map.check_coordinates_for_decor ( tx, ty );
+          bryte::Map::Fixture* decor = map.check_coordinates_for_decor ( mouse_tile_x, mouse_tile_y );
 
           if ( left ) {
                if ( decor ) {
                     map.remove_decor ( decor );
                } else {
-                    if ( tx >= 0 && tx < map.width ( ) &&
-                         ty >= 0 && ty < map.height ( ) ) {
-                         map.add_decor ( tx, ty, current_decor );
+                    if ( mouse_tile_x >= 0 && mouse_tile_x < map.width ( ) &&
+                         mouse_tile_y >= 0 && mouse_tile_y < map.height ( ) ) {
+                         map.add_decor ( mouse_tile_x, mouse_tile_y, current_decor );
                     }
                }
 
@@ -54,15 +48,15 @@ void State::mouse_button_changed_down ( bool left )
      } break;
      case Mode::light:
      {
-          bryte::Map::Fixture* lamp = map.check_coordinates_for_lamp ( tx, ty );
+          bryte::Map::Fixture* lamp = map.check_coordinates_for_lamp ( mouse_tile_x, mouse_tile_y );
 
           if ( left ) {
                if ( lamp ) {
                     map.remove_lamp ( lamp );
                } else {
-                    if ( tx >= 0 && tx < map.width ( ) &&
-                         ty >= 0 && ty < map.height ( ) ) {
-                         map.add_lamp ( tx, ty, current_lamp );
+                    if ( mouse_tile_x >= 0 && mouse_tile_x < map.width ( ) &&
+                         mouse_tile_y >= 0 && mouse_tile_y < map.height ( ) ) {
+                         map.add_lamp ( mouse_tile_x, mouse_tile_y, current_lamp );
                     }
                }
 
@@ -74,12 +68,12 @@ void State::mouse_button_changed_down ( bool left )
      } break;
      case Mode::exit:
      {
-          if ( tx < 0 || tx >= map.width ( ) ||
-               ty < 0 || ty >= map.height ( ) ) {
+          if ( mouse_tile_x < 0 || mouse_tile_x >= map.width ( ) ||
+               mouse_tile_y < 0 || mouse_tile_y >= map.height ( ) ) {
                break;
           }
 
-          bryte::Interactive& interactive = interactives.get_from_tile ( tx, ty );
+          bryte::Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
           if ( left ) {
                if ( interactive.type == bryte::Interactive::Type::exit ) {
@@ -103,17 +97,75 @@ void State::mouse_button_changed_down ( bool left )
                }
           }
      } break;
+     case Mode::lever:
+     {
+          if ( mouse_tile_x < 0 || mouse_tile_x >= map.width ( ) ||
+               mouse_tile_y < 0 || mouse_tile_y >= map.height ( ) ) {
+               break;
+          }
+
+          bryte::Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( left ) {
+               if ( interactive.type == bryte::Interactive::Type::lever ) {
+                    interactive.type = bryte::Interactive::Type::none;
+               } else {
+                    interactive.type = bryte::Interactive::Type::lever;
+                    interactive.interactive_lever.on = false;
+                    interactive.interactive_lever.cooldown_watch.reset ( 0.0f );
+                    interactive.interactive_lever.activate_coordinate_x = 0;
+                    interactive.interactive_lever.activate_coordinate_y = 0;
+               }
+          } else {
+               if ( interactive.type == bryte::Interactive::Type::lever ) {
+                    current_interactive_x = mouse_tile_x;
+                    current_interactive_y = mouse_tile_y;
+               } else {
+                    current_interactive_x = 0;
+                    current_interactive_y = 0;
+               }
+          }
+     } break;
+     case Mode::pushable_block:
+     {
+          if ( mouse_tile_x < 0 || mouse_tile_x >= map.width ( ) ||
+               mouse_tile_y < 0 || mouse_tile_y >= map.height ( ) ) {
+               break;
+          }
+
+          bryte::Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( left ) {
+               if ( interactive.type == bryte::Interactive::Type::pushable_block ) {
+                    interactive.type = bryte::Interactive::Type::none;
+               } else {
+                    interactive.type = bryte::Interactive::Type::pushable_block;
+                    interactive.interactive_pushable_block.state = bryte::PushableBlock::State::idle;
+                    interactive.interactive_pushable_block.cooldown_watch.reset ( 0.0f );
+                    interactive.interactive_pushable_block.move_direction = bryte::Direction::down;
+                    interactive.interactive_pushable_block.pushed_last_update = false;
+               }
+          } else {
+               if ( interactive.type == bryte::Interactive::Type::pushable_block ) {
+                    current_interactive_x = mouse_tile_x;
+                    current_interactive_y = mouse_tile_y;
+               } else {
+                    current_interactive_x = 0;
+                    current_interactive_y = 0;
+               }
+          }
+     } break;
      case Mode::enemy:
      {
-          bryte::Map::Fixture* enemy_spawn = map.check_coordinates_for_enemy_spawn ( tx, ty );
+          bryte::Map::Fixture* enemy_spawn = map.check_coordinates_for_enemy_spawn ( mouse_tile_x, mouse_tile_y );
 
           if ( left ) {
                if ( enemy_spawn ) {
                     map.remove_enemy_spawn ( enemy_spawn );
                } else {
-                    if ( tx >= 0 && tx < map.width ( ) &&
-                         ty >= 0 && ty < map.height ( ) ) {
-                         map.add_enemy_spawn ( tx, ty, 1 );
+                    if ( mouse_tile_x >= 0 && mouse_tile_x < map.width ( ) &&
+                         mouse_tile_y >= 0 && mouse_tile_y < map.height ( ) ) {
+                         map.add_enemy_spawn ( mouse_tile_x, mouse_tile_y, 1 );
                     }
                }
           } else {
@@ -124,12 +176,6 @@ void State::mouse_button_changed_down ( bool left )
 
 void State::option_button_changed_down ( bool up )
 {
-     Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
-     Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
-
-     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
-     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
-
      switch ( mode ) {
      default:
           ASSERT ( 0 );
@@ -167,12 +213,12 @@ void State::option_button_changed_down ( bool up )
           break;
      case Mode::exit:
      {
-          if ( tx < 0 || tx >= map.width ( ) ||
-               ty < 0 || ty >= map.height ( ) ) {
+          if ( mouse_tile_x < 0 || mouse_tile_x >= map.width ( ) ||
+               mouse_tile_y < 0 || mouse_tile_y >= map.height ( ) ) {
                break;
           }
 
-          auto& interactive = interactives.get_from_tile ( tx, ty );
+          auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == bryte::Interactive::Type::exit ) {
                if ( up ) {
@@ -208,6 +254,37 @@ void State::option_button_changed_down ( bool up )
                }
 
                current_exit_direction %= 4;
+          }
+     } break;
+     case Mode::lever:
+     {
+          if ( mouse_tile_x < 0 || mouse_tile_x >= map.width ( ) ||
+               mouse_tile_y < 0 || mouse_tile_y >= map.height ( ) ) {
+               break;
+          }
+
+          auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.type == bryte::Interactive::Type::lever ) {
+               if ( up ) {
+                    switch ( current_field ) {
+                    case 0:
+                         interactive.interactive_lever.activate_coordinate_x--;
+                         break;
+                    case 1:
+                         interactive.interactive_lever.activate_coordinate_y--;
+                         break;
+                    }
+               } else {
+                    switch ( current_field ) {
+                    case 0:
+                         interactive.interactive_lever.activate_coordinate_x++;
+                         break;
+                    case 1:
+                         interactive.interactive_lever.activate_coordinate_y++;
+                         break;
+                    }
+               }
           }
      } break;
      }
@@ -355,7 +432,6 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 
      state->mouse_x = game_input.mouse_position_x;
      state->mouse_y = game_input.mouse_position_y;
-
      if ( game_input.mouse_scroll ) {
           state->option_scroll ( game_input.mouse_scroll );
      }
@@ -403,6 +479,10 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     case Mode::exit:
                          state->current_field++;
                          state->current_field %= 3;
+                         break;
+                    case Mode::lever:
+                         state->current_field++;
+                         state->current_field %= 2;
                          break;
                     }
                }
@@ -457,23 +537,24 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      state->camera += camera_velocity * time_delta;
 
-     Int32 sx = state->mouse_x - meters_to_pixels ( state->camera.x ( ) );
-     Int32 sy = state->mouse_y - meters_to_pixels ( state->camera.y ( ) );
-
-     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
-     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
+     state->mouse_screen_x = state->mouse_x - meters_to_pixels ( state->camera.x ( ) );
+     state->mouse_screen_y = state->mouse_y - meters_to_pixels ( state->camera.y ( ) );
+     state->mouse_tile_x   = state->mouse_screen_x / bryte::Map::c_tile_dimension_in_pixels;
+     state->mouse_tile_y   = state->mouse_screen_y / bryte::Map::c_tile_dimension_in_pixels;
 
      switch ( state->mode ) {
      default:
           ASSERT ( 0 );
           break;
      case Mode::tile:
-          if ( tx >= 0 && tx < state->map.width ( ) &&
-               ty >= 0 && ty < state->map.height ( ) ) {
+          if ( state->mouse_tile_x >= 0 && state->mouse_tile_x < state->map.width ( ) &&
+               state->mouse_tile_y >= 0 && state->mouse_tile_y < state->map.height ( ) ) {
                if ( state->left_button_down ) {
-                    state->map.set_coordinate_value ( tx, ty, state->current_tile );
+                    state->map.set_coordinate_value ( state->mouse_tile_x, state->mouse_tile_y,
+                                                      state->current_tile );
                } else if ( state->right_button_down ) {
-                    state->map.set_coordinate_solid ( tx, ty, state->current_solid );
+                    state->map.set_coordinate_solid ( state->mouse_tile_x, state->mouse_tile_y,
+                                                      state->current_solid );
                }
           }
           break;
@@ -484,12 +565,22 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           break;
      case Mode::exit:
      {
-          auto& interactive = state->interactives.get_from_tile ( tx, ty );
+          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( interactive.type == bryte::Interactive::Type::exit ) {
                auto& exit = interactive.interactive_exit;
                sprintf ( state->message_buffer, "MAP %d EXIT %d %d", exit.map_index,
                          exit.exit_index_x, exit.exit_index_y );
+          }
+     } break;
+     case Mode::lever:
+     {
+          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == bryte::Interactive::Type::lever ) {
+               auto& lever = interactive.interactive_lever;
+               sprintf ( state->message_buffer, "ACT %d %d",
+                         lever.activate_coordinate_x, lever.activate_coordinate_y );
           }
      } break;
      }
@@ -630,7 +721,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_map_solids ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
      }
 
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, 17 };
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, 34 };
      SDL_FillRect ( back_buffer, &hud_rect, SDL_MapRGB ( back_buffer->format, 0, 0, 0 ) );
 
      render_mode_icons ( back_buffer, state->mode_icons_surface, state->mode );
@@ -651,23 +742,37 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_current_icon ( back_buffer, state->lampsheet, state->mouse_x, state->mouse_y,
                                 state->current_lamp, 0 );
           break;
+     case Mode::enemy:
+          render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0, 0 );
+          break;
      case Mode::exit:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheets [ bryte::Interactive::Type::exit ],
                                 state->mouse_x, state->mouse_y,
                                 state->current_exit_direction, state->current_exit_state );
           break;
-     case Mode::enemy:
-          render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0, 0 );
+     case Mode::lever:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheets [ bryte::Interactive::Type::lever ],
+                                state->mouse_x, state->mouse_y,
+                                0, 0 );
+          break;
+     case Mode::pushable_block:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheets [ bryte::Interactive::Type::pushable_block ],
+                                state->mouse_x, state->mouse_y,
+                                0, 0 );
           break;
      }
 
-     state->text.render ( back_buffer, state->message_buffer,
-                          13 * ( state->text.character_width + state->text.character_spacing ), 4 );
-
      char buffer [ 64 ];
-     sprintf ( buffer, "FIELD %d", state->current_field );
-
+     sprintf ( buffer, "T %d %d", state->mouse_tile_x, state->mouse_tile_y );
      state->text.render ( back_buffer, buffer, 210, 4 );
+
+     sprintf ( buffer, "FIELD %d", state->current_field );
+     state->text.render ( back_buffer, buffer, 210, 20 );
+
+     state->text.render ( back_buffer, state->message_buffer,
+                          1 * ( state->text.character_width + state->text.character_spacing ), 20 );
 }
 

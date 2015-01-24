@@ -36,8 +36,10 @@ namespace editor
           tile = 0,
           decor,
           light,
-          exit,
           enemy,
+          exit,
+          lever,
+          pushable_block,
           count
      };
 
@@ -63,6 +65,10 @@ namespace editor
 
           Int32  mouse_x;
           Int32  mouse_y;
+          Int32  mouse_screen_x;
+          Int32  mouse_screen_y;
+          Int32  mouse_tile_x;
+          Int32  mouse_tile_y;
 
           Vector camera;
 
@@ -87,6 +93,8 @@ namespace editor
           Uint8 current_lamp;
           Bool  current_solid;
           Uint8 current_field;
+          Uint32 current_interactive_x;
+          Uint32 current_interactive_y;
 
           Bool draw_solids;
           Bool draw_light;

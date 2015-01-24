@@ -99,7 +99,7 @@ namespace bryte
           Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
           Void activate ( Int32 tile_x, Int32 tile_y, Map& map );
 
-          Interactive& interactive ( Int32 tile_x, Int32 tile_y );
+          Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;

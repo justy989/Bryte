@@ -79,7 +79,7 @@ void State::mouse_button_changed_down ( bool left )
                break;
           }
 
-          bryte::Interactive& interactive = interactives.interactive ( tx, ty );
+          bryte::Interactive& interactive = interactives.get_from_tile ( tx, ty );
 
           if ( left ) {
                if ( interactive.type == bryte::Interactive::Type::exit ) {
@@ -95,6 +95,9 @@ void State::mouse_button_changed_down ( bool left )
                if ( interactive.type == bryte::Interactive::Type::exit ) {
                     interactive.interactive_exit.state = static_cast<bryte::Exit::State>(
                          ( static_cast<Int32>(interactive.interactive_exit.state) + 1 ) % bryte::Exit::State::count );
+               } else {
+                    current_exit_state++;
+                    current_exit_state %= 3;
                }
           }
      } break;
@@ -111,6 +114,7 @@ void State::mouse_button_changed_down ( bool left )
                          map.add_enemy_spawn ( tx, ty, 1 );
                     }
                }
+          } else {
           }
      } break;
      }
@@ -166,7 +170,7 @@ void State::option_button_changed_down ( bool up )
                break;
           }
 
-          auto& interactive = interactives.interactive ( tx, ty );
+          auto& interactive = interactives.get_from_tile ( tx, ty );
 
           if ( interactive.type == bryte::Interactive::Type::exit ) {
                if ( up ) {
@@ -174,6 +178,14 @@ void State::option_button_changed_down ( bool up )
                } else {
                     interactive.interactive_exit.map_index++;
                }
+          } else {
+               if ( up ) {
+                    current_exit_direction++;
+               } else {
+                    current_exit_direction++;
+               }
+
+               current_exit_direction %= 4;
           }
      } break;
      }
@@ -197,13 +209,11 @@ Void State::option_scroll ( Int32 scroll )
                break;
           }
 
-          auto& interactive = interactives.interactive ( tx, ty );
+          auto& interactive = interactives.get_from_tile ( tx, ty );
 
           if ( interactive.type == bryte::Interactive::Type::exit ) {
                interactive.interactive_exit.exit_index += scroll;
           } else {
-               current_exit_direction += scroll;
-               current_exit_direction %= 4;
           }
      } break;
      }
@@ -277,9 +287,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
                state->settings->map_save_filename = state->settings->map_load_filename;
           }
 
-          state->map.load ( state->settings->map_load_filename );
-
-          state->interactives.reset ( state->map.width ( ), state->map.height ( ) );
+          state->map.load ( state->settings->map_load_filename, state->interactives );
      } else {
           state->map.initialize ( state->settings->map_width, state->settings->map_height );
 
@@ -389,12 +397,12 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_O:
                if ( key_change.down ) {
-                    state->map.save ( state->settings->map_save_filename );
+                    state->map.save ( state->settings->map_save_filename, state->interactives );
                }
                break;
           case SDL_SCANCODE_I:
                if ( key_change.down ) {
-                    state->map.load ( state->settings->map_save_filename );
+                    state->map.load ( state->settings->map_save_filename, state->interactives );
                }
                break;
           case SDL_SCANCODE_C:
@@ -464,7 +472,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           break;
      case Mode::exit:
      {
-          auto& interactive = state->interactives.interactive ( tx, ty );
+          auto& interactive = state->interactives.get_from_tile ( tx, ty );
 
           if ( interactive.type == bryte::Interactive::Type::exit ) {
                auto& exit = interactive.interactive_exit;
@@ -540,11 +548,12 @@ static Void render_enemy_spawns ( SDL_Surface* back_buffer, SDL_Surface* enemy_s
 }
 
 static Void render_current_icon ( SDL_Surface* back_buffer, SDL_Surface* sheet,
-                                  Int32 mouse_x, Int32 mouse_y, Int32 current_id )
+                                  Int32 mouse_x, Int32 mouse_y, Int32 current_x_id, Int32 current_y_id )
 {
      SDL_Rect dest_rect { mouse_x, back_buffer->h - mouse_y,
                           bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
-     SDL_Rect clip_rect { current_id * bryte::Map::c_tile_dimension_in_pixels, 0,
+     SDL_Rect clip_rect { current_x_id * bryte::Map::c_tile_dimension_in_pixels,
+                          current_y_id * bryte::Map::c_tile_dimension_in_pixels,
                           bryte::Map::c_tile_dimension_in_pixels, bryte::Map::c_tile_dimension_in_pixels };
 
      SDL_BlitSurface ( sheet, &clip_rect, back_buffer, &dest_rect );
@@ -619,23 +628,24 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::tile:
           render_current_icon ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
-                                state->current_tile );
+                                state->current_tile, 0 );
           break;
      case Mode::decor:
           render_current_icon ( back_buffer, state->decorsheet, state->mouse_x, state->mouse_y,
-                                state->current_decor );
+                                state->current_decor, 0 );
           break;
      case Mode::light:
           render_current_icon ( back_buffer, state->lampsheet, state->mouse_x, state->mouse_y,
-                                state->current_lamp );
+                                state->current_lamp, 0 );
           break;
      case Mode::exit:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheets [ bryte::Interactive::Type::exit ],
-                                state->mouse_x, state->mouse_y, state->current_exit_direction );
+                                state->mouse_x, state->mouse_y,
+                                state->current_exit_direction, state->current_exit_state );
           break;
      case Mode::enemy:
-          render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0 );
+          render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0, 0 );
           break;
      }
 

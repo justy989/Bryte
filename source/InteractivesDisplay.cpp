@@ -7,7 +7,7 @@ Void InteractivesDisplay::render_interactives ( SDL_Surface* back_buffer, Intera
 {
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               render_interactive ( back_buffer, interactives.interactive ( x, y ),
+               render_interactive ( back_buffer, interactives.get_from_tile ( x, y ),
                                     x * Map::c_tile_dimension_in_pixels,
                                     y * Map::c_tile_dimension_in_pixels,
                                     camera_x, camera_y );

@@ -1,5 +1,6 @@
 #include "Map.hpp"
 #include "Utils.hpp"
+#include "Interactives.hpp"
 
 #include <fstream>
 
@@ -265,17 +266,17 @@ Void Map::remove_enemy_spawn ( Fixture* enemy_spawn )
      remove_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
 }
 
-Void Map::load_from_master_list ( Uint8 map_index )
+Void Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
 {
      if ( map_index >= m_master_count ) {
           LOG_ERROR ( "Failed to load map. Invalid map index %d\n", map_index );
           return;
      }
 
-     load ( m_master_list [ map_index ] );
+     load ( m_master_list [ map_index ], interactives );
 }
 
-void Map::save ( const Char8* filepath )
+void Map::save ( const Char8* filepath, Interactives& interactives )
 {
      LOG_INFO ( "Saving Map '%s'\n", filepath );
 
@@ -319,9 +320,16 @@ void Map::save ( const Char8* filepath )
           auto& enemy_spawn = m_enemy_spawns [ i ];
           file.write ( reinterpret_cast<const Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
      }
+
+     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
+          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
+               auto& interactive = interactives.get_from_tile ( x, y );
+               file.write ( reinterpret_cast<const Char8*> ( &interactive ), sizeof ( interactive ) );
+          }
+     }
 }
 
-void Map::load ( const Char8* filepath )
+void Map::load ( const Char8* filepath, Interactives& interactives )
 {
      LOG_INFO ( "Loading Map '%s'\n", filepath );
 
@@ -366,6 +374,15 @@ void Map::load ( const Char8* filepath )
      for ( Int32 i = 0; i < m_enemy_spawn_count; ++i ) {
           auto& enemy_spawn = m_enemy_spawns [ i ];
           file.read ( reinterpret_cast<Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
+     }
+
+     interactives.reset ( m_width, m_height );
+
+     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
+          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
+               auto& interactive = interactives.get_from_tile ( x, y );
+               file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
+          }
      }
 }
 

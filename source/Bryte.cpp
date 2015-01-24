@@ -155,10 +155,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      }
 
      map.load_master_list ( settings->map_master_list_filename );
-     map.load_from_master_list ( settings->map_index );
+     map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );
-
-     interactives.reset ( map.width ( ), map.height ( ) );
 
      interactives.add ( Interactive::Type::pushable_block, 8, 8 );
      interactives.add ( Interactive::Type::pushable_block, 9, 9 );
@@ -265,8 +263,7 @@ Void State::player_death ( )
      player.cooldown_watch.reset ( 0.0f );
 
      // load the first map
-     map.load_from_master_list ( 0 );
-     interactives.reset ( map.width ( ), map.height ( ) );
+     map.load_from_master_list ( 0, interactives );
 
      clear_enemies ( );
      spawn_map_enemies ( );

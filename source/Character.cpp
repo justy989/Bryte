@@ -206,14 +206,14 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           collided = true;
      }
 
-     const Interactive& bottom_left_interactive  = interactives.interactive ( target_tile_left,
-                                                                              target_tile_bottom );
-     const Interactive& top_left_interactive     = interactives.interactive ( target_tile_left,
-                                                                              target_tile_top );
-     const Interactive& bottom_right_interactive = interactives.interactive ( target_tile_right,
-                                                                              target_tile_bottom );
-     const Interactive& top_right_interactive    = interactives.interactive ( target_tile_right,
-                                                                              target_tile_top );
+     const Interactive& bottom_left_interactive  = interactives.get_from_tile ( target_tile_left,
+                                                                                target_tile_bottom );
+     const Interactive& top_left_interactive     = interactives.get_from_tile ( target_tile_left,
+                                                                                target_tile_top );
+     const Interactive& bottom_right_interactive = interactives.get_from_tile ( target_tile_right,
+                                                                                target_tile_bottom );
+     const Interactive& top_right_interactive    = interactives.get_from_tile ( target_tile_right,
+                                                                                target_tile_top );
 
      if ( bottom_left_interactive.is_solid ( ) || top_left_interactive.is_solid ( ) ||
           bottom_right_interactive.is_solid ( ) || top_right_interactive.is_solid ( ) ) {

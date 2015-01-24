@@ -7,6 +7,8 @@
 
 namespace bryte
 {
+     class Interactives;
+
      class Map {
      public:
 
@@ -38,9 +40,9 @@ namespace bryte
 
           Void initialize ( Uint8 width, Uint8 height );
 
-          Void save ( const Char8* filepath );
-          Void load ( const Char8* filepath );
-          Void load_from_master_list ( Uint8 map_index );
+          Void save ( const Char8* filepath, Interactives& interactives );
+          Void load ( const Char8* filepath, Interactives& interactives );
+          Void load_from_master_list ( Uint8 map_index, Interactives& interactives );
 
           Int32 position_to_tile_index     ( Real32 x, Real32 y ) const;
 

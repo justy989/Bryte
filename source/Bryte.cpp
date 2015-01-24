@@ -163,9 +163,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      auto& lever = interactives.add ( Interactive::Type::lever, 5, 4 ).interactive_lever;
 
-     lever.change_tile_coordinate_x = 1;
-     lever.change_tile_coordinate_y = 2;
-     lever.change_tile_value = 9;
+     lever.activate_coordinate_x = 1;
+     lever.activate_coordinate_y = 2;
 
      return true;
 }
@@ -438,9 +437,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      state->interactives.update ( time_delta );
 
      if ( state->activate_key ) {
-          state->interactives.activate ( meters_to_pixels ( state->player.position.x ( ) ) / Map::c_tile_dimension_in_pixels,
-                                         meters_to_pixels ( state->player.position.y ( ) ) / Map::c_tile_dimension_in_pixels,
-                                         state->map );
+          state->interactives.activate ( meters_to_pixels ( state->player.position.x ( ) ) /
+                                         Map::c_tile_dimension_in_pixels,
+                                         meters_to_pixels ( state->player.position.y ( ) ) /
+                                         Map::c_tile_dimension_in_pixels);
      }
 
      for ( Uint32 i = 0; i < State::c_max_health_pickups; ++i ) {

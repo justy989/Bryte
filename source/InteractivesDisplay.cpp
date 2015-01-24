@@ -31,6 +31,9 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::none:
           return;
      case Interactive::Type::lever:
+          if ( interactive.interactive_lever.on ) {
+               clip_rect.x = Map::c_tile_dimension_in_pixels;
+          }
           break;
      case Interactive::Type::pushable_block:
           break;

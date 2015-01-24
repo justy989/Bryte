@@ -18,6 +18,8 @@ namespace bryte
                count
           };
 
+          Void reset ( );
+
           Void activate ( );
 
           Direction direction;
@@ -32,7 +34,7 @@ namespace bryte
 
           Void update ( float time_delta );
 
-          Void activate ( Map& map );
+          Void activate ( Interactives& interactives );
 
           Bool      on;
           Stopwatch cooldown_watch;
@@ -73,7 +75,7 @@ namespace bryte
 
           Void      update   ( float time_delta );
 
-          Void      activate ( Map& map );
+          Void      activate ( Interactives& interactives );
           Direction push     ( Direction direction );
 
           Bool is_solid ( ) const;
@@ -97,7 +99,7 @@ namespace bryte
           Void update ( float time_delta );
 
           Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
-          Void activate ( Int32 tile_x, Int32 tile_y, Map& map );
+          Void activate ( Int32 tile_x, Int32 tile_y );
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
 

@@ -1,2 +1,2 @@
-start.brm
+map.brm
 end.brm

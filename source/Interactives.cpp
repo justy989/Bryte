@@ -80,11 +80,11 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
      }
 }
 
-Void Interactives::activate ( Int32 tile_x, Int32 tile_y, Map& map )
+Void Interactives::activate ( Int32 tile_x, Int32 tile_y )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
-     i.activate ( map );
+     i.activate ( *this );
 }
 
 Bool Interactive::is_solid ( ) const
@@ -106,6 +106,9 @@ Void Interactive::reset ( )
      switch ( type ) {
      default:
           break;
+     case Type::exit:
+          interactive_exit.reset ( );
+          break;
      case Type::lever:
           interactive_lever.reset ( );
           break;
@@ -115,13 +118,16 @@ Void Interactive::reset ( )
      }
 }
 
-Void Interactive::activate ( Map& map )
+Void Interactive::activate ( Interactives& interactives )
 {
      switch ( type ) {
      default:
           break;
+     case Type::exit:
+          interactive_exit.activate ( );
+          break;
      case Type::lever:
-          interactive_lever.activate ( map );
+          interactive_lever.activate ( interactives );
           break;
      }
 }
@@ -158,10 +164,9 @@ Void Interactive::update ( float time_delta )
 Void Lever::reset ( )
 {
      cooldown_watch.reset ( 0.0f );
-     on                       = false;
-     change_tile_coordinate_x = 0;
-     change_tile_coordinate_y = 0;
-     change_tile_value        = 0;
+     on                    = false;
+     activate_coordinate_x = 0;
+     activate_coordinate_y = 0;
 }
 
 Void Lever::update ( float time_delta )
@@ -169,27 +174,17 @@ Void Lever::update ( float time_delta )
      cooldown_watch.tick ( time_delta );
 }
 
-Void Lever::activate ( Map& map )
+Void Lever::activate ( Interactives& interactives )
 {
      if ( !cooldown_watch.expired ( ) ) {
           return;
      }
 
-     auto tile_value = map.get_coordinate_value ( change_tile_coordinate_x,
-                                                  change_tile_coordinate_y );
-     auto tile_solid = map.get_coordinate_solid ( change_tile_coordinate_x,
-                                                  change_tile_coordinate_y );
+     auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+     interactive.activate ( interactives );
 
      // toggle
      on = !on;
-
-     map.set_coordinate_value ( change_tile_coordinate_x, change_tile_coordinate_y,
-                                change_tile_value );
-
-     map.set_coordinate_solid ( change_tile_coordinate_x, change_tile_coordinate_y,
-                                !tile_solid );
-
-     change_tile_value = tile_value;
 
      // reset the stopwatch
      cooldown_watch.reset ( c_lever_cooldown );
@@ -201,7 +196,7 @@ Void PushableBlock::reset ( )
      cooldown_watch.reset ( 0.0f );
      move_direction = Direction::count;
      pushed_last_update = false;
-     moving_offset = 0;
+     //moving_offset = 0;
 }
 
 Void PushableBlock::update ( float time_delta )
@@ -252,10 +247,28 @@ Direction PushableBlock::push ( Direction direction )
      return Direction::count;
 }
 
+Void Exit::reset ( )
+{
+     direction    = Direction::up;
+     state        = State::open;
+     map_index    = 0;
+     exit_index_x = 0;
+     exit_index_y = 0;
+}
+
 Void Exit::activate ( )
 {
-     if ( state == State::closed || state == State::locked ) {
+     switch ( state ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case State::open:
+          state = State::closed;
+          break;
+     case State::closed:
+     case State::locked:
           state = State::open;
+          break;
      }
 }
 

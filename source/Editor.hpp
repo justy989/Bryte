@@ -93,6 +93,7 @@ namespace editor
           Uint8 current_lamp;
           Bool  current_solid;
           Uint8 current_field;
+
           Bool   track_current_interactive;
           Uint32 current_interactive_x;
           Uint32 current_interactive_y;

@@ -158,14 +158,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );
 
-     interactives.add ( Interactive::Type::pushable_block, 8, 8 );
-     interactives.add ( Interactive::Type::pushable_block, 9, 9 );
-
-     auto& lever = interactives.add ( Interactive::Type::lever, 5, 4 ).interactive_lever;
-
-     lever.activate_coordinate_x = 1;
-     lever.activate_coordinate_y = 2;
-
      return true;
 }
 

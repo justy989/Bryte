@@ -1,5 +1,6 @@
 #include "Map.hpp"
 #include "Utils.hpp"
+#include "Interactives.hpp"
 
 #include <fstream>
 
@@ -104,31 +105,13 @@ Void Map::set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid )
      m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid = solid;
 }
 
-Bool Map::is_position_solid ( Real32 x, Real32 y ) const
-{
-     return m_tiles [ position_to_tile_index ( x, y ) ].solid;
-}
-
-Map::Exit* Map::check_coordinates_for_exit ( Uint8 x, Uint8 y )
-{
-     for ( Uint8 d = 0; d < m_exit_count; ++d ) {
-          auto& exit = m_exits [ d ];
-
-          if ( exit.location_x == x && exit.location_y == y ) {
-               return &exit;
-          }
-     }
-
-     return nullptr;
-}
-
 Map::Fixture* Map::check_coordinates_for_fixture ( Map::Fixture* fixture_array, Uint8 fixture_count,
                                                    Uint8 x, Uint8 y )
 {
      for ( Uint8 d = 0; d < fixture_count; ++d ) {
           auto& fixture = fixture_array [ d ];
 
-          if ( fixture.location_x == x && fixture.location_y == y ) {
+          if ( fixture.location.x == x && fixture.location.y == y ) {
                return &fixture;
           }
      }
@@ -136,17 +119,17 @@ Map::Fixture* Map::check_coordinates_for_fixture ( Map::Fixture* fixture_array, 
      return nullptr;
 }
 
-Map::Fixture* Map::check_coordinates_for_decor ( Uint8 x, Uint8 y )
+Map::Fixture* Map::check_coordinates_for_decor ( Int32 x, Int32 y )
 {
      return check_coordinates_for_fixture ( m_decors, m_decor_count, x, y );
 }
 
-Map::Fixture* Map::check_coordinates_for_lamp ( Uint8 x, Uint8 y )
+Map::Fixture* Map::check_coordinates_for_lamp ( Int32 x, Int32 y )
 {
      return check_coordinates_for_fixture ( m_lamps, m_lamp_count, x, y );
 }
 
-Map::Fixture* Map::check_coordinates_for_enemy_spawn ( Uint8 x, Uint8 y )
+Map::Fixture* Map::check_coordinates_for_enemy_spawn ( Int32 x, Int32 y )
 {
      return check_coordinates_for_fixture ( m_enemy_spawns, m_enemy_spawn_count, x, y );
 }
@@ -166,7 +149,7 @@ Void Map::subtract_from_base_light ( Uint8 delta )
      m_base_light_value -= delta;
 }
 
-Void Map::illuminate ( Real32 x, Real32 y, Uint8 value )
+Void Map::illuminate ( Int32 x, Int32 y, Uint8 value )
 {
      Int32 tile_radius = ( static_cast<Int32>( value ) - static_cast<Int32>( m_base_light_value ) ) / c_light_decay;
 
@@ -174,8 +157,8 @@ Void Map::illuminate ( Real32 x, Real32 y, Uint8 value )
           return;
      }
 
-     Int32 tile_x      = meters_to_pixels ( x ) / c_tile_dimension_in_pixels;
-     Int32 tile_y      = meters_to_pixels ( y ) / c_tile_dimension_in_pixels;
+     Int32 tile_x      = x / c_tile_dimension_in_pixels;
+     Int32 tile_y      = y / c_tile_dimension_in_pixels;
      Int32 min_tile_x  = tile_x - tile_radius;
      Int32 max_tile_x  = tile_x + tile_radius;
      Int32 min_tile_y  = tile_y - tile_radius;
@@ -214,21 +197,21 @@ Void Map::reset_light ( )
 
      for ( Uint8 i = 0; i < m_lamp_count; ++i ) {
           auto& lamp = m_lamps [ i ];
-          illuminate ( pixels_to_meters ( lamp.location_x ) * c_tile_dimension_in_pixels,
-                       pixels_to_meters ( lamp.location_y ) * c_tile_dimension_in_pixels,
+          illuminate ( lamp.location.x * c_tile_dimension_in_pixels,
+                       lamp.location.y * c_tile_dimension_in_pixels,
                        c_unique_lamps_light [ lamp.id ] );
      }
 }
 
 Bool Map::add_fixture ( Map::Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
-                        Uint8 location_x, Uint8 location_y, Uint8 id )
+                        Int32 location_x, Int32 location_y, Uint8 id )
 {
      if ( *fixture_count >= max_fixtures ) {
           return false;
      }
 
-     fixture_array [ *fixture_count ].location_x = location_x;
-     fixture_array [ *fixture_count ].location_y = location_y;
+     fixture_array [ *fixture_count ].location.x = location_x;
+     fixture_array [ *fixture_count ].location.y = location_y;
      fixture_array [ *fixture_count ].id         = id;
 
      (*fixture_count)++;
@@ -253,7 +236,7 @@ Void Map::remove_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 m
      (*fixture_count)--;
 }
 
-Bool Map::add_decor ( Uint8 location_x, Uint8 location_y, Uint8 id )
+Bool Map::add_decor ( Int32 location_x, Int32 location_y, Uint8 id )
 {
      return add_fixture ( m_decors, &m_decor_count, c_max_decors, location_x, location_y, id );
 }
@@ -263,7 +246,7 @@ Void Map::remove_decor ( Fixture* decor )
      remove_fixture ( m_decors, &m_decor_count, c_max_decors, decor );
 }
 
-Bool Map::add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id )
+Bool Map::add_lamp ( Int32 location_x, Int32 location_y, Uint8 id )
 {
      return add_fixture ( m_lamps, &m_lamp_count, c_max_lamps, location_x, location_y, id );
 }
@@ -273,7 +256,7 @@ Void Map::remove_lamp ( Fixture* lamp )
      remove_fixture ( m_lamps, &m_lamp_count, c_max_lamps, lamp );
 }
 
-Bool Map::add_enemy_spawn ( Uint8 location_x, Uint8 location_y, Uint8 id )
+Bool Map::add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id )
 {
      return add_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, location_x, location_y, id );
 }
@@ -283,48 +266,17 @@ Void Map::remove_enemy_spawn ( Fixture* enemy_spawn )
      remove_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
 }
 
-Bool Map::add_exit ( Uint8 location_x, Uint8 location_y, Uint8 id )
-{
-     if ( m_exit_count >= c_max_exits ) {
-          return false;
-     }
-
-     m_exits [ m_exit_count ].location_x = location_x;
-     m_exits [ m_exit_count ].location_y = location_y;
-     m_exits [ m_exit_count ].id = id;
-
-     m_exit_count++;
-
-     return true;
-}
-
-Void Map::remove_exit ( Exit* exit )
-{
-     ASSERT ( exit >= m_exits && exit < m_exits + c_max_exits );
-
-     Exit* last = m_exits + ( m_exit_count - 1 );
-
-     // slide down all the elements after it
-     while ( exit <= last ) {
-          Exit* next = exit + 1;
-          *exit = *next;
-          exit = next;
-     }
-
-     m_exit_count--;
-}
-
-Void Map::load_from_master_list ( Uint8 map_index )
+Void Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
 {
      if ( map_index >= m_master_count ) {
           LOG_ERROR ( "Failed to load map. Invalid map index %d\n", map_index );
           return;
      }
 
-     load ( m_master_list [ map_index ] );
+     load ( m_master_list [ map_index ], interactives );
 }
 
-void Map::save ( const Char8* filepath )
+void Map::save ( const Char8* filepath, Interactives& interactives )
 {
      LOG_INFO ( "Saving Map '%s'\n", filepath );
 
@@ -344,13 +296,6 @@ void Map::save ( const Char8* filepath )
 
                file.write ( reinterpret_cast<const Char8*> ( &tile ), sizeof ( tile ) );
           }
-     }
-
-     file.write ( reinterpret_cast<const Char8*>( &m_exit_count ), sizeof ( m_exit_count ) );
-
-     for ( Int32 i = 0; i < m_exit_count; ++i ) {
-          auto& exit = m_exits [ i ];
-          file.write ( reinterpret_cast<const Char8*> ( &exit ), sizeof ( exit ) );
      }
 
      file.write ( reinterpret_cast<const Char8*>( &m_decor_count ), sizeof ( m_decor_count ) );
@@ -375,9 +320,16 @@ void Map::save ( const Char8* filepath )
           auto& enemy_spawn = m_enemy_spawns [ i ];
           file.write ( reinterpret_cast<const Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
      }
+
+     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
+          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
+               auto& interactive = interactives.get_from_tile ( x, y );
+               file.write ( reinterpret_cast<const Char8*> ( &interactive ), sizeof ( interactive ) );
+          }
+     }
 }
 
-void Map::load ( const Char8* filepath )
+void Map::load ( const Char8* filepath, Interactives& interactives )
 {
      LOG_INFO ( "Loading Map '%s'\n", filepath );
 
@@ -397,13 +349,6 @@ void Map::load ( const Char8* filepath )
 
                file.read ( reinterpret_cast<Char8*> ( &tile ), sizeof ( tile ) );
           }
-     }
-
-     file.read ( reinterpret_cast<Char8*>( &m_exit_count ), sizeof ( m_exit_count ) );
-
-     for ( Int32 i = 0; i < m_exit_count; ++i ) {
-          auto& exit = m_exits [ i ];
-          file.read ( reinterpret_cast<Char8*> ( &exit ), sizeof ( exit ) );
      }
 
      file.read ( reinterpret_cast<Char8*>( &m_decor_count ), sizeof ( m_decor_count ) );
@@ -429,6 +374,15 @@ void Map::load ( const Char8* filepath )
      for ( Int32 i = 0; i < m_enemy_spawn_count; ++i ) {
           auto& enemy_spawn = m_enemy_spawns [ i ];
           file.read ( reinterpret_cast<Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
+     }
+
+     interactives.reset ( m_width, m_height );
+
+     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
+          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
+               auto& interactive = interactives.get_from_tile ( x, y );
+               file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
+          }
      }
 }
 

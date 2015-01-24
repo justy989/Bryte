@@ -7,9 +7,12 @@
 #include "GameInput.hpp"
 
 #include "Map.hpp"
+#include "Interactives.hpp"
 
 #include "Text.hpp"
 #include "Vector.hpp"
+
+#include "InteractivesDisplay.hpp"
 
 namespace editor
 {
@@ -33,8 +36,10 @@ namespace editor
           tile = 0,
           decor,
           light,
-          exit,
           enemy,
+          exit,
+          lever,
+          pushable_block,
           count
      };
 
@@ -45,6 +50,7 @@ namespace editor
 
           Void mouse_button_changed_down ( bool left );
           Void option_button_changed_down ( bool up );
+          Void option_scroll ( Int32 scroll );
 
      public:
 
@@ -53,11 +59,16 @@ namespace editor
           Text text;
 
           bryte::Map map;
+          bryte::Interactives interactives;
 
           Mode mode;
 
           Int32  mouse_x;
           Int32  mouse_y;
+          Int32  mouse_screen_x;
+          Int32  mouse_screen_y;
+          Int32  mouse_tile_x;
+          Int32  mouse_tile_y;
 
           Vector camera;
 
@@ -70,15 +81,22 @@ namespace editor
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
-          SDL_Surface* exitsheet;
 
           SDL_Surface* rat_surface;
 
+          bryte::InteractivesDisplay interactives_display;
+
           Uint8 current_tile;
           Uint8 current_decor;
-          Uint8 current_exit;
+          Uint8 current_exit_direction;
+          Uint8 current_exit_state;
           Uint8 current_lamp;
           Bool  current_solid;
+          Uint8 current_field;
+
+          Bool   track_current_interactive;
+          Uint32 current_interactive_x;
+          Uint32 current_interactive_y;
 
           Bool draw_solids;
           Bool draw_light;

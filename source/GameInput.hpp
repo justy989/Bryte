@@ -39,6 +39,8 @@ public:
      Int32     mouse_position_x;
      Int32     mouse_position_y;
 
+     Int32     mouse_scroll;
+
      MouseButtonChange mouse_button_changes [ c_max_mouse_button_change_count ];
      Uint32 mouse_button_change_count;
 };

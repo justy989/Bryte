@@ -8,14 +8,12 @@ using namespace bryte;
 
 static const Real32 c_lever_width             = 0.5f;
 static const Real32 c_lever_height            = 0.5f;
-static const Real32 c_lever_cooldown          = 0.75f;
 
-static const Char8* c_test_tilesheet_path     = "castle_tilesheet.bmp";
-static const Char8* c_test_decorsheet_path    = "castle_decorsheet.bmp";
-static const Char8* c_test_lampsheet_path     = "castle_lampsheet.bmp";
-static const Char8* c_test_exitsheet_path     = "castle_exitsheet.bmp";
-static const Char8* c_test_player_path        = "test_hero.bmp";
-static const Char8* c_test_rat_path           = "test_rat.bmp";
+static const Char8* c_test_tilesheet_path        = "castle_tilesheet.bmp";
+static const Char8* c_test_decorsheet_path       = "castle_decorsheet.bmp";
+static const Char8* c_test_lampsheet_path        = "castle_lampsheet.bmp";
+static const Char8* c_test_player_path           = "test_hero.bmp";
+static const Char8* c_test_rat_path              = "test_rat.bmp";
 
 const Real32 HealthPickup::c_dimension = 0.4f;
 
@@ -75,63 +73,6 @@ static Direction determine_damage_direction ( const Character& a, const Characte
      return Direction::left;
 }
 
-Void Interactive::activate ( Map& map )
-{
-     switch ( type ) {
-     default:
-          ASSERT ( 0 );
-          break;
-     case Type::lever:
-          activate_lever ( map );
-          break;
-     }
-}
-
-Void Interactive::update ( float time_delta )
-{
-     switch ( type ) {
-     default:
-          ASSERT ( 0 );
-          break;
-     case Type::lever:
-          update_lever ( time_delta );
-          break;
-     }
-}
-
-Void Interactive::activate_lever ( Map& map )
-{
-     if ( !lever_state.cooldown_watch.expired ( ) ) {
-          return;
-     }
-
-     auto tile_value = map.get_coordinate_value ( lever_state.change_tile_coordinate_x,
-                                                  lever_state.change_tile_coordinate_y );
-     auto tile_solid = map.get_coordinate_solid ( lever_state.change_tile_coordinate_x,
-                                                  lever_state.change_tile_coordinate_y );
-
-     // toggle
-     lever_state.on = !lever_state.on;
-
-     map.set_coordinate_value ( lever_state.change_tile_coordinate_x,
-                                lever_state.change_tile_coordinate_y,
-                                lever_state.change_tile_value );
-
-     map.set_coordinate_solid ( lever_state.change_tile_coordinate_x,
-                                lever_state.change_tile_coordinate_y,
-                                !tile_solid );
-
-     lever_state.change_tile_value = tile_value;
-
-     // reset the stopwatch
-     lever_state.cooldown_watch.reset ( c_lever_cooldown );
-}
-
-Void Interactive::update_lever ( float time_delta )
-{
-     lever_state.cooldown_watch.tick ( time_delta );
-}
-
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
      random.seed ( 13371 );
@@ -185,11 +126,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( exitsheet, game_memory,
-                                          c_test_exitsheet_path ) ) {
-          return false;
-     }
-
      if ( !load_bitmap_with_game_memory ( rat_surface, game_memory,
                                           c_test_rat_path ) ) {
           return false;
@@ -200,21 +136,27 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::lever ],
+                                          game_memory,
+                                          "castle_leversheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::pushable_block ],
+                                          game_memory,
+                                          "castle_pushableblocksheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::exit ],
+                                          game_memory,
+                                          "castle_exitsheet.bmp" ) ) {
+          return false;
+     }
+
      map.load_master_list ( settings->map_master_list_filename );
-     map.load_from_master_list ( settings->map_index );
+     map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );
-
-     interactive.type       = Interactive::Type::lever;
-     interactive.location_x = 4;
-     interactive.location_y = 4;
-
-     Interactive::LeverState& lever_state = interactive.lever_state;
-
-     lever_state.cooldown_watch.reset ( 0.0f );
-     lever_state.on                       = false;
-     lever_state.change_tile_coordinate_x = 5;
-     lever_state.change_tile_coordinate_y = 5;
-     lever_state.change_tile_value        = 5;
 
      return true;
 }
@@ -224,7 +166,6 @@ Void State::destroy ( )
      SDL_FreeSurface ( tilesheet );
      SDL_FreeSurface ( decorsheet );
      SDL_FreeSurface ( lampsheet );
-     SDL_FreeSurface ( exitsheet );
 
      SDL_FreeSurface ( rat_surface );
      SDL_FreeSurface ( player_surface );
@@ -280,8 +221,8 @@ Void State::spawn_map_enemies ( )
      for ( int i = 0; i < map.enemy_spawn_count ( ); ++i ) {
           auto& enemy_spawn = map.enemy_spawn ( i );
 
-          spawn_enemy ( pixels_to_meters ( enemy_spawn.location_x * Map::c_tile_dimension_in_pixels ),
-                        pixels_to_meters ( enemy_spawn.location_y * Map::c_tile_dimension_in_pixels ) );
+          spawn_enemy ( pixels_to_meters ( enemy_spawn.location.x * Map::c_tile_dimension_in_pixels ),
+                        pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ) );
      }
 }
 
@@ -313,7 +254,7 @@ Void State::player_death ( )
      player.cooldown_watch.reset ( 0.0f );
 
      // load the first map
-     map.load_from_master_list ( 0 );
+     map.load_from_master_list ( 0, interactives );
 
      clear_enemies ( );
      spawn_map_enemies ( );
@@ -348,7 +289,8 @@ static Void render_character ( SDL_Surface* back_buffer, const Character& charac
                                                  character.width ( ), character.height ( ) );
 
      SDL_Rect clip_rect = {
-          0, static_cast<Int32>( character.facing ) * 16, 16, 16
+          0, static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels,
+          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
      };
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -439,22 +381,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           state->player.attack ( );
      }
 
-     if ( state->activate_key ) {
-          auto& player = state->player;
-          auto& lever  = state->interactive;
-
-          if ( rect_collides_with_rect ( player.collision_x ( ), player.collision_y ( ),
-                                         player.collision_width ( ), player.collision_height ( ),
-                                         pixels_to_meters ( lever.location_x * Map::c_tile_dimension_in_pixels ),
-                                         pixels_to_meters ( lever.location_y * Map::c_tile_dimension_in_pixels ),
-                                         c_lever_width, c_lever_height ) ) {
-               lever.activate ( state->map );
-          }
-     }
-
-     state->interactive.update ( time_delta );
-
-     state->player.update ( time_delta, state->map );
+     state->player.update ( time_delta, state->map, state->interactives );
 
      for ( Uint32 i = 0; i < State::c_max_enemies; ++i ) {
           auto& enemy = state->enemies [ i ];
@@ -464,7 +391,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
 
           enemy.think ( state->player.position, state->random, time_delta );
-          enemy.update ( time_delta, state->map );
+          enemy.update ( time_delta, state->map, state->interactives );
 
           // check collision between player and enemy
           if ( state->player.state != Character::State::blinking &&
@@ -498,6 +425,16 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      }
 
+     // update interactives
+     state->interactives.update ( time_delta );
+
+     if ( state->activate_key ) {
+          state->interactives.activate ( meters_to_pixels ( state->player.position.x ( ) ) /
+                                         Map::c_tile_dimension_in_pixels,
+                                         meters_to_pixels ( state->player.position.y ( ) ) /
+                                         Map::c_tile_dimension_in_pixels);
+     }
+
      for ( Uint32 i = 0; i < State::c_max_health_pickups; ++i ) {
           HealthPickup& health_pickup = state->health_pickups [ i ];
 
@@ -521,24 +458,25 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-          auto* exit = map.check_coordinates_for_exit ( state->player.collision_x ( ) / Map::c_tile_dimension_in_meters,
-                                                        state->player.collision_y ( ) / Map::c_tile_dimension_in_meters );
+          auto& interactive = state->interactives.get_from_tile ( state->player.collision_x ( ) /
+                                                                  Map::c_tile_dimension_in_meters,
+                                                                  state->player.collision_y ( ) /
+                                                                  Map::c_tile_dimension_in_meters );
 
-          if ( exit ) {
-               Uint8 exit_index = exit->exit_index;
+          if ( interactive.type == Interactive::Type::exit &&
+               interactive.interactive_exit.state == Exit::State::open ) {
+               Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x * Map::c_tile_dimension_in_pixels ),
+                                     pixels_to_meters ( interactive.interactive_exit.exit_index_y * Map::c_tile_dimension_in_pixels ) );
 
-               map.load_from_master_list ( exit->map_index );
+               map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
                state->clear_enemies ( );
                state->spawn_map_enemies ( );
 
-               auto& dest_exit = map.exit ( exit_index );
-               state->player.position.set ( dest_exit.location_x * Map::c_tile_dimension_in_meters,
-                                            dest_exit.location_y * Map::c_tile_dimension_in_meters );
+               state->player.position = new_position;
 
                player_exit = map.position_to_tile_index ( state->player.collision_x ( ),
                                                           state->player.collision_y ( ) );
-
           }
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.collision_x ( ),
@@ -568,22 +506,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                         state->camera.x ( ), state->camera.y ( ) );
      render_map_lamps ( back_buffer, state->lampsheet, state->map,
                         state->camera.x ( ), state->camera.y ( ) );
-     render_map_exits ( back_buffer, state->exitsheet, state->map,
-                        state->camera.x ( ), state->camera.y ( ) );
+
+    state->interactives_display.render_interactives ( back_buffer, state->interactives,
+                                               state->camera.x ( ), state->camera.y ( ) );
 
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 green   = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
      Uint32 white   = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
-     Uint32 magenta = SDL_MapRGB ( back_buffer->format, 255, 0, 255 );
-
-     // draw lever
-     SDL_Rect lever_rect = build_world_sdl_rect ( pixels_to_meters ( state->interactive.location_x * Map::c_tile_dimension_in_pixels ),
-                                                  pixels_to_meters ( state->interactive.location_y * Map::c_tile_dimension_in_pixels ),
-                                                  c_lever_width, c_lever_height );
-
-     world_to_sdl ( lever_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
-
-     SDL_FillRect ( back_buffer, &lever_rect, magenta );
 
      // draw enemies
      for ( Uint32 i = 0; i < state->enemy_count; ++i ) {

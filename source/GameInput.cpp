@@ -4,6 +4,8 @@ Void GameInput::reset ( )
 {
      key_change_count          = 0;
      mouse_button_change_count = 0;
+
+     mouse_scroll              = 0;
 }
 
 Bool GameInput::add_key_change ( SDL_Scancode scan_code, Bool down )

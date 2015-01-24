@@ -36,8 +36,8 @@ static Void render_fixture ( SDL_Surface* back_buffer, SDL_Surface* fixture_shee
      SDL_Rect clip_rect { fixture->id * Map::c_tile_dimension_in_pixels, 0,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-     dest_rect.x = fixture->location_x * Map::c_tile_dimension_in_pixels;
-     dest_rect.y = fixture->location_y * Map::c_tile_dimension_in_pixels;
+     dest_rect.x = fixture->location.x * Map::c_tile_dimension_in_pixels;
+     dest_rect.y = fixture->location.y * Map::c_tile_dimension_in_pixels;
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
@@ -58,14 +58,6 @@ extern "C" Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lamp_s
 {
      for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
           render_fixture ( back_buffer, lamp_sheet, &map.lamp ( i ), camera_x, camera_y );
-     }
-}
-
-extern "C" Void render_map_exits ( SDL_Surface* back_buffer, SDL_Surface* exit_sheet, Map& map,
-                                   Real32 camera_x, Real32 camera_y )
-{
-     for ( Uint8 i = 0; i < map.exit_count ( ); ++i ) {
-          render_fixture ( back_buffer, exit_sheet, &map.exit ( i ), camera_x, camera_y );
      }
 }
 

@@ -7,8 +7,20 @@
 
 namespace bryte
 {
+     class Interactives;
+
      class Map {
      public:
+
+          struct Coordinates {
+               Int32 x;
+               Int32 y;
+          };
+
+          struct Location {
+               Uint8 x;
+               Uint8 y;
+          };
 
           struct Tile {
                Uint8 value;
@@ -16,15 +28,8 @@ namespace bryte
           };
 
           struct Fixture {
-               Uint8 location_x;
-               Uint8 location_y;
-
+               Location location;
                Uint8 id;
-          };
-
-          struct Exit : public Fixture {
-               Uint8 map_index;
-               Uint8 exit_index;
           };
 
      public:
@@ -35,9 +40,9 @@ namespace bryte
 
           Void initialize ( Uint8 width, Uint8 height );
 
-          Void save ( const Char8* filepath );
-          Void load ( const Char8* filepath );
-          Void load_from_master_list ( Uint8 map_index );
+          Void save ( const Char8* filepath, Interactives& interactives );
+          Void load ( const Char8* filepath, Interactives& interactives );
+          Void load_from_master_list ( Uint8 map_index, Interactives& interactives );
 
           Int32 position_to_tile_index     ( Real32 x, Real32 y ) const;
 
@@ -52,51 +57,41 @@ namespace bryte
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
 
-          Bool     is_position_solid           ( Real32 x, Real32 y ) const;
+          Fixture* check_coordinates_for_decor ( Int32 x, Int32 y );
+          Fixture* check_coordinates_for_lamp  ( Int32 x, Int32 y );
+          Fixture* check_coordinates_for_enemy_spawn ( Int32 x, Int32 y );
 
-          Fixture* check_coordinates_for_decor ( Uint8 x, Uint8 y );
-          Fixture* check_coordinates_for_lamp  ( Uint8 x, Uint8 y );
-          Exit*    check_coordinates_for_exit  ( Uint8 x, Uint8 y );
-          Fixture* check_coordinates_for_enemy_spawn ( Uint8 x, Uint8 y );
-
-          Uint8 base_light_value ( ) const;
-          Void  add_to_base_light ( Uint8 delta );
+          Uint8 base_light_value         ( ) const;
+          Void  add_to_base_light        ( Uint8 delta );
           Void  subtract_from_base_light ( Uint8 delta );
 
-          Void illuminate ( Real32 x, Real32 y, Uint8 value );
+          Void illuminate  ( Int32 x, Int32 y, Uint8 value );
           Void reset_light ( );
 
-          Bool add_decor ( Uint8 location_x, Uint8 location_y, Uint8 id );
-          Void remove_decor ( Fixture* decor );
+          Bool add_decor       ( Int32 location_x, Int32 location_y, Uint8 id );
+          Bool add_lamp        ( Int32 location_x, Int32 location_y, Uint8 id );
+          Bool add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id );
 
-          Bool add_lamp ( Uint8 location_x, Uint8 location_y, Uint8 id );
-          Void remove_lamp ( Fixture* lamp );
-
-          Bool add_enemy_spawn ( Uint8 location_x, Uint8 location_y, Uint8 id );
+          Void remove_decor       ( Fixture* decor );
+          Void remove_lamp        ( Fixture* lamp );
           Void remove_enemy_spawn ( Fixture* enemy_spawn );
 
-          Bool add_exit ( Uint8 location_x, Uint8 location_y, Uint8 id );
-          Void remove_exit ( Exit* exit );
-
-          inline Int32 width ( ) const;
+          inline Int32 width  ( ) const;
           inline Int32 height ( ) const;
 
-          inline Uint8 decor_count ( ) const;
-          inline Fixture& decor ( Uint8 index );
-
-          inline Uint8 lamp_count ( ) const;
-          inline Fixture& lamp ( Uint8 index );
-
-          inline Uint8 exit_count ( ) const;
-          inline Exit& exit ( Uint8 index );
-
+          inline Uint8 decor_count       ( ) const;
+          inline Uint8 lamp_count        ( ) const;
+          inline Uint8 exit_count        ( ) const;
           inline Uint8 enemy_spawn_count ( ) const;
+
+          inline Fixture& decor       ( Uint8 index );
+          inline Fixture& lamp        ( Uint8 index );
           inline Fixture& enemy_spawn ( Uint8 index );
 
      private:
 
           Bool add_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
-                             Uint8 location_x, Uint8 location_y, Uint8 id );
+                             Int32 location_x, Int32 location_y, Uint8 id );
           Void remove_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
                                 Fixture* fixture );
           Fixture* check_coordinates_for_fixture ( Fixture* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y );
@@ -110,7 +105,6 @@ namespace bryte
           static const Real32 c_tile_dimension_in_meters;
 
           static const Uint32 c_max_tiles = 1024;
-          static const Uint32 c_max_exits = 4;
 
           static const Uint32 c_max_light = c_max_tiles;
           static const Int32  c_light_decay = 32;
@@ -141,9 +135,6 @@ namespace bryte
 
           Fixture m_lamps [ c_max_lamps ];
           Uint8   m_lamp_count;
-
-          Exit   m_exits [ c_max_exits ];
-          Uint8  m_exit_count;
 
           Fixture m_enemy_spawns [ c_max_enemy_spawns ];
           Uint8   m_enemy_spawn_count;
@@ -181,18 +172,6 @@ namespace bryte
      inline Uint8 Map::decor_count ( ) const
      {
           return m_decor_count;
-     }
-
-     inline Uint8 Map::exit_count ( ) const
-     {
-          return m_exit_count;
-     }
-
-     inline Map::Exit& Map::exit ( Uint8 index )
-     {
-          ASSERT ( index < m_exit_count );
-
-          return m_exits [ index ];
      }
 
      inline Uint8 Map::enemy_spawn_count ( ) const

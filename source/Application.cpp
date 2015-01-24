@@ -357,6 +357,8 @@ Bool Application::poll_sdl_events ( )
                translate_window_pos_to_back_buffer ( button.x, button.y,
                                                      &m_game_input.mouse_position_x,
                                                      &m_game_input.mouse_position_y );
+          } else if ( sdl_event.type == SDL_MOUSEWHEEL ) {
+               m_game_input.mouse_scroll = sdl_event.wheel.y;
           }
      }
 

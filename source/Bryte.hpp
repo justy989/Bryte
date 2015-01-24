@@ -7,12 +7,15 @@
 #include "GameInput.hpp"
 
 #include "Map.hpp"
+#include "Interactives.hpp"
 #include "Character.hpp"
 #include "Enemy.hpp"
 
 #include "Random.hpp"
 
 #include "Vector.hpp"
+
+#include "InteractivesDisplay.hpp"
 
 #include <SDL2/SDL.h>
 
@@ -36,44 +39,6 @@ namespace bryte
           Int32        player_spawn_tile_y;
      };
 
-     struct Interactive {
-     public:
-
-          enum Type {
-               none,
-               lever
-          };
-
-          struct LeverState {
-               Stopwatch cooldown_watch;
-               Bool      on;
-               Int32     change_tile_coordinate_x;
-               Int32     change_tile_coordinate_y;
-               Int32     change_tile_value;
-          };
-
-     public:
-
-          Void activate ( Map& map );
-          Void update ( float time_delta );
-
-     private:
-
-          Void activate_lever ( Map& map );
-          Void update_lever ( float time_delta );
-
-     public:
-
-          Type type;
-
-          Uint8 location_x;
-          Uint8 location_y;
-
-          union {
-               LeverState lever_state;
-          };
-     };
-
      struct State {
      public:
 
@@ -94,34 +59,34 @@ namespace bryte
 
      public:
 
-          Random    random;
+          Random       random;
 
-          Character player;
-          Int32     player_exit_tile_index;
+          Character    player;
+          Int32        player_exit_tile_index;
 
-          Enemy  enemies [ c_max_enemies ];
-          Uint32 enemy_count;
-
-          Interactive interactive;
+          Enemy        enemies [ c_max_enemies ];
+          Uint32       enemy_count;
 
           HealthPickup health_pickups [ c_max_health_pickups ];
 
-          Bool      direction_keys [ Direction::count ];
-          Bool      attack_key;
-          Bool      activate_key;
+          Map          map;
+          Interactives interactives;
 
-          Map       map;
-
-          Vector    camera;
+          Vector       camera;
 
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
-          SDL_Surface* exitsheet;
 
           SDL_Surface* rat_surface;
 
           SDL_Surface* player_surface;
+
+          InteractivesDisplay interactives_display;
+
+          Bool         direction_keys [ Direction::count ];
+          Bool         attack_key;
+          Bool         activate_key;
 
           Int32        player_spawn_tile_x;
           Int32        player_spawn_tile_y;

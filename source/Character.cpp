@@ -1,5 +1,6 @@
 #include "Character.hpp"
 #include "Map.hpp"
+#include "Interactives.hpp"
 #include "Utils.hpp"
 
 using namespace bryte;
@@ -124,7 +125,7 @@ Void Character::damage ( Int32 amount, Direction push )
      }
 }
 
-Void Character::update ( Real32 time_delta, const Map& map )
+Void Character::update ( Real32 time_delta, const Map& map, Interactives& interactives )
 {
      // tick stopwatches
      state_watch.tick ( time_delta );
@@ -178,22 +179,11 @@ Void Character::update ( Real32 time_delta, const Map& map )
      // TEMPORARY, slow character down
      acceleration += velocity * -2.0f;
 
-     Vector target_position = position + ( velocity * time_delta ) + ( acceleration * ( 0.5f * square ( time_delta ) ) );
+     Vector target_position = position + ( velocity * time_delta ) +
+                              ( acceleration * ( 0.5f * square ( time_delta ) ) );
      velocity = acceleration * time_delta + velocity;
 
      bool collided = false;
-
-     // check collision with tile map
-     if ( map.is_position_solid ( collision_x ( target_position.x ( ) ),
-                                  collision_y ( target_position.y ( ) ) ) ||
-          map.is_position_solid ( collision_x ( target_position.x ( ) ) + collision_width ( ),
-                                  collision_y ( target_position.y ( ) ) ) ||
-          map.is_position_solid ( collision_x ( target_position.x ( ) ),
-                                  collision_y ( target_position.y ( ) ) + collision_height ( ) ) ||
-          map.is_position_solid ( collision_x ( target_position.x ( ) ) + collision_width ( ),
-                                  collision_y ( target_position.y ( ) ) + collision_height ( ) ) ) {
-          collided = true;
-     }
 
      // which tile did our target_position end up in
      Int32 starting_tile_left   = collision_x ( ) / Map::c_tile_dimension_in_meters;
@@ -208,18 +198,44 @@ Void Character::update ( Real32 time_delta, const Map& map )
      Int32 target_tile_top      = ( collision_y ( target_position.y ( ) ) + collision_height ( ) ) /
                                   Map::c_tile_dimension_in_meters;
 
+     // check collision with tile map
+     if ( map.get_coordinate_solid ( target_tile_left, target_tile_bottom ) ||
+          map.get_coordinate_solid ( target_tile_right, target_tile_bottom ) ||
+          map.get_coordinate_solid ( target_tile_left, target_tile_top ) ||
+          map.get_coordinate_solid ( target_tile_right, target_tile_top ) ) {
+          collided = true;
+     }
+
+     const Interactive& bottom_left_interactive  = interactives.get_from_tile ( target_tile_left,
+                                                                                target_tile_bottom );
+     const Interactive& top_left_interactive     = interactives.get_from_tile ( target_tile_left,
+                                                                                target_tile_top );
+     const Interactive& bottom_right_interactive = interactives.get_from_tile ( target_tile_right,
+                                                                                target_tile_bottom );
+     const Interactive& top_right_interactive    = interactives.get_from_tile ( target_tile_right,
+                                                                                target_tile_top );
+
+     if ( bottom_left_interactive.is_solid ( ) || top_left_interactive.is_solid ( ) ||
+          bottom_right_interactive.is_solid ( ) || top_right_interactive.is_solid ( ) ) {
+          collided = true;
+     }
+
      Vector wall;
 
      if ( starting_tile_left - target_tile_left > 0 ) {
           wall.set ( 1.0f, 0.0f );
+          interactives.push ( target_tile_left, target_tile_bottom, Direction::left, map );
      } else if ( starting_tile_right - target_tile_right < 0 ) {
           wall.set ( -1.0f, 0.0f );
+          interactives.push ( target_tile_right, target_tile_bottom, Direction::right, map );
      }
 
      if ( starting_tile_bottom - target_tile_bottom > 0 ) {
           wall.set ( 0.0f, 1.0f );
+          interactives.push ( target_tile_left, target_tile_bottom, Direction::down, map );
      } else if ( starting_tile_top - target_tile_top < 0 ) {
           wall.set ( 0.0f, -1.0f );
+          interactives.push ( target_tile_left, target_tile_top, Direction::up, map );
      }
 
      if ( !collided ) {

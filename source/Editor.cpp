@@ -86,15 +86,17 @@ void State::mouse_button_changed_down ( bool left )
                     interactive.type = bryte::Interactive::Type::none;
                } else {
                     interactive.type = bryte::Interactive::Type::exit;
-                    interactive.interactive_exit.direction  = static_cast<bryte::Direction>( current_exit_direction );
-                    interactive.interactive_exit.state      = static_cast<bryte::Exit::State>( current_exit_state );
-                    interactive.interactive_exit.map_index  = 0;
-                    interactive.interactive_exit.exit_index = 0;
+                    interactive.interactive_exit.direction    = static_cast<bryte::Direction>( current_exit_direction );
+                    interactive.interactive_exit.state        = static_cast<bryte::Exit::State>( current_exit_state );
+                    interactive.interactive_exit.map_index    = 0;
+                    interactive.interactive_exit.exit_index_x = 0;
+                    interactive.interactive_exit.exit_index_y = 0;
                }
           } else {
                if ( interactive.type == bryte::Interactive::Type::exit ) {
                     interactive.interactive_exit.state = static_cast<bryte::Exit::State>(
-                         ( static_cast<Int32>(interactive.interactive_exit.state) + 1 ) % bryte::Exit::State::count );
+                         ( static_cast<Int32>(interactive.interactive_exit.state) + 1 ) %
+                           bryte::Exit::State::count );
                } else {
                     current_exit_state++;
                     current_exit_state %= 3;
@@ -174,9 +176,29 @@ void State::option_button_changed_down ( bool up )
 
           if ( interactive.type == bryte::Interactive::Type::exit ) {
                if ( up ) {
-                    interactive.interactive_exit.map_index--;
+                    switch ( current_field ) {
+                    case 0:
+                         interactive.interactive_exit.map_index--;
+                         break;
+                    case 1:
+                         interactive.interactive_exit.exit_index_x--;
+                         break;
+                    case 2:
+                         interactive.interactive_exit.exit_index_y--;
+                         break;
+                    }
                } else {
-                    interactive.interactive_exit.map_index++;
+                    switch ( current_field ) {
+                    case 0:
+                         interactive.interactive_exit.map_index++;
+                         break;
+                    case 1:
+                         interactive.interactive_exit.exit_index_x++;
+                         break;
+                    case 2:
+                         interactive.interactive_exit.exit_index_y++;
+                         break;
+                    }
                }
           } else {
                if ( up ) {
@@ -193,30 +215,7 @@ void State::option_button_changed_down ( bool up )
 
 Void State::option_scroll ( Int32 scroll )
 {
-     Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
-     Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
 
-     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
-     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
-
-     switch ( mode ) {
-     default:
-          break;
-     case Mode::exit:
-     {
-          if ( tx < 0 || tx >= map.width ( ) ||
-               ty < 0 || ty >= map.height ( ) ) {
-               break;
-          }
-
-          auto& interactive = interactives.get_from_tile ( tx, ty );
-
-          if ( interactive.type == bryte::Interactive::Type::exit ) {
-               interactive.interactive_exit.exit_index += scroll;
-          } else {
-          }
-     } break;
-     }
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
@@ -381,6 +380,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                if ( key_change.down ) {
                     state->mode = static_cast<Mode>( static_cast<int>( state->mode ) + 1 );
                     state->mode = static_cast<Mode>( static_cast<int>( state->mode ) % Mode::count );
+                    state->current_field = 0;
                }
                break;
           case SDL_SCANCODE_W:
@@ -394,6 +394,18 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_A:
                state->camera_direction_keys [ 3 ] = key_change.down;
+               break;
+          case SDL_SCANCODE_F:
+               if ( key_change.down ) {
+                    switch ( state->mode ) {
+                    default:
+                         break;
+                    case Mode::exit:
+                         state->current_field++;
+                         state->current_field %= 3;
+                         break;
+                    }
+               }
                break;
           case SDL_SCANCODE_O:
                if ( key_change.down ) {
@@ -476,7 +488,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           if ( interactive.type == bryte::Interactive::Type::exit ) {
                auto& exit = interactive.interactive_exit;
-               sprintf ( state->message_buffer, "MAP %d EXIT %d", exit.map_index, exit.exit_index );
+               sprintf ( state->message_buffer, "MAP %d EXIT %d %d", exit.map_index,
+                         exit.exit_index_x, exit.exit_index_y );
           }
      } break;
      }
@@ -651,5 +664,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      state->text.render ( back_buffer, state->message_buffer,
                           13 * ( state->text.character_width + state->text.character_spacing ), 4 );
+
+     char buffer [ 64 ];
+     sprintf ( buffer, "FIELD %d", state->current_field );
+
+     state->text.render ( back_buffer, buffer, 210, 4 );
 }
 

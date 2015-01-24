@@ -466,27 +466,26 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-#if 0
-          auto* exit = map.check_coordinates_for_exit ( state->player.collision_x ( ) / Map::c_tile_dimension_in_meters,
-                                                        state->player.collision_y ( ) / Map::c_tile_dimension_in_meters );
+          auto& interactive = state->interactives.get_from_tile ( state->player.collision_x ( ) /
+                                                                  Map::c_tile_dimension_in_meters,
+                                                                  state->player.collision_y ( ) /
+                                                                  Map::c_tile_dimension_in_meters );
 
-          if ( exit ) {
-               Uint8 exit_index = exit->exit_index;
+          if ( interactive.type == Interactive::Type::exit &&
+               interactive.interactive_exit.state == Exit::State::open ) {
+               Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x * Map::c_tile_dimension_in_pixels ),
+                                     pixels_to_meters ( interactive.interactive_exit.exit_index_y * Map::c_tile_dimension_in_pixels ) );
 
-               map.load_from_master_list ( exit->map_index );
+               map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
                state->clear_enemies ( );
                state->spawn_map_enemies ( );
-               state->interactives.reset ( map.width ( ), map.height ( ) );
 
-               auto& dest_exit = map.exit ( exit_index );
-               state->player.position.set ( dest_exit.location.x * Map::c_tile_dimension_in_meters,
-                                            dest_exit.location.y * Map::c_tile_dimension_in_meters );
+               state->player.position = new_position;
 
                player_exit = map.position_to_tile_index ( state->player.collision_x ( ),
                                                           state->player.collision_y ( ) );
           }
-#endif
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.collision_x ( ),
                                                                 state->player.collision_y ( ) );

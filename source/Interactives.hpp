@@ -57,7 +57,8 @@ namespace bryte
           Direction direction;
           State     state;
           Uint8     map_index;
-          Uint8     exit_index;
+          Uint8     exit_index_x;
+          Uint8     exit_index_y;
      };
 
      struct Interactive {

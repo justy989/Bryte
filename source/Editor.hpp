@@ -86,6 +86,7 @@ namespace editor
           Uint8 current_exit_state;
           Uint8 current_lamp;
           Bool  current_solid;
+          Uint8 current_field;
 
           Bool draw_solids;
           Bool draw_light;

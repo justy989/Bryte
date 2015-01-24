@@ -48,6 +48,7 @@ namespace editor
 
           Void mouse_button_changed_down ( bool left );
           Void option_button_changed_down ( bool up );
+          Void option_scroll ( Int32 scroll );
 
      public:
 
@@ -81,7 +82,8 @@ namespace editor
 
           Uint8 current_tile;
           Uint8 current_decor;
-          Uint8 current_exit;
+          Uint8 current_exit_direction;
+          Uint8 current_exit_state;
           Uint8 current_lamp;
           Bool  current_solid;
 

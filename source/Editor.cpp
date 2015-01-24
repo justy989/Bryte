@@ -86,15 +86,15 @@ void State::mouse_button_changed_down ( bool left )
                     interactive.type = bryte::Interactive::Type::none;
                } else {
                     interactive.type = bryte::Interactive::Type::exit;
-                    interactive.interactive_exit.direction  = static_cast<bryte::Direction>( current_exit );
-                    interactive.interactive_exit.state      = bryte::Exit::State::open;
+                    interactive.interactive_exit.direction  = static_cast<bryte::Direction>( current_exit_direction );
+                    interactive.interactive_exit.state      = static_cast<bryte::Exit::State>( current_exit_state );
                     interactive.interactive_exit.map_index  = 0;
                     interactive.interactive_exit.exit_index = 0;
                }
           } else {
                if ( interactive.type == bryte::Interactive::Type::exit ) {
                     interactive.interactive_exit.state = static_cast<bryte::Exit::State>(
-                         ( static_cast<Int32>(exit) + 1 ) % bryte::Exit::State::count );
+                         ( static_cast<Int32>(interactive.interactive_exit.state) + 1 ) % bryte::Exit::State::count );
                }
           }
      } break;
@@ -118,11 +118,11 @@ void State::mouse_button_changed_down ( bool left )
 
 void State::option_button_changed_down ( bool up )
 {
-     //Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
-     //Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
+     Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
+     Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
 
-     //Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
-     //Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
+     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
+     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
 
      switch ( mode ) {
      default:
@@ -161,28 +161,52 @@ void State::option_button_changed_down ( bool up )
           break;
      case Mode::exit:
      {
-#if 0
-          bryte::Map::Exit* exit = map.check_coordinates_for_exit ( tx, ty );
-
-          if ( exit ) {
-               if ( up ) {
-                    exit->map_index--;
-               } else {
-                    exit->map_index++;
-               }
-          } else {
-               if ( up ) {
-                    current_exit++;
-               } else {
-                    current_exit--;
-               }
-
-               current_exit %= 4;
+          if ( tx < 0 || tx >= map.width ( ) ||
+               ty < 0 || ty >= map.height ( ) ) {
+               break;
           }
-#endif
+
+          auto& interactive = interactives.interactive ( tx, ty );
+
+          if ( interactive.type == bryte::Interactive::Type::exit ) {
+               if ( up ) {
+                    interactive.interactive_exit.map_index--;
+               } else {
+                    interactive.interactive_exit.map_index++;
+               }
+          }
      } break;
      }
+}
 
+Void State::option_scroll ( Int32 scroll )
+{
+     Int32 sx = mouse_x - meters_to_pixels ( camera.x ( ) );
+     Int32 sy = mouse_y - meters_to_pixels ( camera.y ( ) );
+
+     Int32 tx = sx / bryte::Map::c_tile_dimension_in_pixels;
+     Int32 ty = sy / bryte::Map::c_tile_dimension_in_pixels;
+
+     switch ( mode ) {
+     default:
+          break;
+     case Mode::exit:
+     {
+          if ( tx < 0 || tx >= map.width ( ) ||
+               ty < 0 || ty >= map.height ( ) ) {
+               break;
+          }
+
+          auto& interactive = interactives.interactive ( tx, ty );
+
+          if ( interactive.type == bryte::Interactive::Type::exit ) {
+               interactive.interactive_exit.exit_index += scroll;
+          } else {
+               current_exit_direction += scroll;
+               current_exit_direction %= 4;
+          }
+     } break;
+     }
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
@@ -254,11 +278,20 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           }
 
           state->map.load ( state->settings->map_load_filename );
+
+          state->interactives.reset ( state->map.width ( ), state->map.height ( ) );
      } else {
           state->map.initialize ( state->settings->map_width, state->settings->map_height );
+
+          state->interactives.reset ( state->map.width ( ), state->map.height ( ) );
      }
 
-     state->current_tile = 1;
+     state->current_tile           = 1;
+     state->current_decor          = 0;
+     state->current_exit_direction = 0;
+     state->current_exit_state     = 0;
+     state->current_lamp           = 0;
+     state->current_solid          = false;
 
      state->camera.set ( 0.0f, 0.0f );
 
@@ -315,6 +348,10 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 
      state->mouse_x = game_input.mouse_position_x;
      state->mouse_y = game_input.mouse_position_y;
+
+     if ( game_input.mouse_scroll ) {
+          state->option_scroll ( game_input.mouse_scroll );
+     }
 
      for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
           const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
@@ -593,14 +630,16 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->current_lamp );
           break;
      case Mode::exit:
-          //render_current_icon ( back_buffer, state->exitsheet, state->mouse_x, state->mouse_y,
-          //                      state->current_exit );
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheets [ bryte::Interactive::Type::exit ],
+                                state->mouse_x, state->mouse_y, state->current_exit_direction );
           break;
      case Mode::enemy:
           render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0 );
           break;
      }
 
-     state->text.render ( back_buffer, state->message_buffer, 13 * ( state->text.character_width + state->text.character_spacing ), 4 );
+     state->text.render ( back_buffer, state->message_buffer,
+                          13 * ( state->text.character_width + state->text.character_spacing ), 4 );
 }
 

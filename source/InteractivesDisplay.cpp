@@ -6,7 +6,7 @@ Void InteractivesDisplay::render_interactives ( SDL_Surface* back_buffer, Intera
                                                 Real32 camera_x, Real32 camera_y )
 {
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
-          for ( Int32 x = 0; x < interactives.height ( ); ++x ) {
+          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
                render_interactive ( back_buffer, interactives.interactive ( x, y ),
                                     x * Map::c_tile_dimension_in_pixels,
                                     y * Map::c_tile_dimension_in_pixels,
@@ -28,11 +28,15 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      default:
           ASSERT ( 0 );
           break;
+     case Interactive::Type::none:
+          return;
      case Interactive::Type::lever:
           break;
      case Interactive::Type::pushable_block:
           break;
      case Interactive::Type::exit:
+          clip_rect.x = interactive.interactive_exit.direction * Map::c_tile_dimension_in_pixels;
+          clip_rect.y = interactive.interactive_exit.state * Map::c_tile_dimension_in_pixels;
           break;
      }
 

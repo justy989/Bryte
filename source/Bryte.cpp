@@ -266,6 +266,7 @@ Void State::player_death ( )
 
      // load the first map
      map.load_from_master_list ( 0 );
+     interactives.reset ( map.width ( ), map.height ( ) );
 
      clear_enemies ( );
      spawn_map_enemies ( );

@@ -14,6 +14,7 @@ static const Char8* c_test_decorsheet_path       = "castle_decorsheet.bmp";
 static const Char8* c_test_lampsheet_path        = "castle_lampsheet.bmp";
 static const Char8* c_test_player_path           = "test_hero.bmp";
 static const Char8* c_test_rat_path              = "test_rat.bmp";
+static const Char8* c_test_bat_path              = "test_bat.bmp";
 
 const Real32 HealthPickup::c_dimension = 0.4f;
 
@@ -126,12 +127,17 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( rat_surface, game_memory,
+     if ( !load_bitmap_with_game_memory ( character_display.enemy_sheets [ Enemy::Type::rat ], game_memory,
                                           c_test_rat_path ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( player_surface, game_memory,
+     if ( !load_bitmap_with_game_memory ( character_display.enemy_sheets [ Enemy::Type::bat ], game_memory,
+                                          c_test_bat_path ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( character_display.player_sheet, game_memory,
                                           c_test_player_path ) ) {
           return false;
      }
@@ -186,15 +192,18 @@ Void State::destroy ( )
      SDL_FreeSurface ( decorsheet );
      SDL_FreeSurface ( lampsheet );
 
-     SDL_FreeSurface ( rat_surface );
-     SDL_FreeSurface ( player_surface );
+     SDL_FreeSurface ( character_display.player_sheet );
+
+     for ( int i = 0; i < Enemy::Type::count; ++i ) {
+          SDL_FreeSurface ( character_display.enemy_sheets [ i ] );
+     }
 
      for ( int i = 0; i < Interactive::Type::count; ++i ) {
           SDL_FreeSurface ( interactives_display.interactive_sheets [ i ] );
      }
 }
 
-Bool State::spawn_enemy ( Real32 x, Real32 y )
+Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id )
 {
      Enemy* enemy = nullptr;
 
@@ -210,29 +219,23 @@ Bool State::spawn_enemy ( Real32 x, Real32 y )
           return false;
      }
 
-     LOG_DEBUG ( "Spawning enemy at: %f, %f\n", x, y );
+     static const char* enemy_id_names [ ] = { "rat", "bat" };
+
+     LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], x, y );
 
      enemy->state  = Character::State::alive;
      enemy->facing = Direction::left;
-     enemy->type   = Enemy::Type::rat;
-
-     enemy->health     = 3;
-     enemy->max_health = 3;
 
      enemy->position.set ( x, y );
-
      enemy->velocity.zero ( );
-
-     enemy->dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
-     enemy->collision_offset.set ( pixels_to_meters ( 1 ), pixels_to_meters ( 4 ) );
-     enemy->collision_dimension.set ( pixels_to_meters ( 14 ), pixels_to_meters ( 6 ) );
-     enemy->rotate_collision = true;
 
      enemy->damage_pushed = Direction::left;
 
      enemy->state_watch.reset ( 0.0f );
      enemy->damage_watch.reset ( 0.0f );
      enemy->cooldown_watch.reset ( 0.0f );
+
+     enemy->init ( static_cast<Enemy::Type>( id ) );
 
      enemy_count++;
 
@@ -245,7 +248,8 @@ Void State::spawn_map_enemies ( )
           auto& enemy_spawn = map.enemy_spawn ( i );
 
           spawn_enemy ( pixels_to_meters ( enemy_spawn.location.x * Map::c_tile_dimension_in_pixels ),
-                        pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ) );
+                        pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ),
+                        enemy_spawn.id );
      }
 }
 
@@ -281,44 +285,6 @@ Void State::player_death ( )
 
      clear_enemies ( );
      spawn_map_enemies ( );
-}
-
-static Void render_character ( SDL_Surface* back_buffer, const Character& character,
-                               SDL_Surface* character_surface,
-                               Real32 camera_x, Real32 camera_y )
-{
-     static const Int32 blink_length  = 4;
-     static Bool        blink_on      = false;
-     static Int32       blink_count   = 0;
-
-     // do not draw if dead
-     if ( character.state == Character::State::dead ) {
-          return;
-     }
-
-     // update blinking
-     if ( blink_count <= 0 ) {
-          blink_count = blink_length;
-          blink_on = !blink_on;
-     } else {
-          blink_count--;
-     }
-
-     if ( !blink_on && character.state == Character::State::blinking ) {
-          return;
-     }
-
-     SDL_Rect dest_rect = build_world_sdl_rect ( character.position.x ( ), character.position.y ( ),
-                                                 character.width ( ), character.height ( ) );
-
-     SDL_Rect clip_rect = {
-          0, static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels,
-          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
-     };
-
-     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
-
-     SDL_BlitSurface ( character_surface, &clip_rect, back_buffer, &dest_rect );
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
@@ -373,7 +339,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
           case SDL_SCANCODE_8:
                if ( key_change.down ) {
                     state->spawn_enemy ( state->player.position.x ( ) - state->player.width ( ),
-                                         state->player.position.y ( ) );
+                                         state->player.position.y ( ), 0 );
                }
                break;
           }
@@ -584,13 +550,15 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // draw enemies
      for ( Uint32 i = 0; i < state->enemy_count; ++i ) {
-          render_character ( back_buffer, state->enemies [ i ], state->rat_surface,
-                             state->camera.x ( ), state->camera.y ( ) );
+          if ( state->enemies [ i ].state == Character::State::alive ) {
+               state->character_display.render_enemy ( back_buffer, state->enemies [ i ],
+                                                       state->camera.x ( ), state->camera.y ( ) );
+          }
      }
 
      // draw player
-     render_character ( back_buffer, state->player, state->player_surface,
-                        state->camera.x ( ), state->camera.y ( ) );
+     state->character_display.render_player ( back_buffer, state->player,
+                                              state->camera.x ( ), state->camera.y ( ) );
 
      // draw player attack
      if ( state->player.state == Character::State::attacking ) {

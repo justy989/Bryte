@@ -81,7 +81,6 @@ namespace bryte
 
           inline Uint8 decor_count       ( ) const;
           inline Uint8 lamp_count        ( ) const;
-          inline Uint8 exit_count        ( ) const;
           inline Uint8 enemy_spawn_count ( ) const;
 
           inline Fixture& decor       ( Uint8 index );

@@ -12,6 +12,7 @@
 #include "Text.hpp"
 #include "Vector.hpp"
 
+#include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
 
 namespace editor
@@ -88,14 +89,14 @@ namespace editor
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
 
-          SDL_Surface* rat_surface;
-
+          bryte::CharacterDisplay    character_display;
           bryte::InteractivesDisplay interactives_display;
 
           Uint8 current_tile;
           Bool  current_solid;
           Uint8 current_decor;
           Uint8 current_lamp;
+          Uint8 current_enemy;
           Uint8 current_exit_direction;
           Uint8 current_exit_state;
           Uint8 current_torch;

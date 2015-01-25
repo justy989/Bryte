@@ -98,15 +98,16 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::enemy:
      {
+          if ( !mouse_on_map ( ) ) {
+               break;
+          }
+
           Map::Fixture* enemy_spawn = map.check_coordinates_for_enemy_spawn ( mouse_tile_x, mouse_tile_y );
 
           if ( enemy_spawn ) {
                map.remove_enemy_spawn ( enemy_spawn );
           } else {
-               if ( mouse_tile_x >= 0 && mouse_tile_x < map.width ( ) &&
-                    mouse_tile_y >= 0 && mouse_tile_y < map.height ( ) ) {
-                    map.add_enemy_spawn ( mouse_tile_x, mouse_tile_y, 1 );
-               }
+               map.add_enemy_spawn ( mouse_tile_x, mouse_tile_y, current_enemy );
           }
      } break;
      case Mode::torch:
@@ -252,6 +253,10 @@ void State::option_button_up_pressed ( )
           map.subtract_from_base_light ( 4 );
           map.reset_light ( );
           break;
+     case Mode::enemy:
+          current_enemy++;
+          current_enemy %= Enemy::Type::count;
+          break;
      case Mode::exit:
      {
           if ( !mouse_on_map ( ) ) {
@@ -321,6 +326,10 @@ void State::option_button_down_pressed ( )
      case Mode::light:
           map.add_to_base_light ( 4 );
           map.reset_light ( );
+          break;
+     case Mode::enemy:
+          current_enemy++;
+          current_enemy %= Enemy::Type::count;
           break;
      case Mode::exit:
      {
@@ -418,8 +427,15 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->rat_surface, game_memory,
-                                          state->settings->map_rat_filename ) ) {
+     if ( !load_bitmap_with_game_memory ( state->character_display.enemy_sheets [ Enemy::Type::rat ],
+                                          game_memory,
+                                          "test_rat.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->character_display.enemy_sheets [ Enemy::Type::bat ],
+                                          game_memory,
+                                          "test_bat.bmp" ) ) {
           return false;
      }
 
@@ -501,7 +517,10 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
      SDL_FreeSurface ( state->decorsheet );
      SDL_FreeSurface ( state->lampsheet );
 
-     SDL_FreeSurface ( state->rat_surface );
+     for ( int i = 0; i < Enemy::Type::count; ++i ) {
+          SDL_FreeSurface ( state->character_display.enemy_sheets [ i ] );
+     }
+
 
      for ( int i = 0; i < Interactive::Type::count; ++i ) {
           SDL_FreeSurface ( state->interactives_display.interactive_sheets [ i ] );
@@ -768,8 +787,8 @@ static Void render_map_solids ( SDL_Surface* back_buffer, Map& map, Real32 camer
      }
 }
 
-static Void render_enemy_spawns ( SDL_Surface* back_buffer, SDL_Surface* enemy_sheet, Map& map,
-                                  Real32 camera_x, Real32 camera_y )
+static Void render_enemy_spawns ( SDL_Surface* back_buffer, SDL_Surface** enemy_sheet,
+                                  Map& map, Real32 camera_x, Real32 camera_y )
 {
      for ( Uint8 i = 0; i < map.enemy_spawn_count ( ); ++i ) {
           auto& enemy_spawn = map.enemy_spawn ( i );
@@ -787,7 +806,7 @@ static Void render_enemy_spawns ( SDL_Surface* back_buffer, SDL_Surface* enemy_s
 
           world_to_sdl ( enemy_spawn_rect, back_buffer, camera_x, camera_y );
 
-          SDL_BlitSurface ( enemy_sheet, &clip_rect, back_buffer, &enemy_spawn_rect );
+          SDL_BlitSurface ( enemy_sheet [ enemy_spawn.id ], &clip_rect, back_buffer, &enemy_spawn_rect );
      }
 }
 
@@ -848,7 +867,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_map ( back_buffer, state->tilesheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
      render_map_lamps ( back_buffer, state->lampsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
-     render_enemy_spawns ( back_buffer, state->rat_surface, state->map, state->camera.x ( ), state->camera.y ( ) );
+     render_enemy_spawns ( back_buffer, state->character_display.enemy_sheets,
+                           state->map, state->camera.x ( ), state->camera.y ( ) );
 
      state->interactives_display.render_interactives ( back_buffer, state->interactives,
                                                        state->camera.x ( ), state->camera.y ( ) );
@@ -886,7 +906,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->current_lamp, 0 );
           break;
      case Mode::enemy:
-          render_current_icon ( back_buffer, state->rat_surface, state->mouse_x, state->mouse_y, 0, 0 );
+          render_current_icon ( back_buffer, state->character_display.enemy_sheets [ state->current_enemy ],
+                                state->mouse_x, state->mouse_y, 0, 0 );
           break;
      case Mode::exit:
           render_current_icon ( back_buffer,

@@ -15,6 +15,7 @@
 
 #include "Vector.hpp"
 
+#include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
 
 #include <SDL2/SDL.h>
@@ -45,7 +46,7 @@ namespace bryte
           Bool initialize ( GameMemory& game_memory, Settings* settings );
           Void destroy    ( );
 
-          Bool spawn_enemy ( Real32 x, Real32 y );
+          Bool spawn_enemy ( Real32 x, Real32 y, Uint8 id );
 
           Void spawn_map_enemies ( );
           Void clear_enemies ( );
@@ -78,10 +79,7 @@ namespace bryte
           SDL_Surface* decorsheet;
           SDL_Surface* lampsheet;
 
-          SDL_Surface* rat_surface;
-
-          SDL_Surface* player_surface;
-
+          CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
 
           Bool         direction_keys [ Direction::count ];

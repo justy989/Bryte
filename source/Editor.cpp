@@ -599,7 +599,6 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      switch ( state->mode ) {
      default:
-          ASSERT ( 0 );
           break;
      case Mode::tile:
           if ( state->mouse_tile_x >= 0 && state->mouse_tile_x < state->map.width ( ) &&
@@ -797,7 +796,6 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      switch ( state->mode ) {
      default:
-          ASSERT ( 0 );
           break;
      case Mode::tile:
           render_current_icon ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,

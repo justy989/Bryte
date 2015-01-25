@@ -48,6 +48,11 @@ namespace bryte
           Real32 collision_width ( ) const;
           Real32 collision_height ( ) const;
 
+          Real32 collision_center_x ( ) const;
+          Real32 collision_center_y ( ) const;
+
+          Void set_collision_center ( Real32 x, Real32 y );
+
      public:
 
           static const Real32 c_damage_accel;
@@ -94,8 +99,6 @@ namespace bryte
      {
           return dimension.y ( );
      }
-
-
 }
 
 #endif

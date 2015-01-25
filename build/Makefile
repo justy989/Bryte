@@ -18,7 +18,7 @@ EDITOR         = bryte_editor
 EXE_OBJS       = Log.o InputRecorder.o GameInput.o Application.o
 
 # targets
-all: release
+all: debug
 release: CFLAGS += -O3
 release: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
 debug: CFLAGS += -g3 -DDEBUG

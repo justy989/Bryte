@@ -471,3 +471,21 @@ Real32 Character::collision_height ( ) const
      return 0.0f;
 }
 
+Real32 Character::collision_center_x ( ) const
+{
+     return collision_x ( ) + collision_width ( ) * 0.5f;
+}
+
+Real32 Character::collision_center_y ( ) const
+{
+     return collision_y ( ) + collision_height ( ) * 0.5f;
+}
+
+Void Character::set_collision_center ( Real32 x, Real32 y )
+{
+     Real32 x_offset = collision_center_x ( ) - position.x ( );
+     Real32 y_offset = collision_center_y ( ) - position.y ( );
+
+     position = Vector{ x - x_offset, y - y_offset };
+}
+

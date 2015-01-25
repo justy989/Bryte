@@ -442,10 +442,33 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      if ( state->activate_key ) {
           state->activate_key = false;
-          state->interactives.activate ( meters_to_pixels ( state->player.position.x ( ) ) /
-                                         Map::c_tile_dimension_in_pixels,
-                                         meters_to_pixels ( state->player.position.y ( ) ) /
-                                         Map::c_tile_dimension_in_pixels);
+
+          Vector player_center { state->player.collision_center_x ( ),
+                                 state->player.collision_center_y ( ) };
+
+          Int32 player_center_tile_x = meters_to_pixels ( player_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+          Int32 player_center_tile_y = meters_to_pixels ( player_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+
+          switch ( state->player.facing ) {
+          default:
+               break;
+          case Direction::left:
+               player_center_tile_x--;
+               break;
+          case Direction::right:
+               player_center_tile_x++;
+               break;
+          case Direction::up:
+               player_center_tile_y++;
+               break;
+          case Direction::down:
+               player_center_tile_y--;
+               break;
+          }
+
+          LOG_DEBUG ( "Activate: %d, %d\n", player_center_tile_x, player_center_tile_y );
+
+          state->interactives.activate ( player_center_tile_x, player_center_tile_y );
      }
 
      for ( Uint32 i = 0; i < State::c_max_health_pickups; ++i ) {
@@ -471,32 +494,42 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-          auto& interactive = state->interactives.get_from_tile ( meters_to_pixels ( state->player.position.x ( ) ) /
-                                                                  Map::c_tile_dimension_in_pixels,
-                                                                  meters_to_pixels ( state->player.position.y ( ) ) /
-                                                                  Map::c_tile_dimension_in_pixels );
+          Vector player_center { state->player.collision_center_x ( ),
+                                 state->player.collision_center_y ( ) };
+
+          Int32 player_center_tile_x = meters_to_pixels ( player_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+          Int32 player_center_tile_y = meters_to_pixels ( player_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+
+          auto& interactive = state->interactives.get_from_tile ( player_center_tile_x, player_center_tile_y );
 
           if ( interactive.type == Interactive::Type::exit &&
                interactive.interactive_exit.state == Exit::State::open ) {
-               Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x * Map::c_tile_dimension_in_pixels ),
-                                     pixels_to_meters ( interactive.interactive_exit.exit_index_y * Map::c_tile_dimension_in_pixels ) );
+               Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x *
+                                                        Map::c_tile_dimension_in_pixels ),
+                                     pixels_to_meters ( interactive.interactive_exit.exit_index_y *
+                                                        Map::c_tile_dimension_in_pixels ) );
+
+               new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
+                                        Map::c_tile_dimension_in_meters * 0.5f );
 
                map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
                state->clear_enemies ( );
                state->spawn_map_enemies ( );
 
-               state->player.position = new_position;
+               state->player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
 
                player_exit = map.position_to_tile_index ( state->player.position.x ( ),
                                                           state->player.position.y ( ) );
+               LOG_INFO ( "Save exit: %d\n", player_exit )
           }
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.position.x ( ),
                                                                 state->player.position.y ( ) );
 
           // clear the exit destination if they've left the tile
-          if ( player_exit != player_tile_index ) {
+          if ( abs ( player_exit - player_tile_index ) > 1 ) {
+               LOG_INFO ( "changed exit: %d\n", player_tile_index )
                player_exit = 0;
           }
      }

@@ -92,6 +92,8 @@ Bool Interactive::is_solid ( ) const
      switch ( type ) {
      default:
           break;
+     case lever:
+          return true;
      case pushable_block:
           return true;
      case exit:
@@ -178,6 +180,8 @@ Void Interactive::update ( float time_delta )
           interactive_pushable_block.update ( time_delta );
           break;
      case Type::exit:
+          break;
+     case Type::torch:
           break;
      case Type::pushable_torch:
           interactive_pushable_torch.update ( time_delta );

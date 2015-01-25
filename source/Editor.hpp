@@ -25,7 +25,6 @@ namespace editor
           const char* map_tilesheet_filename;
           const char* map_decorsheet_filename;
           const char* map_lampsheet_filename;
-          const char* map_exitsheet_filename;
 
           const char* map_rat_filename;
 

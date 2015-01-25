@@ -62,6 +62,15 @@ namespace bryte
           // Int32     moving_offset;
      };
 
+     struct Torch {
+
+          Void reset ( );
+          Void activate ( );
+
+          Bool  on;
+          Int32 value;
+     };
+
      struct Interactive {
           enum Type {
                none,
@@ -120,7 +129,7 @@ namespace bryte
 
      inline Int32 Interactives::width ( ) const
      {
-          return m_height;
+          return m_width;
      }
 
      inline Int32 Interactives::height ( ) const

@@ -105,6 +105,9 @@ Void Interactive::reset ( )
 {
      switch ( type ) {
      default:
+          ASSERT ( 0 );
+          break;
+     case Type::none:
           break;
      case Type::exit:
           interactive_exit.reset ( );
@@ -149,6 +152,8 @@ Void Interactive::update ( float time_delta )
      switch ( type ) {
      default:
           ASSERT ( 0 );
+          break;
+     case Type::none:
           break;
      case Type::lever:
           interactive_lever.update ( time_delta );

@@ -42,7 +42,6 @@ int main ( int argc, char** argv )
      editor_settings.map_tilesheet_filename  = "castle_tilesheet.bmp";
      editor_settings.map_decorsheet_filename = "castle_decorsheet.bmp";
      editor_settings.map_lampsheet_filename  = "castle_lampsheet.bmp";
-     editor_settings.map_exitsheet_filename  = "castle_exitsheet.bmp";
      editor_settings.map_rat_filename        = "test_rat.bmp";
      editor_settings.map_save_filename       = "map.brm";
      editor_settings.map_load_filename       = nullptr;

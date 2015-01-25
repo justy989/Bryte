@@ -125,6 +125,33 @@ Void Character::damage ( Int32 amount, Direction push )
      }
 }
 
+static Bool check_wall ( Real32 wall, Real32 wall_min, Real32 wall_max,
+                         Real32 starting_position, Real32 change_in_position,
+                         Real32 other_starting_position, Real32 other_change_in_position,
+                         Real32* closest_time_intersection )
+{
+     if ( change_in_position == 0.0f ) {
+          return false;
+     }
+
+     Real32 time_intersection = ( wall - starting_position ) / change_in_position;
+
+     if ( time_intersection > 0.0f && time_intersection < 1.0f ) {
+
+          if ( *closest_time_intersection > time_intersection ) {
+
+               Real32 other_intersection = other_starting_position + time_intersection * other_change_in_position;
+
+               if ( other_intersection >= wall_min && other_intersection <= wall_max ) {
+                    *closest_time_intersection = time_intersection;
+                    return true;
+               }
+          }
+     }
+
+     return false;
+}
+
 Void Character::update ( Real32 time_delta, const Map& map, Interactives& interactives )
 {
      // tick stopwatches
@@ -163,8 +190,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                     state = State::alive;
                }
           }
-     }
-          break;
+     } break;
      case State::attacking:
           if ( state_watch.expired ( ) ) {
                cooldown_watch.reset ( Character::c_cooldown_time );
@@ -177,73 +203,76 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      }
 
      // TEMPORARY, slow character down
-     acceleration += velocity * -2.0f;
+     acceleration += velocity * -3.25f;
 
-     Vector target_position = position + ( velocity * time_delta ) +
-                              ( acceleration * ( 0.5f * square ( time_delta ) ) );
+     Vector change_in_position = ( velocity * time_delta ) +
+                                 ( acceleration * ( 0.5f * square ( time_delta ) ) );
+
      velocity = acceleration * time_delta + velocity;
 
-     bool collided = false;
+     Real32 half_width  = collision_width ( ) * 0.5f;
+     Real32 half_height = collision_height ( ) * 0.5f;
 
-     // which tile did our target_position end up in
-     Int32 starting_tile_left   = collision_x ( ) / Map::c_tile_dimension_in_meters;
-     Int32 starting_tile_right  = ( collision_x ( ) + collision_width ( ) ) / Map::c_tile_dimension_in_meters;
-     Int32 starting_tile_bottom =  collision_y ( ) / Map::c_tile_dimension_in_meters;
-     Int32 starting_tile_top    = ( collision_y ( ) + collision_height ( ) ) / Map::c_tile_dimension_in_meters;
+     Vector center { collision_x ( ) + half_width,
+                     collision_y ( ) + half_height };
 
-     Int32 target_tile_left     = collision_x ( target_position.x ( ) ) / Map::c_tile_dimension_in_meters;
-     Int32 target_tile_right    = ( collision_x ( target_position.x ( ) ) + collision_width ( ) ) /
-                                  Map::c_tile_dimension_in_meters;
-     Int32 target_tile_bottom   = collision_y ( target_position.y ( ) ) / Map::c_tile_dimension_in_meters;
-     Int32 target_tile_top      = ( collision_y ( target_position.y ( ) ) + collision_height ( ) ) /
-                                  Map::c_tile_dimension_in_meters;
+     Int32 center_tile_x = meters_to_pixels ( center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+     Int32 center_tile_y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 
-     // check collision with tile map
-     if ( map.get_coordinate_solid ( target_tile_left, target_tile_bottom ) ||
-          map.get_coordinate_solid ( target_tile_right, target_tile_bottom ) ||
-          map.get_coordinate_solid ( target_tile_left, target_tile_top ) ||
-          map.get_coordinate_solid ( target_tile_right, target_tile_top ) ) {
-          collided = true;
+     // TODO: move tiles based on width
+     Int32 min_check_tile_x = center_tile_x - 1;
+     Int32 min_check_tile_y = center_tile_y - 1;
+     Int32 max_check_tile_x = center_tile_x + 1;
+     Int32 max_check_tile_y = center_tile_y + 1;
+
+     CLAMP ( min_check_tile_x, 0, map.width  ( ) - 1 );
+     CLAMP ( min_check_tile_y, 0, map.height ( ) - 1 );
+     CLAMP ( max_check_tile_x, 0, map.width  ( ) - 1 );
+     CLAMP ( max_check_tile_y, 0, map.height ( ) - 1 );
+
+     Real32 closest_time_intersection = 1.0f;
+
+     // loop over tile area
+     for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
+          for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
+               if ( !map.get_coordinate_solid ( x, y ) ) {
+                    continue;
+               }
+
+               Real32 left   = pixels_to_meters ( x * Map::c_tile_dimension_in_pixels );
+               Real32 right  = left + Map::c_tile_dimension_in_meters;
+               Real32 bottom = pixels_to_meters ( y * Map::c_tile_dimension_in_pixels );
+               Real32 top    = bottom + Map::c_tile_dimension_in_meters;
+
+               // minkowski sum extruding
+               left   -= half_width;
+               right  += half_width;
+               bottom -= half_height;
+               top    += half_height;
+
+               if ( check_wall ( left, bottom, top, center.x ( ), change_in_position.x ( ),
+                                 center.y ( ), change_in_position.y ( ),
+                                 &closest_time_intersection ) ) {
+               }
+
+               if ( check_wall ( right, bottom, top, center.x ( ), change_in_position.x ( ),
+                                 center.y ( ), change_in_position.y ( ),
+                                 &closest_time_intersection ) ) {
+               }
+
+               if ( check_wall ( bottom, left, right, center.y ( ), change_in_position.y ( ),
+                                 center.x ( ), change_in_position.x ( ),
+                                 &closest_time_intersection ) ) {
+               }
+
+               if ( check_wall ( top, left, right, center.y ( ), change_in_position.y ( ),
+                                 center.x ( ), change_in_position.x ( ),
+                                 &closest_time_intersection ) ) {
+               }
+         }
      }
 
-     const Interactive& bottom_left_interactive  = interactives.get_from_tile ( target_tile_left,
-                                                                                target_tile_bottom );
-     const Interactive& top_left_interactive     = interactives.get_from_tile ( target_tile_left,
-                                                                                target_tile_top );
-     const Interactive& bottom_right_interactive = interactives.get_from_tile ( target_tile_right,
-                                                                                target_tile_bottom );
-     const Interactive& top_right_interactive    = interactives.get_from_tile ( target_tile_right,
-                                                                                target_tile_top );
-
-     if ( bottom_left_interactive.is_solid ( ) || top_left_interactive.is_solid ( ) ||
-          bottom_right_interactive.is_solid ( ) || top_right_interactive.is_solid ( ) ) {
-          collided = true;
-     }
-
-     Vector wall;
-
-     if ( starting_tile_left - target_tile_left > 0 ) {
-          wall.set ( 1.0f, 0.0f );
-          interactives.push ( target_tile_left, target_tile_bottom, Direction::left, map );
-     } else if ( starting_tile_right - target_tile_right < 0 ) {
-          wall.set ( -1.0f, 0.0f );
-          interactives.push ( target_tile_right, target_tile_bottom, Direction::right, map );
-     }
-
-     if ( starting_tile_bottom - target_tile_bottom > 0 ) {
-          wall.set ( 0.0f, 1.0f );
-          interactives.push ( target_tile_left, target_tile_bottom, Direction::down, map );
-     } else if ( starting_tile_top - target_tile_top < 0 ) {
-          wall.set ( 0.0f, -1.0f );
-          interactives.push ( target_tile_left, target_tile_top, Direction::up, map );
-     }
-
-     if ( !collided ) {
-          position = target_position;
-     } else {
-          velocity = velocity - ( wall * velocity.inner_product ( wall ) ); // slidy
-          //velocity = velocity - ( wall * velocity.inner_product ( wall ) * 2.0f ); // bouncy
-     }
+     position += ( change_in_position * ( closest_time_intersection - 0.01f ) );
 
      acceleration.zero ( );
 }

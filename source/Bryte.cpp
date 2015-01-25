@@ -458,10 +458,11 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-          auto& interactive = state->interactives.get_from_tile ( state->player.collision_x ( ) /
-                                                                  Map::c_tile_dimension_in_meters,
-                                                                  state->player.collision_y ( ) /
-                                                                  Map::c_tile_dimension_in_meters );
+
+          auto& interactive = state->interactives.get_from_tile ( meters_to_pixels ( state->player.collision_x ( ) ) /
+                                                                  Map::c_tile_dimension_in_pixels,
+                                                                  meters_to_pixels ( state->player.collision_y ( ) ) /
+                                                                  Map::c_tile_dimension_in_pixels );
 
           if ( interactive.type == Interactive::Type::exit &&
                interactive.interactive_exit.state == Exit::State::open ) {

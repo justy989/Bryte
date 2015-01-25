@@ -458,10 +458,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      // check if the player has exitted the area
      if ( player_exit == 0 ) {
-
-          auto& interactive = state->interactives.get_from_tile ( meters_to_pixels ( state->player.collision_x ( ) ) /
+          auto& interactive = state->interactives.get_from_tile ( meters_to_pixels ( state->player.position.x ( ) ) /
                                                                   Map::c_tile_dimension_in_pixels,
-                                                                  meters_to_pixels ( state->player.collision_y ( ) ) /
+                                                                  meters_to_pixels ( state->player.position.y ( ) ) /
                                                                   Map::c_tile_dimension_in_pixels );
 
           if ( interactive.type == Interactive::Type::exit &&
@@ -476,12 +475,12 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                state->player.position = new_position;
 
-               player_exit = map.position_to_tile_index ( state->player.collision_x ( ),
-                                                          state->player.collision_y ( ) );
+               player_exit = map.position_to_tile_index ( state->player.position.x ( ),
+                                                          state->player.position.y ( ) );
           }
      } else {
-          auto player_tile_index = map.position_to_tile_index ( state->player.collision_x ( ),
-                                                                state->player.collision_y ( ) );
+          auto player_tile_index = map.position_to_tile_index ( state->player.position.x ( ),
+                                                                state->player.position.y ( ) );
 
           // clear the exit destination if they've left the tile
           if ( player_exit != player_tile_index ) {

@@ -235,11 +235,17 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      for ( int i = 0; i < 4 && time_remaining > 0.0f; ++i ) {
           Vector wall_normal;
           Real32 closest_time_intersection = time_remaining;
+          Direction push_direction;
+          Int32 push_interactive_x = -1;
+          Int32 push_interactive_y = -1;
 
           // loop over tile area
           for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
                for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
-                    if ( !map.get_coordinate_solid ( x, y ) ) {
+                    auto& interactive = interactives.get_from_tile ( x, y );
+
+                    if ( !map.get_coordinate_solid ( x, y ) &&
+                         !interactive.is_solid ( ) ) {
                          continue;
                     }
 
@@ -258,26 +264,52 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       center.y ( ), change_in_position.y ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { -1.0f, 0.0f };
+                         if ( interactive.is_solid ( ) ) {
+                              push_direction = Direction::right;
+                              push_interactive_x = x;
+                              push_interactive_y = y;
+                         }
                     }
 
                     if ( check_wall ( right, bottom, top, center.x ( ), change_in_position.x ( ),
                                       center.y ( ), change_in_position.y ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { 1.0f, 0.0f };
+                         if ( interactive.is_solid ( ) ) {
+                              push_direction = Direction::left;
+                              push_interactive_x = x;
+                              push_interactive_y = y;
+                         }
                     }
 
                     if ( check_wall ( bottom, left, right, center.y ( ), change_in_position.y ( ),
                                       center.x ( ), change_in_position.x ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { 0.0f, -1.0f };
+                         if ( interactive.is_solid ( ) ) {
+                              push_direction = Direction::up;
+                              push_interactive_x = x;
+                              push_interactive_y = y;
+                         }
                     }
 
                     if ( check_wall ( top, left, right, center.y ( ), change_in_position.y ( ),
                                       center.x ( ), change_in_position.x ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { 0.0f, 1.0f };
+
+                         if ( interactive.is_solid ( ) ) {
+                              push_direction = Direction::down;
+                              push_interactive_x = x;
+                              push_interactive_y = y;
+                         }
                     }
               }
+          }
+
+          // push any interactives we are colliding with
+          if ( push_interactive_x >= 0 ) {
+               interactives.push ( push_interactive_x, push_interactive_y, push_direction, map );
           }
 
           position += ( change_in_position * ( closest_time_intersection - 0.01f ) );

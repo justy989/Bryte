@@ -5,7 +5,7 @@
 
 using namespace bryte;
 
-const Real32 Character::c_damage_accel  = 80.0f;
+const Real32 Character::c_damage_accel  = 40.0f;
 const Real32 Character::c_damage_time   = 0.15f;
 const Real32 Character::c_blink_time    = 1.5f;
 const Real32 Character::c_attack_width  = 0.7f;

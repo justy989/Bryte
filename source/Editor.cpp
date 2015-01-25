@@ -189,12 +189,14 @@ Void State::mouse_button_right_clicked ( )
                current_interactive_y = mouse_tile_y;
                track_current_interactive = true;
           } else {
-               auto& lever = interactives.get_from_tile ( current_interactive_x,
-                                                          current_interactive_y );
-               ASSERT ( lever.type == Interactive::Type::lever );
-               lever.interactive_lever.activate_coordinate_x = mouse_tile_x;
-               lever.interactive_lever.activate_coordinate_y = mouse_tile_y;
-               track_current_interactive = false;
+               if ( track_current_interactive ) {
+                    auto& lever = interactives.get_from_tile ( current_interactive_x,
+                                                               current_interactive_y );
+                    ASSERT ( lever.type == Interactive::Type::lever );
+                    lever.interactive_lever.activate_coordinate_x = mouse_tile_x;
+                    lever.interactive_lever.activate_coordinate_y = mouse_tile_y;
+                    track_current_interactive = false;
+               }
           }
      } break;
      case Mode::pushable_block:
@@ -218,12 +220,14 @@ Void State::mouse_button_right_clicked ( )
                current_interactive_y = mouse_tile_y;
                track_current_interactive = true;
           } else {
-               auto& light_detector = interactives.get_from_tile ( current_interactive_x,
-                                                                   current_interactive_y );
-               ASSERT ( light_detector.type == Interactive::Type::light_detector );
-               light_detector.interactive_light_detector.activate_coordinate_x = mouse_tile_x;
-               light_detector.interactive_light_detector.activate_coordinate_y = mouse_tile_y;
-               track_current_interactive = false;
+               if ( track_current_interactive ) {
+                    auto& light_detector = interactives.get_from_tile ( current_interactive_x,
+                                                                        current_interactive_y );
+                    ASSERT ( light_detector.type == Interactive::Type::light_detector );
+                    light_detector.interactive_light_detector.activate_coordinate_x = mouse_tile_x;
+                    light_detector.interactive_light_detector.activate_coordinate_y = mouse_tile_y;
+                    track_current_interactive = false;
+               }
           }
      } break;
      }

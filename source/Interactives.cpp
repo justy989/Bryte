@@ -96,6 +96,8 @@ Bool Interactive::is_solid ( ) const
           return true;
      case exit:
           return interactive_exit.state != Exit::State::open;
+     case pushable_torch:
+          return true;
      }
 
      return false;
@@ -121,6 +123,9 @@ Void Interactive::reset ( )
      case Type::torch:
           interactive_torch.reset ( );
           break;
+     case Type::pushable_torch:
+          interactive_pushable_torch.reset ( );
+          break;
      }
 }
 
@@ -138,6 +143,9 @@ Void Interactive::activate ( Interactives& interactives )
      case Type::torch:
           interactive_torch.activate ( );
           break;
+     case Type::pushable_torch:
+          interactive_pushable_torch.activate ( );
+          break;
      }
 }
 
@@ -148,6 +156,8 @@ Direction Interactive::push ( Direction direction )
           break;
      case Type::pushable_block:
           return interactive_pushable_block.push ( direction );
+     case Type::pushable_torch:
+          return interactive_pushable_torch.push ( direction );
      }
 
      return Direction::count;
@@ -168,6 +178,9 @@ Void Interactive::update ( float time_delta )
           interactive_pushable_block.update ( time_delta );
           break;
      case Type::exit:
+          break;
+     case Type::pushable_torch:
+          interactive_pushable_torch.update ( time_delta );
           break;
      }
 }
@@ -293,4 +306,26 @@ Void Torch::activate ( )
 {
      on = !on;
 }
+
+Void PushableTorch::reset ( )
+{
+     torch.reset ( );
+     pushable_block.reset ( );
+}
+
+Void PushableTorch::update ( float time_delta )
+{
+     pushable_block.update ( time_delta );
+}
+
+Void PushableTorch::activate ( )
+{
+     torch.activate ( );
+}
+
+Direction PushableTorch::push ( Direction direction )
+{
+     return pushable_block.push ( direction );
+}
+
 

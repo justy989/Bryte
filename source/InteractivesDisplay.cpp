@@ -43,7 +43,12 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           clip_rect.y = interactive.interactive_exit.state * Map::c_tile_dimension_in_pixels;
           break;
      case Interactive::Type::torch:
-          if ( interactive.interactive_lever.on ) {
+          if ( interactive.interactive_torch.on ) {
+               clip_rect.x = Map::c_tile_dimension_in_pixels;
+          }
+          break;
+     case Interactive::Type::pushable_torch:
+          if ( interactive.interactive_pushable_torch.torch.on ) {
                clip_rect.x = Map::c_tile_dimension_in_pixels;
           }
           break;
@@ -65,9 +70,16 @@ Void InteractivesDisplay::contribute_light ( Interactives& interactives, Map& ma
                     break;
                case Interactive::Type::torch:
                     if ( interactive.interactive_torch.on ) {
-                         //map.illuminate ( x, y, interactive.interactive_torch.value );
                          map.illuminate ( x * Map::c_tile_dimension_in_pixels,
-                                          y * Map::c_tile_dimension_in_pixels, 255 );
+                                          y * Map::c_tile_dimension_in_pixels,
+                                          interactive.interactive_torch.value );
+                    }
+                    break;
+               case Interactive::Type::pushable_torch:
+                    if ( interactive.interactive_pushable_torch.torch.on ) {
+                         map.illuminate ( x * Map::c_tile_dimension_in_pixels,
+                                          y * Map::c_tile_dimension_in_pixels,
+                                          interactive.interactive_pushable_torch.torch.value );
                     }
                     break;
                }

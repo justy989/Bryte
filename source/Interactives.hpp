@@ -71,6 +71,19 @@ namespace bryte
           Int32 value;
      };
 
+     struct PushableTorch {
+
+          Void reset ( );
+
+          Void update ( float time_delta );
+
+          Void activate  ( );
+          Direction push ( Direction direction );
+
+          Torch torch;
+          PushableBlock pushable_block;
+     };
+
      struct Interactive {
           enum Type {
                none,
@@ -78,6 +91,7 @@ namespace bryte
                lever,
                pushable_block,
                torch,
+               pushable_torch,
                count
           };
 
@@ -97,6 +111,7 @@ namespace bryte
                PushableBlock interactive_pushable_block;
                Exit          interactive_exit;
                Torch         interactive_torch;
+               PushableTorch interactive_pushable_torch;
           };
      };
 

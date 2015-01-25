@@ -160,6 +160,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::pushable_torch ],
+                                          game_memory,
+                                          "castle_pushabletorchsheet.bmp" ) ) {
+          return false;
+     }
+
      map.load_master_list ( settings->map_master_list_filename );
      map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );

@@ -183,6 +183,28 @@ void State::mouse_button_changed_down ( bool left )
                current_torch %= 2;
           }
      } break;
+     case Mode::pushable_torch:
+     {
+          if ( mouse_tile_x < 0 || mouse_tile_x >= map.width ( ) ||
+               mouse_tile_y < 0 || mouse_tile_y >= map.height ( ) ) {
+               break;
+          }
+
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( left ) {
+               if ( interactive.type == Interactive::Type::pushable_torch ) {
+                    interactive.type = Interactive::Type::none;
+               } else {
+                    interactive.type = Interactive::Type::pushable_torch;
+                    interactive.reset ( );
+                    interactive.interactive_torch.on = current_pushable_torch;
+               }
+          } else {
+               current_pushable_torch++;
+               current_pushable_torch %= 2;
+          }
+     } break;
      }
 }
 
@@ -373,6 +395,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::torch ],
                                           game_memory,
                                           "castle_torchsheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::pushable_torch ],
+                                          game_memory,
+                                          "castle_pushabletorchsheet.bmp" ) ) {
           return false;
      }
 
@@ -801,6 +829,12 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->interactives_display.interactive_sheets [ Interactive::Type::torch ],
                                 state->mouse_x, state->mouse_y,
                                 state->current_torch, 0 );
+          break;
+     case Mode::pushable_torch:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheets [ Interactive::Type::pushable_torch ],
+                                state->mouse_x, state->mouse_y,
+                                state->current_pushable_torch, 0 );
           break;
      }
 

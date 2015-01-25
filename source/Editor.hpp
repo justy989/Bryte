@@ -40,6 +40,7 @@ namespace editor
           lever,
           pushable_block,
           torch,
+          pushable_torch,
           count
      };
 
@@ -93,6 +94,7 @@ namespace editor
           Uint8 current_exit_direction;
           Uint8 current_exit_state;
           Uint8 current_torch;
+          Uint8 current_pushable_torch;
           Uint8 current_field;
 
           Bool   track_current_interactive;

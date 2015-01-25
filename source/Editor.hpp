@@ -49,9 +49,15 @@ namespace editor
 
           static const Real32 c_camera_speed;
 
-          Void mouse_button_changed_down ( bool left );
-          Void option_button_changed_down ( bool up );
-          Void option_scroll ( Int32 scroll );
+          Void mouse_button_left_clicked ( );
+          Void mouse_button_right_clicked ( );
+          Void option_button_up_pressed ( );
+          Void option_button_down_pressed ( );
+          Void mouse_scrolled ( Int32 scroll );
+
+     private:
+
+          Bool mouse_on_map ( );
 
      public:
 

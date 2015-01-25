@@ -39,6 +39,7 @@ namespace editor
           exit,
           lever,
           pushable_block,
+          torch,
           count
      };
 
@@ -86,11 +87,12 @@ namespace editor
           bryte::InteractivesDisplay interactives_display;
 
           Uint8 current_tile;
+          Bool  current_solid;
           Uint8 current_decor;
+          Uint8 current_lamp;
           Uint8 current_exit_direction;
           Uint8 current_exit_state;
-          Uint8 current_lamp;
-          Bool  current_solid;
+          Uint8 current_torch;
           Uint8 current_field;
 
           Bool   track_current_interactive;

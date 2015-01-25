@@ -161,6 +161,28 @@ void State::mouse_button_changed_down ( bool left )
           } else {
           }
      } break;
+     case Mode::torch:
+     {
+          if ( mouse_tile_x < 0 || mouse_tile_x >= map.width ( ) ||
+               mouse_tile_y < 0 || mouse_tile_y >= map.height ( ) ) {
+               break;
+          }
+
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( left ) {
+               if ( interactive.type == Interactive::Type::torch ) {
+                    interactive.type = Interactive::Type::none;
+               } else {
+                    interactive.type = Interactive::Type::torch;
+                    interactive.reset ( );
+                    interactive.interactive_torch.on = current_torch;
+               }
+          } else {
+               current_torch++;
+               current_torch %= 2;
+          }
+     } break;
      }
 }
 
@@ -330,6 +352,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::exit ],
+                                          game_memory,
+                                          "castle_exitsheet.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::lever ],
                                           game_memory,
                                           "castle_leversheet.bmp" ) ) {
@@ -342,9 +370,9 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::exit ],
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::torch ],
                                           game_memory,
-                                          "castle_exitsheet.bmp" ) ) {
+                                          "castle_torchsheet.bmp" ) ) {
           return false;
      }
 
@@ -714,6 +742,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      state->interactives_display.render_interactives ( back_buffer, state->interactives,
                                                        state->camera.x ( ), state->camera.y ( ) );
 
+     state->map.reset_light ( );
+
+     state->interactives_display.contribute_light ( state->interactives, state->map );
+
      if ( state->draw_light ) {
           render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
      }
@@ -763,6 +795,12 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->interactives_display.interactive_sheets [ Interactive::Type::pushable_block ],
                                 state->mouse_x, state->mouse_y,
                                 0, 0 );
+          break;
+     case Mode::torch:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheets [ Interactive::Type::torch ],
+                                state->mouse_x, state->mouse_y,
+                                state->current_torch, 0 );
           break;
      }
 

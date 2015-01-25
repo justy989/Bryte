@@ -118,6 +118,9 @@ Void Interactive::reset ( )
      case Type::pushable_block:
           interactive_pushable_block.reset ( );
           break;
+     case Type::torch:
+          interactive_torch.reset ( );
+          break;
      }
 }
 
@@ -131,6 +134,9 @@ Void Interactive::activate ( Interactives& interactives )
           break;
      case Type::lever:
           interactive_lever.activate ( interactives );
+          break;
+     case Type::torch:
+          interactive_torch.activate ( );
           break;
      }
 }
@@ -275,5 +281,16 @@ Void Exit::activate ( )
           state = State::open;
           break;
      }
+}
+
+Void Torch::reset ( )
+{
+     on    = true;
+     value = 255;
+}
+
+Void Torch::activate ( )
+{
+     on = !on;
 }
 

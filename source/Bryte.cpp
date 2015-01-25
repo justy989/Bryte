@@ -136,6 +136,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::exit ],
+                                          game_memory,
+                                          "castle_exitsheet.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::lever ],
                                           game_memory,
                                           "castle_leversheet.bmp" ) ) {
@@ -148,9 +154,9 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::exit ],
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::torch ],
                                           game_memory,
-                                          "castle_exitsheet.bmp" ) ) {
+                                          "castle_torchsheet.bmp" ) ) {
           return false;
      }
 
@@ -429,6 +435,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      state->interactives.update ( time_delta );
 
      if ( state->activate_key ) {
+          state->activate_key = false;
           state->interactives.activate ( meters_to_pixels ( state->player.position.x ( ) ) /
                                          Map::c_tile_dimension_in_pixels,
                                          meters_to_pixels ( state->player.position.y ( ) ) /
@@ -507,8 +514,12 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_map_lamps ( back_buffer, state->lampsheet, state->map,
                         state->camera.x ( ), state->camera.y ( ) );
 
-    state->interactives_display.render_interactives ( back_buffer, state->interactives,
-                                               state->camera.x ( ), state->camera.y ( ) );
+     state->interactives_display.render_interactives ( back_buffer, state->interactives,
+                                                       state->camera.x ( ), state->camera.y ( ) );
+
+     state->map.reset_light ( );
+
+     state->interactives_display.contribute_light ( state->interactives, state->map );
 
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 green   = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );

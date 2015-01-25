@@ -1,3 +1,4 @@
+map.brm
 start.brm
 top.brm
 bottom.brm

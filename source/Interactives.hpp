@@ -77,6 +77,7 @@ namespace bryte
                exit,
                lever,
                pushable_block,
+               torch,
                count
           };
 
@@ -95,6 +96,7 @@ namespace bryte
                Lever         interactive_lever;
                PushableBlock interactive_pushable_block;
                Exit          interactive_exit;
+               Torch         interactive_torch;
           };
      };
 

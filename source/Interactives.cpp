@@ -87,6 +87,13 @@ Void Interactives::activate ( Int32 tile_x, Int32 tile_y )
      i.activate ( *this );
 }
 
+Void Interactives::light ( Int32 tile_x, Int32 tile_y, Uint8 light )
+{
+     Interactive& i = get_from_tile ( tile_x, tile_y );
+
+     i.light ( light, *this );
+}
+
 Bool Interactive::is_solid ( ) const
 {
      switch ( type ) {
@@ -128,6 +135,9 @@ Void Interactive::reset ( )
      case Type::pushable_torch:
           interactive_pushable_torch.reset ( );
           break;
+     case Type::light_detector:
+          interactive_light_detector.reset ( );
+          break;
      }
 }
 
@@ -165,6 +175,17 @@ Direction Interactive::push ( Direction direction )
      return Direction::count;
 }
 
+Void Interactive::light ( Uint8 light, Interactives& interactives )
+{
+     switch ( type ) {
+     default:
+          break;
+     case Type::light_detector:
+          interactive_light_detector.light ( light, interactives );
+          break;
+     }
+}
+
 Void Interactive::update ( float time_delta )
 {
      switch ( type ) {
@@ -172,16 +193,15 @@ Void Interactive::update ( float time_delta )
           ASSERT ( 0 );
           break;
      case Type::none:
+     case Type::exit:
+     case Type::torch:
+     case Type::light_detector:
           break;
      case Type::lever:
           interactive_lever.update ( time_delta );
           break;
      case Type::pushable_block:
           interactive_pushable_block.update ( time_delta );
-          break;
-     case Type::exit:
-          break;
-     case Type::torch:
           break;
      case Type::pushable_torch:
           interactive_pushable_torch.update ( time_delta );
@@ -332,4 +352,39 @@ Direction PushableTorch::push ( Direction direction )
      return pushable_block.push ( direction );
 }
 
+Void LightDetector::reset ( )
+{
+     type                  = bryte;
+     below_value           = true;
+     activate_coordinate_x = 0;
+     activate_coordinate_y = 0;
+}
+
+Void LightDetector::light ( Uint8 value, Interactives& interactives )
+{
+     switch ( type ) {
+     case Type::bryte:
+          if ( value >= c_bryte_value && below_value ) {
+               below_value = false;
+
+               interactives.activate ( activate_coordinate_x, activate_coordinate_y );
+          } else if ( value < c_bryte_value && !below_value ) {
+               below_value = true;
+
+               interactives.activate ( activate_coordinate_x, activate_coordinate_y );
+          }
+          break;
+     case Type::dark:
+          if ( value <= c_dark_value && !below_value ) {
+               below_value = true;
+
+               interactives.activate ( activate_coordinate_x, activate_coordinate_y );
+          } else if ( value > c_dark_value && below_value ) {
+               below_value = false;
+
+               interactives.activate ( activate_coordinate_x, activate_coordinate_y );
+          }
+          break;
+     }
+}
 

@@ -84,6 +84,26 @@ namespace bryte
           PushableBlock pushable_block;
      };
 
+     struct LightDetector {
+
+          Void reset ( );
+
+          Void light ( Uint8 value, Interactives& interactives );
+
+          enum Type {
+               bryte,
+               dark,
+          };
+
+          Type  type;
+          bool  below_value;
+          Uint8 activate_coordinate_x;
+          Uint8 activate_coordinate_y;
+
+          static const Uint8 c_bryte_value = 178;
+          static const Uint8 c_dark_value  = 128;
+     };
+
      struct Interactive {
           enum Type {
                none,
@@ -92,6 +112,7 @@ namespace bryte
                pushable_block,
                torch,
                pushable_torch,
+               light_detector,
                count
           };
 
@@ -101,6 +122,7 @@ namespace bryte
 
           Void      activate ( Interactives& interactives );
           Direction push     ( Direction direction );
+          Void      light    ( Uint8 light, Interactives& interactives );
 
           Bool is_solid ( ) const;
 
@@ -112,6 +134,7 @@ namespace bryte
                Exit          interactive_exit;
                Torch         interactive_torch;
                PushableTorch interactive_pushable_torch;
+               LightDetector interactive_light_detector;
           };
      };
 
@@ -126,6 +149,7 @@ namespace bryte
 
           Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
           Void activate ( Int32 tile_x, Int32 tile_y );
+          Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
 

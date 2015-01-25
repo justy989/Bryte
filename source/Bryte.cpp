@@ -166,6 +166,13 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::light_detector ],
+                                          game_memory,
+                                          "castle_lightdetectorsheet.bmp" ) ) {
+          return false;
+     }
+
+
      map.load_master_list ( settings->map_master_list_filename );
      map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );
@@ -181,6 +188,10 @@ Void State::destroy ( )
 
      SDL_FreeSurface ( rat_surface );
      SDL_FreeSurface ( player_surface );
+
+     for ( int i = 0; i < Interactive::Type::count; ++i ) {
+          SDL_FreeSurface ( interactives_display.interactive_sheets [ i ] );
+     }
 }
 
 Bool State::spawn_enemy ( Real32 x, Real32 y )
@@ -531,6 +542,13 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( abs ( player_exit - player_tile_index ) > 1 ) {
                LOG_INFO ( "changed exit: %d\n", player_tile_index )
                player_exit = 0;
+          }
+     }
+
+     // give interactives their light values
+     for ( Int32 y = 0; y < state->interactives.height ( ); ++y ) {
+          for ( Int32 x = 0; x < state->interactives.width ( ); ++x ) {
+               state->interactives.light ( x, y, map.get_coordinate_light ( x, y ) );
           }
      }
 }

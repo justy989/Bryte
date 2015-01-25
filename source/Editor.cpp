@@ -130,7 +130,19 @@ Void State::mouse_button_left_clicked ( )
           } else {
                interactive.type = Interactive::Type::pushable_torch;
                interactive.reset ( );
-               interactive.interactive_torch.on = current_pushable_torch;
+               interactive.interactive_pushable_torch.torch.on = current_pushable_torch;
+          }
+     } break;
+     case Mode::light_detector:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::light_detector ) {
+               interactive.type = Interactive::Type::none;
+          } else {
+               interactive.type = Interactive::Type::light_detector;
+               interactive.reset ( );
+               interactive.interactive_light_detector.type = static_cast<bryte::LightDetector::Type>( current_light_detector_bryte );
           }
      } break;
      }
@@ -197,6 +209,23 @@ Void State::mouse_button_right_clicked ( )
           current_pushable_torch++;
           current_pushable_torch %= 2;
           break;
+     case Mode::light_detector:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::light_detector ) {
+               current_interactive_x = mouse_tile_x;
+               current_interactive_y = mouse_tile_y;
+               track_current_interactive = true;
+          } else {
+               auto& light_detector = interactives.get_from_tile ( current_interactive_x,
+                                                                   current_interactive_y );
+               ASSERT ( light_detector.type == Interactive::Type::light_detector );
+               light_detector.interactive_light_detector.activate_coordinate_x = mouse_tile_x;
+               light_detector.interactive_light_detector.activate_coordinate_y = mouse_tile_y;
+               track_current_interactive = false;
+          }
+     } break;
      }
 }
 
@@ -263,6 +292,10 @@ void State::option_button_up_pressed ( )
                }
           }
      } break;
+     case Mode::light_detector:
+          current_light_detector_bryte++;
+          current_light_detector_bryte %= 2;
+          break;
      }
 }
 
@@ -329,6 +362,10 @@ void State::option_button_down_pressed ( )
                }
           }
      } break;
+     case Mode::light_detector:
+          current_light_detector_bryte--;
+          current_light_detector_bryte %= 2;
+          break;
      }
 }
 
@@ -412,6 +449,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
+if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::light_detector ],
+                                          game_memory,
+                                          "castle_lightdetectorsheet.bmp" ) ) {
+          return false;
+     }
+
      if ( state->settings->map_load_filename ) {
           if ( !state->settings->map_save_filename ) {
                state->settings->map_save_filename = state->settings->map_load_filename;
@@ -455,6 +498,10 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
      SDL_FreeSurface ( state->lampsheet );
 
      SDL_FreeSurface ( state->rat_surface );
+
+     for ( int i = 0; i < Interactive::Type::count; ++i ) {
+          SDL_FreeSurface ( state->interactives_display.interactive_sheets [ i ] );
+     }
 }
 
 extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game_input )
@@ -601,15 +648,16 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      default:
           break;
      case Mode::tile:
-          if ( state->mouse_tile_x >= 0 && state->mouse_tile_x < state->map.width ( ) &&
-               state->mouse_tile_y >= 0 && state->mouse_tile_y < state->map.height ( ) ) {
-               if ( state->left_button_down ) {
-                    state->map.set_coordinate_value ( state->mouse_tile_x, state->mouse_tile_y,
-                                                      state->current_tile );
-               } else if ( state->right_button_down ) {
-                    state->map.set_coordinate_solid ( state->mouse_tile_x, state->mouse_tile_y,
-                                                      state->current_solid );
-               }
+          if ( !state->mouse_on_map ( ) ) {
+               break;
+          }
+
+          if ( state->left_button_down ) {
+               state->map.set_coordinate_value ( state->mouse_tile_x, state->mouse_tile_y,
+                                                 state->current_tile );
+          } else if ( state->right_button_down ) {
+               state->map.set_coordinate_solid ( state->mouse_tile_x, state->mouse_tile_y,
+                                                 state->current_solid );
           }
           break;
      case Mode::decor:
@@ -618,35 +666,59 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           sprintf ( state->message_buffer, "BASE %d", state->map.base_light_value ( ) );
           break;
      case Mode::exit:
-          if ( state->mouse_tile_x >= 0 && state->mouse_tile_x < state->map.width ( ) &&
-               state->mouse_tile_y >= 0 && state->mouse_tile_y < state->map.height ( ) ) {
-               auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
-
-               if ( interactive.type == Interactive::Type::exit ) {
-                    auto& exit = interactive.interactive_exit;
-                    sprintf ( state->message_buffer, "MAP %d EXIT %d %d", exit.map_index,
-                              exit.exit_index_x, exit.exit_index_y );
-               }
+     {
+          if ( !state->mouse_on_map ( ) ) {
+               break;
           }
-     break;
+
+          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::exit ) {
+               auto& exit = interactive.interactive_exit;
+               sprintf ( state->message_buffer, "MAP %d EXIT %d %d", exit.map_index,
+                         exit.exit_index_x, exit.exit_index_y );
+          }
+     } break;
      case Mode::lever:
+     {
           if ( state->track_current_interactive ) {
                sprintf ( state->message_buffer, "C ACT %d %d",
                          state->current_interactive_x, state->current_interactive_y );
                break;
           }
 
-          if ( state->mouse_tile_x >= 0 && state->mouse_tile_x < state->map.width ( ) &&
-               state->mouse_tile_y >= 0 && state->mouse_tile_y < state->map.height ( ) ) {
-               auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
-
-               if ( interactive.type == Interactive::Type::lever ) {
-                    auto& lever = interactive.interactive_lever;
-                    sprintf ( state->message_buffer, "ACT %d %d",
-                              lever.activate_coordinate_x, lever.activate_coordinate_y );
-               }
+          if ( !state->mouse_on_map ( ) ) {
+               break;
           }
-     break;
+
+          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::lever ) {
+               auto& lever = interactive.interactive_lever;
+               sprintf ( state->message_buffer, "ACT %d %d",
+                         lever.activate_coordinate_x, lever.activate_coordinate_y );
+          }
+     } break;
+     case Mode::light_detector:
+     {
+          if ( state->track_current_interactive ) {
+               sprintf ( state->message_buffer, "C ACT %d %d",
+                         state->current_interactive_x, state->current_interactive_y );
+               break;
+          }
+
+          if ( !state->mouse_on_map ( ) ) {
+               break;
+          }
+
+          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::light_detector ) {
+               auto& light_detector = interactive.interactive_light_detector;
+               sprintf ( state->message_buffer, "ACT %d %d",
+                         light_detector.activate_coordinate_x, light_detector.activate_coordinate_y );
+          }
+     } break;
      }
 }
 
@@ -841,6 +913,12 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->interactives_display.interactive_sheets [ Interactive::Type::pushable_torch ],
                                 state->mouse_x, state->mouse_y,
                                 state->current_pushable_torch, 0 );
+          break;
+     case Mode::light_detector:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheets [ Interactive::Type::light_detector ],
+                                state->mouse_x, state->mouse_y,
+                                0, state->current_light_detector_bryte );
           break;
      }
 

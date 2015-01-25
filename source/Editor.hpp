@@ -41,6 +41,7 @@ namespace editor
           pushable_block,
           torch,
           pushable_torch,
+          light_detector,
           count
      };
 
@@ -54,8 +55,6 @@ namespace editor
           Void option_button_up_pressed ( );
           Void option_button_down_pressed ( );
           Void mouse_scrolled ( Int32 scroll );
-
-     private:
 
           Bool mouse_on_map ( );
 
@@ -101,6 +100,7 @@ namespace editor
           Uint8 current_exit_state;
           Uint8 current_torch;
           Uint8 current_pushable_torch;
+          Uint8 current_light_detector_bryte;
           Uint8 current_field;
 
           Bool   track_current_interactive;

@@ -22,13 +22,20 @@
 
 namespace bryte
 {
-     struct HealthPickup {
+     struct Pickup {
 
-          static const Real32 c_dimension;
+          enum Type {
+               none,
+               health,
+               key,
+               ingredient,
+               count
+          };
+
+          static const Real32 c_dimension; // temporary
 
           Vector position;
-
-          Bool available = false;
+          Type   type;
      };
 
      struct Settings {
@@ -47,6 +54,7 @@ namespace bryte
           Void destroy    ( );
 
           Bool spawn_enemy ( Real32 x, Real32 y, Uint8 id );
+          Bool spawn_pickup ( Real32 x, Real32 y, Pickup::Type type );
 
           Void spawn_map_enemies ( );
           Void clear_enemies ( );
@@ -56,7 +64,7 @@ namespace bryte
      public:
 
           static const Uint32 c_max_enemies = 32;
-          static const Uint32 c_max_health_pickups = 8;
+          static const Uint32 c_max_pickups = 8;
 
      public:
 
@@ -68,7 +76,7 @@ namespace bryte
           Enemy        enemies [ c_max_enemies ];
           Uint32       enemy_count;
 
-          HealthPickup health_pickups [ c_max_health_pickups ];
+          Pickup       pickups [ c_max_pickups ];
 
           Map          map;
           Interactives interactives;

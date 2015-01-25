@@ -16,7 +16,7 @@ static const Char8* c_test_player_path           = "test_hero.bmp";
 static const Char8* c_test_rat_path              = "test_rat.bmp";
 static const Char8* c_test_bat_path              = "test_bat.bmp";
 
-const Real32 HealthPickup::c_dimension = 0.4f;
+const Real32 Pickup::c_dimension = 0.4f;
 
 static State* get_state ( GameMemory& game_memory )
 {
@@ -107,8 +107,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           enemies [ i ].state = Character::State::dead;
      }
 
-     for ( Uint32 i = 0; i < c_max_health_pickups; ++i ) {
-          health_pickups [ i ].available = false;
+     for ( Uint32 i = 0; i < c_max_pickups; ++i ) {
+          pickups [ i ].type = Pickup::Type::none;
      }
 
      // load test graphics
@@ -240,6 +240,26 @@ Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id )
      enemy_count++;
 
      return true;
+}
+
+Bool State::spawn_pickup ( Real32 x, Real32 y, Pickup::Type type )
+{
+     static const char* pickup_names [ ] = { "none", "health", "key", "ingredient" };
+
+     for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
+          Pickup& pickup = pickups [ i ];
+
+          if ( pickup.type == Pickup::Type::none ) {
+               pickup.type = type;
+               pickup.position.set ( x, y );
+
+               LOG_DEBUG ( "Spawn pickup %s at %f, %f\n", pickup_names [ type ], x, y );
+
+               return true;
+          }
+     }
+
+     return false;
 }
 
 Void State::spawn_map_enemies ( )
@@ -401,15 +421,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                enemy.damage ( 1, damage_dir );
 
                if ( enemy.state == Character::State::dead ) {
-                    for ( Uint32 i = 0; i < State::c_max_health_pickups; ++i ) {
-                         HealthPickup& health_pickup = state->health_pickups [ i ];
+                    state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
 
-                         if ( !health_pickup.available ) {
-                              health_pickup.position.set ( enemy.position.x ( ), enemy.position.y ( ) );
-                              health_pickup.available = true;
-                              break;
-                         }
-                    }
                }
           }
      }
@@ -448,21 +461,31 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           state->interactives.activate ( player_center_tile_x, player_center_tile_y );
      }
 
-     for ( Uint32 i = 0; i < State::c_max_health_pickups; ++i ) {
-          HealthPickup& health_pickup = state->health_pickups [ i ];
+     for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
+          Pickup& pickup = state->pickups [ i ];
 
-          if ( health_pickup.available ) {
-               if ( rect_collides_with_rect ( state->player.position.x ( ), state->player.position.y ( ),
-                                              state->player.width ( ), state->player.height ( ),
-                                              health_pickup.position.x ( ), health_pickup.position.y ( ),
-                                              HealthPickup::c_dimension, HealthPickup::c_dimension ) ) {
-                    health_pickup.available    = false;
+          if ( pickup.type == Pickup::Type::none ) {
+               continue;
+          }
+
+          if ( rect_collides_with_rect ( state->player.collision_x ( ), state->player.collision_y ( ),
+                                         state->player.collision_width ( ), state->player.collision_height ( ),
+                                         pickup.position.x ( ), pickup.position.y ( ),
+                                         Pickup::c_dimension, Pickup::c_dimension ) ) {
+
+               switch ( pickup.type ) {
+               default:
+                    break;
+               case Pickup::Type::health:
                     state->player.health += 5;
 
                     if ( state->player.health > state->player.max_health ) {
                          state->player.health = state->player.max_health;
                     }
+                    break;
                }
+
+               pickup.type = Pickup::Type::none;
           }
      }
 
@@ -572,20 +595,19 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           SDL_FillRect ( back_buffer, &attack_rect, green );
      }
 
-     for ( Uint32 i = 0; i < State::c_max_health_pickups; ++i ) {
-          HealthPickup& health_pickup = state->health_pickups [ i ];
+     for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
+          Pickup& pickup = state->pickups [ i ];
 
-          if ( health_pickup.available ) {
-               SDL_Rect health_pickup_rect = build_world_sdl_rect ( health_pickup.position.x ( ),
-                                                                    health_pickup.position.y ( ),
-                                                                    HealthPickup::c_dimension,
-                                                                    HealthPickup::c_dimension );
-
-
-               world_to_sdl ( health_pickup_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
-
-               SDL_FillRect ( back_buffer, &health_pickup_rect, red );
+          if ( pickup.type == Pickup::Type::none ) {
+               continue;
           }
+
+          SDL_Rect pickup_rect = build_world_sdl_rect ( pickup.position.x ( ), pickup.position.y ( ),
+                                                        Pickup::c_dimension, Pickup::c_dimension );
+
+          world_to_sdl ( pickup_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
+
+          SDL_FillRect ( back_buffer, &pickup_rect, red );
      }
 
      render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );

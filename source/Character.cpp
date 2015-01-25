@@ -203,7 +203,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      }
 
      // TEMPORARY, slow character down
-     acceleration += velocity * -3.25f;
+     acceleration += velocity * -2.5f;
 
      Vector change_in_position = ( velocity * time_delta ) +
                                  ( acceleration * ( 0.5f * square ( time_delta ) ) );
@@ -230,49 +230,62 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      CLAMP ( max_check_tile_x, 0, map.width  ( ) - 1 );
      CLAMP ( max_check_tile_y, 0, map.height ( ) - 1 );
 
-     Real32 closest_time_intersection = 1.0f;
+     Real32 time_remaining = 1.0f;
 
-     // loop over tile area
-     for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
-          for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
-               if ( !map.get_coordinate_solid ( x, y ) ) {
-                    continue;
-               }
+     for ( int i = 0; i < 4 && time_remaining > 0.0f; ++i ) {
+          Vector wall_normal;
+          Real32 closest_time_intersection = time_remaining;
 
-               Real32 left   = pixels_to_meters ( x * Map::c_tile_dimension_in_pixels );
-               Real32 right  = left + Map::c_tile_dimension_in_meters;
-               Real32 bottom = pixels_to_meters ( y * Map::c_tile_dimension_in_pixels );
-               Real32 top    = bottom + Map::c_tile_dimension_in_meters;
+          // loop over tile area
+          for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
+               for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
+                    if ( !map.get_coordinate_solid ( x, y ) ) {
+                         continue;
+                    }
 
-               // minkowski sum extruding
-               left   -= half_width;
-               right  += half_width;
-               bottom -= half_height;
-               top    += half_height;
+                    Real32 left   = pixels_to_meters ( x * Map::c_tile_dimension_in_pixels );
+                    Real32 right  = left + Map::c_tile_dimension_in_meters;
+                    Real32 bottom = pixels_to_meters ( y * Map::c_tile_dimension_in_pixels );
+                    Real32 top    = bottom + Map::c_tile_dimension_in_meters;
 
-               if ( check_wall ( left, bottom, top, center.x ( ), change_in_position.x ( ),
-                                 center.y ( ), change_in_position.y ( ),
-                                 &closest_time_intersection ) ) {
-               }
+                    // minkowski sum extruding
+                    left   -= half_width;
+                    right  += half_width;
+                    bottom -= half_height;
+                    top    += half_height;
 
-               if ( check_wall ( right, bottom, top, center.x ( ), change_in_position.x ( ),
-                                 center.y ( ), change_in_position.y ( ),
-                                 &closest_time_intersection ) ) {
-               }
+                    if ( check_wall ( left, bottom, top, center.x ( ), change_in_position.x ( ),
+                                      center.y ( ), change_in_position.y ( ),
+                                      &closest_time_intersection ) ) {
+                         wall_normal = { -1.0f, 0.0f };
+                    }
 
-               if ( check_wall ( bottom, left, right, center.y ( ), change_in_position.y ( ),
-                                 center.x ( ), change_in_position.x ( ),
-                                 &closest_time_intersection ) ) {
-               }
+                    if ( check_wall ( right, bottom, top, center.x ( ), change_in_position.x ( ),
+                                      center.y ( ), change_in_position.y ( ),
+                                      &closest_time_intersection ) ) {
+                         wall_normal = { 1.0f, 0.0f };
+                    }
 
-               if ( check_wall ( top, left, right, center.y ( ), change_in_position.y ( ),
-                                 center.x ( ), change_in_position.x ( ),
-                                 &closest_time_intersection ) ) {
-               }
-         }
+                    if ( check_wall ( bottom, left, right, center.y ( ), change_in_position.y ( ),
+                                      center.x ( ), change_in_position.x ( ),
+                                      &closest_time_intersection ) ) {
+                         wall_normal = { 0.0f, -1.0f };
+                    }
+
+                    if ( check_wall ( top, left, right, center.y ( ), change_in_position.y ( ),
+                                      center.x ( ), change_in_position.x ( ),
+                                      &closest_time_intersection ) ) {
+                         wall_normal = { 0.0f, 1.0f };
+                    }
+              }
+          }
+
+          position += ( change_in_position * ( closest_time_intersection - 0.01f ) );
+          velocity -= ( wall_normal * velocity.inner_product ( wall_normal ) );
+          change_in_position -= ( wall_normal * change_in_position.inner_product ( wall_normal ) );
+
+          time_remaining -= closest_time_intersection;
      }
-
-     position += ( change_in_position * ( closest_time_intersection - 0.01f ) );
 
      acceleration.zero ( );
 }

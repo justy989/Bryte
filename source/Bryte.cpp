@@ -426,8 +426,14 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                enemy.damage ( 1, damage_dir );
 
                if ( enemy.state == Character::State::dead ) {
-                    state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
 
+                    auto roll = state->random.generate ( 1, 11 );
+
+                    if ( roll > 5 && roll < 8 ) {
+                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
+                    } else if ( roll >= 8 ) {
+                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
+                    }
                }
           }
      }
@@ -554,6 +560,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 {
      auto* state = get_state ( game_memory );
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
+     Uint32 yellow  = SDL_MapRGB ( back_buffer->format, 255, 255, 0 );
      Uint32 green   = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
      Uint32 white   = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
 
@@ -607,7 +614,16 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
           world_to_sdl ( pickup_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
 
-          SDL_FillRect ( back_buffer, &pickup_rect, red );
+          switch ( pickup.type ) {
+          default:
+               break;
+          case Pickup::Type::health:
+               SDL_FillRect ( back_buffer, &pickup_rect, red );
+               break;
+          case Pickup::Type::key:
+               SDL_FillRect ( back_buffer, &pickup_rect, yellow );
+               break;
+          }
      }
 
      // light

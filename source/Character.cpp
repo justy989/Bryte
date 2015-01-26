@@ -246,9 +246,10 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
                     if ( !map.get_coordinate_solid ( x, y ) &&
                          !interactive.is_solid ( ) ) {
-                         if ( interactive.type == Interactive::Type::exit &&
-                              collides_with_exits ) {
-
+                         if ( interactive.type == Interactive::Type::exit ) {
+                              if ( !collides_with_exits ) {
+                                   continue;
+                              }
                          } else {
                               continue;
                          }

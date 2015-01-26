@@ -1,3 +1,5 @@
+#ifdef LINUX
+
 #include <cstdio>
 
 #include <SDL2/SDL.h>
@@ -86,3 +88,4 @@ int main ( int argc, char** argv )
      return application.run_game ( settings, &editor_settings ) ? 0 : 1;
 }
 
+#endif

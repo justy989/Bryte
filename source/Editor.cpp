@@ -1,8 +1,12 @@
+#ifdef LINUX
+
 #include "Editor.hpp"
 #include "Log.hpp"
 #include "Utils.hpp"
 #include "Bitmap.hpp"
 #include "MapDisplay.hpp"
+
+#include <cstdio>
 
 using namespace editor;
 using namespace bryte;
@@ -965,3 +969,4 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                           1 * ( state->text.character_width + state->text.character_spacing ), 20 );
 }
 
+#endif

@@ -19,7 +19,14 @@ static const Uint32 timestamp_max_characters = 32;
 
 void Log::info ( const Char8* format, ... )
 {
-     LOG_FUNC_BODY ( "INFO:   " );
+     //LOG_FUNC_BODY ( "INFO:   " );
+    va_list arg;
+    Char8 timestamp [ timestamp_max_characters ];
+    make_timestamp ( timestamp );
+    printf ( "%s %s ", timestamp, "INFO:   " );
+    va_start ( arg, format );
+    vfprintf ( stdout, format, arg );
+    va_end ( arg );
 }
 
 void Log::warning ( const Char8* format, ... )
@@ -40,15 +47,31 @@ void Log::debug ( const Char8* format, ... )
 void Log::make_timestamp ( Char8* destination )
 {
     time_t raw_time; // time since epoch in seconds
-    struct tm* time_info; // local Time
 
     // grab the raw time and local time
     time ( &raw_time );
+#ifdef LINUX
+    struct tm* time_info = nullptr; // local Time
+
     time_info = localtime ( &raw_time );
 
     // format the time string, start after day of the week
-    strncpy( destination, asctime( time_info ) + 11,
-             8 );
+    strncpy ( destination, asctime ( time_info ) + 11,
+              8 );
+#endif
+
+#ifdef WIN32
+
+    char buffer [ 64 ];
+    struct tm time_info; // local Time
+
+    localtime_s ( &time_info, &raw_time );
+
+    asctime_s ( buffer, &time_info );
+
+    // format the time string, start after day of the week
+    strncpy_s ( destination, 64, buffer + 11, 64 );
+#endif
 
     // cutoff formatted time string to not show year
     destination [ 8 ] = '\0';

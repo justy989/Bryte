@@ -1,3 +1,5 @@
+#ifdef LINUX
+
 #ifndef BRYTE_EDITOR_HPP
 #define BRYTE_EDITOR_HPP
 
@@ -126,3 +128,4 @@ extern "C" Void game_render     ( GameMemory&, SDL_Surface* );
 
 #endif
 
+#endif

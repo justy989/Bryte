@@ -1,6 +1,8 @@
 #include "Text.hpp"
 #include "Utils.hpp"
 
+#include <ctype.h>
+
 Void Text::render ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y )
 {
      Char8 c;

@@ -4,6 +4,14 @@
 #include "Camera.hpp"
 #include "MapDisplay.hpp"
 
+#ifdef WIN32
+    #define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+
 using namespace bryte;
 
 static const Real32 c_lever_width             = 0.5f;
@@ -674,7 +682,14 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      SDL_FillRect ( back_buffer, &health_bar_rect, red );
 
      char buffer [ 64 ];
+
+#ifdef LINUX
      sprintf ( buffer, "KEYS %d", state->player_key_count );
+#endif
+
+#ifdef WIN32
+     sprintf_s ( buffer, "KEYS %d", state->player_key_count );
+#endif
      state->text.render ( back_buffer, buffer, 210, 4 );
 }
 

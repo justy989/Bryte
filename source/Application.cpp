@@ -7,19 +7,10 @@
 #include <cstdio>
 #include <cassert>
 #include <cstring>
-#include <dlfcn.h>
 
 using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
-
-const Char8* Application::c_game_func_strs [ c_func_count ] = {
-     "game_init",
-     "game_destroy",
-     "game_user_input",
-     "game_update",
-     "game_render"
-};
 
 static const Char8* c_game_memory_filepath  = "bryte_memory.mem";
 static const Char8* c_record_input_filepath = "bryte_input.in";
@@ -29,13 +20,6 @@ Application::Application ( ) :
      m_renderer              ( nullptr ),
      m_back_buffer_texture   ( nullptr ),
      m_back_buffer_surface   ( nullptr ),
-     m_shared_library_path   ( nullptr ),
-     m_shared_library_handle ( nullptr ),
-     m_game_init_func        ( nullptr ),
-     m_game_destroy_func     ( nullptr ),
-     m_game_user_input_func  ( nullptr ),
-     m_game_update_func      ( nullptr ),
-     m_game_render_func      ( nullptr ),
      m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
      m_current_update_timestamp ( m_previous_update_timestamp )
 {
@@ -49,11 +33,6 @@ Application::~Application ( )
           LOG_INFO ( "Freeing allocated game memory.\n" );
           free ( m_game_memory.location ( ) );
           m_game_memory.clear ( );
-     }
-
-     if ( m_shared_library_handle ) {
-          LOG_INFO ( "Closing shared library\n" );
-          dlclose ( m_shared_library_handle );
      }
 
      if ( m_back_buffer_surface ) {
@@ -121,53 +100,6 @@ Bool Application::create_window ( const Char8* window_title, Int32 window_width,
           PRINT_SDL_ERROR ( "SDL_CreateTextureFromSurface" );
           return false;
      }
-
-     return true;
-}
-
-Bool Application::load_game_code ( const Char8* shared_library_path )
-{
-     if ( m_shared_library_handle ) {
-          LOG_INFO ( "Freeing shared library handle\n" );
-          dlclose ( m_shared_library_handle );
-     }
-
-     LOG_INFO ( "Loading shared library: %s\n", shared_library_path );
-     m_shared_library_handle = dlopen ( shared_library_path, RTLD_LAZY );
-
-     if ( !m_shared_library_handle ) {
-          PRINT_DL_ERROR ( "dlopen" );
-          return false;
-     }
-
-     Char8* save_path = strdup ( shared_library_path );
-
-     // if we succeded, save the shared library path
-     if ( m_shared_library_path ) {
-          free ( m_shared_library_path );
-     }
-
-     m_shared_library_path = save_path;
-
-     // load each func and validate they succeeded in loading
-     void* game_funcs [ c_func_count ];
-
-     for ( int i = 0; i < c_func_count; ++i ) {
-          LOG_INFO ( "Loading function: %s\n", c_game_func_strs [ i ] );
-          game_funcs [ i ] = dlsym ( m_shared_library_handle, c_game_func_strs [ i ] );
-
-          if ( !game_funcs [ i ] ) {
-               PRINT_DL_ERROR ( "dlsym" );
-               return false;
-          }
-     }
-
-     // set the loaded functions
-     m_game_init_func          = reinterpret_cast<GameInitFunc>( game_funcs [ 0 ] );
-     m_game_destroy_func       = reinterpret_cast<GameDestroyFunc>( game_funcs [ 1 ] );
-     m_game_user_input_func    = reinterpret_cast<GameUserInputFunc>( game_funcs [ 2 ] );
-     m_game_update_func        = reinterpret_cast<GameUpdateFunc>( game_funcs [ 3 ] );
-     m_game_render_func        = reinterpret_cast<GameRenderFunc>( game_funcs [ 4 ] );
 
      return true;
 }
@@ -249,7 +181,7 @@ Void Application::handle_input ( )
           }
      }
 
-     m_game_user_input_func ( m_game_memory, m_game_input );
+     m_game_functions.game_user_input_func ( m_game_memory, m_game_input );
 }
 
 Void Application::clear_back_buffer ( )
@@ -291,7 +223,7 @@ Bool Application::poll_sdl_events ( )
                }
 
                if ( sc == SDL_SCANCODE_0 ) {
-                    load_game_code ( m_shared_library_path );
+                    m_game_functions.load ( m_settings.shared_library_path );
                     continue;
                }
 
@@ -389,12 +321,14 @@ Real32 Application::time_and_limit_loop ( Int32 locked_frames_per_second )
 
 Bool Application::run_game ( const Settings& settings, void* game_settings )
 {
+    m_settings = settings;
+
      if ( !create_window ( settings.window_title, settings.window_width, settings.window_height,
                            settings.back_buffer_width, settings.back_buffer_height ) ) {
           return false;
      }
 
-     if ( !load_game_code ( settings.shared_library_path ) ) {
+     if ( !m_game_functions.load ( settings.shared_library_path ) ) {
           return false;
      }
 
@@ -411,7 +345,7 @@ Bool Application::run_game ( const Settings& settings, void* game_settings )
      ASSERT ( m_game_render_func );
 
      LOG_INFO ( "Initializing game\n" );
-     if ( !m_game_init_func ( m_game_memory, game_settings ) ) {
+     if ( !m_game_functions.game_init_func ( m_game_memory, game_settings ) ) {
           return false;
      }
 
@@ -428,15 +362,15 @@ Bool Application::run_game ( const Settings& settings, void* game_settings )
 
           handle_input ( );
 
-          m_game_update_func ( m_game_memory, time_delta );
+          m_game_functions.game_update_func ( m_game_memory, time_delta );
 
           clear_back_buffer ( );
-          m_game_render_func ( m_game_memory, m_back_buffer_surface );
+          m_game_functions.game_render_func ( m_game_memory, m_back_buffer_surface );
           render_to_window ( );
      }
 
      LOG_INFO ( "Destroying game\n" );
-     m_game_destroy_func ( m_game_memory );
+     m_game_functions.game_destroy_func ( m_game_memory );
 
      return 0;
 }

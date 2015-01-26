@@ -11,7 +11,6 @@
 #include <fstream>
 
 #define PRINT_SDL_ERROR(sdl_api) LOG_ERROR ( "%s() failed: %s\n", sdl_api, SDL_GetError ( ) );
-#define PRINT_DL_ERROR(dl_api) LOG_ERROR ( "%s() failed: %s\n", dl_api, dlerror ( ) );
 
 using std::chrono::high_resolution_clock;
 
@@ -50,7 +49,6 @@ private:
 
      Bool create_window        ( const Char8* window_title, Int32 window_width, Int32 window_height,
                                  Int32 back_buffer_width, Int32 back_buffer_height );
-     Bool load_game_code       ( const Char8* shared_library_path );
      Bool allocate_game_memory ( Uint32 size );
 
      Bool save_game_memory      ( const Char8* save_path );
@@ -80,21 +78,14 @@ private:
      SDL_Texture*  m_back_buffer_texture;
      SDL_Surface*  m_back_buffer_surface;
 
-     // loaded share library attributes
-     Char8* m_shared_library_path;
-     void*  m_shared_library_handle;
+     GameFunctions m_game_functions;
 
-     // functions loaded from game shared library
-     GameInitFunc         m_game_init_func;
-     GameDestroyFunc      m_game_destroy_func;
-     GameUserInputFunc    m_game_user_input_func;
-     GameUpdateFunc       m_game_update_func;
-     GameRenderFunc       m_game_render_func;
+     GameMemory    m_game_memory;
+     GameInput     m_game_input;
 
-     GameMemory           m_game_memory;
-     GameInput            m_game_input;
+     InputRecorder m_input_recorder;
 
-     InputRecorder        m_input_recorder;
+     Settings      m_settings;
 
      // frame timestamps
      high_resolution_clock::time_point m_previous_update_timestamp;

@@ -3,8 +3,8 @@
 
 using namespace bryte;
 
-Void InteractivesDisplay::render_interactives ( SDL_Surface* back_buffer, Interactives& interactives,
-                                                Real32 camera_x, Real32 camera_y )
+Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& interactives,
+                                   Real32 camera_x, Real32 camera_y )
 {
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
@@ -70,33 +70,5 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      SDL_BlitSurface ( interactive_sheets [ interactive.type ], &clip_rect, back_buffer, &dest_rect );
-}
-
-Void InteractivesDisplay::contribute_light ( Interactives& interactives, Map& map )
-{
-     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
-          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               auto& interactive = interactives.get_from_tile ( x, y );
-
-               switch ( interactive.type ) {
-               default:
-                    break;
-               case Interactive::Type::torch:
-                    if ( interactive.interactive_torch.on ) {
-                         map.illuminate ( x * Map::c_tile_dimension_in_pixels,
-                                          y * Map::c_tile_dimension_in_pixels,
-                                          interactive.interactive_torch.value );
-                    }
-                    break;
-               case Interactive::Type::pushable_torch:
-                    if ( interactive.interactive_pushable_torch.torch.on ) {
-                         map.illuminate ( x * Map::c_tile_dimension_in_pixels,
-                                          y * Map::c_tile_dimension_in_pixels,
-                                          interactive.interactive_pushable_torch.torch.value );
-                    }
-                    break;
-               }
-          }
-     }
 }
 

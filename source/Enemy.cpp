@@ -18,7 +18,10 @@ Void Enemy::init ( Type type )
           collision_offset.set ( pixels_to_meters ( 1 ), pixels_to_meters ( 4 ) );
           collision_dimension.set ( pixels_to_meters ( 14 ), pixels_to_meters ( 6 ) );
 
-          rotate_collision = true;
+          rotate_collision = false;
+
+          collides_with_solids = true;
+          collides_with_exits  = true;
           break;
      case Enemy::Type::bat:
           health     = 2;
@@ -29,6 +32,9 @@ Void Enemy::init ( Type type )
           collision_dimension.set ( pixels_to_meters ( 10 ), pixels_to_meters ( 6 ) );
 
           rotate_collision = false;
+
+          collides_with_solids = true;
+          collides_with_exits  = true;
           break;
      }
 }

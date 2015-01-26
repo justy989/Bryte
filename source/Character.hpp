@@ -88,6 +88,9 @@ namespace bryte
 
           Stopwatch damage_watch;
           Stopwatch cooldown_watch;
+
+          Bool collides_with_solids;
+          Bool collides_with_exits;
      };
 
      inline Real32 Character::width ( ) const

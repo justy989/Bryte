@@ -3,8 +3,8 @@
 
 using namespace bryte;
 
-extern "C" Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& map,
-                             Real32 camera_x, Real32 camera_y )
+static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& map,
+                         Real32 camera_x, Real32 camera_y )
 {
      // TODO: optimize to only draw to the part of the back buffer we can see
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
@@ -44,8 +44,8 @@ static Void render_fixture ( SDL_Surface* back_buffer, SDL_Surface* fixture_shee
      SDL_BlitSurface ( fixture_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
-extern "C" Void render_map_decor ( SDL_Surface* back_buffer, SDL_Surface* decor_sheet, Map& map,
-                                   Real32 camera_x, Real32 camera_y )
+static Void render_map_decor ( SDL_Surface* back_buffer, SDL_Surface* decor_sheet, Map& map,
+                               Real32 camera_x, Real32 camera_y )
 {
      for ( Uint8 i = 0; i < map.decor_count ( ); ++i ) {
           render_fixture ( back_buffer, decor_sheet, &map.decor ( i ), camera_x, camera_y );
@@ -53,12 +53,19 @@ extern "C" Void render_map_decor ( SDL_Surface* back_buffer, SDL_Surface* decor_
 
 }
 
-extern "C" Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lamp_sheet, Map& map,
-                                   Real32 camera_x, Real32 camera_y )
+static Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lamp_sheet, Map& map,
+                               Real32 camera_x, Real32 camera_y )
 {
      for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
           render_fixture ( back_buffer, lamp_sheet, &map.lamp ( i ), camera_x, camera_y );
      }
+}
+
+Void MapDisplay::render ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y )
+{
+     render_map ( back_buffer, tilesheet, map, camera_x, camera_y );
+     render_map_decor ( back_buffer, decorsheet, map, camera_x, camera_y );
+     render_map_lamps ( back_buffer, lampsheet, map, camera_x, camera_y );
 }
 
 static Void blend_light ( SDL_Surface* back_buffer, const SDL_Rect& dest_rect, Real32 light )

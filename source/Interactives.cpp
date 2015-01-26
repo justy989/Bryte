@@ -45,6 +45,34 @@ Void Interactives::update ( float time_delta )
      }
 }
 
+Void Interactives::contribute_light ( Map& map )
+{
+     for ( Int32 y = 0; y < height ( ); ++y ) {
+          for ( Int32 x = 0; x < width ( ); ++x ) {
+               auto& interactive = get_from_tile ( x, y );
+
+               switch ( interactive.type ) {
+               default:
+                    break;
+               case Interactive::Type::torch:
+                    if ( interactive.interactive_torch.on ) {
+                         map.illuminate ( x * Map::c_tile_dimension_in_pixels,
+                                          y * Map::c_tile_dimension_in_pixels,
+                                          interactive.interactive_torch.value );
+                    }
+                    break;
+               case Interactive::Type::pushable_torch:
+                    if ( interactive.interactive_pushable_torch.torch.on ) {
+                         map.illuminate ( x * Map::c_tile_dimension_in_pixels,
+                                          y * Map::c_tile_dimension_in_pixels,
+                                          interactive.interactive_pushable_torch.torch.value );
+                    }
+                    break;
+               }
+          }
+     }
+}
+
 Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );

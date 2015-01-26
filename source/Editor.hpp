@@ -12,6 +12,7 @@
 #include "Text.hpp"
 #include "Vector.hpp"
 
+#include "MapDisplay.hpp"
 #include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
 
@@ -85,10 +86,7 @@ namespace editor
 
           SDL_Surface* mode_icons_surface;
 
-          SDL_Surface* tilesheet;
-          SDL_Surface* decorsheet;
-          SDL_Surface* lampsheet;
-
+          bryte::MapDisplay          map_display;
           bryte::CharacterDisplay    character_display;
           bryte::InteractivesDisplay interactives_display;
 

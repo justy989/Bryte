@@ -147,6 +147,8 @@ namespace bryte
 
           Void update ( float time_delta );
 
+          Void contribute_light ( Map& map );
+
           Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
           Void activate ( Int32 tile_x, Int32 tile_y );
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );

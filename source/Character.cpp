@@ -246,7 +246,12 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
                     if ( !map.get_coordinate_solid ( x, y ) &&
                          !interactive.is_solid ( ) ) {
-                         continue;
+                         if ( interactive.type == Interactive::Type::exit &&
+                              collides_with_exits ) {
+
+                         } else {
+                              continue;
+                         }
                     }
 
                     Real32 left   = pixels_to_meters ( x * Map::c_tile_dimension_in_pixels );

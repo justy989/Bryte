@@ -15,6 +15,7 @@
 
 #include "Vector.hpp"
 
+#include "MapDisplay.hpp"
 #include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
 
@@ -83,19 +84,18 @@ namespace bryte
 
           Vector       camera;
 
-          SDL_Surface* tilesheet;
-          SDL_Surface* decorsheet;
-          SDL_Surface* lampsheet;
-
+          MapDisplay          map_display;
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
 
-          Bool         direction_keys [ Direction::count ];
-          Bool         attack_key;
-          Bool         activate_key;
+          Bool  direction_keys [ Direction::count ];
+          Bool  attack_key;
+          Bool  activate_key;
 
-          Int32        player_spawn_tile_x;
-          Int32        player_spawn_tile_y;
+          Int32 player_spawn_tile_x;
+          Int32 player_spawn_tile_y;
+
+          Int32 player_key_count;
      };
 
      struct MemoryLocations {

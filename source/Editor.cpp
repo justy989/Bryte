@@ -314,12 +314,12 @@ void State::option_button_down_pressed ( )
      default:
           break;
      case Mode::tile:
-          if ( current_tile < tilesheet->w / Map::c_tile_dimension_in_pixels ) {
+          if ( current_tile < map_display.tilesheet->w / Map::c_tile_dimension_in_pixels ) {
                current_tile++;
           }
           break;
      case Mode::decor:
-          if ( current_decor < decorsheet->w / Map::c_tile_dimension_in_pixels ) {
+          if ( current_decor < map_display.decorsheet->w / Map::c_tile_dimension_in_pixels ) {
                current_decor++;
           }
           break;
@@ -412,17 +412,17 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->tilesheet,  game_memory,
+     if ( !load_bitmap_with_game_memory ( state->map_display.tilesheet,  game_memory,
                                           state->settings->map_tilesheet_filename ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->decorsheet, game_memory,
+     if ( !load_bitmap_with_game_memory ( state->map_display.decorsheet, game_memory,
                                           state->settings->map_decorsheet_filename ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->lampsheet, game_memory,
+     if ( !load_bitmap_with_game_memory ( state->map_display.lampsheet, game_memory,
                                           state->settings->map_lampsheet_filename ) ) {
           return false;
      }
@@ -469,7 +469,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           return false;
      }
 
-if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::light_detector ],
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::light_detector ],
                                           game_memory,
                                           "castle_lightdetectorsheet.bmp" ) ) {
           return false;
@@ -513,9 +513,9 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
 
      SDL_FreeSurface ( state->mode_icons_surface );
 
-     SDL_FreeSurface ( state->tilesheet );
-     SDL_FreeSurface ( state->decorsheet );
-     SDL_FreeSurface ( state->lampsheet );
+     SDL_FreeSurface ( state->map_display.tilesheet );
+     SDL_FreeSurface ( state->map_display.decorsheet );
+     SDL_FreeSurface ( state->map_display.lampsheet );
 
      for ( int i = 0; i < Enemy::Type::count; ++i ) {
           SDL_FreeSurface ( state->character_display.enemy_sheets [ i ] );
@@ -743,6 +743,11 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      } break;
      }
+
+     state->map.reset_light ( );
+
+     state->interactives.contribute_light ( state->map );
+
 }
 
 static Void render_map_solids ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y )
@@ -864,27 +869,28 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 {
      State* state = get_state ( game_memory );
 
-     render_map ( back_buffer, state->tilesheet, state->map, state->camera.x ( ), state->camera.y ( ) );
-     render_map_decor ( back_buffer, state->decorsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
-     render_map_lamps ( back_buffer, state->lampsheet, state->map, state->camera.x ( ), state->camera.y ( ) );
+     // map
+     state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+
+     // interactives
+     state->interactives_display.render ( back_buffer, state->interactives,
+                                          state->camera.x ( ), state->camera.y ( ) );
+
+     // enemy spawns
      render_enemy_spawns ( back_buffer, state->character_display.enemy_sheets,
                            state->map, state->camera.x ( ), state->camera.y ( ) );
 
-     state->interactives_display.render_interactives ( back_buffer, state->interactives,
-                                                       state->camera.x ( ), state->camera.y ( ) );
-
-     state->map.reset_light ( );
-
-     state->interactives_display.contribute_light ( state->interactives, state->map );
-
+     // light
      if ( state->draw_light ) {
           render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
      }
 
+     // solids
      if ( state->draw_solids ) {
           render_map_solids ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
      }
 
+     // ui
      SDL_Rect hud_rect { 0, 0, back_buffer->w, 34 };
      SDL_FillRect ( back_buffer, &hud_rect, SDL_MapRGB ( back_buffer->format, 0, 0, 0 ) );
 
@@ -894,15 +900,15 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      default:
           break;
      case Mode::tile:
-          render_current_icon ( back_buffer, state->tilesheet, state->mouse_x, state->mouse_y,
+          render_current_icon ( back_buffer, state->map_display.tilesheet, state->mouse_x, state->mouse_y,
                                 state->current_tile, 0 );
           break;
      case Mode::decor:
-          render_current_icon ( back_buffer, state->decorsheet, state->mouse_x, state->mouse_y,
+          render_current_icon ( back_buffer, state->map_display.decorsheet, state->mouse_x, state->mouse_y,
                                 state->current_decor, 0 );
           break;
      case Mode::light:
-          render_current_icon ( back_buffer, state->lampsheet, state->mouse_x, state->mouse_y,
+          render_current_icon ( back_buffer, state->map_display.lampsheet, state->mouse_x, state->mouse_y,
                                 state->current_lamp, 0 );
           break;
      case Mode::enemy:
@@ -947,6 +953,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      }
 
+     // text ui
      char buffer [ 64 ];
      sprintf ( buffer, "T %d %d", state->mouse_tile_x, state->mouse_tile_y );
      state->text.render ( back_buffer, buffer, 210, 4 );

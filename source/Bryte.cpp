@@ -102,6 +102,9 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      player.damage_watch.reset ( 0.0f );
      player.cooldown_watch.reset ( 0.0f );
 
+     player.collides_with_exits  = false;
+     player.collides_with_solids = true;
+
      // ensure all enemies start dead
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
           enemies [ i ].state = Character::State::dead;
@@ -112,17 +115,17 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      }
 
      // load test graphics
-     if ( !load_bitmap_with_game_memory ( tilesheet, game_memory,
+     if ( !load_bitmap_with_game_memory ( map_display.tilesheet, game_memory,
                                           c_test_tilesheet_path ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( decorsheet, game_memory,
+     if ( !load_bitmap_with_game_memory ( map_display.decorsheet, game_memory,
                                           c_test_decorsheet_path ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( lampsheet, game_memory,
+     if ( !load_bitmap_with_game_memory ( map_display.lampsheet, game_memory,
                                           c_test_lampsheet_path ) ) {
           return false;
      }
@@ -183,14 +186,16 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );
 
+     player_key_count = 0;
+
      return true;
 }
 
 Void State::destroy ( )
 {
-     SDL_FreeSurface ( tilesheet );
-     SDL_FreeSurface ( decorsheet );
-     SDL_FreeSurface ( lampsheet );
+     SDL_FreeSurface ( map_display.tilesheet );
+     SDL_FreeSurface ( map_display.decorsheet );
+     SDL_FreeSurface ( map_display.lampsheet );
 
      SDL_FreeSurface ( character_display.player_sheet );
 
@@ -534,6 +539,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      }
 
+     state->map.reset_light ( );
+     state->interactives.contribute_light ( map );
+
      // give interactives their light values
      for ( Int32 y = 0; y < state->interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < state->interactives.width ( ); ++x ) {
@@ -545,33 +553,24 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      auto* state = get_state ( game_memory );
-
-     state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
-                                                       state->player.position.x ( ), state->player.width ( ) ) );
-
-     state->camera.set_y ( calculate_camera_position ( back_buffer->h, state->map.height ( ),
-                                                       state->player.position.y ( ), state->player.height ( ) ) );
-
-     // draw map
-     render_map ( back_buffer, state->tilesheet, state->map,
-                  state->camera.x ( ), state->camera.y ( ) );
-     render_map_decor ( back_buffer, state->decorsheet, state->map,
-                        state->camera.x ( ), state->camera.y ( ) );
-     render_map_lamps ( back_buffer, state->lampsheet, state->map,
-                        state->camera.x ( ), state->camera.y ( ) );
-
-     state->interactives_display.render_interactives ( back_buffer, state->interactives,
-                                                       state->camera.x ( ), state->camera.y ( ) );
-
-     state->map.reset_light ( );
-
-     state->interactives_display.contribute_light ( state->interactives, state->map );
-
      Uint32 red     = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 green   = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
      Uint32 white   = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
 
-     // draw enemies
+     // calculate camera
+     state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
+                                                       state->player.position.x ( ), state->player.width ( ) ) );
+     state->camera.set_y ( calculate_camera_position ( back_buffer->h, state->map.height ( ),
+                                                       state->player.position.y ( ), state->player.height ( ) ) );
+
+     // map
+     state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+
+     // interactives
+     state->interactives_display.render ( back_buffer, state->interactives,
+                                          state->camera.x ( ), state->camera.y ( ) );
+
+     // enemies
      for ( Uint32 i = 0; i < state->enemy_count; ++i ) {
           if ( state->enemies [ i ].state == Character::State::alive ) {
                state->character_display.render_enemy ( back_buffer, state->enemies [ i ],
@@ -579,11 +578,11 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           }
      }
 
-     // draw player
+     // player
      state->character_display.render_player ( back_buffer, state->player,
                                               state->camera.x ( ), state->camera.y ( ) );
 
-     // draw player attack
+     // player attack
      if ( state->player.state == Character::State::attacking ) {
           SDL_Rect attack_rect = build_world_sdl_rect ( state->player.attack_x ( ),
                                                         state->player.attack_y ( ),
@@ -595,6 +594,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           SDL_FillRect ( back_buffer, &attack_rect, green );
      }
 
+     // pickups
      for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
           Pickup& pickup = state->pickups [ i ];
 
@@ -610,7 +610,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           SDL_FillRect ( back_buffer, &pickup_rect, red );
      }
 
+     // light
      render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+
+     // ui
 
      // draw player health bar
      Real32 pct = static_cast<Real32>( state->player.health ) /

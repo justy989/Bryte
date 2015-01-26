@@ -28,16 +28,18 @@ struct GameFunctions
 
     Bool load ( const Char8* shared_library_path );
 
-    GameInitFunc         game_init_func;
-    GameDestroyFunc      game_destroy_func;
-    GameUserInputFunc    game_user_input_func;
-    GameUpdateFunc       game_update_func;
-    GameRenderFunc       game_render_func;
-
 #ifdef LINUX
     Void* shared_library_handle;
-    Char8* shared_library_path;
+    Char8* shared_library_filepath;
+
+    static const Int32 c_func_count = 5;
 #endif
+
+    GameInitFunc      game_init_func;
+    GameDestroyFunc   game_destroy_func;
+    GameUserInputFunc game_user_input_func;
+    GameUpdateFunc    game_update_func;
+    GameRenderFunc    game_render_func;
 };
 
 #endif

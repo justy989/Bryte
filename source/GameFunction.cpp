@@ -4,7 +4,7 @@
 #ifdef LINUX
     #include <dlfcn.h>
 
-const Char8* Application::c_game_func_strs [ c_func_count ] = {
+const Char8* c_game_func_strs [ GameFunctions::c_func_count ] = {
     "game_init",
     "game_destroy",
     "game_user_input",
@@ -35,7 +35,7 @@ GameFunctions::~GameFunctions ( )
 #ifdef LINUX
     if ( shared_library_handle ) {
         LOG_INFO ( "Closing shared library\n" );
-        dlclose ( m_shared_library_handle );
+        dlclose ( shared_library_handle );
     }
 #endif
 }
@@ -59,18 +59,18 @@ Bool GameFunctions::load ( const Char8* shared_library_path )
     Char8* save_path = strdup ( shared_library_path );
 
     // if we succeded, save the shared library path
-    if ( shared_library_handle ) {
-        free ( shared_library_handle );
+    if ( shared_library_filepath ) {
+        free ( shared_library_filepath );
     }
 
-    this->shared_library_path = shared_library_path;
+    shared_library_filepath = save_path;
 
     // load each func and validate they succeeded in loading
     Void* game_funcs [ c_func_count ];
 
     for ( Int32 i = 0; i < c_func_count; ++i ) {
         LOG_INFO ( "Loading function: %s\n", c_game_func_strs [ i ] );
-        game_funcs [ i ] = dlsym ( m_shared_library_handle, c_game_func_strs [ i ] );
+        game_funcs [ i ] = dlsym ( shared_library_handle, c_game_func_strs [ i ] );
 
         if ( !game_funcs [ i ] ) {
             PRINT_DL_ERROR ( "dlsym" );

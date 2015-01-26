@@ -338,12 +338,6 @@ Bool Application::run_game ( const Settings& settings, void* game_settings )
 
      Real32 time_delta = 0.0f;
 
-     ASSERT ( m_game_init_func );
-     ASSERT ( m_game_destroy_func );
-     ASSERT ( m_game_user_input_func );
-     ASSERT ( m_game_update_func );
-     ASSERT ( m_game_render_func );
-
      LOG_INFO ( "Initializing game\n" );
      if ( !m_game_functions.game_init_func ( m_game_memory, game_settings ) ) {
           return false;

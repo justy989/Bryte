@@ -3,6 +3,14 @@
 
 using namespace bryte;
 
+MapDisplay::MapDisplay ( ) :
+     tilesheet ( nullptr ),
+     decorsheet ( nullptr ),
+     lampsheet ( nullptr )
+{
+
+}
+
 static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& map,
                          Real32 camera_x, Real32 camera_y )
 {

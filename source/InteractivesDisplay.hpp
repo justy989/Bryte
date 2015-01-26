@@ -10,6 +10,8 @@ namespace bryte
      struct InteractivesDisplay {
      public:
 
+          InteractivesDisplay ( );
+
           Void render ( SDL_Surface* back_buffer, Interactives& interactives,
                         Real32 camera_x, Real32 camera_y );
 

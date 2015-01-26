@@ -11,7 +11,7 @@ namespace bryte
 
      class Map {
      public:
-
+#pragma pack(push,1)
           struct Coordinates {
                Int32 x;
                Int32 y;
@@ -31,6 +31,7 @@ namespace bryte
                Location location;
                Uint8 id;
           };
+#pragma pack(pop)
 
      public:
 

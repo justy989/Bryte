@@ -4,6 +4,14 @@
 
 using namespace bryte;
 
+CharacterDisplay::CharacterDisplay ( ) :
+     player_sheet ( nullptr )
+{
+     for ( Int32 i = 0; i < Enemy::Type::count; ++i ) {
+          enemy_sheets [ i ] = nullptr;
+     }
+}
+
 static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_sheet,
                                const Character& character,
                                Real32 camera_x, Real32 camera_y )

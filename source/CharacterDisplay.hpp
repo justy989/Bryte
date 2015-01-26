@@ -8,6 +8,8 @@
 namespace bryte {
      struct CharacterDisplay {
 
+          CharacterDisplay ( );
+
           Void render_player ( SDL_Surface* back_buffer, const Character& character,
                                Real32 camera_x, Real32 camera_y );
 

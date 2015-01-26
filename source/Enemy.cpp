@@ -3,9 +3,22 @@
 
 using namespace bryte;
 
-Void Enemy::init ( Type type )
+Void Enemy::init ( Type type, Real32 x, Real32 y )
 {
      this->type = type;
+
+     state = Character::State::alive;
+     facing = Direction::left;
+
+     position.set ( x, y );
+     velocity.zero ( );
+     acceleration.zero ( );
+
+     damage_pushed = Direction::left;
+
+     state_watch.reset ( 0.0f );
+     damage_watch.reset ( 0.0f );
+     cooldown_watch.reset ( 0.0f );
 
      switch ( type ) {
      default:

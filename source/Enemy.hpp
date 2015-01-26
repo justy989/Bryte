@@ -37,7 +37,7 @@ namespace bryte
                Stopwatch timer;
           };
 
-          Void init ( Type type );
+          Void init ( Type type, Real32 x, Real32 y );
 
      public:
 

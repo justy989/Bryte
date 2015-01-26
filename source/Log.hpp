@@ -3,6 +3,8 @@
 
 #include "Types.hpp"
 
+#ifdef LINUX
+
 class Log {
 public:
 
@@ -25,6 +27,24 @@ private:
      #define LOG_DEBUG( ... ) Log::debug ( __VA_ARGS__ );
 #else
      #define LOG_DEBUG( ... )
+#endif
+
+#endif
+
+#if WIN32
+
+#include <cstdio>
+
+#define LOG_INFO( ... ) printf ( "INFO   : " ); printf ( __VA_ARGS__ )
+#define LOG_ERROR( ... ) printf ( "ERROR  : " ); printf ( __VA_ARGS__ )
+#define LOG_WARNING( ... ) printf ( "WARNING: " ); printf ( __VA_ARGS__ )
+
+#ifdef DEBUG
+    #define LOG_DEBUG( ... ) printf ( "DEBUG: " ); printf ( __VA_ARGS__ )
+#else
+    #define LOG_DEBUG( ... )
+#endif
+
 #endif
 
 #endif

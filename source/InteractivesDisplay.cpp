@@ -3,6 +3,13 @@
 
 using namespace bryte;
 
+InteractivesDisplay::InteractivesDisplay ( )
+{
+     for ( Int32 i = 0; i < Interactive::Type::count; ++i ) {
+          interactive_sheets [ i ] = nullptr;
+     }
+}
+
 Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& interactives,
                                    Real32 camera_x, Real32 camera_y )
 {

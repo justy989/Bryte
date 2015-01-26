@@ -99,6 +99,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      player.max_health       = 25;
 
      player.velocity.zero ( );
+     player.acceleration.zero ( );
 
      player.dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
      player.collision_offset.set ( pixels_to_meters ( 5 ), pixels_to_meters ( 2 ) );
@@ -115,8 +116,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      // ensure all enemies start dead
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
-          enemies [ i ].state = Character::State::dead;
+         enemies [ i ].init ( Enemy::Type::count, 0.0f, 0.0f );
+         enemies [ i ].state = Character::State::dead;
      }
+
+     enemy_count = 0;
 
      for ( Uint32 i = 0; i < c_max_pickups; ++i ) {
           pickups [ i ].type = Pickup::Type::none;
@@ -223,7 +227,9 @@ Void State::destroy ( )
      }
 
      for ( int i = 0; i < Interactive::Type::count; ++i ) {
-          SDL_FreeSurface ( interactives_display.interactive_sheets [ i ] );
+          if ( interactives_display.interactive_sheets [ i ] ) {
+               SDL_FreeSurface ( interactives_display.interactive_sheets [ i ] );
+          }
      }
 }
 
@@ -247,19 +253,7 @@ Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id )
 
      LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], x, y );
 
-     enemy->state  = Character::State::alive;
-     enemy->facing = Direction::left;
-
-     enemy->position.set ( x, y );
-     enemy->velocity.zero ( );
-
-     enemy->damage_pushed = Direction::left;
-
-     enemy->state_watch.reset ( 0.0f );
-     enemy->damage_watch.reset ( 0.0f );
-     enemy->cooldown_watch.reset ( 0.0f );
-
-     enemy->init ( static_cast<Enemy::Type>( id ) );
+     enemy->init ( static_cast<Enemy::Type>( id ), x, y );
 
      enemy_count++;
 
@@ -565,7 +559,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                player_exit = map.position_to_tile_index ( state->player.position.x ( ),
                                                           state->player.position.y ( ) );
-               LOG_INFO ( "Save exit: %d\n", player_exit )
+
+               LOG_INFO ( "Save exit: %d\n", player_exit );
           }
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.position.x ( ),
@@ -573,7 +568,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           // clear the exit destination if they've left the tile
           if ( abs ( player_exit - player_tile_index ) > 1 ) {
-               LOG_INFO ( "changed exit: %d\n", player_tile_index )
+               LOG_INFO ( "changed exit: %d\n", player_tile_index );
                player_exit = 0;
           }
      }

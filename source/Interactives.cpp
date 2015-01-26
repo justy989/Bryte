@@ -128,13 +128,12 @@ Bool Interactive::is_solid ( ) const
      default:
           break;
      case lever:
-          return true;
+     case torch:
      case pushable_block:
+     case pushable_torch:
           return true;
      case exit:
           return interactive_exit.state != Exit::State::open;
-     case pushable_torch:
-          return true;
      }
 
      return false;

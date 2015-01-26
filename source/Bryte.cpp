@@ -126,6 +126,14 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           pickups [ i ].type = Pickup::Type::none;
      }
 
+     for ( int i = 0; i < Enemy::Type::count; ++i ) {
+          character_display.enemy_sheets [ i ] = nullptr;
+     }
+
+     for ( int i = 0; i < Interactive::Type::count; ++i ) {
+          interactives_display.interactive_sheets [ i ] = nullptr;
+     }
+
      FileContents text_contents    = load_entire_file ( "text.bmp", &game_memory );
 
      text.fontsheet         = load_bitmap ( &text_contents );
@@ -204,12 +212,17 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     for ( Int32 i = 0; i < 4; ++i ) {
+          direction_keys [ i ] = false;
+     }
 
      map.load_master_list ( settings->map_master_list_filename );
      map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );
 
      player_key_count = 0;
+
+     attack_key = false;
 
      return true;
 }

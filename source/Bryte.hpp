@@ -19,6 +19,8 @@
 #include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
 
+#include "Text.hpp"
+
 #include <SDL2/SDL.h>
 
 namespace bryte
@@ -83,6 +85,8 @@ namespace bryte
           Interactives interactives;
 
           Vector       camera;
+
+          Text text;
 
           MapDisplay          map_display;
           CharacterDisplay    character_display;

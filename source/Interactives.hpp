@@ -44,22 +44,25 @@ namespace bryte
 
      struct PushableBlock {
           enum State {
-               idle,
-               leaned_on,
-               moving
+               idle,      // no luv at the moment
+               leaned_on, // a character is pushing it
+               moving,    // a single frame to tell the map I moved
+               solid      // no longer pushable
           };
 
           Void reset ( );
 
           Void update ( float time_delta );
 
-          Direction push ( Direction direction );
+          Direction push ( Direction direction, Interactives& interactives );
 
           State     state;
           Stopwatch cooldown_watch;
-          Direction move_direction;
+          Direction restricted_direction;
+          Bool      one_time;
           Bool      pushed_last_update;
-          // Int32     moving_offset;
+          Uint8     activate_coordinate_x;
+          Uint8     activate_coordinate_y;
      };
 
      struct Torch {
@@ -78,7 +81,7 @@ namespace bryte
           Void update ( float time_delta );
 
           Void activate  ( );
-          Direction push ( Direction direction );
+          Direction push ( Direction direction, Interactives& interactives );
 
           Torch torch;
           PushableBlock pushable_block;
@@ -121,7 +124,7 @@ namespace bryte
           Void      update   ( float time_delta );
 
           Void      activate ( Interactives& interactives );
-          Direction push     ( Direction direction );
+          Direction push     ( Direction direction, Interactives& interactives );
           Void      light    ( Uint8 light, Interactives& interactives );
 
           Bool is_solid ( ) const;

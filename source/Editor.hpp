@@ -101,6 +101,8 @@ namespace editor
           Uint8 current_enemy_drop;
           Uint8 current_exit_direction;
           Uint8 current_exit_state;
+          Uint8 current_pushable_block_one_time;
+          Uint8 current_pushable_block_restricted_direction;
           Uint8 current_torch;
           Uint8 current_pushable_torch;
           Uint8 current_light_detector_bryte;

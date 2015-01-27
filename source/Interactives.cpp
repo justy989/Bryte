@@ -77,7 +77,7 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
-     Direction result_dir = i.push ( dir );
+     Direction result_dir = i.push ( dir, *this );
 
      Int32 dest_x = tile_x;
      Int32 dest_y = tile_y;
@@ -188,15 +188,15 @@ Void Interactive::activate ( Interactives& interactives )
      }
 }
 
-Direction Interactive::push ( Direction direction )
+Direction Interactive::push ( Direction direction, Interactives& interactives )
 {
      switch ( type ) {
      default:
           break;
      case Type::pushable_block:
-          return interactive_pushable_block.push ( direction );
+          return interactive_pushable_block.push ( direction, interactives );
      case Type::pushable_torch:
-          return interactive_pushable_torch.push ( direction );
+          return interactive_pushable_torch.push ( direction, interactives );
      }
 
      return Direction::count;
@@ -267,11 +267,11 @@ Void Lever::activate ( Interactives& interactives )
 
 Void PushableBlock::reset ( )
 {
-     state = idle;
+     state                = idle;
      cooldown_watch.reset ( 0.0f );
-     move_direction = Direction::count;
-     pushed_last_update = false;
-     //moving_offset = 0;
+     restricted_direction = Direction::count;
+     pushed_last_update   = false;
+     one_time             = false;
 }
 
 Void PushableBlock::update ( float time_delta )
@@ -291,18 +291,26 @@ Void PushableBlock::update ( float time_delta )
           break;
      case moving:
           break;
+     case solid:
+          break;
      }
 
      pushed_last_update = false;
 }
 
-Direction PushableBlock::push ( Direction direction )
+Direction PushableBlock::push ( Direction direction, Interactives& interactives )
 {
      switch ( state) {
      default:
           ASSERT ( 0 );
           break;
      case idle:
+          // restrict direction can be pushed if desired
+          if ( restricted_direction != Direction::count &&
+               restricted_direction != direction ) {
+               break;
+          }
+
           state = leaned_on;
           cooldown_watch.reset ( c_lean_on_block_time );
           pushed_last_update = true;
@@ -310,13 +318,24 @@ Direction PushableBlock::push ( Direction direction )
      case leaned_on:
           if ( cooldown_watch.expired ( ) ) {
                state = moving;
-               move_direction = direction;
           }
           pushed_last_update = true;
           break;
      case moving:
-          state = idle;
+          if ( one_time ) {
+               state = solid;
+          } else {
+               state = idle;
+          }
+
+          if ( activate_coordinate_x || activate_coordinate_y ) {
+               auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+               interactive.activate ( interactives );
+          }
+
           return direction;
+     case solid:
+          break;
      }
 
      return Direction::count;
@@ -374,9 +393,9 @@ Void PushableTorch::activate ( )
      torch.activate ( );
 }
 
-Direction PushableTorch::push ( Direction direction )
+Direction PushableTorch::push ( Direction direction, Interactives& interactives )
 {
-     return pushable_block.push ( direction );
+     return pushable_block.push ( direction, interactives );
 }
 
 Void LightDetector::reset ( )

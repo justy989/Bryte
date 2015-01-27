@@ -98,6 +98,9 @@ Void State::mouse_button_left_clicked ( )
           } else {
                interactive.type = Interactive::Type::pushable_block;
                interactive.reset ( );
+               interactive.interactive_pushable_block.one_time = current_pushable_block_one_time;
+               interactive.interactive_pushable_block.restricted_direction =
+                    static_cast<Direction>( current_pushable_block_restricted_direction );
           }
      } break;
      case Mode::enemy:
@@ -208,7 +211,24 @@ Void State::mouse_button_right_clicked ( )
           }
      } break;
      case Mode::pushable_block:
-          break;
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::pushable_block ) {
+               current_interactive_x = mouse_tile_x;
+               current_interactive_y = mouse_tile_y;
+               track_current_interactive = true;
+          } else {
+               if ( track_current_interactive ) {
+                    auto& pushable_block = interactives.get_from_tile ( current_interactive_x,
+                                                               current_interactive_y );
+                    ASSERT ( pushable_block.type == Interactive::Type::pushable_block );
+                    pushable_block.interactive_pushable_block.activate_coordinate_x = mouse_tile_x;
+                    pushable_block.interactive_pushable_block.activate_coordinate_y = mouse_tile_y;
+                    track_current_interactive = false;
+               }
+          }
+     } break;
      case Mode::enemy:
           current_enemy_direction++;
           current_enemy_direction %= Direction::count;
@@ -292,24 +312,11 @@ void State::option_button_up_pressed ( )
           }
      } break;
      case Mode::lever:
-     {
-          if ( !mouse_on_map ( ) ) {
-               break;
-          }
-
-          auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
-
-          if ( interactive.type == Interactive::Type::lever ) {
-               switch ( current_field ) {
-               case 0:
-                    interactive.interactive_lever.activate_coordinate_x--;
-                    break;
-               case 1:
-                    interactive.interactive_lever.activate_coordinate_y--;
-                    break;
-               }
-          }
-     } break;
+          break;
+     case Mode::pushable_block:
+          current_pushable_block_restricted_direction--;
+          current_pushable_block_restricted_direction %= ( Direction::count + 1 );
+          break;
      case Mode::light_detector:
           current_light_detector_bryte++;
           current_light_detector_bryte %= 2;
@@ -366,24 +373,11 @@ void State::option_button_down_pressed ( )
           }
      } break;
      case Mode::lever:
-     {
-          if ( !mouse_on_map ( ) ) {
-               break;
-          }
-
-          auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
-
-          if ( interactive.type == Interactive::Type::lever ) {
-               switch ( current_field ) {
-               case 0:
-                    interactive.interactive_lever.activate_coordinate_x++;
-                    break;
-               case 1:
-                    interactive.interactive_lever.activate_coordinate_y++;
-                    break;
-               }
-          }
-     } break;
+          break;
+     case Mode::pushable_block:
+          current_pushable_block_restricted_direction++;
+          current_pushable_block_restricted_direction %= ( Direction::count + 1);
+          break;
      case Mode::light_detector:
           current_light_detector_bryte--;
           current_light_detector_bryte %= 2;
@@ -413,6 +407,22 @@ Void State::mouse_scrolled ( Int32 scroll )
           }
 
           current_enemy_drop %= Pickup::Type::count;
+          break;
+     case Mode::pushable_block:
+          if ( mouse_on_map ( ) ) {
+               auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+               if ( interactive.type == Interactive::Type::pushable_block ) {
+                    interactive.interactive_pushable_block.one_time =
+                         !interactive.interactive_pushable_block.one_time;
+               } else {
+                    current_pushable_block_one_time++;
+                    current_pushable_block_one_time %= 2;
+               }
+          } else {
+               current_pushable_block_one_time++;
+               current_pushable_block_one_time %= 2;
+          }
           break;
      }
 }
@@ -544,6 +554,8 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
      state->current_enemy_drop           = 0;
      state->current_exit_direction       = 0;
      state->current_exit_state           = 0;
+     state->current_pushable_block_one_time = 0;
+     state->current_pushable_block_restricted_direction = 4;
      state->current_torch                = 0;
      state->current_pushable_torch       = 0;
      state->current_light_detector_bryte = 0;
@@ -610,6 +622,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 
      state->mouse_x = game_input.mouse_position_x;
      state->mouse_y = game_input.mouse_position_y;
+
      if ( game_input.mouse_scroll ) {
           state->mouse_scrolled ( game_input.mouse_scroll );
      }
@@ -751,7 +764,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           auto* enemy_spawn = state->map.check_coordinates_for_enemy_spawn ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( enemy_spawn ) {
-               sprintf ( state->message_buffer, "PICKUP %d", enemy_spawn->drop );
+               static const Char8* pickup_names [ ] = { "NONE", "HEALTH", "KEY", "INGREDIENT" };
+               sprintf ( state->message_buffer, "PICKUP %s", pickup_names [ enemy_spawn->drop ] );
           }
      } break;
      case Mode::exit:
@@ -786,6 +800,33 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                auto& lever = interactive.interactive_lever;
                sprintf ( state->message_buffer, "ACT %d %d",
                          lever.activate_coordinate_x, lever.activate_coordinate_y );
+          }
+     } break;
+     case Mode::pushable_block:
+     {
+          if ( state->track_current_interactive ) {
+               sprintf ( state->message_buffer, "C ACT %d %d",
+                         state->current_interactive_x, state->current_interactive_y );
+               break;
+          }
+
+          if ( !state->mouse_on_map ( ) ) {
+               break;
+          }
+
+          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::pushable_block ) {
+               auto& pushable_block = interactive.interactive_pushable_block;
+               sprintf ( state->message_buffer, "ONCE %d DIR %d ACT %d %d",
+                         pushable_block.one_time,
+                         pushable_block.restricted_direction,
+                         pushable_block.activate_coordinate_y,
+                         pushable_block.activate_coordinate_x );
+          } else {
+               sprintf ( state->message_buffer, "ONCE %d DIR %d",
+                         state->current_pushable_block_one_time,
+                         state->current_pushable_block_restricted_direction );
           }
      } break;
      case Mode::light_detector:

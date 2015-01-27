@@ -323,9 +323,6 @@ void Map::save ( const Char8* filepath, Interactives& interactives )
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
                auto& interactive = interactives.get_from_tile ( x, y );
-               if ( interactive.type == Interactive::Type::exit ) {
-                    interactive.interactive_exit.direction = static_cast<Direction>( ( static_cast<Int32>( interactive.interactive_exit.direction ) + 1 ) % Direction::count );
-               }
                file.write ( reinterpret_cast<const Char8*> ( &interactive ), sizeof ( interactive ) );
           }
      }

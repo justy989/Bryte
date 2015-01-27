@@ -583,30 +583,34 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      Int32 player_center_tile_x = meters_to_pixels ( player_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
      Int32 player_center_tile_y = meters_to_pixels ( player_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 
-     auto& interactive = state->interactives.get_from_tile ( player_center_tile_x, player_center_tile_y );
+     if ( player_center_tile_x >= 0 && player_center_tile_x < state->interactives.width ( ) &&
+          player_center_tile_y >= 0 && player_center_tile_y < state->interactives.height ( ) ) {
 
-     if ( interactive.type == Interactive::Type::exit &&
-          interactive.interactive_exit.state == Exit::State::open &&
-          interactive.interactive_exit.direction == opposite_direction ( state->player.facing ) ) {
-          Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x *
-                                                   Map::c_tile_dimension_in_pixels ),
-                                pixels_to_meters ( interactive.interactive_exit.exit_index_y *
-                                                   Map::c_tile_dimension_in_pixels ) );
+          auto& interactive = state->interactives.get_from_tile ( player_center_tile_x, player_center_tile_y );
 
-          new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
-                                   Map::c_tile_dimension_in_meters * 0.5f );
+          if ( interactive.type == Interactive::Type::exit &&
+               interactive.interactive_exit.state == Exit::State::open &&
+               interactive.interactive_exit.direction == opposite_direction ( state->player.facing ) ) {
+               Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x *
+                                                        Map::c_tile_dimension_in_pixels ),
+                                     pixels_to_meters ( interactive.interactive_exit.exit_index_y *
+                                                        Map::c_tile_dimension_in_pixels ) );
 
-          map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
+               new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
+                                        Map::c_tile_dimension_in_meters * 0.5f );
 
-          state->clear_pickups ( );
-          state->clear_enemies ( );
-          state->spawn_map_enemies ( );
+               map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
-          state->player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
+               state->clear_pickups ( );
+               state->clear_enemies ( );
+               state->spawn_map_enemies ( );
 
-          LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
-                      state->player.position.x ( ),
-                      state->player.position.y ( ) );
+               state->player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
+
+               LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
+                           state->player.position.x ( ),
+                           state->player.position.y ( ) );
+          }
      }
 
      state->map.reset_light ( );

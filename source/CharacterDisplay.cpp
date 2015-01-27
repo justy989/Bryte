@@ -16,7 +16,7 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
                                const Character& character,
                                Real32 camera_x, Real32 camera_y )
 {
-     static const Int32 blink_length  = 4;
+     static const Int32 blink_length  = 5;
      static Bool        blink_on      = false;
      static Int32       blink_count   = 0;
 

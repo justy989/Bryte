@@ -12,7 +12,6 @@ const Real32 Character::c_attack_width  = 0.7f;
 const Real32 Character::c_attack_height = 0.3f;
 const Real32 Character::c_attack_time   = 0.35f;
 const Real32 Character::c_cooldown_time = 0.25f;
-const Real32 Character::c_accel         = 7.0f;
 
 Bool Character::collides_with ( const Character& character )
 {
@@ -203,7 +202,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      }
 
      // TEMPORARY, slow character down
-     acceleration += velocity * -2.5f;
+     acceleration += velocity * -4.0f;
 
      Vector change_in_position = ( velocity * time_delta ) +
                                  ( acceleration * ( 0.5f * square ( time_delta ) ) );
@@ -335,16 +334,16 @@ Void Character::walk ( Direction dir )
           ASSERT ( 0 );
           break;
      case Direction::left:
-          acceleration += Vector( -1.0f, 0.0f ) * c_accel;
+          acceleration += Vector ( -walk_acceleration.x ( ), 0.0f );
           break;
      case Direction::up:
-          acceleration += Vector( 0.0f, 1.0f ) * c_accel;
+          acceleration += Vector ( 0.0f, walk_acceleration.y ( ) );
           break;
      case Direction::right:
-          acceleration += Vector( 1.0f, 0.0f ) * c_accel;
+          acceleration += Vector ( walk_acceleration.x ( ), 0.0f );
           break;
      case Direction::down:
-          acceleration += Vector( 0.0f, -1.0f ) * c_accel;
+          acceleration += Vector ( 0.0f, -walk_acceleration.y ( ) );
           break;
      }
 

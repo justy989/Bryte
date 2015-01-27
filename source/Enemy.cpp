@@ -36,6 +36,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           collides_with_solids = true;
           collides_with_exits  = true;
+
+          walk_acceleration.set ( 9.0f, 9.0f );
           break;
      case Enemy::Type::bat:
           health     = 2;
@@ -48,7 +50,9 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           rotate_collision = false;
 
           collides_with_solids = true;
-          collides_with_exits  = true;
+          collides_with_exits = true;
+
+          walk_acceleration.set ( 5.0f, 5.0f );
           break;
      }
 }
@@ -102,7 +106,7 @@ Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
      timer.tick ( time_delta );
 
      if ( timer.expired ( ) ) {
-          move_direction = static_cast<BatState::Direction>( random.generate ( 0, BatState::Direction::count ) );
+          move_direction = static_cast<BatState::Direction>( random.generate ( 0, BatState::Direction::count + 1 ) );
           timer.reset ( random.generate ( 1, 2 ) );
      }
 

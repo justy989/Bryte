@@ -114,6 +114,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      player.collides_with_exits  = false;
      player.collides_with_solids = true;
 
+     player.walk_acceleration.set ( 8.5f, 8.5f );
+
      // ensure all enemies start dead
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
          enemies [ i ].init ( Enemy::Type::count, 0.0f, 0.0f, Direction::left, Pickup::Type::none );

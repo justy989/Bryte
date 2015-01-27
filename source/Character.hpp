@@ -82,6 +82,8 @@ namespace bryte
           Vector collision_offset;
           Vector collision_dimension;
 
+          Vector walk_acceleration;
+
           Bool rotate_collision;
 
           Direction damage_pushed;

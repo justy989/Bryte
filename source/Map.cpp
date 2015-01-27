@@ -6,6 +6,13 @@
 
 using namespace bryte;
 
+Void Map::Fixture::set ( Uint8 x, Uint8 y, Uint8 id )
+{
+     location.x = x;
+     location.y = y;
+     this->id = id;
+}
+
 const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimension_in_pixels /
                                                                     pixels_per_meter );
 
@@ -105,33 +112,19 @@ Void Map::set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid )
      m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid = solid;
 }
 
-Map::Fixture* Map::check_coordinates_for_fixture ( Map::Fixture* fixture_array, Uint8 fixture_count,
-                                                   Uint8 x, Uint8 y )
-{
-     for ( Uint8 d = 0; d < fixture_count; ++d ) {
-          auto& fixture = fixture_array [ d ];
-
-          if ( fixture.location.x == x && fixture.location.y == y ) {
-               return &fixture;
-          }
-     }
-
-     return nullptr;
-}
-
 Map::Fixture* Map::check_coordinates_for_decor ( Int32 x, Int32 y )
 {
-     return check_coordinates_for_fixture ( m_decors, m_decor_count, x, y );
+     return check_coordinates_for_fixture<Fixture> ( m_decors, m_decor_count, x, y );
 }
 
 Map::Fixture* Map::check_coordinates_for_lamp ( Int32 x, Int32 y )
 {
-     return check_coordinates_for_fixture ( m_lamps, m_lamp_count, x, y );
+     return check_coordinates_for_fixture<Fixture> ( m_lamps, m_lamp_count, x, y );
 }
 
-Map::Fixture* Map::check_coordinates_for_enemy_spawn ( Int32 x, Int32 y )
+Map::EnemySpawn* Map::check_coordinates_for_enemy_spawn ( Int32 x, Int32 y )
 {
-     return check_coordinates_for_fixture ( m_enemy_spawns, m_enemy_spawn_count, x, y );
+     return check_coordinates_for_fixture<EnemySpawn> ( m_enemy_spawns, m_enemy_spawn_count, x, y );
 }
 
 Uint8 Map::base_light_value ( ) const
@@ -151,7 +144,8 @@ Void Map::subtract_from_base_light ( Uint8 delta )
 
 Void Map::illuminate ( Int32 x, Int32 y, Uint8 value )
 {
-     Int32 tile_radius = ( static_cast<Int32>( value ) - static_cast<Int32>( m_base_light_value ) ) / c_light_decay;
+     Int32 tile_radius = ( static_cast<Int32>( value ) - static_cast<Int32>( m_base_light_value ) ) /
+                           c_light_decay;
 
      if ( tile_radius <= 0 ) {
           return;
@@ -203,67 +197,57 @@ Void Map::reset_light ( )
      }
 }
 
-Bool Map::add_fixture ( Map::Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
-                        Int32 location_x, Int32 location_y, Uint8 id )
+Bool Map::add_decor ( Int32 location_x, Int32 location_y, Uint8 id )
 {
-     if ( *fixture_count >= max_fixtures ) {
+     if ( !add_element<Fixture> ( m_decors, &m_decor_count, c_max_decors ) ) {
           return false;
      }
 
-     fixture_array [ *fixture_count ].location.x = location_x;
-     fixture_array [ *fixture_count ].location.y = location_y;
-     fixture_array [ *fixture_count ].id         = id;
-
-     (*fixture_count)++;
+     m_decors [ m_decor_count - 1 ].set ( location_x, location_y, id );
 
      return true;
 }
 
-Void Map::remove_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
-                           Fixture* fixture )
-{
-     ASSERT ( fixture >= fixture_array && fixture < fixture_array + max_fixtures );
-
-     Fixture* last = fixture_array + ( *fixture_count - 1 );
-
-     // slide down all the elements after it
-     while ( fixture <= last ) {
-          Fixture* next = fixture + 1;
-          *fixture = *next;
-          fixture = next;
-     }
-
-     (*fixture_count)--;
-}
-
-Bool Map::add_decor ( Int32 location_x, Int32 location_y, Uint8 id )
-{
-     return add_fixture ( m_decors, &m_decor_count, c_max_decors, location_x, location_y, id );
-}
-
 Void Map::remove_decor ( Fixture* decor )
 {
-     remove_fixture ( m_decors, &m_decor_count, c_max_decors, decor );
+     remove_element<Fixture> ( m_decors, &m_decor_count, c_max_decors, decor );
 }
 
 Bool Map::add_lamp ( Int32 location_x, Int32 location_y, Uint8 id )
 {
-     return add_fixture ( m_lamps, &m_lamp_count, c_max_lamps, location_x, location_y, id );
+     if ( !add_element<Fixture> ( m_lamps, &m_lamp_count, c_max_lamps ) ) {
+          return false;
+     }
+
+     m_lamps [ m_lamp_count - 1 ].set ( location_x, location_y, id );
+
+     return true;
 }
 
 Void Map::remove_lamp ( Fixture* lamp )
 {
-     remove_fixture ( m_lamps, &m_lamp_count, c_max_lamps, lamp );
+     remove_element<Fixture> ( m_lamps, &m_lamp_count, c_max_lamps, lamp );
 }
 
-Bool Map::add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id )
+Bool Map::add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id,
+                            Direction facing, Pickup::Type drop )
 {
-     return add_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, location_x, location_y, id );
+     if ( !add_element<EnemySpawn> ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns ) ) {
+          return false;
+     }
+
+     auto& enemy_spawn = m_enemy_spawns [ m_enemy_spawn_count - 1 ];
+
+     enemy_spawn.set ( location_x, location_y, id );
+     enemy_spawn.facing = facing;
+     enemy_spawn.drop   = drop;
+
+     return true;
 }
 
-Void Map::remove_enemy_spawn ( Fixture* enemy_spawn )
+Void Map::remove_enemy_spawn ( EnemySpawn* enemy_spawn )
 {
-     remove_fixture ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
+     remove_element<EnemySpawn> ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
 }
 
 Void Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )

@@ -106,12 +106,14 @@ Void State::mouse_button_left_clicked ( )
                break;
           }
 
-          Map::Fixture* enemy_spawn = map.check_coordinates_for_enemy_spawn ( mouse_tile_x, mouse_tile_y );
+          Map::EnemySpawn* enemy_spawn = map.check_coordinates_for_enemy_spawn ( mouse_tile_x, mouse_tile_y );
 
           if ( enemy_spawn ) {
                map.remove_enemy_spawn ( enemy_spawn );
           } else {
-               map.add_enemy_spawn ( mouse_tile_x, mouse_tile_y, current_enemy );
+               map.add_enemy_spawn ( mouse_tile_x, mouse_tile_y, current_enemy,
+                                     static_cast<Direction>( current_enemy_direction ),
+                                     static_cast<Pickup::Type>( current_enemy_drop ) );
           }
      } break;
      case Mode::torch:
@@ -147,7 +149,8 @@ Void State::mouse_button_left_clicked ( )
           } else {
                interactive.type = Interactive::Type::light_detector;
                interactive.reset ( );
-               interactive.interactive_light_detector.type = static_cast<bryte::LightDetector::Type>( current_light_detector_bryte );
+               interactive.interactive_light_detector.type = static_cast<bryte::LightDetector::Type>(
+                                                                  current_light_detector_bryte );
           }
      } break;
      }
@@ -207,6 +210,8 @@ Void State::mouse_button_right_clicked ( )
      case Mode::pushable_block:
           break;
      case Mode::enemy:
+          current_enemy_direction++;
+          current_enemy_direction %= Direction::count;
           break;
      case Mode::torch:
           current_torch++;
@@ -491,22 +496,46 @@ extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
           state->interactives.reset ( state->map.width ( ), state->map.height ( ) );
      }
 
-     state->current_tile           = 1;
-     state->current_decor          = 0;
-     state->current_exit_direction = 0;
-     state->current_exit_state     = 0;
-     state->current_lamp           = 0;
-     state->current_solid          = false;
-
      state->camera.set ( 0.0f, 0.0f );
+
+     state->mode = Mode::tile;
+
+     state->mouse_x = 0;
+     state->mouse_y = 0;
+     state->mouse_screen_x = 0;
+     state->mouse_screen_y = 0;
+     state->mouse_tile_x = 0;
+     state->mouse_tile_y = 0;
+
+     for ( Int32 i = 0; i < 4; ++i ) {
+          state->camera_direction_keys [ i ] = false;
+     }
 
      state->left_button_down = false;
      state->right_button_down = false;
 
-     state->mode = Mode::tile;
+     state->current_tile                 = 0;
+     state->current_solid                = false;
+     state->current_decor                = 0;
+     state->current_lamp                 = 0;
+     state->current_enemy                = 0;
+     state->current_enemy_direction      = 0;
+     state->current_enemy_drop           = 0;
+     state->current_exit_direction       = 0;
+     state->current_exit_state           = 0;
+     state->current_torch                = 0;
+     state->current_pushable_torch       = 0;
+     state->current_light_detector_bryte = 0;
+     state->current_field                = 0;
 
-     state->draw_solids = false;
-     state->draw_light  = false;
+     state->track_current_interactive    = false;
+     state->current_interactive_x        = 0;
+     state->current_interactive_y        = 0;
+
+     state->draw_solids                  = false;
+     state->draw_light                   = false;
+
+     state->message_buffer [ 0 ] = '\0';
 
      return true;
 }
@@ -806,7 +835,7 @@ static Void render_enemy_spawns ( SDL_Surface* back_buffer, SDL_Surface** enemy_
                                       enemy_spawn.location.y * Map::c_tile_dimension_in_pixels,
                                       Map::c_tile_dimension_in_pixels,
                                       Map::c_tile_dimension_in_pixels };
-          SDL_Rect clip_rect { 0, 0,
+          SDL_Rect clip_rect { 0, static_cast<Int32>( enemy_spawn.facing ) * Map::c_tile_dimension_in_pixels,
                                Map::c_tile_dimension_in_pixels,
                                Map::c_tile_dimension_in_pixels };
 
@@ -917,7 +946,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::enemy:
           render_current_icon ( back_buffer, state->character_display.enemy_sheets [ state->current_enemy ],
-                                state->mouse_x, state->mouse_y, 0, 0 );
+                                state->mouse_x, state->mouse_y, 0, state->current_enemy_direction );
           break;
      case Mode::exit:
           render_current_icon ( back_buffer,

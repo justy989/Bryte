@@ -10,6 +10,7 @@
 #include "Interactives.hpp"
 #include "Character.hpp"
 #include "Enemy.hpp"
+#include "Pickup.hpp"
 
 #include "Random.hpp"
 
@@ -25,22 +26,6 @@
 
 namespace bryte
 {
-     struct Pickup {
-
-          enum Type {
-               none,
-               health,
-               key,
-               ingredient,
-               count
-          };
-
-          static const Real32 c_dimension; // temporary
-
-          Vector position;
-          Type   type;
-     };
-
      struct Settings {
           const Char8* map_master_list_filename;
 

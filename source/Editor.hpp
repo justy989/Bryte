@@ -71,6 +71,14 @@ namespace editor
           bryte::Map map;
           bryte::Interactives interactives;
 
+          SDL_Surface* mode_icons_surface;
+
+          bryte::MapDisplay          map_display;
+          bryte::CharacterDisplay    character_display;
+          bryte::InteractivesDisplay interactives_display;
+
+          Vector camera;
+
           Mode mode;
 
           Int32  mouse_x;
@@ -80,23 +88,17 @@ namespace editor
           Int32  mouse_tile_x;
           Int32  mouse_tile_y;
 
-          Vector camera;
-
           Bool camera_direction_keys [ 4 ];
           Bool left_button_down;
           Bool right_button_down;
-
-          SDL_Surface* mode_icons_surface;
-
-          bryte::MapDisplay          map_display;
-          bryte::CharacterDisplay    character_display;
-          bryte::InteractivesDisplay interactives_display;
 
           Uint8 current_tile;
           Bool  current_solid;
           Uint8 current_decor;
           Uint8 current_lamp;
           Uint8 current_enemy;
+          Uint8 current_enemy_direction;
+          Uint8 current_enemy_drop;
           Uint8 current_exit_direction;
           Uint8 current_exit_state;
           Uint8 current_torch;

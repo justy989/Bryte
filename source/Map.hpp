@@ -4,6 +4,8 @@
 #include "Types.hpp"
 #include "GameMemory.hpp"
 #include "Utils.hpp"
+#include "Direction.hpp"
+#include "Pickup.hpp"
 
 namespace bryte
 {
@@ -28,8 +30,15 @@ namespace bryte
           };
 
           struct Fixture {
+               Void set ( Uint8 x, Uint8 y, Uint8 id );
+
                Location location;
                Uint8 id;
+          };
+
+          struct EnemySpawn : public Fixture {
+               Direction    facing;
+               Pickup::Type drop;
           };
 #pragma pack(pop)
 
@@ -58,9 +67,9 @@ namespace bryte
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
 
-          Fixture* check_coordinates_for_decor ( Int32 x, Int32 y );
-          Fixture* check_coordinates_for_lamp  ( Int32 x, Int32 y );
-          Fixture* check_coordinates_for_enemy_spawn ( Int32 x, Int32 y );
+          Fixture*    check_coordinates_for_decor       ( Int32 x, Int32 y );
+          Fixture*    check_coordinates_for_lamp        ( Int32 x, Int32 y );
+          EnemySpawn* check_coordinates_for_enemy_spawn ( Int32 x, Int32 y );
 
           Uint8 base_light_value         ( ) const;
           Void  add_to_base_light        ( Uint8 delta );
@@ -71,11 +80,12 @@ namespace bryte
 
           Bool add_decor       ( Int32 location_x, Int32 location_y, Uint8 id );
           Bool add_lamp        ( Int32 location_x, Int32 location_y, Uint8 id );
-          Bool add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id );
+          Bool add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id,
+                                 Direction facing, Pickup::Type drop );
 
           Void remove_decor       ( Fixture* decor );
           Void remove_lamp        ( Fixture* lamp );
-          Void remove_enemy_spawn ( Fixture* enemy_spawn );
+          Void remove_enemy_spawn ( EnemySpawn* enemy_spawn );
 
           inline Int32 width  ( ) const;
           inline Int32 height ( ) const;
@@ -84,17 +94,20 @@ namespace bryte
           inline Uint8 lamp_count        ( ) const;
           inline Uint8 enemy_spawn_count ( ) const;
 
-          inline Fixture& decor       ( Uint8 index );
-          inline Fixture& lamp        ( Uint8 index );
-          inline Fixture& enemy_spawn ( Uint8 index );
+          inline Fixture&    decor       ( Uint8 index );
+          inline Fixture&    lamp        ( Uint8 index );
+          inline EnemySpawn& enemy_spawn ( Uint8 index );
 
      private:
 
-          Bool add_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
-                             Int32 location_x, Int32 location_y, Uint8 id );
-          Void remove_fixture ( Fixture* fixture_array, Uint8* fixture_count, Uint8 max_fixtures,
-                                Fixture* fixture );
-          Fixture* check_coordinates_for_fixture ( Fixture* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y );
+          template < typename T >
+          Bool add_element ( T* element_array, Uint8* element_count, Uint8 max_elements );
+
+          template < typename T >
+          Void remove_element ( T* element_array, Uint8* element_count, Uint8 max_elements, T* element );
+
+          template < typename T >
+          T* check_coordinates_for_fixture ( T* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y );
 
      public:
 
@@ -136,8 +149,8 @@ namespace bryte
           Fixture m_lamps [ c_max_lamps ];
           Uint8   m_lamp_count;
 
-          Fixture m_enemy_spawns [ c_max_enemy_spawns ];
-          Uint8   m_enemy_spawn_count;
+          EnemySpawn m_enemy_spawns [ c_max_enemy_spawns ];
+          Uint8      m_enemy_spawn_count;
      };
 
      inline Int32 Map::width ( ) const
@@ -179,11 +192,54 @@ namespace bryte
           return m_enemy_spawn_count;
      }
 
-     inline Map::Fixture& Map::enemy_spawn ( Uint8 index )
+     inline Map::EnemySpawn& Map::enemy_spawn ( Uint8 index )
      {
           ASSERT ( index < m_enemy_spawn_count );
 
           return m_enemy_spawns [ index ];
+     }
+
+     template < typename T >
+     Bool Map::add_element ( T* element_array, Uint8* element_count, Uint8 max_elements )
+     {
+          if ( *element_count >= max_elements ) {
+               return false;
+          }
+
+          (*element_count)++;
+
+          return true;
+     }
+
+     template < typename T >
+     Void Map::remove_element ( T* element_array, Uint8* element_count, Uint8 max_elements, T* element )
+     {
+          ASSERT ( element >= element_array && element < ( element_array + max_elements ) );
+
+          T* last = element_array + ( *element_count - 1 );
+
+          // slide down all the elements after it
+          while ( element <= last ) {
+               T* next = element + 1;
+               *element = *next;
+               element = next;
+          }
+
+          (*element_count)--;
+     }
+
+     template < typename T >
+     T* Map::check_coordinates_for_fixture ( T* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y )
+     {
+          for ( Uint8 d = 0; d < fixture_count; ++d ) {
+               auto& fixture = fixture_array [ d ];
+
+               if ( fixture.location.x == x && fixture.location.y == y ) {
+                    return &fixture;
+               }
+          }
+
+          return nullptr;
      }
 }
 

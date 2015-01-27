@@ -387,6 +387,8 @@ void Map::load ( const Char8* filepath, Interactives& interactives )
 
 Void Map::persist_exits ( const Interactives& interactives )
 {
+     LOG_DEBUG ( "Persisting exits on map: %d\n", m_current_master_map );
+
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
                const auto& interactive = interactives.cget_from_tile ( x, y );

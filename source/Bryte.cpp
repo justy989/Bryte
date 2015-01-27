@@ -103,7 +103,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      player.dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
      player.collision_offset.set ( pixels_to_meters ( 5 ), pixels_to_meters ( 2 ) );
      player.collision_dimension.set ( pixels_to_meters ( 6 ), pixels_to_meters ( 7 ) );
-     player.rotate_collision = false;
 
      player.damage_pushed = Direction::left;
      player.state_watch.reset ( 0.0f );
@@ -269,7 +268,9 @@ Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup
           return false;
      }
 
+#ifdef DEBUG
      static const char* enemy_id_names [ ] = { "rat", "bat" };
+#endif
 
      LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], x, y );
 
@@ -282,8 +283,6 @@ Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup
 
 Bool State::spawn_pickup ( Real32 x, Real32 y, Pickup::Type type )
 {
-     static const char* pickup_names [ ] = { "none", "health", "key", "ingredient" };
-
      for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
           Pickup& pickup = pickups [ i ];
 
@@ -291,7 +290,7 @@ Bool State::spawn_pickup ( Real32 x, Real32 y, Pickup::Type type )
                pickup.type = type;
                pickup.position.set ( x, y );
 
-               LOG_DEBUG ( "Spawn pickup %s at %f, %f\n", pickup_names [ type ], x, y );
+               LOG_DEBUG ( "Spawn pickup %s at %f, %f\n", Pickup::c_names [ type ], x, y );
 
                return true;
           }
@@ -401,6 +400,11 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                                          Pickup::Type::health );
                }
                break;
+#ifdef DEBUG
+          case SDL_SCANCODE_K:
+               state->player_key_count++;
+               break;
+#endif
           }
      }
 }
@@ -650,7 +654,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // calculate camera
      state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
                                                        state->player.position.x ( ), state->player.width ( ) ) );
-     state->camera.set_y ( calculate_camera_position ( back_buffer->h - 34, state->map.height ( ),
+     state->camera.set_y ( calculate_camera_position ( back_buffer->h - 16, state->map.height ( ),
                                                        state->player.position.y ( ), state->player.height ( ) ) );
 
      // map
@@ -693,7 +697,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      // ui
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, 34 };
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, 16 };
      SDL_FillRect ( back_buffer, &hud_rect, black );
 
      // draw player health bar
@@ -702,8 +706,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      Int32 bar_len = static_cast<Int32>( 50.0f * pct );
 
-     SDL_Rect health_bar_rect { 15, 15, bar_len, 10 };
-     SDL_Rect health_bar_border_rect { 14, 14, 52, 12 };
+     SDL_Rect health_bar_rect { 3, 3, bar_len, 10 };
+     SDL_Rect health_bar_border_rect { 2, 2, 52, 12 };
 
      SDL_FillRect ( back_buffer, &health_bar_border_rect, white );
      SDL_FillRect ( back_buffer, &health_bar_rect, red );
@@ -711,12 +715,17 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      char buffer [ 64 ];
 
 #ifdef LINUX
-     sprintf ( buffer, "KEYS %d", state->player_key_count );
+     sprintf ( buffer, "%d", state->player_key_count );
 #endif
 
 #ifdef WIN32
-     sprintf_s ( buffer, "KEYS %d", state->player_key_count );
+     sprintf_s ( buffer, "%d", state->player_key_count );
 #endif
-     state->text.render ( back_buffer, buffer, 210, 4 );
+     state->text.render ( back_buffer, buffer, 235, 4 );
+
+     SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect pickup_clip_rect { Pickup::c_dimension_in_pixels, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     SDL_BlitSurface ( state->pickup_sheet, &pickup_clip_rect, back_buffer, &pickup_dest_rect );
 }
 

@@ -41,15 +41,15 @@ namespace bryte
           inline Real32 width ( ) const;
           inline Real32 height ( ) const;
 
-          Real32 collision_x ( ) const;
-          Real32 collision_y ( ) const;
-          Real32 collision_x ( Real32 start_position ) const;
-          Real32 collision_y ( Real32 start_position ) const;
-          Real32 collision_width ( ) const;
-          Real32 collision_height ( ) const;
+          inline Real32 collision_x ( ) const;
+          inline Real32 collision_y ( ) const;
+          inline Real32 collision_x ( Real32 start_position ) const;
+          inline Real32 collision_y ( Real32 start_position ) const;
+          inline Real32 collision_width ( ) const;
+          inline Real32 collision_height ( ) const;
 
-          Real32 collision_center_x ( ) const;
-          Real32 collision_center_y ( ) const;
+          inline Real32 collision_center_x ( ) const;
+          inline Real32 collision_center_y ( ) const;
 
           Void set_collision_center ( Real32 x, Real32 y );
 
@@ -84,8 +84,6 @@ namespace bryte
 
           Vector walk_acceleration;
 
-          Bool rotate_collision;
-
           Direction damage_pushed;
 
           Stopwatch damage_watch;
@@ -103,6 +101,46 @@ namespace bryte
      inline Real32 Character::height ( ) const
      {
           return dimension.y ( );
+     }
+
+     inline Real32 Character::collision_x ( ) const
+     {
+          return position.x ( ) + collision_offset.x ( );
+     }
+
+     inline Real32 Character::collision_y ( ) const
+     {
+          return position.y ( ) + collision_offset.y ( );
+     }
+
+     inline Real32 Character::collision_x ( Real32 start_position ) const
+     {
+          return start_position + collision_offset.x ( );
+     }
+
+     inline Real32 Character::collision_y ( Real32 start_position ) const
+     {
+          return start_position + collision_offset.y ( );
+     }
+
+     inline Real32 Character::collision_width ( ) const
+     {
+          return collision_dimension.x ( );
+     }
+
+     inline Real32 Character::collision_height ( ) const
+     {
+          return collision_dimension.y ( );
+     }
+
+     inline Real32 Character::collision_center_x ( ) const
+     {
+          return collision_x ( ) + collision_width ( ) * 0.5f;
+     }
+
+     inline Real32 Character::collision_center_y ( ) const
+     {
+          return collision_y ( ) + collision_height ( ) * 0.5f;
      }
 }
 

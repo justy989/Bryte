@@ -30,9 +30,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
           collision_offset.set ( pixels_to_meters ( 1 ), pixels_to_meters ( 4 ) );
-          collision_dimension.set ( pixels_to_meters ( 14 ), pixels_to_meters ( 6 ) );
-
-          rotate_collision = false;
+          collision_dimension.set ( pixels_to_meters ( 12 ), pixels_to_meters ( 10 ) );
 
           collides_with_solids = true;
           collides_with_exits  = true;
@@ -46,8 +44,6 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
           collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 4 ) );
           collision_dimension.set ( pixels_to_meters ( 10 ), pixels_to_meters ( 6 ) );
-
-          rotate_collision = false;
 
           collides_with_solids = true;
           collides_with_exits = true;

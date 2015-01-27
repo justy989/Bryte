@@ -39,6 +39,13 @@ Bool Map::load_master_list ( const Char8* filepath )
           m_master_count++;
      }
 
+     m_current_master_map = c_first_master_map;
+
+     // clear our persisted exits
+     for ( Uint32 m = 0; m < c_max_maps; ++m ) {
+          m_persisted_exits [ m ].exit_count = 0;
+     }
+
      return true;
 }
 
@@ -257,7 +264,15 @@ Void Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
           return;
      }
 
+     if ( m_current_master_map != c_first_master_map ) {
+          persist_exits ( interactives );
+     }
+
      load ( m_master_list [ map_index ], interactives );
+
+     m_current_master_map = map_index;
+
+     restore_exits ( interactives );
 }
 
 void Map::save ( const Char8* filepath, Interactives& interactives )
@@ -367,6 +382,61 @@ void Map::load ( const Char8* filepath, Interactives& interactives )
                auto& interactive = interactives.get_from_tile ( x, y );
                file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
           }
+     }
+}
+
+Void Map::persist_exits ( const Interactives& interactives )
+{
+     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
+          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
+               const auto& interactive = interactives.cget_from_tile ( x, y );
+
+               if ( interactive.type != Interactive::Type::exit ) {
+                    continue;
+               }
+
+               auto& exit = interactive.interactive_exit;
+
+               auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
+
+               if ( map_persisted_exits.exit_count >= PersistedExits::c_max_persisted_exits ) {
+                    LOG_ERROR ( "Too many exits on map to persist: %u\n", map_persisted_exits.exit_count );
+               }
+
+               auto& persisted_exit = map_persisted_exits.exits [ map_persisted_exits.exit_count ];
+
+               persisted_exit.location.x = x;
+               persisted_exit.location.y = y;
+               persisted_exit.id         = exit.state;
+
+               LOG_DEBUG ( "Persisted exit %d %d to state %d\n", x, y, exit.state );
+
+               map_persisted_exits.exit_count++;
+          }
+     }
+}
+
+Void Map::restore_exits ( Interactives& interactives )
+{
+     auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
+
+     for ( Uint8 i = 0; i < map_persisted_exits.exit_count; ++i ) {
+          auto& persisted_exit = map_persisted_exits.exits [ i ];
+          auto& interactive = interactives.get_from_tile ( persisted_exit.location.x,
+                                                           persisted_exit.location.y );
+
+          if ( interactive.type != Interactive::Type::exit ) {
+               LOG_ERROR ( "Unable to persist exit at %d %d, map has changed.\n",
+                           persisted_exit.location.x, persisted_exit.location.y );
+               continue;
+          }
+
+          LOG_DEBUG ( "Restoring exit %d %d to state %d\n",
+                      persisted_exit.location.x, persisted_exit.location.y,
+                      persisted_exit.id );
+
+          auto& exit = interactive.interactive_exit;
+          exit.state = static_cast<Exit::State> ( persisted_exit.id );
      }
 }
 

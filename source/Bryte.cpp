@@ -580,7 +580,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                player_exit = map.position_to_tile_index ( state->player.position.x ( ),
                                                           state->player.position.y ( ) );
 
-               LOG_INFO ( "Save exit: %d\n", player_exit );
+               LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
+                           state->player.position.x ( ),
+                           state->player.position.y ( ) );
           }
      } else {
           auto player_tile_index = map.position_to_tile_index ( state->player.position.x ( ),
@@ -588,7 +590,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           // clear the exit destination if they've left the tile
           if ( abs ( player_exit - player_tile_index ) > 1 ) {
-               LOG_INFO ( "changed exit: %d\n", player_tile_index );
+               LOG_DEBUG ( "Player move from teleport spot to %f %f on new map\n",
+                           state->player.position.x ( ),
+                           state->player.position.y ( ) );
                player_exit = 0;
           }
      }

@@ -14,6 +14,14 @@ Interactive& Interactives::get_from_tile ( Int32 tile_x, Int32 tile_y )
      return m_interactives [ ( tile_y * m_width ) + tile_x ];
 }
 
+const Interactive& Interactives::cget_from_tile ( Int32 tile_x, Int32 tile_y ) const
+{
+     ASSERT ( tile_x >= 0 && tile_x < m_width );
+     ASSERT ( tile_y >= 0 && tile_y < m_height );
+
+     return m_interactives [ ( tile_y * m_width ) + tile_x ];
+}
+
 Void Interactives::reset ( Int32 width, Int32 height )
 {
      m_width  = width;

@@ -157,6 +157,7 @@ namespace bryte
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
+          const Interactive& cget_from_tile ( Int32 tile_x, Int32 tile_y ) const;
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;

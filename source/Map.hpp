@@ -13,7 +13,9 @@ namespace bryte
 
      class Map {
      public:
-#pragma pack(push,1)
+
+// TODO: GTFO
+#pragma pack(push, 1)
           struct Coordinates {
                Int32 x;
                Int32 y;
@@ -39,6 +41,13 @@ namespace bryte
           struct EnemySpawn : public Fixture {
                Direction    facing;
                Pickup::Type drop;
+          };
+
+          struct PersistedExits {
+               static const Uint32 c_max_persisted_exits = 8;
+
+               Uint8   exit_count;
+               Fixture exits [ c_max_persisted_exits ];
           };
 #pragma pack(pop)
 
@@ -109,10 +118,15 @@ namespace bryte
           template < typename T >
           T* check_coordinates_for_fixture ( T* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y );
 
+          Void persist_exits ( const Interactives& interactives );
+          Void restore_exits ( Interactives& interactives );
+
      public:
 
           static const Uint32 c_max_map_name_size = 32;
           static const Uint32 c_max_maps = 32;
+
+          static const Int32  c_first_master_map = -1;
 
           static const Int32  c_tile_dimension_in_pixels = 16;
           static const Real32 c_tile_dimension_in_meters;
@@ -132,25 +146,29 @@ namespace bryte
 
      private:
 
-          Char8  m_master_list [ c_max_maps ][ c_max_map_name_size ];
-          Uint8  m_master_count;
+          Char8          m_master_list [ c_max_maps ][ c_max_map_name_size ];
+          Uint8          m_master_count;
 
-          Tile   m_tiles [ c_max_tiles ];
+          PersistedExits m_persisted_exits [ c_max_maps ];
 
-          Uint8  m_width;
-          Uint8  m_height;
+          Int32          m_current_master_map;
 
-          Uint8  m_base_light_value;
-          Uint8  m_light [ c_max_light ];
+          Tile           m_tiles [ c_max_tiles ];
 
-          Fixture m_decors [ c_max_decors ];
-          Uint8   m_decor_count;
+          Uint8          m_width;
+          Uint8          m_height;
 
-          Fixture m_lamps [ c_max_lamps ];
-          Uint8   m_lamp_count;
+          Uint8          m_base_light_value;
+          Uint8          m_light [ c_max_light ];
 
-          EnemySpawn m_enemy_spawns [ c_max_enemy_spawns ];
-          Uint8      m_enemy_spawn_count;
+          Fixture        m_decors [ c_max_decors ];
+          Uint8          m_decor_count;
+
+          Fixture        m_lamps [ c_max_lamps ];
+          Uint8          m_lamp_count;
+
+          EnemySpawn     m_enemy_spawns [ c_max_enemy_spawns ];
+          Uint8          m_enemy_spawn_count;
      };
 
      inline Int32 Map::width ( ) const

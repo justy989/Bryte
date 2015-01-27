@@ -41,7 +41,7 @@ namespace bryte
           Bool initialize ( GameMemory& game_memory, Settings* settings );
           Void destroy    ( );
 
-          Bool spawn_enemy ( Real32 x, Real32 y, Uint8 id );
+          Bool spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup::Type drop );
           Bool spawn_pickup ( Real32 x, Real32 y, Pickup::Type type );
 
           Void spawn_map_enemies ( );

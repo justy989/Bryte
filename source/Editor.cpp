@@ -393,7 +393,28 @@ void State::option_button_down_pressed ( )
 
 Void State::mouse_scrolled ( Int32 scroll )
 {
+     switch ( mode )
+     {
+     default:
+          break;
+     case Mode::enemy:
+          if ( mouse_on_map ( ) ) {
+               auto* enemy_spawn = map.check_coordinates_for_enemy_spawn ( mouse_tile_x, mouse_tile_y );
 
+               if ( enemy_spawn ) {
+                    Int32 value = static_cast<Int32>( enemy_spawn->drop );
+                    value += scroll;
+                    enemy_spawn->drop = static_cast<Pickup::Type>( value % Pickup::Type::count );
+               } else {
+                    current_enemy_drop += scroll;
+               }
+          } else {
+               current_enemy_drop += scroll;
+          }
+
+          current_enemy_drop %= Pickup::Type::count;
+          break;
+     }
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
@@ -721,6 +742,18 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      case Mode::light:
           sprintf ( state->message_buffer, "BASE %d", state->map.base_light_value ( ) );
           break;
+     case Mode::enemy:
+     {
+          if ( !state->mouse_on_map ( ) ) {
+               break;
+          }
+
+          auto* enemy_spawn = state->map.check_coordinates_for_enemy_spawn ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( enemy_spawn ) {
+               sprintf ( state->message_buffer, "PICKUP %d", enemy_spawn->drop );
+          }
+     } break;
      case Mode::exit:
      {
           if ( !state->mouse_on_map ( ) ) {

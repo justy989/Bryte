@@ -2,6 +2,7 @@
 #define BRYTE_ENEMY_HPP
 
 #include "Character.hpp"
+#include "Pickup.hpp"
 #include "Random.hpp"
 
 namespace bryte
@@ -26,10 +27,6 @@ namespace bryte
                     up_right,
                     down_left,
                     down_right,
-                    up,
-                    down,
-                    left,
-                    right,
                     count
                };
 
@@ -37,7 +34,7 @@ namespace bryte
                Stopwatch timer;
           };
 
-          Void init ( Type type, Real32 x, Real32 y );
+          Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
 
      public:
 
@@ -56,6 +53,8 @@ namespace bryte
                RatState rat_state;
                BatState bat_state;
           };
+
+          Pickup::Type drop;
      };
 }
 

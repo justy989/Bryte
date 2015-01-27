@@ -116,7 +116,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      // ensure all enemies start dead
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
-         enemies [ i ].init ( Enemy::Type::count, 0.0f, 0.0f );
+         enemies [ i ].init ( Enemy::Type::count, 0.0f, 0.0f, Direction::left, Pickup::Type::none );
          enemies [ i ].state = Character::State::dead;
      }
 
@@ -246,7 +246,7 @@ Void State::destroy ( )
      }
 }
 
-Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id )
+Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup::Type drop )
 {
      Enemy* enemy = nullptr;
 
@@ -266,7 +266,7 @@ Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id )
 
      LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], x, y );
 
-     enemy->init ( static_cast<Enemy::Type>( id ), x, y );
+     enemy->init ( static_cast<Enemy::Type>( id ), x, y, facing, drop );
 
      enemy_count++;
 
@@ -300,7 +300,7 @@ Void State::spawn_map_enemies ( )
 
           spawn_enemy ( pixels_to_meters ( enemy_spawn.location.x * Map::c_tile_dimension_in_pixels ),
                         pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ),
-                        enemy_spawn.id );
+                        enemy_spawn.id, enemy_spawn.facing, enemy_spawn.drop );
      }
 }
 
@@ -390,7 +390,8 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
           case SDL_SCANCODE_8:
                if ( key_change.down ) {
                     state->spawn_enemy ( state->player.position.x ( ) - state->player.width ( ),
-                                         state->player.position.y ( ), 0 );
+                                         state->player.position.y ( ), 0, Direction::left,
+                                         Pickup::Type::health );
                }
                break;
           }
@@ -452,7 +453,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                enemy.damage ( 1, damage_dir );
 
                if ( enemy.state == Character::State::dead ) {
-
+                    if ( enemy.drop != Pickup::Type::none ) {
+                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), enemy.drop );
+                    }
+#if 0
                     auto roll = state->random.generate ( 1, 11 );
 
                     if ( roll > 5 && roll < 8 ) {
@@ -460,6 +464,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                     } else if ( roll >= 8 ) {
                          state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
                     }
+#endif
                }
           }
      }

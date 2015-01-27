@@ -3,12 +3,13 @@
 
 using namespace bryte;
 
-Void Enemy::init ( Type type, Real32 x, Real32 y )
+Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
 {
-     this->type = type;
-
      state = Character::State::alive;
-     facing = Direction::left;
+
+     this->type   = type;
+     this->facing = facing;
+     this->drop   = drop;
 
      position.set ( x, y );
      velocity.zero ( );
@@ -124,18 +125,7 @@ Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
           walk ( Direction::down );
           walk ( Direction::right );
           break;
-     case BatState::Direction::up:
-          walk ( Direction::up );
-          break;
-     case BatState::Direction::down:
-          walk ( Direction::down );
-          break;
-     case BatState::Direction::left:
-          walk ( Direction::left );
-          break;
-     case BatState::Direction::right:
-          walk ( Direction::right );
-          break;     }
+     }
 
      facing = Direction::left;
 }

@@ -45,7 +45,9 @@ namespace bryte
           Bool spawn_pickup ( Real32 x, Real32 y, Pickup::Type type );
 
           Void spawn_map_enemies ( );
+
           Void clear_enemies ( );
+          Void clear_pickups ( );
 
           Void player_death ( );
 

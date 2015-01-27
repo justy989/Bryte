@@ -5,13 +5,15 @@
 
 using namespace bryte;
 
-const Real32 Character::c_damage_accel  = 40.0f;
-const Real32 Character::c_damage_time   = 0.15f;
-const Real32 Character::c_blink_time    = 1.5f;
-const Real32 Character::c_attack_width  = 0.7f;
-const Real32 Character::c_attack_height = 0.3f;
-const Real32 Character::c_attack_time   = 0.35f;
-const Real32 Character::c_cooldown_time = 0.25f;
+const Real32 Character::c_damage_accel            = 40.0f;
+const Real32 Character::c_damage_time             = 0.15f;
+const Real32 Character::c_blink_time              = 1.5f;
+const Int32  Character::c_attack_width_in_pixels  = 9;
+const Int32  Character::c_attack_height_in_pixels = 4;
+const Real32 Character::c_attack_width_in_meters  = pixels_to_meters ( Character::c_attack_width_in_pixels );
+const Real32 Character::c_attack_height_in_meters = pixels_to_meters ( Character::c_attack_height_in_pixels );
+const Real32 Character::c_attack_time             = 0.35f;
+const Real32 Character::c_cooldown_time           = 0.25f;
 
 Bool Character::collides_with ( const Character& character )
 {
@@ -37,9 +39,9 @@ Real32 Character::attack_x ( ) const
      default:
           ASSERT ( 0 );
      case Direction::left:
-          return position.x ( ) - Character::c_attack_height;
+          return position.x ( ) - Character::c_attack_height_in_meters;
      case Direction::right:
-          return position.x ( ) + dimension.x ( );
+          return position.x ( ) + dimension.x ( ) * 0.8f;
      case Direction::up:
           return position.x ( ) + dimension.x ( ) * 0.33f;
      case Direction::down:
@@ -74,10 +76,10 @@ Real32 Character::attack_width ( ) const
           ASSERT ( 0 );
      case Direction::left:
      case Direction::right:
-          return c_attack_width;
+          return c_attack_width_in_meters;
      case Direction::up:
      case Direction::down:
-          return c_attack_height;
+          return c_attack_height_in_meters;
      }
 
      return 0.0f;
@@ -90,10 +92,42 @@ Real32 Character::attack_height ( ) const
           ASSERT ( 0 );
      case Direction::left:
      case Direction::right:
-          return c_attack_height;
+          return c_attack_height_in_meters;
      case Direction::up:
      case Direction::down:
-          return c_attack_width;
+          return c_attack_width_in_meters;
+     }
+
+     return 0.0f;
+}
+
+Int32 Character::attack_width_in_pixels ( ) const
+{
+     switch ( facing ) {
+     default:
+          ASSERT ( 0 );
+     case Direction::left:
+     case Direction::right:
+          return c_attack_width_in_pixels;
+     case Direction::up:
+     case Direction::down:
+          return c_attack_height_in_pixels;
+     }
+
+     return 0.0f;
+}
+
+Int32 Character::attack_height_in_pixels ( ) const
+{
+     switch ( facing ) {
+     default:
+          ASSERT ( 0 );
+     case Direction::left:
+     case Direction::right:
+          return c_attack_height_in_pixels;
+     case Direction::up:
+     case Direction::down:
+          return c_attack_width_in_pixels;
      }
 
      return 0.0f;

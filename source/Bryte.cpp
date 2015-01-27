@@ -176,6 +176,16 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( character_display.vertical_sword_sheet, game_memory,
+                                          "test_vertical_sword.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( character_display.horizontal_sword_sheet, game_memory,
+                                          "test_horizontal_sword.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::exit ],
                                           game_memory,
                                           "castle_exitsheet.bmp" ) ) {
@@ -317,6 +327,13 @@ Void State::clear_enemies ( )
      }
 
      enemy_count = 0;
+}
+
+Void State::clear_pickups ( )
+{
+     for ( Uint32 i = 0; i < c_max_pickups; ++i ) {
+          pickups [ i ].type = Pickup::Type::none;
+     }
 }
 
 Void State::player_death ( )
@@ -583,6 +600,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
+               state->clear_pickups ( );
                state->clear_enemies ( );
                state->spawn_map_enemies ( );
 
@@ -647,7 +665,6 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 {
      auto* state = get_state ( game_memory );
      Uint32 red    = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
-     Uint32 green  = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
      Uint32 white  = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
      Uint32 black  = SDL_MapRGB ( back_buffer->format, 0, 0, 0 );
 
@@ -677,18 +694,6 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // player
      state->character_display.render_player ( back_buffer, state->player,
                                               state->camera.x ( ), state->camera.y ( ) );
-
-     // player attack
-     if ( state->player.state == Character::State::attacking ) {
-          SDL_Rect attack_rect = build_world_sdl_rect ( state->player.attack_x ( ),
-                                                        state->player.attack_y ( ),
-                                                        state->player.attack_width ( ),
-                                                        state->player.attack_height ( ) );
-
-          world_to_sdl ( attack_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
-
-          SDL_FillRect ( back_buffer, &attack_rect, green );
-     }
 
      // pickups
      render_pickups ( back_buffer, state->pickup_sheet, state->pickups, state->camera.x ( ), state->camera.y ( ) );

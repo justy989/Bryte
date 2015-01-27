@@ -18,6 +18,9 @@ namespace bryte {
 
           SDL_Surface* enemy_sheets [ Enemy::Type::count ];
           SDL_Surface* player_sheet;
+
+          SDL_Surface* horizontal_sword_sheet;
+          SDL_Surface* vertical_sword_sheet;
      };
 };
 

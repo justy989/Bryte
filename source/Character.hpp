@@ -37,6 +37,8 @@ namespace bryte
           Real32 attack_y ( ) const;
           Real32 attack_width ( ) const;
           Real32 attack_height ( ) const;
+          Int32  attack_width_in_pixels ( ) const;
+          Int32  attack_height_in_pixels ( ) const;
 
           inline Real32 width ( ) const;
           inline Real32 height ( ) const;
@@ -58,8 +60,10 @@ namespace bryte
           static const Real32 c_damage_accel;
           static const Real32 c_damage_time;
           static const Real32 c_blink_time;
-          static const Real32 c_attack_width;
-          static const Real32 c_attack_height;
+          static const Int32  c_attack_width_in_pixels;
+          static const Int32  c_attack_height_in_pixels;
+          static const Real32 c_attack_width_in_meters;
+          static const Real32 c_attack_height_in_meters;
           static const Real32 c_attack_time;
           static const Real32 c_cooldown_time;
           static const Real32 c_accel;

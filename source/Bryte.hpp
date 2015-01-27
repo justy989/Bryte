@@ -61,7 +61,6 @@ namespace bryte
           Random       random;
 
           Character    player;
-          Int32        player_exit_tile_index;
 
           Enemy        enemies [ c_max_enemies ];
           Uint32       enemy_count;

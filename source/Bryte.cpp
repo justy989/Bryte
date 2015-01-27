@@ -575,55 +575,38 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      }
 
-     auto& player_exit = state->player_exit_tile_index;
      auto& map         = state->map;
 
-     // check if the player has exitted the area
-     if ( player_exit == 0 ) {
-          Vector player_center { state->player.collision_center_x ( ),
-                                 state->player.collision_center_y ( ) };
+     Vector player_center { state->player.collision_center_x ( ),
+                            state->player.collision_center_y ( ) };
 
-          Int32 player_center_tile_x = meters_to_pixels ( player_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
-          Int32 player_center_tile_y = meters_to_pixels ( player_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+     Int32 player_center_tile_x = meters_to_pixels ( player_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+     Int32 player_center_tile_y = meters_to_pixels ( player_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 
-          auto& interactive = state->interactives.get_from_tile ( player_center_tile_x, player_center_tile_y );
+     auto& interactive = state->interactives.get_from_tile ( player_center_tile_x, player_center_tile_y );
 
-          if ( interactive.type == Interactive::Type::exit &&
-               interactive.interactive_exit.state == Exit::State::open ) {
-               Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x *
-                                                        Map::c_tile_dimension_in_pixels ),
-                                     pixels_to_meters ( interactive.interactive_exit.exit_index_y *
-                                                        Map::c_tile_dimension_in_pixels ) );
+     if ( interactive.type == Interactive::Type::exit &&
+          interactive.interactive_exit.state == Exit::State::open &&
+          interactive.interactive_exit.direction == opposite_direction ( state->player.facing ) ) {
+          Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x *
+                                                   Map::c_tile_dimension_in_pixels ),
+                                pixels_to_meters ( interactive.interactive_exit.exit_index_y *
+                                                   Map::c_tile_dimension_in_pixels ) );
 
-               new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
-                                        Map::c_tile_dimension_in_meters * 0.5f );
+          new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
+                                   Map::c_tile_dimension_in_meters * 0.5f );
 
-               map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
+          map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
-               state->clear_pickups ( );
-               state->clear_enemies ( );
-               state->spawn_map_enemies ( );
+          state->clear_pickups ( );
+          state->clear_enemies ( );
+          state->spawn_map_enemies ( );
 
-               state->player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
+          state->player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
 
-               player_exit = map.position_to_tile_index ( state->player.position.x ( ),
-                                                          state->player.position.y ( ) );
-
-               LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
-                           state->player.position.x ( ),
-                           state->player.position.y ( ) );
-          }
-     } else {
-          auto player_tile_index = map.position_to_tile_index ( state->player.position.x ( ),
-                                                                state->player.position.y ( ) );
-
-          // clear the exit destination if they've left the tile
-          if ( abs ( player_exit - player_tile_index ) > 1 ) {
-               LOG_DEBUG ( "Player move from teleport spot to %f %f on new map\n",
-                           state->player.position.x ( ),
-                           state->player.position.y ( ) );
-               player_exit = 0;
-          }
+          LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
+                      state->player.position.x ( ),
+                      state->player.position.y ( ) );
      }
 
      state->map.reset_light ( );

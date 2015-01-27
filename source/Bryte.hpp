@@ -77,6 +77,8 @@ namespace bryte
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
 
+          SDL_Surface*        pickup_sheet;
+
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;
           Bool  activate_key;

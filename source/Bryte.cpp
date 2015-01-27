@@ -23,8 +23,7 @@ static const Char8* c_test_lampsheet_path        = "castle_lampsheet.bmp";
 static const Char8* c_test_player_path           = "test_hero.bmp";
 static const Char8* c_test_rat_path              = "test_rat.bmp";
 static const Char8* c_test_bat_path              = "test_bat.bmp";
-
-const Real32 Pickup::c_dimension = 0.4f;
+static const Char8* c_test_pickups_path          = "test_pickups.bmp";
 
 static State* get_state ( GameMemory& game_memory )
 {
@@ -214,6 +213,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( pickup_sheet, game_memory, c_test_pickups_path ) ) {
+          return false;
+     }
+
      for ( Int32 i = 0; i < 4; ++i ) {
           direction_keys [ i ] = false;
      }
@@ -246,6 +249,8 @@ Void State::destroy ( )
                SDL_FreeSurface ( interactives_display.interactive_sheets [ i ] );
           }
      }
+
+     SDL_FreeSurface ( pickup_sheet );
 }
 
 Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup::Type drop )
@@ -526,7 +531,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( rect_collides_with_rect ( state->player.collision_x ( ), state->player.collision_y ( ),
                                          state->player.collision_width ( ), state->player.collision_height ( ),
                                          pickup.position.x ( ), pickup.position.y ( ),
-                                         Pickup::c_dimension, Pickup::c_dimension ) ) {
+                                         Pickup::c_dimension_in_meters, Pickup::c_dimension_in_meters ) ) {
+
+               LOG_DEBUG ( "Player got pickup %s\n", Pickup::c_names [ pickup.type ] );
 
                switch ( pickup.type ) {
                default:
@@ -608,11 +615,34 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 }
 
+static Void render_pickups ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet, Pickup* pickups,
+                             Real32 camera_x, Real32 camera_y )
+{
+     for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
+          Pickup& pickup = pickups [ i ];
+
+          if ( pickup.type == Pickup::Type::none ||
+               pickup.type == Pickup::Type::ingredient ) {
+               continue;
+          }
+
+          SDL_Rect dest_rect = build_world_sdl_rect ( pickup.position.x ( ), pickup.position.y ( ),
+                                                      Pickup::c_dimension_in_meters,
+                                                      Pickup::c_dimension_in_meters );
+
+          SDL_Rect clip_rect { ( static_cast<Int32>( pickup.type ) - 1) * Pickup::c_dimension_in_pixels, 0,
+                               Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+          world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+          SDL_BlitSurface ( pickup_sheet, &clip_rect, back_buffer, &dest_rect );
+     }
+}
+
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      auto* state = get_state ( game_memory );
      Uint32 red    = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
-     Uint32 yellow = SDL_MapRGB ( back_buffer->format, 255, 255, 0 );
      Uint32 green  = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
      Uint32 white  = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
      Uint32 black  = SDL_MapRGB ( back_buffer->format, 0, 0, 0 );
@@ -657,29 +687,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      }
 
      // pickups
-     for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
-          Pickup& pickup = state->pickups [ i ];
-
-          if ( pickup.type == Pickup::Type::none ) {
-               continue;
-          }
-
-          SDL_Rect pickup_rect = build_world_sdl_rect ( pickup.position.x ( ), pickup.position.y ( ),
-                                                        Pickup::c_dimension, Pickup::c_dimension );
-
-          world_to_sdl ( pickup_rect, back_buffer, state->camera.x ( ), state->camera.y ( ) );
-
-          switch ( pickup.type ) {
-          default:
-               break;
-          case Pickup::Type::health:
-               SDL_FillRect ( back_buffer, &pickup_rect, red );
-               break;
-          case Pickup::Type::key:
-               SDL_FillRect ( back_buffer, &pickup_rect, yellow );
-               break;
-          }
-     }
+     render_pickups ( back_buffer, state->pickup_sheet, state->pickups, state->camera.x ( ), state->camera.y ( ) );
 
      // light
      render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );

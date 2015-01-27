@@ -764,8 +764,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           auto* enemy_spawn = state->map.check_coordinates_for_enemy_spawn ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( enemy_spawn ) {
-               static const Char8* pickup_names [ ] = { "NONE", "HEALTH", "KEY", "INGREDIENT" };
-               sprintf ( state->message_buffer, "PICKUP %s", pickup_names [ enemy_spawn->drop ] );
+               sprintf ( state->message_buffer, "PICKUP %s", Pickup::c_names [ enemy_spawn->drop ] );
           }
      } break;
      case Mode::exit:

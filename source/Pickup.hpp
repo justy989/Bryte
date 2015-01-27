@@ -4,6 +4,7 @@
 #include "Vector.hpp"
 
 namespace bryte {
+
      struct Pickup {
 
           inline Pickup ( );
@@ -16,7 +17,10 @@ namespace bryte {
                count
           };
 
-          static const Real32 c_dimension; // temporary
+          static const Int32 c_dimension_in_pixels = 10;
+          static const Real32 c_dimension_in_meters;
+
+          static const Char8* c_names [ Type::count ];
 
           Vector position;
           Type   type;

@@ -1,4 +1,5 @@
 #include "Interactives.hpp"
+#include "Enemy.hpp"
 #include "Log.hpp"
 
 using namespace bryte;
@@ -81,7 +82,8 @@ Void Interactives::contribute_light ( Map& map )
      }
 }
 
-Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
+Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map,
+                          const Enemy* enemies, Uint8 enemy_count, const Character& player )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
@@ -107,10 +109,29 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           break;
      }
 
+     Bool free_to_move = true;
+
      Interactive& dest_i = get_from_tile ( dest_x, dest_y );
 
-     if ( dest_i.type == Interactive::Type::none &&
-          !map.get_coordinate_solid ( dest_x, dest_y ) ) {
+     if ( dest_i.type != Interactive::Type::none ||
+          map.get_coordinate_solid ( dest_x, dest_y ) ) {
+          free_to_move = false;
+     }
+
+     if ( free_to_move && player.in_tile ( dest_x, dest_y ) ) {
+          free_to_move = false;
+     }
+
+     if ( free_to_move ) {
+          for ( Int32 i = 0; i < enemy_count; ++i ) {
+               if ( enemies [ i ].in_tile ( dest_x, dest_y ) ) {
+                    free_to_move = false;
+                    break;
+               }
+          }
+     }
+
+     if ( free_to_move ) {
           dest_i = i;
           i.type = Interactive::Type::none;
      }
@@ -441,4 +462,3 @@ Void LightDetector::light ( Uint8 value, Interactives& interactives )
           break;
      }
 }
-

@@ -18,6 +18,7 @@ namespace bryte
 
           struct RatState {
                bool      moving; // either moving or waiting
+               bool      reacting_to_attack;
                Stopwatch timer;
           };
 

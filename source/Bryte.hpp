@@ -88,6 +88,10 @@ namespace bryte
           Int32 player_spawn_tile_y;
 
           Int32 player_key_count;
+
+#ifdef DEBUG
+          Bool enemy_think;
+#endif
      };
 
      struct MemoryLocations {

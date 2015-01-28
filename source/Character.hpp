@@ -19,6 +19,7 @@ namespace bryte
                alive,
                blinking,
                attacking,
+               pushing,
                dying,
           };
 
@@ -26,6 +27,7 @@ namespace bryte
 
           Bool collides_with ( const Character& character );
           Bool attack_collides_with ( const Character& character );
+          Bool in_tile ( Int32 x, Int32 y ) const;
 
           Void walk ( Direction dir );
           Void attack ( );

@@ -70,8 +70,17 @@ Void Enemy::think ( const Vector& player, Random& random, float time_delta )
 
 Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
 {
-     Bool&      moving = rat_state.moving;
-     Stopwatch& timer  = rat_state.timer;
+     Bool& moving             = rat_state.moving;
+     Bool& reacting_to_attack = rat_state.reacting_to_attack;
+     Stopwatch& timer         = rat_state.timer;
+
+     // if attacked move in a 
+     if ( state == Character::State::blinking && !reacting_to_attack ) {
+          facing = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+          timer.reset ( random.generate ( 1, 3 ) );
+          moving             = true;
+          reacting_to_attack = true;
+     }
 
      if ( !moving ) {
           timer.tick ( time_delta );
@@ -87,9 +96,10 @@ Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
 
           timer.tick ( time_delta );
 
-          if ( timer.expired ( ) || state == State::blinking ) {
+          if ( timer.expired ( ) ) {
                timer.reset ( random.generate ( 0, 3 ) );
-               moving = false;
+               moving             = false;
+               reacting_to_attack = false;
           }
      }
 }

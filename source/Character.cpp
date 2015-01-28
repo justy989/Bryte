@@ -17,7 +17,8 @@ const Real32 Character::c_cooldown_time           = 0.25f;
 
 Bool Character::collides_with ( const Character& character )
 {
-     return rect_collides_with_rect ( collision_x ( ), collision_y ( ), collision_width ( ), collision_height ( ),
+     return rect_collides_with_rect ( collision_x ( ), collision_y ( ),
+                                      collision_width ( ), collision_height ( ),
                                       character.collision_x ( ), character.collision_y ( ),
                                       character.collision_width ( ), character.collision_height ( ) );
 }
@@ -158,6 +159,15 @@ Void Character::damage ( Int32 amount, Direction push )
      }
 }
 
+Bool Character::in_tile ( Int32 x, Int32 y ) const
+{
+     float tile_left   = pixels_to_meters ( x * Map::c_tile_dimension_in_pixels );
+     float tile_bottom = pixels_to_meters ( y * Map::c_tile_dimension_in_pixels );
+
+     return rect_collides_with_rect ( collision_x ( ), collision_y ( ), collision_width ( ), collision_height ( ),
+                                      tile_left, tile_bottom, Map::c_tile_dimension_in_meters, Map::c_tile_dimension_in_meters );
+}
+
 static Bool check_wall ( Real32 wall, Real32 wall_min, Real32 wall_max,
                          Real32 starting_position, Real32 change_in_position,
                          Real32 other_starting_position, Real32 other_change_in_position,
@@ -231,6 +241,10 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           }
 
           break;
+     case State::pushing:
+          // must keep pushing to stay in that state
+          state = State::alive;
+          break;
      default:
           break;
      }
@@ -268,9 +282,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      for ( int i = 0; i < 4 && time_remaining > 0.0f; ++i ) {
           Vector wall_normal;
           Real32 closest_time_intersection = time_remaining;
-          Direction push_direction;
-          Int32 push_interactive_x = -1;
-          Int32 push_interactive_y = -1;
+          Direction push_direction = Direction::count;
 
           // loop over tile area
           for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
@@ -305,8 +317,6 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { -1.0f, 0.0f };
                          if ( interactive.is_solid ( ) ) {
                               push_direction = Direction::right;
-                              push_interactive_x = x;
-                              push_interactive_y = y;
                          }
                     }
 
@@ -316,8 +326,6 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { 1.0f, 0.0f };
                          if ( interactive.is_solid ( ) ) {
                               push_direction = Direction::left;
-                              push_interactive_x = x;
-                              push_interactive_y = y;
                          }
                     }
 
@@ -327,8 +335,6 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { 0.0f, -1.0f };
                          if ( interactive.is_solid ( ) ) {
                               push_direction = Direction::up;
-                              push_interactive_x = x;
-                              push_interactive_y = y;
                          }
                     }
 
@@ -339,16 +345,14 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
                          if ( interactive.is_solid ( ) ) {
                               push_direction = Direction::down;
-                              push_interactive_x = x;
-                              push_interactive_y = y;
                          }
                     }
               }
           }
 
           // push any interactives we are colliding with
-          if ( push_interactive_x >= 0 ) {
-               interactives.push ( push_interactive_x, push_interactive_y, push_direction, map );
+          if ( push_direction != Direction::count && state == Character::State::alive ) {
+               state = pushing;
           }
 
           position += ( change_in_position * ( closest_time_intersection - 0.01f ) );
@@ -391,4 +395,3 @@ Void Character::set_collision_center ( Real32 x, Real32 y )
 
      position = Vector{ x - x_offset, y - y_offset };
 }
-

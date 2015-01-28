@@ -134,7 +134,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           interactives_display.interactive_sheets [ i ] = nullptr;
      }
 
-     FileContents text_contents    = load_entire_file ( "text.bmp", &game_memory );
+     FileContents text_contents = load_entire_file ( "text.bmp", &game_memory );
 
      text.fontsheet         = load_bitmap ( &text_contents );
      text.character_width   = 5;
@@ -404,7 +404,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
           case SDL_SCANCODE_D:
                state->direction_keys [ Direction::right ] = key_change.down;
                break;
-          case SDL_SCANCODE_C:
+          case SDL_SCANCODE_SPACE:
                state->attack_key = key_change.down;
                break;
           case SDL_SCANCODE_E:
@@ -418,12 +418,48 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                }
                break;
 #ifdef DEBUG
+          case SDL_SCANCODE_I:
+               if ( key_change.down ) {
+                    state->enemy_think = !state->enemy_think;
+               }
+               break;
           case SDL_SCANCODE_K:
-               state->player_key_count++;
+               if ( key_change.down ) {
+                    state->player_key_count++;
+               }
                break;
 #endif
           }
      }
+}
+
+Void character_adjacent_tile ( const Character& character, Int32* adjacent_tile_x, Int32* adjacent_tile_y )
+{
+     Vector character_center { character.collision_center_x ( ),
+                               character.collision_center_y ( ) };
+
+     Int32 character_center_tile_x = meters_to_pixels ( character_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+     Int32 character_center_tile_y = meters_to_pixels ( character_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+
+     switch ( character.facing ) {
+          default:
+               break;
+          case Direction::left:
+               character_center_tile_x--;
+               break;
+          case Direction::right:
+               character_center_tile_x++;
+               break;
+          case Direction::up:
+               character_center_tile_y++;
+               break;
+          case Direction::down:
+               character_center_tile_y--;
+               break;
+     }
+
+     *adjacent_tile_x = character_center_tile_x;
+     *adjacent_tile_y = character_center_tile_y;
 }
 
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
@@ -452,6 +488,18 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      state->player.update ( time_delta, state->map, state->interactives );
 
+     if ( state->player.state == Character::State::pushing ) {
+          Int32 push_tile_x = 0;
+          Int32 push_tile_y = 0;
+
+          character_adjacent_tile ( state->player, &push_tile_x, &push_tile_y );
+
+          if ( push_tile_x >= 0 && push_tile_x < state->interactives.width ( ) &&
+               push_tile_y >= 0 && push_tile_y < state->interactives.height ( ) ) {
+               state->interactives.push ( push_tile_x, push_tile_y, state->player.facing, state->map, state->enemies, state->enemy_count, state->player );
+          }
+     }
+
      for ( Uint32 i = 0; i < State::c_max_enemies; ++i ) {
           auto& enemy = state->enemies [ i ];
 
@@ -459,8 +507,30 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                continue;
           }
 
+#ifdef DEBUG
+          if ( state->enemy_think ) {
+               enemy.think ( state->player.position, state->random, time_delta );
+          }
+#else
           enemy.think ( state->player.position, state->random, time_delta );
+#endif
+
           enemy.update ( time_delta, state->map, state->interactives );
+
+#if 0
+          // not sure I want enemies messing with your puzzles
+          if ( enemy.state == Character::State::pushing ) {
+               Int32 push_tile_x = 0;
+               Int32 push_tile_y = 0;
+
+               character_adjacent_tile ( enemy, &push_tile_x, &push_tile_y );
+
+               if ( push_tile_x >= 0 && push_tile_x < state->interactives.width ( ) &&
+                    push_tile_y >= 0 && push_tile_y < state->interactives.height ( ) ) {
+                    state->interactives.push ( push_tile_x, push_tile_y, enemy.facing, state->map, state->enemies, state->enemy_count, state->player );
+               }
+          }
+#endif
 
           // check collision between player and enemy
           if ( state->player.state != Character::State::blinking &&
@@ -485,6 +555,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), enemy.drop );
                     }
 #if 0
+                    // generate an item to drop
                     auto roll = state->random.generate ( 1, 11 );
 
                     if ( roll > 5 && roll < 8 ) {
@@ -503,42 +574,26 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      if ( state->activate_key ) {
           state->activate_key = false;
 
-          Vector player_center { state->player.collision_center_x ( ),
-                                 state->player.collision_center_y ( ) };
+          Int32 player_activate_tile_x = 0;
+          Int32 player_activate_tile_y = 0;
 
-          Int32 player_center_tile_x = meters_to_pixels ( player_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
-          Int32 player_center_tile_y = meters_to_pixels ( player_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+          character_adjacent_tile ( state->player, &player_activate_tile_x, &player_activate_tile_y );
 
-          switch ( state->player.facing ) {
-          default:
-               break;
-          case Direction::left:
-               player_center_tile_x--;
-               break;
-          case Direction::right:
-               player_center_tile_x++;
-               break;
-          case Direction::up:
-               player_center_tile_y++;
-               break;
-          case Direction::down:
-               player_center_tile_y--;
-               break;
-          }
+          if ( player_activate_tile_x >= 0 && player_activate_tile_x < state->interactives.width ( ) &&
+               player_activate_tile_y >= 0 && player_activate_tile_y < state->interactives.height ( ) ) {
 
-          auto& interactive = state->interactives.get_from_tile ( player_center_tile_x,
-                                                                  player_center_tile_y );
+               auto& interactive = state->interactives.get_from_tile ( player_activate_tile_x, player_activate_tile_y );
 
-          if ( interactive.type == Interactive::Type::exit ) {
-               if ( interactive.interactive_exit.state == Exit::State::locked &&
+               if ( interactive.type == Interactive::Type::exit &&
+                    interactive.interactive_exit.state == Exit::State::locked &&
                     state->player_key_count > 0 ) {
-                    LOG_DEBUG ( "Unlock Door: %d, %d\n", player_center_tile_x, player_center_tile_y );
-                    state->interactives.activate ( player_center_tile_x, player_center_tile_y );
+                    LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
+                    state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
                     state->player_key_count--;
+               } else {
+                    LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
+                    state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
                }
-          } else {
-               LOG_DEBUG ( "Activate: %d, %d\n", player_center_tile_x, player_center_tile_y );
-               state->interactives.activate ( player_center_tile_x, player_center_tile_y );
           }
      }
 

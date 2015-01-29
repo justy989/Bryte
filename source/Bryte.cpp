@@ -30,6 +30,83 @@ static State* get_state ( GameMemory& game_memory )
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
 }
 
+Vector vector_from_direction ( Direction dir )
+{
+     switch ( dir )
+     {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Direction::left:
+          return Vector { -1.0f, 0.0f };
+     case Direction::up:
+          return Vector { 0.0f, 1.0f };
+     case Direction::right:
+          return Vector { 1.0f, 0.0f };
+     case Direction::down:
+          return Vector { 0.0f, -1.0f };
+     }
+
+     // should not hit
+     return Vector { 0.0f, 0.0f };
+}
+
+const Real32 Arrow::c_speed = 20.0f;
+const Real32 Arrow::c_stuck_time = 1.5f;
+
+Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
+{
+     Int32 tile_x = static_cast<Int32>( position.x ( ) / Map::c_tile_dimension_in_meters );
+     Int32 tile_y = static_cast<Int32>( position.y ( ) / Map::c_tile_dimension_in_meters );
+
+     if ( tile_x < 0 || tile_x >= map.width ( ) ||
+          tile_y < 0 || tile_y >= map.height ( ) ) {
+          return false;
+     }
+
+     if ( map.get_coordinate_solid ( tile_x, tile_y ) ) {
+          return true;
+     }
+
+     auto& interactive = interactives.get_from_tile ( tile_x, tile_y );
+
+     if ( interactive.is_solid ( ) ) {
+          interactive.activate ( interactives );
+          return true;
+     }
+
+     return false;
+}
+
+Void Arrow::update ( float time_delta, const Map& map, Interactives& interactives )
+{
+     switch ( state ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case State::dead:
+          break;
+     case State::spawning:
+          // nop for now ** pre-mature planning wooo **
+          state = flying;
+          break;
+     case State::flying:
+          position += vector_from_direction ( facing ) * c_speed * time_delta;
+          if ( check_for_solids ( map, interactives ) ) {
+               state = State::stuck;
+               stuck_watch.reset ( c_stuck_time );
+          }
+          break;
+     case State::stuck:
+          stuck_watch.tick ( time_delta );
+
+          if ( stuck_watch.expired ( ) ) {
+               state = dead;
+          }
+          break;
+     }
+}
+
 // assuming A attacks B
 static Direction determine_damage_direction ( const Character& a, const Character& b, Random& random )
 {
@@ -226,6 +303,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( arrow_sheet, game_memory, "test_arrow.bmp" ) ) {
+          return false;
+     }
+
      for ( Int32 i = 0; i < 4; ++i ) {
           direction_keys [ i ] = false;
      }
@@ -237,6 +318,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      player_key_count = 0;
 
      attack_key = false;
+
+     arrow.position.set ( 0.0f, 0.0f );
+     arrow.facing = Direction::left;
+     arrow.state = Arrow::State::dead;
+     arrow.stuck_watch.reset ( 0.0f );
 
      return true;
 }
@@ -484,6 +570,17 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      if ( state->attack_key ) {
           state->player.attack ( );
+
+          // temporarily shoot arrow
+          if ( state->arrow.state == Arrow::State::dead ) {
+               LOG_DEBUG ( "Spawn Arrow: %f, %f -> %d\n",
+                           state->player.position.x ( ),
+                           state->player.position.y ( ),
+                           state->player.facing );
+               state->arrow.state    = Arrow::State::spawning;
+               state->arrow.position = state->player.position;
+               state->arrow.facing   = state->player.facing;
+          }
      }
 
      state->player.update ( time_delta, state->map, state->interactives );
@@ -595,7 +692,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                     state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
                }
           }
+
      }
+
+     state->arrow.update ( time_delta, state->map, state->interactives );
 
      for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
           Pickup& pickup = state->pickups [ i ];
@@ -703,6 +803,26 @@ static Void render_pickups ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet
      }
 }
 
+static Void render_arrow ( SDL_Surface* back_buffer, SDL_Surface* arrow_sheet, const Arrow& arrow,
+                           Real32 camera_x, Real32 camera_y )
+{
+     if ( arrow.state == Arrow::State::dead ) {
+          return;
+     }
+
+     SDL_Rect dest_rect = build_world_sdl_rect ( arrow.position.x ( ), arrow.position.y ( ),
+                                                 Map::c_tile_dimension_in_meters,
+                                                 Map::c_tile_dimension_in_meters );
+
+     SDL_Rect clip_rect { 0, static_cast<Int32>( arrow.facing ) * Map::c_tile_dimension_in_pixels,
+                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( arrow_sheet, &clip_rect, back_buffer, &dest_rect );
+}
+
+
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      auto* state = get_state ( game_memory );
@@ -739,6 +859,9 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // pickups
      render_pickups ( back_buffer, state->pickup_sheet, state->pickups, state->camera.x ( ), state->camera.y ( ) );
+
+     // arrows
+     render_arrow ( back_buffer, state->arrow_sheet, state->arrow, state->camera.x ( ), state->camera.y ( ) );
 
      // light
      render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );

@@ -26,6 +26,26 @@
 
 namespace bryte
 {
+     struct Arrow {
+          enum State {
+               dead,
+               spawning,
+               flying,
+               stuck
+          };
+
+          Void update ( float dt, const Map& map, Interactives& interactives );
+          Bool check_for_solids ( const Map& map, Interactives& interactives );
+
+          State     state;
+          Vector    position;
+          Direction facing;
+          Stopwatch stuck_watch;
+
+          static const Real32 c_speed;
+          static const Real32 c_stuck_time;
+     };
+
      struct Settings {
           const Char8* map_master_list_filename;
 
@@ -79,6 +99,9 @@ namespace bryte
           InteractivesDisplay interactives_display;
 
           SDL_Surface*        pickup_sheet;
+          SDL_Surface*        arrow_sheet;
+
+          Arrow               arrow;
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;

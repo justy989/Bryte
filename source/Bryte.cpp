@@ -25,6 +25,8 @@ static const Char8* c_test_rat_path              = "test_rat.bmp";
 static const Char8* c_test_bat_path              = "test_bat.bmp";
 static const Char8* c_test_pickups_path          = "test_pickups.bmp";
 
+Vector Arrow::collision_points [ Direction::count ];
+
 static State* get_state ( GameMemory& game_memory )
 {
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
@@ -56,8 +58,10 @@ const Real32 Arrow::c_stuck_time = 1.5f;
 
 Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
 {
-     Int32 tile_x = static_cast<Int32>( position.x ( ) / Map::c_tile_dimension_in_meters );
-     Int32 tile_y = static_cast<Int32>( position.y ( ) / Map::c_tile_dimension_in_meters );
+     Vector arrow_center = position + Arrow::collision_points [ facing ];
+
+     Int32 tile_x = static_cast<Int32>( arrow_center.x ( ) / Map::c_tile_dimension_in_meters );
+     Int32 tile_y = static_cast<Int32>( arrow_center.y ( ) / Map::c_tile_dimension_in_meters );
 
      if ( tile_x < 0 || tile_x >= map.width ( ) ||
           tile_y < 0 || tile_y >= map.height ( ) ) {
@@ -71,8 +75,17 @@ Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
      auto& interactive = interactives.get_from_tile ( tile_x, tile_y );
 
      if ( interactive.is_solid ( ) ) {
-          interactive.activate ( interactives );
+          // do not activate exits!
+          if ( interactive.type != Interactive::Type::exit ) {
+               interactive.activate ( interactives );
+          }
           return true;
+     } else {
+          if ( interactive.type == Interactive::Type::exit ) {
+               // otherwise arrows can escape when doors are open
+               // TODO: is this ok?
+               return true;
+          }
      }
 
      return false;
@@ -319,10 +332,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      attack_key = false;
 
-     arrow.position.set ( 0.0f, 0.0f );
-     arrow.facing = Direction::left;
-     arrow.state = Arrow::State::dead;
-     arrow.stuck_watch.reset ( 0.0f );
+     Arrow::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
+     Arrow::collision_points [ Direction::up ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 14 ) );
+     Arrow::collision_points [ Direction::right ].set ( pixels_to_meters ( 14 ), pixels_to_meters ( 7 ) );
+     Arrow::collision_points [ Direction::down ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 1 ) );
 
 #ifdef DEBUG
      enemy_think = true;
@@ -399,6 +412,23 @@ Bool State::spawn_pickup ( Real32 x, Real32 y, Pickup::Type type )
      return false;
 }
 
+Bool State::spawn_arrow ( Real32 x, Real32 y, Direction facing )
+{
+     for ( Uint32 i = 0; i < c_max_arrows; ++i ) {
+          Arrow& arrow = arrows [ i ];
+
+          if ( arrow.state == Arrow::State::dead ) {
+               LOG_DEBUG ( "Spawn Arrow %f, %f -> %d\n", x, y, facing );
+               arrow.state    = Arrow::State::spawning;
+               arrow.position.set ( x, y );
+               arrow.facing   = facing;
+               return true;
+          }
+     }
+
+     return false;
+}
+
 Void State::spawn_map_enemies ( )
 {
      for ( int i = 0; i < map.enemy_spawn_count ( ); ++i ) {
@@ -423,6 +453,16 @@ Void State::clear_pickups ( )
 {
      for ( Uint32 i = 0; i < c_max_pickups; ++i ) {
           pickups [ i ].type = Pickup::Type::none;
+     }
+}
+
+Void State::clear_arrows ( )
+{
+     for ( Uint32 i = 0; i < c_max_arrows; ++i ) {
+          arrows [ i ].position.set ( 0.0f, 0.0f );
+          arrows [ i ].facing = Direction::left;
+          arrows [ i ].state = Arrow::State::dead;
+          arrows [ i ].stuck_watch.reset ( 0.0f );
      }
 }
 
@@ -573,18 +613,13 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      if ( state->attack_key ) {
+          state->attack_key = false;
+
           state->player.attack ( );
 
-          // temporarily shoot arrow
-          if ( state->arrow.state == Arrow::State::dead ) {
-               LOG_DEBUG ( "Spawn Arrow: %f, %f -> %d\n",
-                           state->player.position.x ( ),
-                           state->player.position.y ( ),
-                           state->player.facing );
-               state->arrow.state    = Arrow::State::spawning;
-               state->arrow.position = state->player.position;
-               state->arrow.facing   = state->player.facing;
-          }
+          state->spawn_arrow ( state->player.position.x ( ),
+                               state->player.position.y ( ),
+                               state->player.facing );
      }
 
      state->player.update ( time_delta, state->map, state->interactives );
@@ -700,7 +735,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      }
 
-     state->arrow.update ( time_delta, state->map, state->interactives );
+     for ( Uint32 i = 0; i < State::c_max_arrows; ++i ) {
+          state->arrows [ i ].update ( time_delta, state->map, state->interactives );
+     }
 
      for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
           Pickup& pickup = state->pickups [ i ];
@@ -762,6 +799,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
                state->clear_pickups ( );
+               state->clear_arrows ( );
                state->clear_enemies ( );
                state->spawn_map_enemies ( );
 
@@ -811,9 +849,6 @@ static Void render_pickups ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet
 static Void render_arrow ( SDL_Surface* back_buffer, SDL_Surface* arrow_sheet, const Arrow& arrow,
                            Real32 camera_x, Real32 camera_y )
 {
-     if ( arrow.state == Arrow::State::dead ) {
-          return;
-     }
 
      SDL_Rect dest_rect = build_world_sdl_rect ( arrow.position.x ( ), arrow.position.y ( ),
                                                  Map::c_tile_dimension_in_meters,
@@ -866,7 +901,15 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_pickups ( back_buffer, state->pickup_sheet, state->pickups, state->camera.x ( ), state->camera.y ( ) );
 
      // arrows
-     render_arrow ( back_buffer, state->arrow_sheet, state->arrow, state->camera.x ( ), state->camera.y ( ) );
+     for ( Uint32 i = 0; i < State::c_max_arrows; ++i ) {
+          auto& arrow = state->arrows [ i ];
+
+          if ( arrow.state == Arrow::State::dead ) {
+               continue;
+          }
+
+          render_arrow ( back_buffer, state->arrow_sheet, arrow, state->camera.x ( ), state->camera.y ( ) );
+     }
 
      // light
      render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );

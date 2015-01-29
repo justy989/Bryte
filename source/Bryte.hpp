@@ -15,6 +15,7 @@
 #include "Random.hpp"
 
 #include "Vector.hpp"
+#include "Rect.hpp"
 
 #include "MapDisplay.hpp"
 #include "CharacterDisplay.hpp"
@@ -42,6 +43,8 @@ namespace bryte
           Direction facing;
           Stopwatch stuck_watch;
 
+          static Vector    collision_points [ Direction::count ];
+
           static const Real32 c_speed;
           static const Real32 c_stuck_time;
      };
@@ -63,11 +66,13 @@ namespace bryte
 
           Bool spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup::Type drop );
           Bool spawn_pickup ( Real32 x, Real32 y, Pickup::Type type );
+          Bool spawn_arrow ( Real32 x, Real32 y, Direction facing );
 
           Void spawn_map_enemies ( );
 
           Void clear_enemies ( );
           Void clear_pickups ( );
+          Void clear_arrows ( );
 
           Void player_death ( );
 
@@ -75,6 +80,7 @@ namespace bryte
 
           static const Uint32 c_max_enemies = 32;
           static const Uint32 c_max_pickups = 8;
+          static const Uint32 c_max_arrows  = 32;
 
      public:
 
@@ -101,7 +107,7 @@ namespace bryte
           SDL_Surface*        pickup_sheet;
           SDL_Surface*        arrow_sheet;
 
-          Arrow               arrow;
+          Arrow               arrows [ c_max_arrows ];
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;

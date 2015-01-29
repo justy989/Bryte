@@ -9,9 +9,9 @@ public:
 
      inline Vector ( Real32 x = 0.0f, Real32 y = 0.0f );
 
-     inline Vector operator+ ( const Vector& v );
-     inline Vector operator- ( const Vector& v );
-     inline Vector operator* ( Real32 scale );
+     inline Vector operator+ ( const Vector& v ) const;
+     inline Vector operator- ( const Vector& v ) const;
+     inline Vector operator* ( Real32 scale ) const;
 
      inline Vector& operator+= ( const Vector& v );
      inline Vector& operator-= ( const Vector& v );
@@ -42,17 +42,17 @@ inline Vector::Vector ( Real32 x, Real32 y ) :
 
 }
 
-inline Vector Vector::operator+ ( const Vector& v )
+inline Vector Vector::operator+ ( const Vector& v ) const
 {
      return Vector ( m_x + v.m_x, m_y + v.m_y );
 }
 
-inline Vector Vector::operator- ( const Vector& v )
+inline Vector Vector::operator- ( const Vector& v ) const
 {
      return Vector ( m_x - v.m_x, m_y - v.m_y );
 }
 
-inline Vector Vector::operator* ( Real32 scale )
+inline Vector Vector::operator* ( Real32 scale ) const
 {
      return Vector ( m_x * scale, m_y * scale );
 }

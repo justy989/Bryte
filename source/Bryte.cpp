@@ -238,6 +238,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      attack_key = false;
 
+#ifdef DEBUG
+     enemy_think = true;
+#endif
+
      return true;
 }
 
@@ -584,12 +588,13 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                auto& interactive = state->interactives.get_from_tile ( player_activate_tile_x, player_activate_tile_y );
 
-               if ( interactive.type == Interactive::Type::exit &&
-                    interactive.interactive_exit.state == Exit::State::locked &&
-                    state->player_key_count > 0 ) {
-                    LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
-                    state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
-                    state->player_key_count--;
+               if ( interactive.type == Interactive::Type::exit ) {
+                    if ( interactive.interactive_exit.state == Exit::State::locked &&
+                         state->player_key_count > 0 ) {
+                         LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
+                         state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
+                         state->player_key_count--;
+                    }
                } else {
                     LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
                     state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );

@@ -17,7 +17,7 @@ namespace bryte {
 
           inline Pickup ( );
 
-          Void clear ( );
+          inline Void clear ( );
 
           static const Int32 c_dimension_in_pixels = 10;
           static const Real32 c_dimension_in_meters;
@@ -33,7 +33,7 @@ namespace bryte {
 
      }
 
-     Void Pickup::clear ( )
+     inline Void Pickup::clear ( )
      {
           type = Type::none;
      }

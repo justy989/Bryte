@@ -188,8 +188,9 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      player.position.set ( pixels_to_meters ( player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
                            pixels_to_meters ( player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
 
-     player.state  = Character::State::alive;
-     player.facing = Direction::left;
+     player.life_state = Entity::LifeState::alive;
+     player.state      = Character::State::idle;
+     player.facing     = Direction::left;
 
      player.health           = 25;
      player.max_health       = 25;
@@ -214,7 +215,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      // ensure all enemies start dead
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
          enemies [ i ].init ( Enemy::Type::count, 0.0f, 0.0f, Direction::left, Pickup::Type::none );
-         enemies [ i ].state = Character::State::dead;
+         enemies [ i ].life_state = Entity::LifeState::dead;
+         enemies [ i ].state = Character::State::idle;
      }
 
      enemy_count = 0;
@@ -378,7 +380,7 @@ Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup
      Enemy* enemy = nullptr;
 
      for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
-          if ( enemies [ i ].state == Character::State::dead ) {
+          if ( !enemies [ i ].is_alive ( ) ) {
                enemy = enemies + i;
                break;
           }
@@ -446,7 +448,7 @@ Void State::spawn_map_enemies ( )
 Void State::clear_enemies ( )
 {
      for ( Uint32 i = 0; i < enemy_count; ++i ) {
-          enemies [ i ].state = Character::State::dead;
+          enemies [ i ].life_state = Entity::LifeState::dead;
      }
 
      enemy_count = 0;
@@ -454,7 +456,8 @@ Void State::clear_enemies ( )
 
 Void State::player_death ( )
 {
-     player.state  = Character::State::alive;
+     player.life_state = Entity::LifeState::alive;
+     player.state  = Character::State::idle;
      player.facing = Direction::left;
 
      player.health           = 25;
@@ -623,7 +626,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      for ( Uint32 i = 0; i < State::c_max_enemies; ++i ) {
           auto& enemy = state->enemies [ i ];
 
-          if ( enemy.state == Character::State::dead ) {
+          if ( !enemy.is_alive ( ) ) {
                continue;
           }
 
@@ -658,7 +661,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                Direction damage_dir = determine_damage_direction ( enemy, state->player, state->random );
                state->player.damage ( 1, damage_dir );
 
-               if ( state->player.state == Character::State::dead ) {
+               if ( state->player.life_state == Entity::LifeState::dead ) {
                     state->player_death ( );
                }
           }
@@ -670,7 +673,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                Direction damage_dir = determine_damage_direction ( state->player, enemy, state->random );
                enemy.damage ( 1, damage_dir );
 
-               if ( enemy.state == Character::State::dead ) {
+               if ( !enemy.is_alive ( ) ) {
                     if ( enemy.drop != Pickup::Type::none ) {
                          state->spawn_pickup ( enemy.position, enemy.drop );
                     }
@@ -865,7 +868,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // enemies
      for ( Uint32 i = 0; i < state->enemy_count; ++i ) {
-          if ( state->enemies [ i ].state == Character::State::dead ) {
+          if ( !state->enemies [ i ].is_alive ( ) ) {
                continue;
           }
 
@@ -881,7 +884,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
           auto& pickup = state->pickups [ i ];
 
-          if ( pickup.life_state == Entity::LifeState::dead ) {
+          if ( !pickup.is_alive ( ) ) {
                continue;
           }
 
@@ -892,7 +895,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
           auto& arrow = state->arrows [ i ];
 
-          if ( arrow.life_state == Entity::LifeState::dead ) {
+          if ( !arrow.is_alive ( ) ) {
                continue;
           }
 

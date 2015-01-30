@@ -2,7 +2,7 @@
 #define BRYTE_CHARACTER_HPP
 
 #include "Direction.hpp"
-#include "Vector.hpp"
+#include "Entity.hpp"
 #include "StopWatch.hpp"
 
 namespace bryte
@@ -10,17 +10,14 @@ namespace bryte
      class Map;
      class Interactives;
 
-     struct Character {
+     struct Character : public Entity {
      public:
 
           enum State {
-               dead,
-               spawning,
-               alive,
+               idle,
                blinking,
                attacking,
-               pushing,
-               dying,
+               pushing
           };
 
      public:
@@ -80,7 +77,6 @@ namespace bryte
           Int32  health;
           Int32  max_health;
 
-          Vector position;
           Vector dimension;
           Vector velocity;
           Vector acceleration;

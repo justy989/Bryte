@@ -5,7 +5,8 @@ using namespace bryte;
 
 Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
 {
-     state = Character::State::alive;
+     life_state   = LifeState::alive;
+     state        = State::idle;
 
      this->type   = type;
      this->facing = facing;
@@ -74,7 +75,7 @@ Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
      Bool& reacting_to_attack = rat_state.reacting_to_attack;
      Stopwatch& timer         = rat_state.timer;
 
-     // if attacked move in a 
+     // if attacked move in a
      if ( state == Character::State::blinking && !reacting_to_attack ) {
           facing = static_cast<Direction>( random.generate ( 0, Direction::count ) );
           timer.reset ( random.generate ( 1, 3 ) );

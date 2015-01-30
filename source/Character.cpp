@@ -25,7 +25,7 @@ Bool Character::collides_with ( const Character& character )
 
 Void Character::attack ( )
 {
-     if ( state != State::alive || !cooldown_watch.expired ( ) ) {
+     if ( life_state != LifeState::alive || !cooldown_watch.expired ( ) ) {
           return;
      }
 
@@ -155,7 +155,7 @@ Void Character::damage ( Int32 amount, Direction push )
           state = State::blinking;
      } else {
           // TODO: change to dying and handle transition to death
-          state = State::dead;
+          life_state = LifeState::dead;
      }
 }
 
@@ -165,7 +165,8 @@ Bool Character::in_tile ( Int32 x, Int32 y ) const
      float tile_bottom = pixels_to_meters ( y * Map::c_tile_dimension_in_pixels );
 
      return rect_collides_with_rect ( collision_x ( ), collision_y ( ), collision_width ( ), collision_height ( ),
-                                      tile_left, tile_bottom, Map::c_tile_dimension_in_meters, Map::c_tile_dimension_in_meters );
+                                      tile_left, tile_bottom,
+                                      Map::c_tile_dimension_in_meters, Map::c_tile_dimension_in_meters );
 }
 
 static Bool check_wall ( Real32 wall, Real32 wall_min, Real32 wall_max,
@@ -229,21 +230,21 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           }
 
           if ( state_watch.expired ( ) ) {
-               if ( state != State::dead ) {
-                    state = State::alive;
+               if ( life_state != LifeState::dead ) {
+                    state = State::idle;
                }
           }
      } break;
      case State::attacking:
           if ( state_watch.expired ( ) ) {
                cooldown_watch.reset ( Character::c_cooldown_time );
-               state = State::alive;
+               state = State::idle;
           }
 
           break;
      case State::pushing:
           // must keep pushing to stay in that state
-          state = State::alive;
+          state = State::idle;
           break;
      default:
           break;
@@ -351,7 +352,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           }
 
           // push any interactives we are colliding with
-          if ( push_direction != Direction::count && state == Character::State::alive ) {
+          if ( push_direction != Direction::count && state == Character::State::idle ) {
                state = pushing;
           }
 

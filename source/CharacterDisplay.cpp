@@ -55,7 +55,7 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
      static Int32       blink_count   = 0;
 
      // do not draw if dead
-     if ( character.state == Character::State::dead ) {
+     if ( !character.is_alive ( ) ) {
           return;
      }
 

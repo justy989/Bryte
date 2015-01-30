@@ -8,7 +8,7 @@
 
 #include "Map.hpp"
 #include "Interactives.hpp"
-#include "Character.hpp"
+#include "Player.hpp"
 #include "Enemy.hpp"
 #include "Pickup.hpp"
 
@@ -69,9 +69,9 @@ namespace bryte
 
      public:
 
-          Random       random;
+          Random random;
 
-          Character    player;
+          Player player;
 
           EntityManager<Enemy, 32> enemies;
           EntityManager<Pickup, 8> pickups;
@@ -88,8 +88,10 @@ namespace bryte
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
 
-          SDL_Surface*        pickup_sheet;
-          SDL_Surface*        arrow_sheet;
+          SDL_Surface* pickup_sheet;
+          SDL_Surface* arrow_sheet;
+
+          SDL_Surface* attack_icon;
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;

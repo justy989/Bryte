@@ -185,32 +185,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      player_spawn_tile_x = settings->player_spawn_tile_x;
      player_spawn_tile_y = settings->player_spawn_tile_y;
 
+     player.clear ( );
+
      player.position.set ( pixels_to_meters ( player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
                            pixels_to_meters ( player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
 
      player.life_state = Entity::LifeState::alive;
-     player.state      = Character::State::idle;
-     player.facing     = Direction::left;
-
-     player.health           = 25;
-     player.max_health       = 25;
-
-     player.velocity.zero ( );
-     player.acceleration.zero ( );
-
-     player.dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
-     player.collision_offset.set ( pixels_to_meters ( 5 ), pixels_to_meters ( 2 ) );
-     player.collision_dimension.set ( pixels_to_meters ( 6 ), pixels_to_meters ( 7 ) );
-
-     player.damage_pushed = Direction::left;
-     player.state_watch.reset ( 0.0f );
-     player.damage_watch.reset ( 0.0f );
-     player.cooldown_watch.reset ( 0.0f );
-
-     player.collides_with_exits  = false;
-     player.collides_with_solids = true;
-
-     player.walk_acceleration.set ( 8.5f, 8.5f );
 
      enemies.clear ( );
      pickups.clear ( );
@@ -327,8 +307,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );
 
-     player_key_count = 0;
-
      attack_key = false;
 
      Arrow::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
@@ -430,22 +408,12 @@ Void State::spawn_map_enemies ( )
 
 Void State::player_death ( )
 {
-     player.life_state = Entity::LifeState::alive;
-     player.state  = Character::State::idle;
-     player.facing = Direction::left;
+     player.clear ( );
 
-     player.health           = 25;
-     player.max_health       = 25;
+     player.life_state = Entity::LifeState::alive;
 
      player.position.set ( pixels_to_meters ( player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
                            pixels_to_meters ( player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
-
-     player.velocity.zero ( );
-
-     player.damage_pushed = Direction::left;
-     player.state_watch.reset ( 0.0f );
-     player.damage_watch.reset ( 0.0f );
-     player.cooldown_watch.reset ( 0.0f );
 
      // load the first map
      map.load_from_master_list ( 0, interactives );
@@ -517,7 +485,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_K:
                if ( key_change.down ) {
-                    state->player_key_count++;
+                    state->player.key_count++;
                }
                break;
 #endif
@@ -682,7 +650,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                if ( interactive.type == Interactive::Type::exit ) {
                     if ( interactive.interactive_exit.state == Exit::State::locked &&
-                         state->player_key_count > 0 ) {
+                         state->player.key_count > 0 ) {
                          LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
                          state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
                          state->player_key_count--;
@@ -702,7 +670,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
           Pickup& pickup = state->pickups [ i ];
 
-          if ( pickup.type == Pickup::Type::none ) {
+          if ( !pickup.is_alive ( ) ) {
                continue;
           }
 
@@ -724,11 +692,12 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                     }
                     break;
                case Pickup::Type::key:
-                    state->player_key_count++;
+                    state->player.key_count++;
                     break;
                }
 
                pickup.type = Pickup::Type::none;
+               pickup.life_state = Entity::LifeState::dead;
           }
      }
 
@@ -897,11 +866,11 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      char buffer [ 64 ];
 
 #ifdef LINUX
-     sprintf ( buffer, "%d", state->player_key_count );
+     sprintf ( buffer, "%d", state->player.key_count );
 #endif
 
 #ifdef WIN32
-     sprintf_s ( buffer, "%d", state->player_key_count );
+     sprintf_s ( buffer, "%d", state->player.key_count );
 #endif
      state->text.render ( back_buffer, buffer, 235, 4 );
 

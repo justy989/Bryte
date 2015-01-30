@@ -91,10 +91,11 @@ namespace bryte
           SDL_Surface* pickup_sheet;
           SDL_Surface* arrow_sheet;
 
-          SDL_Surface* attack_icon;
+          SDL_Surface* attack_icon_sheet;
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;
+          Bool  switch_attack_key;
           Bool  activate_key;
 
           Int32 player_spawn_tile_x;

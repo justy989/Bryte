@@ -299,6 +299,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory, "test_attack_icon.bmp" ) ) {
+          return false;
+     }
+
      for ( Int32 i = 0; i < 4; ++i ) {
           direction_keys [ i ] = false;
      }
@@ -308,6 +312,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      spawn_map_enemies ( );
 
      attack_key = false;
+     switch_attack_key = false;
 
      Arrow::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
      Arrow::collision_points [ Direction::up ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 14 ) );
@@ -343,6 +348,9 @@ Void State::destroy ( )
      }
 
      SDL_FreeSurface ( pickup_sheet );
+     SDL_FreeSurface ( arrow_sheet );
+
+     SDL_FreeSurface ( attack_icon_sheet );
 }
 
 Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop )
@@ -465,6 +473,9 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
           case SDL_SCANCODE_D:
                state->direction_keys [ Direction::right ] = key_change.down;
                break;
+          case SDL_SCANCODE_Q:
+               state->switch_attack_key = key_change.down;
+               break;
           case SDL_SCANCODE_SPACE:
                state->attack_key = key_change.down;
                break;
@@ -542,12 +553,30 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           state->player.walk ( Direction::left );
      }
 
+     if ( state->switch_attack_key ) {
+          state->switch_attack_key = false;
+
+          Int32 new_attack_mode = ( static_cast<Int32>( state->player.attack_mode ) + 1 ) %
+                                  Player::AttackMode::count;
+          state->player.attack_mode = static_cast<Player::AttackMode>( new_attack_mode );
+     }
+
      if ( state->attack_key ) {
           state->attack_key = false;
 
-          state->player.attack ( );
-
-          state->spawn_arrow ( state->player.position, state->player.facing );
+          switch ( state->player.attack_mode ) {
+          default:
+               ASSERT ( 0 );
+               break;
+          case Player::AttackMode::sword:
+               state->player.attack ( );
+               break;
+          case Player::AttackMode::arrow:
+               state->spawn_arrow ( state->player.position, state->player.facing );
+               break;
+          case Player::AttackMode::bomb:
+               break;
+          }
      }
 
      state->player.update ( time_delta, state->map, state->interactives );
@@ -862,6 +891,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      SDL_FillRect ( back_buffer, &health_bar_border_rect, white );
      SDL_FillRect ( back_buffer, &health_bar_rect, red );
+
+     SDL_Rect attack_dest { ( back_buffer->w / 2 ) - ( Map::c_tile_dimension_in_pixels / 2 ), 0,
+                            Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+     SDL_Rect attack_clip { state->player.attack_mode * Map::c_tile_dimension_in_pixels, 0,
+                            Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     SDL_BlitSurface ( state->attack_icon_sheet, &attack_clip, back_buffer, &attack_dest );
 
      char buffer [ 64 ];
 

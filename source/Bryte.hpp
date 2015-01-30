@@ -12,6 +12,8 @@
 #include "Enemy.hpp"
 #include "Pickup.hpp"
 
+#include "EntityManager.hpp"
+
 #include "Random.hpp"
 
 #include "Vector.hpp"
@@ -27,18 +29,11 @@
 
 namespace bryte
 {
-     struct Arrow {
-          enum State {
-               dead,
-               spawning,
-               flying,
-               stuck
-          };
-
+     struct Arrow : public Entity {
           Void update ( float dt, const Map& map, Interactives& interactives );
           Bool check_for_solids ( const Map& map, Interactives& interactives );
+          Void clear ( );
 
-          State     state;
           Vector    position;
           Direction facing;
           Stopwatch stuck_watch;
@@ -65,22 +60,18 @@ namespace bryte
           Void destroy    ( );
 
           Bool spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup::Type drop );
-          Bool spawn_pickup ( Real32 x, Real32 y, Pickup::Type type );
-          Bool spawn_arrow ( Real32 x, Real32 y, Direction facing );
+          Bool spawn_pickup ( const Vector& position, Pickup::Type type );
+          Bool spawn_arrow ( const Vector& position, Direction facing );
 
           Void spawn_map_enemies ( );
 
           Void clear_enemies ( );
-          Void clear_pickups ( );
-          Void clear_arrows ( );
 
           Void player_death ( );
 
      public:
 
           static const Uint32 c_max_enemies = 32;
-          static const Uint32 c_max_pickups = 8;
-          static const Uint32 c_max_arrows  = 32;
 
      public:
 
@@ -91,7 +82,8 @@ namespace bryte
           Enemy        enemies [ c_max_enemies ];
           Uint32       enemy_count;
 
-          Pickup       pickups [ c_max_pickups ];
+          EntityManager<Pickup, 8> pickups;
+          EntityManager<Arrow, 64> arrows;
 
           Map          map;
           Interactives interactives;
@@ -106,8 +98,6 @@ namespace bryte
 
           SDL_Surface*        pickup_sheet;
           SDL_Surface*        arrow_sheet;
-
-          Arrow               arrows [ c_max_arrows ];
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;

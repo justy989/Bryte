@@ -93,31 +93,38 @@ Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
 
 Void Arrow::update ( float time_delta, const Map& map, Interactives& interactives )
 {
-     switch ( state ) {
+     switch ( life_state ) {
      default:
           ASSERT ( 0 );
           break;
-     case State::dead:
+     case LifeState::dead:
           break;
-     case State::spawning:
+     case LifeState::spawning:
           // nop for now ** pre-mature planning wooo **
-          state = flying;
+          life_state = LifeState::alive;
           break;
-     case State::flying:
-          position += vector_from_direction ( facing ) * c_speed * time_delta;
-          if ( check_for_solids ( map, interactives ) ) {
-               state = State::stuck;
-               stuck_watch.reset ( c_stuck_time );
-          }
-          break;
-     case State::stuck:
-          stuck_watch.tick ( time_delta );
-
+     case LifeState::alive:
           if ( stuck_watch.expired ( ) ) {
-               state = dead;
+               position += vector_from_direction ( facing ) * c_speed * time_delta;
+
+               if ( check_for_solids ( map, interactives ) ) {
+                    stuck_watch.reset ( c_stuck_time );
+               }
+          } else {
+               stuck_watch.tick ( time_delta );
+
+               if ( stuck_watch.expired ( ) ) {
+                    life_state = dead;
+               }
           }
           break;
      }
+}
+
+Void Arrow::clear ( )
+{
+     facing = Direction::left;
+     stuck_watch.reset ( 0.0f );
 }
 
 // assuming A attacks B
@@ -212,9 +219,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      enemy_count = 0;
 
-     for ( Uint32 i = 0; i < c_max_pickups; ++i ) {
-          pickups [ i ].type = Pickup::Type::none;
-     }
+     pickups.clear ( );
 
      for ( int i = 0; i < Enemy::Type::count; ++i ) {
           character_display.enemy_sheets [ i ] = nullptr;
@@ -337,6 +342,9 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      Arrow::collision_points [ Direction::right ].set ( pixels_to_meters ( 14 ), pixels_to_meters ( 7 ) );
      Arrow::collision_points [ Direction::down ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 1 ) );
 
+     pickups.clear ( );
+     arrows.clear ( );
+
 #ifdef DEBUG
      enemy_think = true;
 #endif
@@ -394,39 +402,34 @@ Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup
      return true;
 }
 
-Bool State::spawn_pickup ( Real32 x, Real32 y, Pickup::Type type )
+Bool State::spawn_pickup ( const Vector& position, Pickup::Type type )
 {
-     for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
-          Pickup& pickup = pickups [ i ];
+     auto* pickup = pickups.spawn ( position );
 
-          if ( pickup.type == Pickup::Type::none ) {
-               pickup.type = type;
-               pickup.position.set ( x, y );
-
-               LOG_DEBUG ( "Spawn pickup %s at %f, %f\n", Pickup::c_names [ type ], x, y );
-
-               return true;
-          }
+     if ( !pickup ) {
+          return false;
      }
 
-     return false;
+     pickup->type = type;
+
+     LOG_DEBUG ( "Spawn pickup %s at %f, %f\n", Pickup::c_names [ type ], position.x ( ), position.y ( ) );
+
+     return true;
 }
 
-Bool State::spawn_arrow ( Real32 x, Real32 y, Direction facing )
+Bool State::spawn_arrow ( const Vector& position, Direction facing )
 {
-     for ( Uint32 i = 0; i < c_max_arrows; ++i ) {
-          Arrow& arrow = arrows [ i ];
+     auto* arrow = arrows.spawn ( position );
 
-          if ( arrow.state == Arrow::State::dead ) {
-               LOG_DEBUG ( "Spawn Arrow %f, %f -> %d\n", x, y, facing );
-               arrow.state    = Arrow::State::spawning;
-               arrow.position.set ( x, y );
-               arrow.facing   = facing;
-               return true;
-          }
+     if ( !arrow ) {
+          return false;
      }
 
-     return false;
+     arrow->facing = facing;
+
+     LOG_DEBUG( "Spawning Arrow at %f, %f\n", position.x ( ), position.y ( ) );
+
+     return true;
 }
 
 Void State::spawn_map_enemies ( )
@@ -447,23 +450,6 @@ Void State::clear_enemies ( )
      }
 
      enemy_count = 0;
-}
-
-Void State::clear_pickups ( )
-{
-     for ( Uint32 i = 0; i < c_max_pickups; ++i ) {
-          pickups [ i ].type = Pickup::Type::none;
-     }
-}
-
-Void State::clear_arrows ( )
-{
-     for ( Uint32 i = 0; i < c_max_arrows; ++i ) {
-          arrows [ i ].position.set ( 0.0f, 0.0f );
-          arrows [ i ].facing = Direction::left;
-          arrows [ i ].state = Arrow::State::dead;
-          arrows [ i ].stuck_watch.reset ( 0.0f );
-     }
 }
 
 Void State::player_death ( )
@@ -617,9 +603,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           state->player.attack ( );
 
-          state->spawn_arrow ( state->player.position.x ( ),
-                               state->player.position.y ( ),
-                               state->player.facing );
+          state->spawn_arrow ( state->player.position, state->player.facing );
      }
 
      state->player.update ( time_delta, state->map, state->interactives );
@@ -688,7 +672,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                if ( enemy.state == Character::State::dead ) {
                     if ( enemy.drop != Pickup::Type::none ) {
-                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), enemy.drop );
+                         state->spawn_pickup ( enemy.position, enemy.drop );
                     }
 #if 0
                     // generate an item to drop
@@ -735,11 +719,11 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      }
 
-     for ( Uint32 i = 0; i < State::c_max_arrows; ++i ) {
+     for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
           state->arrows [ i ].update ( time_delta, state->map, state->interactives );
      }
 
-     for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
+     for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
           Pickup& pickup = state->pickups [ i ];
 
           if ( pickup.type == Pickup::Type::none ) {
@@ -798,8 +782,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
-               state->clear_pickups ( );
-               state->clear_arrows ( );
+               state->pickups.clear ( );
+               state->arrows.clear ( );
                state->clear_enemies ( );
                state->spawn_map_enemies ( );
 
@@ -822,28 +806,24 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 }
 
-static Void render_pickups ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet, Pickup* pickups,
-                             Real32 camera_x, Real32 camera_y )
+static Void render_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet, Pickup& pickup,
+                            Real32 camera_x, Real32 camera_y )
 {
-     for ( Uint32 i = 0; i < State::c_max_pickups; ++i ) {
-          Pickup& pickup = pickups [ i ];
-
-          if ( pickup.type == Pickup::Type::none ||
-               pickup.type == Pickup::Type::ingredient ) {
-               continue;
-          }
-
-          SDL_Rect dest_rect = build_world_sdl_rect ( pickup.position.x ( ), pickup.position.y ( ),
-                                                      Pickup::c_dimension_in_meters,
-                                                      Pickup::c_dimension_in_meters );
-
-          SDL_Rect clip_rect { ( static_cast<Int32>( pickup.type ) - 1) * Pickup::c_dimension_in_pixels, 0,
-                               Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-
-          world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
-
-          SDL_BlitSurface ( pickup_sheet, &clip_rect, back_buffer, &dest_rect );
+     if ( pickup.type == Pickup::Type::none ||
+          pickup.type == Pickup::Type::ingredient ) {
+          return;
      }
+
+     SDL_Rect dest_rect = build_world_sdl_rect ( pickup.position.x ( ), pickup.position.y ( ),
+                                                 Pickup::c_dimension_in_meters,
+                                                 Pickup::c_dimension_in_meters );
+
+     SDL_Rect clip_rect { ( static_cast<Int32>( pickup.type ) - 1) * Pickup::c_dimension_in_pixels, 0,
+                          Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( pickup_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
 static Void render_arrow ( SDL_Surface* back_buffer, SDL_Surface* arrow_sheet, const Arrow& arrow,
@@ -898,13 +878,21 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                               state->camera.x ( ), state->camera.y ( ) );
 
      // pickups
-     render_pickups ( back_buffer, state->pickup_sheet, state->pickups, state->camera.x ( ), state->camera.y ( ) );
+     for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
+          auto& pickup = state->pickups [ i ];
+
+          if ( pickup.life_state == Entity::LifeState::dead ) {
+               continue;
+          }
+
+          render_pickup ( back_buffer, state->pickup_sheet, pickup, state->camera.x ( ), state->camera.y ( ) );
+     }
 
      // arrows
-     for ( Uint32 i = 0; i < State::c_max_arrows; ++i ) {
+     for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
           auto& arrow = state->arrows [ i ];
 
-          if ( arrow.state == Arrow::State::dead ) {
+          if ( arrow.life_state == Entity::LifeState::dead ) {
                continue;
           }
 

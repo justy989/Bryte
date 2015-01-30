@@ -1,13 +1,11 @@
 #ifndef BRYTE_PICKUP_HPP
 #define BRYTE_PICKUP_HPP
 
-#include "Vector.hpp"
+#include "Entity.hpp"
 
 namespace bryte {
 
-     struct Pickup {
-
-          inline Pickup ( );
+     struct Pickup : public Entity {
 
           enum Type {
                none,
@@ -17,12 +15,15 @@ namespace bryte {
                count
           };
 
+          inline Pickup ( );
+
+          Void clear ( );
+
           static const Int32 c_dimension_in_pixels = 10;
           static const Real32 c_dimension_in_meters;
 
           static const Char8* c_names [ Type::count ];
 
-          Vector position;
           Type   type;
      };
 
@@ -30,6 +31,11 @@ namespace bryte {
           type ( Type::none )
      {
 
+     }
+
+     Void Pickup::clear ( )
+     {
+          type = Type::none;
      }
 };
 

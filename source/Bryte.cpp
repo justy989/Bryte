@@ -113,8 +113,14 @@ Void Arrow::update ( float time_delta, const Map& map, Interactives& interactive
           } else {
                stuck_watch.tick ( time_delta );
 
+               if ( stuck_in_entity ) {
+                    position = stuck_in_entity->position + entity_offset;
+               }
+
                if ( stuck_watch.expired ( ) ) {
                     life_state = dead;
+                    position.set ( 0.0f, 0.0f );
+                    clear ( );
                }
           }
           break;
@@ -125,6 +131,8 @@ Void Arrow::clear ( )
 {
      facing = Direction::left;
      stuck_watch.reset ( 0.0f );
+     stuck_in_entity = nullptr;
+     entity_offset.set ( 0.0f, 0.0f );
 }
 
 // assuming A attacks B
@@ -430,6 +438,25 @@ Void State::player_death ( )
      spawn_map_enemies ( );
 }
 
+Void State::drop_item_on_enemy_death ( const Enemy& enemy )
+{
+     if ( !enemy.is_alive ( ) ) {
+          if ( enemy.drop != Pickup::Type::none ) {
+               spawn_pickup ( enemy.position, enemy.drop );
+          }
+#if 0
+                    // generate an item to drop
+                    auto roll = state->random.generate ( 1, 11 );
+
+                    if ( roll > 5 && roll < 8 ) {
+                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
+                    } else if ( roll >= 8 ) {
+                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
+                    }
+#endif
+     }
+}
+
 extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
@@ -642,22 +669,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->player.attack_collides_with ( enemy ) ) {
                Direction damage_dir = determine_damage_direction ( state->player, enemy, state->random );
                enemy.damage ( 1, damage_dir );
-
-               if ( !enemy.is_alive ( ) ) {
-                    if ( enemy.drop != Pickup::Type::none ) {
-                         state->spawn_pickup ( enemy.position, enemy.drop );
-                    }
-#if 0
-                    // generate an item to drop
-                    auto roll = state->random.generate ( 1, 11 );
-
-                    if ( roll > 5 && roll < 8 ) {
-                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
-                    } else if ( roll >= 8 ) {
-                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
-                    }
-#endif
-               }
+               state->drop_item_on_enemy_death ( enemy );
           }
      }
 
@@ -693,7 +705,40 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
-          state->arrows [ i ].update ( time_delta, state->map, state->interactives );
+          auto& arrow = state->arrows [ i ];
+
+          if ( !arrow.is_alive ( ) ) {
+               continue;
+          }
+
+          arrow.update ( time_delta, state->map, state->interactives );
+
+          if ( !arrow.stuck_watch.expired ( ) ) {
+               continue;
+          }
+
+          Vector arrow_collision_point = arrow.position + arrow.collision_points [ arrow.facing ];
+
+          for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
+               auto& enemy = state->enemies [ c ];
+
+               if ( !enemy.is_alive ( ) ) {
+                    continue;
+               }
+
+               if ( point_inside_rect ( arrow_collision_point.x ( ),
+                                        arrow_collision_point.y ( ),
+                                        enemy.collision_x ( ), enemy.collision_y ( ),
+                                        enemy.collision_x ( ) + enemy.collision_width ( ),
+                                        enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
+                    enemy.damage ( 1, arrow.facing );
+                    state->drop_item_on_enemy_death ( enemy );
+                    arrow.stuck_in_entity = &enemy;
+                    arrow.entity_offset   = arrow.position - enemy.position;
+                    arrow.stuck_watch.reset ( Arrow::c_stuck_time );
+                    break;
+               }
+          }
      }
 
      for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {

@@ -37,6 +37,8 @@ namespace bryte
           Vector    position;
           Direction facing;
           Stopwatch stuck_watch;
+          Entity*   stuck_in_entity;
+          Vector    entity_offset;
 
           static Vector    collision_points [ Direction::count ];
 
@@ -66,6 +68,8 @@ namespace bryte
           Void spawn_map_enemies ( );
 
           Void player_death ( );
+
+          Void drop_item_on_enemy_death ( const Enemy& enemy );
 
      public:
 

@@ -212,15 +212,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      player.walk_acceleration.set ( 8.5f, 8.5f );
 
-     // ensure all enemies start dead
-     for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
-         enemies [ i ].init ( Enemy::Type::count, 0.0f, 0.0f, Direction::left, Pickup::Type::none );
-         enemies [ i ].life_state = Entity::LifeState::dead;
-         enemies [ i ].state = Character::State::idle;
-     }
-
-     enemy_count = 0;
-
+     enemies.clear ( );
      pickups.clear ( );
 
      for ( int i = 0; i < Enemy::Type::count; ++i ) {
@@ -375,31 +367,21 @@ Void State::destroy ( )
      SDL_FreeSurface ( pickup_sheet );
 }
 
-Bool State::spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup::Type drop )
+Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop )
 {
-     Enemy* enemy = nullptr;
-
-     for ( Uint32 i = 0; i < c_max_enemies; ++i ) {
-          if ( !enemies [ i ].is_alive ( ) ) {
-               enemy = enemies + i;
-               break;
-          }
-     }
+     Enemy* enemy = enemies.spawn ( position );
 
      if ( !enemy ) {
-          LOG_WARNING ( "Tried to spawn enemy when %d enemies already exist.\n", c_max_enemies );
           return false;
      }
+
+     enemy->init ( static_cast<Enemy::Type>( id ), position.x ( ), position.y ( ), facing, drop );
 
 #ifdef DEBUG
      static const char* enemy_id_names [ ] = { "rat", "bat" };
 #endif
 
-     LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], x, y );
-
-     enemy->init ( static_cast<Enemy::Type>( id ), x, y, facing, drop );
-
-     enemy_count++;
+     LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], position.x ( ), position.y ( ) );
 
      return true;
 }
@@ -439,19 +421,11 @@ Void State::spawn_map_enemies ( )
      for ( int i = 0; i < map.enemy_spawn_count ( ); ++i ) {
           auto& enemy_spawn = map.enemy_spawn ( i );
 
-          spawn_enemy ( pixels_to_meters ( enemy_spawn.location.x * Map::c_tile_dimension_in_pixels ),
-                        pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ),
-                        enemy_spawn.id, enemy_spawn.facing, enemy_spawn.drop );
-     }
-}
+          Vector position { pixels_to_meters ( enemy_spawn.location.x * Map::c_tile_dimension_in_pixels ),
+                            pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ) };
 
-Void State::clear_enemies ( )
-{
-     for ( Uint32 i = 0; i < enemy_count; ++i ) {
-          enemies [ i ].life_state = Entity::LifeState::dead;
+          spawn_enemy ( position, enemy_spawn.id, enemy_spawn.facing, enemy_spawn.drop );
      }
-
-     enemy_count = 0;
 }
 
 Void State::player_death ( )
@@ -476,7 +450,7 @@ Void State::player_death ( )
      // load the first map
      map.load_from_master_list ( 0, interactives );
 
-     clear_enemies ( );
+     enemies.clear ( );
      spawn_map_enemies ( );
 }
 
@@ -531,9 +505,8 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_8:
                if ( key_change.down ) {
-                    state->spawn_enemy ( state->player.position.x ( ) - state->player.width ( ),
-                                         state->player.position.y ( ), 0, Direction::left,
-                                         Pickup::Type::health );
+                    Vector spawn_pos = state->player.position - Vector ( Map::c_tile_dimension_in_meters, 0.0f );
+                    state->spawn_enemy ( spawn_pos, 0, state->player.facing, Pickup::Type::health );
                }
                break;
 #ifdef DEBUG
@@ -619,11 +592,11 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           if ( push_tile_x >= 0 && push_tile_x < state->interactives.width ( ) &&
                push_tile_y >= 0 && push_tile_y < state->interactives.height ( ) ) {
-               state->interactives.push ( push_tile_x, push_tile_y, state->player.facing, state->map, state->enemies, state->enemy_count, state->player );
+               state->interactives.push ( push_tile_x, push_tile_y, state->player.facing, state->map );
           }
      }
 
-     for ( Uint32 i = 0; i < State::c_max_enemies; ++i ) {
+     for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
           auto& enemy = state->enemies [ i ];
 
           if ( !enemy.is_alive ( ) ) {
@@ -787,7 +760,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                state->pickups.clear ( );
                state->arrows.clear ( );
-               state->clear_enemies ( );
+               state->enemies.clear ( );
                state->spawn_map_enemies ( );
 
                state->player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
@@ -867,7 +840,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                           state->camera.x ( ), state->camera.y ( ) );
 
      // enemies
-     for ( Uint32 i = 0; i < state->enemy_count; ++i ) {
+     for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
           if ( !state->enemies [ i ].is_alive ( ) ) {
                continue;
           }

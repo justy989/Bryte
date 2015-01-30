@@ -9,8 +9,6 @@
 namespace bryte
 {
      class Interactives;
-     class Enemy;
-     class Character;
 
      struct Exit {
           enum State {
@@ -154,8 +152,7 @@ namespace bryte
 
           Void contribute_light ( Map& map );
 
-          Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map,
-                      const Enemy* enemies, Uint8 enemy_count, const Character& player );
+          Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
           Void activate ( Int32 tile_x, Int32 tile_y );
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
 

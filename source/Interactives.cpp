@@ -82,8 +82,7 @@ Void Interactives::contribute_light ( Map& map )
      }
 }
 
-Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map,
-                          const Enemy* enemies, Uint8 enemy_count, const Character& player )
+Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
@@ -118,6 +117,8 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           free_to_move = false;
      }
 
+#if 0
+     // TODO: put checking for characters back in when it is quicker to find them
      if ( free_to_move && player.in_tile ( dest_x, dest_y ) ) {
           free_to_move = false;
      }
@@ -130,6 +131,7 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
                }
           }
      }
+#endif
 
      if ( free_to_move ) {
           dest_i = i;

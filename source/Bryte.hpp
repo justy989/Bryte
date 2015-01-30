@@ -59,19 +59,13 @@ namespace bryte
           Bool initialize ( GameMemory& game_memory, Settings* settings );
           Void destroy    ( );
 
-          Bool spawn_enemy ( Real32 x, Real32 y, Uint8 id, Direction facing, Pickup::Type drop );
+          Bool spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop );
           Bool spawn_pickup ( const Vector& position, Pickup::Type type );
           Bool spawn_arrow ( const Vector& position, Direction facing );
 
           Void spawn_map_enemies ( );
 
-          Void clear_enemies ( );
-
           Void player_death ( );
-
-     public:
-
-          static const Uint32 c_max_enemies = 32;
 
      public:
 
@@ -79,9 +73,7 @@ namespace bryte
 
           Character    player;
 
-          Enemy        enemies [ c_max_enemies ];
-          Uint32       enemy_count;
-
+          EntityManager<Enemy, 32> enemies;
           EntityManager<Pickup, 8> pickups;
           EntityManager<Arrow, 64> arrows;
 

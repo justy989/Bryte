@@ -35,11 +35,13 @@ namespace bryte
                Stopwatch timer;
           };
 
-          Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
-
      public:
 
+          Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
+
           Void think ( const Vector& player, Random& random, float time_delta );
+
+          Void clear ( );
 
      private:
 

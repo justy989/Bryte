@@ -11,6 +11,8 @@ namespace bryte {
                none,
                health,
                key,
+               arrow,
+               bomb,
                ingredient,
                count
           };

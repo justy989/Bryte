@@ -526,6 +526,16 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     state->player.key_count++;
                }
                break;
+          case SDL_SCANCODE_O:
+               if ( key_change.down ) {
+                    state->player.arrow_count++;
+               }
+               break;
+          case SDL_SCANCODE_B:
+               if ( key_change.down ) {
+                    state->player.bomb_count++;
+               }
+               break;
 #endif
           }
      }
@@ -599,7 +609,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->player.attack ( );
                break;
           case Player::AttackMode::arrow:
-               state->spawn_arrow ( state->player.position, state->player.facing );
+               if ( state->player.arrow_count > 0 ) {
+                    state->spawn_arrow ( state->player.position, state->player.facing );
+                    state->player.arrow_count--;
+               }
                break;
           case Player::AttackMode::bomb:
                break;
@@ -767,6 +780,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                     break;
                case Pickup::Type::key:
                     state->player.key_count++;
+                    break;
+               case Pickup::Type::arrow:
+                    state->player.arrow_count++;
                     break;
                }
 
@@ -955,9 +971,23 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 #endif
      state->text.render ( back_buffer, buffer, 235, 4 );
 
+#ifdef LINUX
+     sprintf ( buffer, "%d", state->player.arrow_count );
+#endif
+
+#ifdef WIN32
+     sprintf_s ( buffer, "%d", state->player.arrow_count );
+#endif
+     state->text.render ( back_buffer, buffer, 210, 4 );
+
      SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
      SDL_Rect pickup_clip_rect { Pickup::c_dimension_in_pixels, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
 
      SDL_BlitSurface ( state->pickup_sheet, &pickup_clip_rect, back_buffer, &pickup_dest_rect );
+
+     SDL_Rect arrow_dest_rect { 200, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect arrow_clip_rect { Pickup::c_dimension_in_pixels * 2, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     SDL_BlitSurface ( state->pickup_sheet, &arrow_clip_rect, back_buffer, &arrow_dest_rect );
 }
 

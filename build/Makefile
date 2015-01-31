@@ -13,7 +13,7 @@ GAME_SO_OBJS   = Log.o Utils.o Bitmap.o Map.o Interactives.o Character.o Player.
 			  MapDisplay.o CharacterDisplay.o InteractivesDisplay.o Camera.o Text.o
 GAME           = bryte
 EDITOR_SO      = bryte_editor.so
-EDITOR_SO_OBJS = Log.o Utils.o Map.o Interactives.o Pickup.o Bitmap.o Text.o MapDisplay.o \
+EDITOR_SO_OBJS = Log.o Utils.o Map.o Character.o Interactives.o Pickup.o Bitmap.o Text.o MapDisplay.o \
 			  CharacterDisplay.o InteractivesDisplay.o
 EDITOR         = bryte_editor
 EXE_OBJS       = Log.o InputRecorder.o GameFunction.o GameInput.o Application.o
@@ -24,6 +24,10 @@ release: CFLAGS += -O3
 release: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
 debug: CFLAGS += -g3 -DDEBUG
 debug: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
+cygwin: LINK = -L/usr/local/lib -lcygwin -lSDL2main -lSDL2 -mwindows -ldl
+cygwin: -Wall -Werror -std=c++11 -DLINUX
+cygwin: INCLUDE += -I/usr/local/include
+cygwin: debug
 
 # rules
 clean:

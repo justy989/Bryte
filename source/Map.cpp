@@ -440,5 +440,7 @@ Void Map::restore_exits ( Interactives& interactives )
           auto& exit = interactive.interactive_exit;
           exit.state = static_cast<Exit::State> ( persisted_exit.id );
      }
+
+     map_persisted_exits.exit_count = 0;
 }
 

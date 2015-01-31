@@ -13,8 +13,8 @@ Void Player::clear ( )
      health           = 25;
      max_health       = 25;
 
-     velocity.set ( 0.0f, 0.0f );
-     acceleration.set ( 0.0f, 0.0f );
+     velocity.zero ( );
+     acceleration.zero ( );
 
      dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
 
@@ -28,7 +28,7 @@ Void Player::clear ( )
      damage_watch.reset ( 0.0f );
      cooldown_watch.reset ( 0.0f );
 
-     position.set ( 0.0f, 0.0f );
+     position.zero ( );
 
      collides_with_solids = true;
      collides_with_exits = false;

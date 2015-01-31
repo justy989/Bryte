@@ -527,7 +527,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           state->interactives.reset ( state->map.width ( ), state->map.height ( ) );
      }
 
-     state->camera.set ( 0.0f, 0.0f );
+     state->camera.zero ( );
 
      state->mode = Mode::tile;
 

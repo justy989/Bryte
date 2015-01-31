@@ -14,6 +14,7 @@ namespace bryte
           };
 
           inline Bool is_dead ( ) const;
+          inline Bool is_alive ( ) const;
 
           Vector    position;
           LifeState life_state;
@@ -23,6 +24,16 @@ namespace bryte
      {
           return life_state == LifeState::dead;
      }
+
+     inline Bool Entity::is_alive ( ) const
+     {
+          return life_state != LifeState::dead;
+     }
+
+     struct TrackEntity {
+          Entity* entity;
+          Vector offset;
+     };
 }
 
 #endif

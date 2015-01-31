@@ -23,6 +23,8 @@
 #include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
 
+#include "Emitter.hpp"
+
 #include "Text.hpp"
 
 #include <SDL2/SDL.h>
@@ -48,8 +50,7 @@ namespace bryte
           Vector    position;
           Direction facing;
           Stopwatch stuck_watch;
-          Entity*   stuck_in_entity;
-          Vector    entity_offset;
+          TrackEntity track_entity;
      };
 
      struct Bomb : public Entity {
@@ -115,6 +116,8 @@ namespace bryte
           MapDisplay          map_display;
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
+
+          Emitter emitter;
 
           SDL_Surface* pickup_sheet;
           SDL_Surface* arrow_sheet;

@@ -79,20 +79,20 @@ Void Enemy::clear ( )
      health = 0;
      max_health = 0;
 
-     dimension.set ( 0.0f, 0.0f );
-     acceleration.set ( 0.0f, 0.0f );
+     dimension.zero ( );
+     acceleration.zero ( );
 
-     collision_offset.set ( 0.0f, 0.0f );
-     collision_dimension.set ( 0.0f, 0.0f );
+     collision_offset.zero ( );
+     collision_dimension.zero ( );
 
-     walk_acceleration.set ( 0.0f, 0.0f );
+     walk_acceleration.zero ( );
 
      damage_pushed = Direction::count;
 
      damage_watch.reset ( 0.0f );
      cooldown_watch.reset ( 0.0f );
 
-     position.set ( 0.0f, 0.0f );
+     position.zero ( );
 
      collides_with_solids = false;
      collides_with_exits = false;

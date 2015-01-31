@@ -113,13 +113,13 @@ Void Arrow::update ( float time_delta, const Map& map, Interactives& interactive
           } else {
                stuck_watch.tick ( time_delta );
 
-               if ( stuck_in_entity ) {
-                    position = stuck_in_entity->position + entity_offset;
+               if ( track_entity.entity ) {
+                    position = track_entity.entity->position + track_entity.offset;
                }
 
                if ( stuck_watch.expired ( ) ) {
                     life_state = dead;
-                    position.set ( 0.0f, 0.0f );
+                    position.zero ( );
                     clear ( );
                }
           }
@@ -131,8 +131,8 @@ Void Arrow::clear ( )
 {
      facing = Direction::left;
      stuck_watch.reset ( 0.0f );
-     stuck_in_entity = nullptr;
-     entity_offset.set ( 0.0f, 0.0f );
+     track_entity.entity = nullptr;
+     track_entity.offset.zero ( );
 }
 
 const Real32 Bomb::c_explode_time = 3.0f;
@@ -348,6 +348,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 #ifdef DEBUG
      enemy_think = true;
 #endif
+
+     emitter.clear ( );
+     emitter.setup_immortal ( Vector ( 5.0f, 5.0f ), SDL_MapRGB ( attack_icon_sheet->format, 0, 255, 0 ),
+                              0.0f, 1.07f, 2.0f, 2.0f,
+                              1.0f, 2.0f, 1, 3 );
 
      return true;
 }
@@ -784,8 +789,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                                         enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
                     enemy.damage ( 1, arrow.facing );
                     state->drop_item_on_enemy_death ( enemy );
-                    arrow.stuck_in_entity = &enemy;
-                    arrow.entity_offset   = arrow.position - enemy.position;
+                    arrow.track_entity.entity = &enemy;
+                    arrow.track_entity.offset = arrow.position - enemy.position;
                     arrow.stuck_watch.reset ( Arrow::c_stuck_time );
                     break;
                }
@@ -918,6 +923,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      }
 
+     state->emitter.update ( time_delta, state->random );
+
      state->map.reset_light ( );
      state->interactives.contribute_light ( map );
 
@@ -978,6 +985,19 @@ static Void render_bomb ( SDL_Surface* back_buffer, SDL_Surface* bomb_sheet, con
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      SDL_BlitSurface ( bomb_sheet, &clip_rect, back_buffer, &dest_rect );
+}
+
+static Void render_particle ( SDL_Surface* back_buffer, const Particle& particle, Uint32 color,
+                              Real32 camera_x, Real32 camera_y )
+{
+     SDL_Rect dest_rect = build_world_sdl_rect ( particle.position.x ( ), particle.position.y ( ), 0.0f, 0.0f );
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     dest_rect.w = 1;
+     dest_rect.h = 1;
+
+     SDL_FillRect ( back_buffer, &dest_rect, color );
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -1045,6 +1065,16 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           }
 
           render_bomb ( back_buffer, state->bomb_sheet, bomb, state->camera.x ( ), state->camera.y ( ) );
+     }
+
+     if ( state->emitter.is_alive ( ) ) {
+          for ( Uint8 i = 0; i < Emitter::c_max_particles; ++i ) {
+               auto& particle_lifetime_watch = state->emitter.particle_lifetime_watches [ i ];
+               if ( !particle_lifetime_watch.expired ( ) ) {
+                    render_particle ( back_buffer, state->emitter.particles [ i ], state->emitter.color,
+                                      state->camera.x ( ), state->camera.y ( ) );
+               }
+          }
      }
 
      // light

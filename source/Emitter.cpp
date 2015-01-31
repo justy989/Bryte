@@ -15,6 +15,8 @@ Void Emitter::setup_immortal ( const Vector& position, Uint32 color,
      ASSERT ( min_particle_speed <= max_particle_speed );
      ASSERT ( particles_per_frame );
 
+     clear ( );
+
      this->life_state = Entity::LifeState::alive;
 
      life_type = LifeType::immortal;
@@ -45,6 +47,8 @@ Void Emitter::setup_limited_time ( const Vector& position, Real32 lifetime, Uint
      ASSERT ( min_particle_lifetime <= max_particle_lifetime );
      ASSERT ( min_particle_speed <= max_particle_speed );
      ASSERT ( particles_per_frame );
+
+     clear ( );
 
      this->life_state = Entity::LifeState::alive;
 
@@ -79,6 +83,8 @@ Void Emitter::setup_to_track_entity ( Entity* entity, const Vector& entity_offse
      ASSERT ( min_particle_lifetime <= max_particle_lifetime );
      ASSERT ( min_particle_speed <= max_particle_speed );
      ASSERT ( particles_per_frame );
+
+     clear ( );
 
      life_type = LifeType::entity;
 

@@ -136,7 +136,7 @@ Void Arrow::clear ( )
 }
 
 const Real32 Bomb::c_explode_time = 3.0f;
-const Real32 Bomb::c_explode_radius = 5.0f;;
+const Real32 Bomb::c_explode_radius = Map::c_tile_dimension_in_meters * 2.0f;
 
 Void Bomb::update ( float dt )
 {
@@ -210,9 +210,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
                            pixels_to_meters ( player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
 
      player.life_state = Entity::LifeState::alive;
-
-     enemies.clear ( );
-     pickups.clear ( );
 
      for ( int i = 0; i < Enemy::Type::count; ++i ) {
           character_display.enemy_sheets [ i ] = nullptr;
@@ -330,9 +327,16 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           direction_keys [ i ] = false;
      }
 
+     pickups.clear ( );
+     arrows.clear ( );
+     emitters.clear ( );
+     enemies.clear ( );
+
      map.load_master_list ( settings->map_master_list_filename );
      map.load_from_master_list ( settings->map_index, interactives );
      spawn_map_enemies ( );
+
+     setup_emitters_from_map_lamps ( );
 
      attack_key = false;
      switch_attack_key = false;
@@ -342,17 +346,9 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      Arrow::collision_points [ Direction::right ].set ( pixels_to_meters ( 14 ), pixels_to_meters ( 7 ) );
      Arrow::collision_points [ Direction::down ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 1 ) );
 
-     pickups.clear ( );
-     arrows.clear ( );
-
 #ifdef DEBUG
      enemy_think = true;
 #endif
-
-     emitter.clear ( );
-     emitter.setup_immortal ( Vector ( 5.0f, 5.0f ), SDL_MapRGB ( attack_icon_sheet->format, 0, 255, 0 ),
-                              0.0f, 1.07f, 2.0f, 2.0f,
-                              1.0f, 2.0f, 1, 3 );
 
      return true;
 }
@@ -427,6 +423,14 @@ bool State::spawn_arrow ( const Vector& position, Direction facing )
 
      LOG_DEBUG ( "spawning arrow at %f, %f\n", position.x ( ), position.y ( ) );
 
+     auto* emitter = emitters.spawn ( position );
+
+     if ( emitter ) {
+          emitter->setup_to_track_entity ( arrow, Arrow::collision_points [ facing ],
+                                           SDL_MapRGB ( pickup_sheet->format, 255, 255, 255 ),
+                                           0.0f, 0.0f, 0.5f, 0.5f, 0.1f, 0.1f, 1, 2 );
+     }
+
      return true;
 }
 
@@ -441,6 +445,15 @@ Bool State::spawn_bomb ( const Vector& position )
      bomb->explode_watch.reset ( Bomb::c_explode_time );
 
      LOG_DEBUG ( "spawning bomb at %f, %f\n", position.x ( ), position.y ( ) );
+
+     auto* emitter = emitters.spawn ( position );
+
+     if ( emitter ) {
+          Vector offset { Map::c_tile_dimension_in_meters * 0.5f, Map::c_tile_dimension_in_meters };
+          emitter->setup_to_track_entity ( bomb, offset,
+                                           SDL_MapRGB ( pickup_sheet->format, 255, 255, 255 ),
+                                           0.785f, 2.356f, 1.0f, 1.0f, 0.5f, 0.5f, 1, 10 );
+     }
 
      return true;
 }
@@ -489,6 +502,27 @@ Void State::drop_item_on_enemy_death ( const Enemy& enemy )
                state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
           }
 #endif
+     }
+}
+
+Void State::setup_emitters_from_map_lamps ( )
+{
+     for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
+          auto& lamp = map.lamp ( i );
+
+          Vector position { pixels_to_meters ( lamp.location.x * Map::c_tile_dimension_in_pixels ),
+                            pixels_to_meters ( lamp.location.y * Map::c_tile_dimension_in_pixels ) };
+          Vector offset { Map::c_tile_dimension_in_meters * 0.4f,
+                          Map::c_tile_dimension_in_meters * 0.7f };
+
+          auto* emitter = emitters.spawn ( position );
+
+          if ( !emitter ) {
+               break;
+          }
+
+          emitter->setup_immortal ( position + offset, SDL_MapRGB ( pickup_sheet->format, 255, 255, 0 ),
+                                    0.78f, 2.35f, 0.5f, 0.75f, 0.5f, 1.0f, 1, 10 );
      }
 }
 
@@ -824,9 +858,11 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                }
 
                // activate nearby objects
+               Vector bomb_center { bomb.position.x ( ) + Map::c_tile_dimension_in_meters * 0.5f,
+                                    bomb.position.y ( ) + Map::c_tile_dimension_in_meters * 0.5f };
                Int32 tile_radius = meters_to_pixels ( Bomb::c_explode_radius ) / Map::c_tile_dimension_in_pixels;
-               Int32 tile_min_x = meters_to_pixels ( bomb.position.x ( ) ) / Map::c_tile_dimension_in_pixels;
-               Int32 tile_min_y = meters_to_pixels ( bomb.position.y ( ) ) / Map::c_tile_dimension_in_pixels;
+               Int32 tile_min_x = meters_to_pixels ( bomb_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+               Int32 tile_min_y = meters_to_pixels ( bomb_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 
                tile_min_x -= tile_radius;
                tile_min_y -= tile_radius;
@@ -843,6 +879,18 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                     for ( Int32 x = tile_min_x; x <= tile_max_x; ++x ) {
                          state->interactives.activate ( x, y );
                     }
+               }
+
+               // create quick emitter
+               auto* emitter = state->emitters.spawn ( bomb.position );
+
+               if ( emitter ) {
+                    Vector offset { Map::c_tile_dimension_in_meters * 0.5f,
+                                    Map::c_tile_dimension_in_meters * 0.5f };
+                    emitter->setup_limited_time ( bomb.position + offset, 0.5f,
+                                                  SDL_MapRGB ( state->pickup_sheet->format, 200, 200, 200 ),
+                                                  0.0f, 6.28f, 0.5f, 0.5f, 6.0f, 6.0f,
+                                                  Emitter::c_max_particles, 0 );
                }
           }
      }
@@ -884,6 +932,15 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      }
 
+     for ( Uint32 i = 0; i < state->emitters.max ( ); ++i ) {
+          auto& emitter = state->emitters [ i ];
+          if ( emitter.is_dead ( ) ) {
+               continue;
+          }
+
+          emitter.update ( time_delta, state->random );
+     }
+
      auto& map         = state->map;
 
      Vector player_center { state->player.collision_center_x ( ),
@@ -913,7 +970,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->pickups.clear ( );
                state->arrows.clear ( );
                state->enemies.clear ( );
+               state->emitters.clear ( );
                state->spawn_map_enemies ( );
+
+               state->setup_emitters_from_map_lamps ( );
 
                state->player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
 
@@ -922,8 +982,6 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                            state->player.position.y ( ) );
           }
      }
-
-     state->emitter.update ( time_delta, state->random );
 
      state->map.reset_light ( );
      state->interactives.contribute_light ( map );
@@ -1067,12 +1125,16 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_bomb ( back_buffer, state->bomb_sheet, bomb, state->camera.x ( ), state->camera.y ( ) );
      }
 
-     if ( state->emitter.is_alive ( ) ) {
-          for ( Uint8 i = 0; i < Emitter::c_max_particles; ++i ) {
-               auto& particle_lifetime_watch = state->emitter.particle_lifetime_watches [ i ];
-               if ( !particle_lifetime_watch.expired ( ) ) {
-                    render_particle ( back_buffer, state->emitter.particles [ i ], state->emitter.color,
-                                      state->camera.x ( ), state->camera.y ( ) );
+     // emitters
+     for ( Uint32 i = 0; i < state->emitters.max ( ); ++i ) {
+          auto& emitter = state->emitters [ i ];
+          if ( emitter.is_alive ( ) ) {
+               for ( Uint8 i = 0; i < Emitter::c_max_particles; ++i ) {
+                    auto& particle_lifetime_watch = emitter.particle_lifetime_watches [ i ];
+                    if ( !particle_lifetime_watch.expired ( ) ) {
+                         render_particle ( back_buffer, emitter.particles [ i ], emitter.color,
+                                           state->camera.x ( ), state->camera.y ( ) );
+                    }
                }
           }
      }

@@ -40,14 +40,13 @@ namespace bryte
 
      public:
 
-          static Vector    collision_points [ Direction::count ];
+          static Vector collision_points [ Direction::count ];
 
           static const Real32 c_speed;
           static const Real32 c_stuck_time;
 
      public:
 
-          Vector    position;
           Direction facing;
           Stopwatch stuck_watch;
           TrackEntity track_entity;
@@ -95,6 +94,8 @@ namespace bryte
 
           Void drop_item_on_enemy_death ( const Enemy& enemy );
 
+          Void setup_emitters_from_map_lamps ( );
+
      public:
 
           Random random;
@@ -105,6 +106,7 @@ namespace bryte
           EntityManager<Pickup, 8> pickups;
           EntityManager<Arrow, 64> arrows;
           EntityManager<Bomb,   8> bombs;
+          EntityManager<Emitter, 32> emitters;
 
           Map          map;
           Interactives interactives;
@@ -116,8 +118,6 @@ namespace bryte
           MapDisplay          map_display;
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
-
-          Emitter emitter;
 
           SDL_Surface* pickup_sheet;
           SDL_Surface* arrow_sheet;

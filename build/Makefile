@@ -25,7 +25,7 @@ release: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
 debug: CFLAGS += -g3 -DDEBUG
 debug: $(GAME_SO) $(GAME) $(EDITOR_SO) $(EDITOR)
 cygwin: LINK = -L/usr/local/lib -lcygwin -lSDL2main -lSDL2 -mwindows -ldl
-cygwin: -Wall -Werror -std=c++11 -DLINUX
+cygwin: CFLAGS = -Wall -Werror -std=c++11 -DLINUX
 cygwin: INCLUDE += -I/usr/local/include
 cygwin: debug
 

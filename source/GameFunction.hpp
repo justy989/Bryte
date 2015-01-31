@@ -8,7 +8,7 @@
 class GameInput;
 
 // exported functions to be called by the application
-extern "C" Bool game_init_stub       ( GameMemory&, void* settings );
+extern "C" Bool game_init_stub       ( GameMemory&, Void* settings );
 extern "C" Void game_destroy_stub    ( GameMemory& );
 extern "C" Void game_user_input_stub ( GameMemory&, const GameInput& );
 extern "C" Void game_update_stub     ( GameMemory&, Real32 );

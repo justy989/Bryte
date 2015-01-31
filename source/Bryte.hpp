@@ -30,20 +30,42 @@
 namespace bryte
 {
      struct Arrow : public Entity {
+     public:
+
           Void update ( float dt, const Map& map, Interactives& interactives );
           Bool check_for_solids ( const Map& map, Interactives& interactives );
           Void clear ( );
+
+     public:
+
+          static Vector    collision_points [ Direction::count ];
+
+          static const Real32 c_speed;
+          static const Real32 c_stuck_time;
+
+     public:
 
           Vector    position;
           Direction facing;
           Stopwatch stuck_watch;
           Entity*   stuck_in_entity;
           Vector    entity_offset;
+     };
 
-          static Vector    collision_points [ Direction::count ];
+     struct Bomb : public Entity {
+     public:
 
-          static const Real32 c_speed;
-          static const Real32 c_stuck_time;
+          Void update ( float dt );
+          Void clear ( );
+
+     public:
+
+          static const Real32 c_explode_time;
+          static const Real32 c_explode_radius;
+
+     public:
+
+          Stopwatch explode_watch;
      };
 
      struct Settings {
@@ -64,6 +86,7 @@ namespace bryte
           Bool spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop );
           Bool spawn_pickup ( const Vector& position, Pickup::Type type );
           Bool spawn_arrow ( const Vector& position, Direction facing );
+          Bool spawn_bomb ( const Vector& position );
 
           Void spawn_map_enemies ( );
 
@@ -80,6 +103,7 @@ namespace bryte
           EntityManager<Enemy, 32> enemies;
           EntityManager<Pickup, 8> pickups;
           EntityManager<Arrow, 64> arrows;
+          EntityManager<Bomb,   8> bombs;
 
           Map          map;
           Interactives interactives;
@@ -94,6 +118,7 @@ namespace bryte
 
           SDL_Surface* pickup_sheet;
           SDL_Surface* arrow_sheet;
+          SDL_Surface* bomb_sheet;
 
           SDL_Surface* attack_icon_sheet;
 

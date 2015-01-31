@@ -26,7 +26,7 @@ namespace bryte
           for ( Uint32 i = 0; i < MAX; ++i ) {
                auto& entity = entities [ i ];
 
-               if ( !entity.is_alive ( ) ) {
+               if ( entity.is_dead ( ) ) {
                     entity.life_state = Entity::LifeState::spawning;
                     entity.position = position;
                     return &entity;

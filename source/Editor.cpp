@@ -263,7 +263,7 @@ Void State::mouse_button_right_clicked ( )
      }
 }
 
-void State::option_button_up_pressed ( )
+Void State::option_button_up_pressed ( )
 {
      switch ( mode ) {
      default:
@@ -324,7 +324,7 @@ void State::option_button_up_pressed ( )
      }
 }
 
-void State::option_button_down_pressed ( )
+Void State::option_button_down_pressed ( )
 {
      switch ( mode ) {
      default:
@@ -427,7 +427,7 @@ Void State::mouse_scrolled ( Int32 scroll )
      }
 }
 
-extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
+extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
      State* state = GAME_PUSH_MEMORY ( game_memory, State);

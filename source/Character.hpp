@@ -52,6 +52,8 @@ namespace bryte
           inline Real32 collision_center_x ( ) const;
           inline Real32 collision_center_y ( ) const;
 
+          inline Vector collision_center ( ) const;
+
           Void set_collision_center ( Real32 x, Real32 y );
 
      public:
@@ -144,6 +146,12 @@ namespace bryte
      {
           return collision_y ( ) + collision_height ( ) * 0.5f;
      }
+
+     inline Vector Character::collision_center ( ) const
+     {
+          return Vector { collision_center_x ( ), collision_center_y ( ) };
+     }
+
 }
 
 #endif

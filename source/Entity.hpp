@@ -13,15 +13,15 @@ namespace bryte
                alive
           };
 
-          inline Bool is_alive ( ) const;
+          inline Bool is_dead ( ) const;
 
           Vector    position;
           LifeState life_state;
      };
 
-     inline Bool Entity::is_alive ( ) const
+     inline Bool Entity::is_dead ( ) const
      {
-          return life_state != LifeState::dead;
+          return life_state == LifeState::dead;
      }
 }
 

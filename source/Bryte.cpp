@@ -25,8 +25,6 @@ static const Char8* c_test_rat_path              = "test_rat.bmp";
 static const Char8* c_test_bat_path              = "test_bat.bmp";
 static const Char8* c_test_pickups_path          = "test_pickups.bmp";
 
-Vector Arrow::collision_points [ Direction::count ];
-
 static State* get_state ( GameMemory& game_memory )
 {
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
@@ -55,6 +53,8 @@ Vector vector_from_direction ( Direction dir )
 
 const Real32 Arrow::c_speed = 20.0f;
 const Real32 Arrow::c_stuck_time = 1.5f;
+
+Vector Arrow::collision_points [ Direction::count ];
 
 Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
 {
@@ -135,29 +135,40 @@ Void Arrow::clear ( )
      entity_offset.set ( 0.0f, 0.0f );
 }
 
-// assuming A attacks B
-static Direction determine_damage_direction ( const Character& a, const Character& b, Random& random )
+const Real32 Bomb::c_explode_time = 3.0f;
+const Real32 Bomb::c_explode_radius = 5.0f;;
+
+Void Bomb::update ( float dt )
 {
-     Real32 a_center_x = a.position.x ( ) + a.width ( ) * 0.5f;
-     Real32 a_center_y = a.position.y ( ) + a.collision_dimension.y ( ) * 0.5f;
+     // allow 1 frame where the bomb has expired but isn't dead
+     if ( explode_watch.expired ( ) ) {
+          life_state = Entity::LifeState::dead;
+     }
 
-     Real32 b_center_x = b.position.x ( ) + b.width ( ) * 0.5f;
-     Real32 b_center_y = b.position.y ( ) + b.collision_dimension.x ( ) * 0.5f;
+     explode_watch.tick ( dt );
+}
 
-     Real32 diff_x = b_center_x - a_center_x;
-     Real32 diff_y = b_center_y - a_center_y;
+Void Bomb::clear ( )
+{
+     explode_watch.reset ( 0.0f );
+}
 
-     Real32 abs_x = fabs ( diff_x );
-     Real32 abs_y = fabs ( diff_y );
+// assuming A attacks B
+static Direction determine_damage_direction ( const Vector& a, const Vector& b, Random& random )
+{
+     Vector diff = b - a;
+
+     Real32 abs_x = fabs ( diff.x ( ) );
+     Real32 abs_y = fabs ( diff.y ( ) );
 
      if ( abs_x > abs_y ) {
-          if ( diff_x > 0.0f ) {
+          if ( diff.x ( ) > 0.0f ) {
                return Direction::right;
           }
 
           return Direction::left;
      } else if ( abs_y > abs_x ) {
-          if ( diff_y > 0.0f ) {
+          if ( diff.y ( ) > 0.0f ) {
                return Direction::up;
           }
 
@@ -165,13 +176,13 @@ static Direction determine_damage_direction ( const Character& a, const Characte
      } else {
           Direction valid_dirs [ 2 ];
 
-          if ( diff_x > 0.0f ) {
+          if ( diff.x ( ) > 0.0f ) {
                valid_dirs [ 0 ] = Direction::right;
           } else {
                valid_dirs [ 0 ] = Direction::left;
           }
 
-          if ( diff_y > 0.0f ) {
+          if ( diff.y ( ) > 0.0f ) {
                valid_dirs [ 1 ] = Direction::up;
           } else {
                valid_dirs [ 1 ] = Direction::down;
@@ -307,6 +318,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( bomb_sheet, game_memory, "test_bomb.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory, "test_attack_icon.bmp" ) ) {
           return false;
      }
@@ -395,7 +410,7 @@ Bool State::spawn_pickup ( const Vector& position, Pickup::Type type )
      return true;
 }
 
-Bool State::spawn_arrow ( const Vector& position, Direction facing )
+bool State::spawn_arrow ( const Vector& position, Direction facing )
 {
      auto* arrow = arrows.spawn ( position );
 
@@ -405,7 +420,22 @@ Bool State::spawn_arrow ( const Vector& position, Direction facing )
 
      arrow->facing = facing;
 
-     LOG_DEBUG( "Spawning Arrow at %f, %f\n", position.x ( ), position.y ( ) );
+     LOG_DEBUG ( "spawning arrow at %f, %f\n", position.x ( ), position.y ( ) );
+
+     return true;
+}
+
+Bool State::spawn_bomb ( const Vector& position )
+{
+     auto* bomb = bombs.spawn ( position );
+
+     if ( !bomb ) {
+          return false;
+     }
+
+     bomb->explode_watch.reset ( Bomb::c_explode_time );
+
+     LOG_DEBUG ( "spawning bomb at %f, %f\n", position.x ( ), position.y ( ) );
 
      return true;
 }
@@ -440,24 +470,24 @@ Void State::player_death ( )
 
 Void State::drop_item_on_enemy_death ( const Enemy& enemy )
 {
-     if ( !enemy.is_alive ( ) ) {
+     if ( enemy.is_dead ( ) ) {
           if ( enemy.drop != Pickup::Type::none ) {
                spawn_pickup ( enemy.position, enemy.drop );
           }
 #if 0
-                    // generate an item to drop
-                    auto roll = state->random.generate ( 1, 11 );
+          // generate an item to drop
+          auto roll = state->random.generate ( 1, 11 );
 
-                    if ( roll > 5 && roll < 8 ) {
-                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
-                    } else if ( roll >= 8 ) {
-                         state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
-                    }
+          if ( roll > 5 && roll < 8 ) {
+               state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
+          } else if ( roll >= 8 ) {
+               state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
+          }
 #endif
      }
 }
 
-extern "C" Bool game_init ( GameMemory& game_memory, void* settings )
+extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
      State* state = GAME_PUSH_MEMORY ( game_memory, State );
@@ -615,6 +645,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                }
                break;
           case Player::AttackMode::bomb:
+               if ( state->player.bomb_count > 0 ) {
+                    state->spawn_bomb ( state->player.position );
+                    state->player.bomb_count--;
+               }
                break;
           }
      }
@@ -636,7 +670,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
           auto& enemy = state->enemies [ i ];
 
-          if ( !enemy.is_alive ( ) ) {
+          if ( enemy.is_dead ( ) ) {
                continue;
           }
 
@@ -668,7 +702,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           // check collision between player and enemy
           if ( state->player.state != Character::State::blinking &&
                state->player.collides_with ( enemy ) ) {
-               Direction damage_dir = determine_damage_direction ( enemy, state->player, state->random );
+               Direction damage_dir = determine_damage_direction ( enemy.collision_center ( ),
+                                                                   state->player.collision_center ( ),
+                                                                   state->random );
                state->player.damage ( 1, damage_dir );
 
                if ( state->player.life_state == Entity::LifeState::dead ) {
@@ -680,7 +716,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( state->player.state == Character::State::attacking &&
                enemy.state != Character::State::blinking &&
                state->player.attack_collides_with ( enemy ) ) {
-               Direction damage_dir = determine_damage_direction ( state->player, enemy, state->random );
+               Direction damage_dir = determine_damage_direction ( state->player.collision_center ( ),
+                                                                   enemy.collision_center ( ),
+                                                                   state->random );
                enemy.damage ( 1, damage_dir );
                state->drop_item_on_enemy_death ( enemy );
           }
@@ -720,7 +758,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
           auto& arrow = state->arrows [ i ];
 
-          if ( !arrow.is_alive ( ) ) {
+          if ( arrow.is_dead ( ) ) {
                continue;
           }
 
@@ -735,7 +773,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
                auto& enemy = state->enemies [ c ];
 
-               if ( !enemy.is_alive ( ) ) {
+               if ( enemy.is_dead ( ) ) {
                     continue;
                }
 
@@ -754,10 +792,60 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      }
 
+     for ( Uint32 i = 0; i < state->bombs.max ( ); ++i ) {
+          auto& bomb = state->bombs [ i ];
+
+          if ( bomb.is_dead ( ) ) {
+               continue;
+          }
+
+          bomb.update ( time_delta );
+
+          if ( bomb.explode_watch.expired ( ) ) {
+               // damage nearby enemies
+               for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
+                    auto& enemy = state->enemies [ c ];
+
+                    if ( enemy.is_dead ( ) ) {
+                         continue;
+                    }
+
+                    if ( enemy.collision_center ( ).distance_to ( bomb.position ) < Bomb::c_explode_radius ) {
+                         enemy.damage ( 5, determine_damage_direction ( bomb.position,
+                                                                        enemy.collision_center ( ),
+                                                                        state->random ) );
+                         state->drop_item_on_enemy_death ( enemy );
+                    }
+               }
+
+               // activate nearby objects
+               Int32 tile_radius = meters_to_pixels ( Bomb::c_explode_radius ) / Map::c_tile_dimension_in_pixels;
+               Int32 tile_min_x = meters_to_pixels ( bomb.position.x ( ) ) / Map::c_tile_dimension_in_pixels;
+               Int32 tile_min_y = meters_to_pixels ( bomb.position.y ( ) ) / Map::c_tile_dimension_in_pixels;
+
+               tile_min_x -= tile_radius;
+               tile_min_y -= tile_radius;
+
+               Int32 tile_max_x = tile_min_x + tile_radius * 2;
+               Int32 tile_max_y = tile_min_y + tile_radius * 2;
+
+               CLAMP ( tile_min_x, 0, state->interactives.width ( ) - 1 );
+               CLAMP ( tile_min_y, 0, state->interactives.height ( ) - 1 );
+               CLAMP ( tile_max_x, 0, state->interactives.width ( ) - 1 );
+               CLAMP ( tile_max_y, 0, state->interactives.height ( ) - 1 );
+
+               for ( Int32 y = tile_min_y; y <= tile_max_y; ++y ) {
+                    for ( Int32 x = tile_min_x; x <= tile_max_x; ++x ) {
+                         state->interactives.activate ( x, y );
+                    }
+               }
+          }
+     }
+
      for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
           Pickup& pickup = state->pickups [ i ];
 
-          if ( !pickup.is_alive ( ) ) {
+          if ( pickup.is_dead ( ) ) {
                continue;
           }
 
@@ -877,6 +965,20 @@ static Void render_arrow ( SDL_Surface* back_buffer, SDL_Surface* arrow_sheet, c
      SDL_BlitSurface ( arrow_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
+static Void render_bomb ( SDL_Surface* back_buffer, SDL_Surface* bomb_sheet, const Bomb& bomb,
+                           Real32 camera_x, Real32 camera_y )
+{
+
+     SDL_Rect dest_rect = build_world_sdl_rect ( bomb.position.x ( ), bomb.position.y ( ),
+                                                 Map::c_tile_dimension_in_meters,
+                                                 Map::c_tile_dimension_in_meters );
+
+     SDL_Rect clip_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( bomb_sheet, &clip_rect, back_buffer, &dest_rect );
+}
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
@@ -900,7 +1002,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // enemies
      for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
-          if ( !state->enemies [ i ].is_alive ( ) ) {
+          if ( state->enemies [ i ].is_dead ( ) ) {
                continue;
           }
 
@@ -916,7 +1018,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
           auto& pickup = state->pickups [ i ];
 
-          if ( !pickup.is_alive ( ) ) {
+          if ( pickup.is_dead ( ) ) {
                continue;
           }
 
@@ -927,11 +1029,22 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
           auto& arrow = state->arrows [ i ];
 
-          if ( !arrow.is_alive ( ) ) {
+          if ( arrow.is_dead ( ) ) {
                continue;
           }
 
           render_arrow ( back_buffer, state->arrow_sheet, arrow, state->camera.x ( ), state->camera.y ( ) );
+     }
+
+     // bombs
+     for ( Uint32 i = 0; i < state->bombs.max ( ); ++i ) {
+          auto& bomb = state->bombs [ i ];
+
+          if ( bomb.is_dead ( ) ) {
+               continue;
+          }
+
+          render_bomb ( back_buffer, state->bomb_sheet, bomb, state->camera.x ( ), state->camera.y ( ) );
      }
 
      // light
@@ -972,20 +1085,34 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      state->text.render ( back_buffer, buffer, 235, 4 );
 
 #ifdef LINUX
+     sprintf ( buffer, "%d", state->player.bomb_count );
+#endif
+
+#ifdef WIN32
+     sprintf_s ( buffer, "%d", state->player.bomb_count );
+#endif
+     state->text.render ( back_buffer, buffer, 210, 4 );
+
+#ifdef LINUX
      sprintf ( buffer, "%d", state->player.arrow_count );
 #endif
 
 #ifdef WIN32
      sprintf_s ( buffer, "%d", state->player.arrow_count );
 #endif
-     state->text.render ( back_buffer, buffer, 210, 4 );
+     state->text.render ( back_buffer, buffer, 185, 4 );
 
      SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
      SDL_Rect pickup_clip_rect { Pickup::c_dimension_in_pixels, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
 
      SDL_BlitSurface ( state->pickup_sheet, &pickup_clip_rect, back_buffer, &pickup_dest_rect );
 
-     SDL_Rect arrow_dest_rect { 200, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect bomb_dest_rect { 200, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect bomb_clip_rect { Pickup::c_dimension_in_pixels * 3, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     SDL_BlitSurface ( state->pickup_sheet, &bomb_clip_rect, back_buffer, &bomb_dest_rect );
+
+     SDL_Rect arrow_dest_rect { 175, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
      SDL_Rect arrow_clip_rect { Pickup::c_dimension_in_pixels * 2, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
 
      SDL_BlitSurface ( state->pickup_sheet, &arrow_clip_rect, back_buffer, &arrow_dest_rect );

@@ -3,6 +3,8 @@
 
 #include "Types.hpp"
 
+#include <cmath>
+
 class Vector
 {
 public:
@@ -17,8 +19,9 @@ public:
      inline Vector& operator-= ( const Vector& v );
      inline Vector& operator*= ( Real32 scale );
 
-     inline Real32 inner_product ( const Vector& v );
-     inline Real32 length_squared ( );
+     inline Real32 inner_product ( const Vector& v ) const;
+     inline Real32 length_squared ( ) const;
+     inline Real32 distance_to ( const Vector& v ) const;
 
      inline void zero ( );
 
@@ -81,12 +84,20 @@ inline Vector& Vector::operator*= ( Real32 scale )
      return *this;
 }
 
-inline Real32 Vector::inner_product ( const Vector& v )
+inline Real32 Vector::inner_product ( const Vector& v ) const
 {
      return m_x * v.m_x + m_y * v.m_y;
 }
 
-inline Real32 Vector::length_squared ( )
+inline Real32 Vector::distance_to ( const Vector& v ) const
+{
+     Real32 x_diff = m_x - v.m_x;
+     Real32 y_diff = m_y - v.m_y;
+
+     return sqrt ( ( x_diff * x_diff ) + ( y_diff * y_diff ) );
+}
+
+inline Real32 Vector::length_squared ( ) const
 {
      return inner_product ( *this );
 }

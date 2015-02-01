@@ -215,9 +215,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           character_display.enemy_sheets [ i ] = nullptr;
      }
 
-     for ( int i = 0; i < Interactive::Type::count; ++i ) {
-          interactives_display.interactive_sheets [ i ] = nullptr;
-     }
+     interactives_display.interactive_sheet = nullptr;
 
      FileContents text_contents = load_entire_file ( "text.bmp", &game_memory );
 
@@ -271,39 +269,9 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::exit ],
+     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheet,
                                           game_memory,
-                                          "castle_exitsheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::lever ],
-                                          game_memory,
-                                          "castle_leversheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::pushable_block ],
-                                          game_memory,
-                                          "castle_pushableblocksheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::torch ],
-                                          game_memory,
-                                          "castle_torchsheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::pushable_torch ],
-                                          game_memory,
-                                          "castle_pushabletorchsheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheets [ Interactive::Type::light_detector ],
-                                          game_memory,
-                                          "castle_lightdetectorsheet.bmp" ) ) {
+                                          "castle_interactivesheet.bmp" ) ) {
           return false;
      }
 
@@ -365,11 +333,7 @@ Void State::destroy ( )
           SDL_FreeSurface ( character_display.enemy_sheets [ i ] );
      }
 
-     for ( int i = 0; i < Interactive::Type::count; ++i ) {
-          if ( interactives_display.interactive_sheets [ i ] ) {
-               SDL_FreeSurface ( interactives_display.interactive_sheets [ i ] );
-          }
-     }
+     SDL_FreeSurface ( interactives_display.interactive_sheet );
 
      SDL_FreeSurface ( pickup_sheet );
      SDL_FreeSurface ( arrow_sheet );

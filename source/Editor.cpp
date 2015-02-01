@@ -479,39 +479,9 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::exit ],
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheet,
                                           game_memory,
-                                          "castle_exitsheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::lever ],
-                                          game_memory,
-                                          "castle_leversheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::pushable_block ],
-                                          game_memory,
-                                          "castle_pushableblocksheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::torch ],
-                                          game_memory,
-                                          "castle_torchsheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::pushable_torch ],
-                                          game_memory,
-                                          "castle_pushabletorchsheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheets [ Interactive::Type::light_detector ],
-                                          game_memory,
-                                          "castle_lightdetectorsheet.bmp" ) ) {
+                                          "castle_interactivesheet.bmp" ) ) {
           return false;
      }
 
@@ -587,10 +557,7 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
           SDL_FreeSurface ( state->character_display.enemy_sheets [ i ] );
      }
 
-
-     for ( int i = 0; i < Interactive::Type::count; ++i ) {
-          SDL_FreeSurface ( state->interactives_display.interactive_sheets [ i ] );
-     }
+     SDL_FreeSurface ( state->interactives_display.interactive_sheet );
 }
 
 extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game_input )
@@ -1006,9 +973,15 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      default:
           break;
      case Mode::tile:
-          render_current_icon ( back_buffer, state->map_display.tilesheet, state->mouse_x, state->mouse_y,
-                                state->current_tile, 0 );
+     {
+          auto tile = state->current_tile;
+
+          if ( tile ) {
+               render_current_icon ( back_buffer, state->map_display.tilesheet, state->mouse_x, state->mouse_y,
+                                     tile - 1, 0 );
+          }
           break;
+     }
      case Mode::decor:
           render_current_icon ( back_buffer, state->map_display.decorsheet, state->mouse_x, state->mouse_y,
                                 state->current_decor, 0 );
@@ -1021,41 +994,41 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_current_icon ( back_buffer, state->character_display.enemy_sheets [ state->current_enemy ],
                                 state->mouse_x, state->mouse_y, 0, state->current_enemy_direction );
           break;
-     case Mode::exit:
-          render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheets [ Interactive::Type::exit ],
-                                state->mouse_x, state->mouse_y,
-                                state->current_exit_direction, state->current_exit_state );
-          break;
      case Mode::lever:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheets [ Interactive::Type::lever ],
+                                state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                0, 0 );
+                                Interactive::Type::lever, 0 );
           break;
      case Mode::pushable_block:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheets [ Interactive::Type::pushable_block ],
+                                state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                0, 0 );
+                                Interactive::Type::pushable_block, 0 );
           break;
      case Mode::torch:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheets [ Interactive::Type::torch ],
+                                state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                state->current_torch, 0 );
+                                Interactive::Type::torch, 0 );
           break;
      case Mode::pushable_torch:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheets [ Interactive::Type::pushable_torch ],
+                                state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                state->current_pushable_torch, 0 );
+                                Interactive::Type::pushable_torch, 0 );
           break;
      case Mode::light_detector:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheets [ Interactive::Type::light_detector ],
+                                state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                0, state->current_light_detector_bryte );
+                                Interactive::Type::light_detector, 0 );
+          break;
+     case Mode::exit:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheet,
+                                state->mouse_x, state->mouse_y,
+                                Interactive::Type::exit, 0 );
           break;
      }
 
@@ -1072,3 +1045,4 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 }
 
 #endif
+

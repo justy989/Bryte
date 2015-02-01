@@ -19,7 +19,7 @@ namespace bryte
                                     Int32 position_x, Int32 position_y,
                                     Real32 camera_x, Real32 camera_y );
 
-          SDL_Surface* interactive_sheets [ Interactive::Type::count ];
+          SDL_Surface* interactive_sheet;
      };
 }
 

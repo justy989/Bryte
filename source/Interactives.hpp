@@ -110,12 +110,12 @@ namespace bryte
      struct Interactive {
           enum Type {
                none,
-               exit,
                lever,
                pushable_block,
                torch,
                pushable_torch,
                light_detector,
+               exit,
                count
           };
 

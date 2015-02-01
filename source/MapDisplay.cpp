@@ -18,12 +18,18 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
 
+               auto tile_value = map.get_coordinate_value ( x, y );
+
+               if ( !tile_value ) {
+                    continue;
+               }
+
+               tile_value--;
+
                SDL_Rect tile_rect { 0, 0,
                                     Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
                SDL_Rect clip_rect { 0, 0,
                                     Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-
-               auto tile_value = map.get_coordinate_value ( x, y );
 
                clip_rect.x = tile_value * Map::c_tile_dimension_in_pixels;
 
@@ -123,6 +129,13 @@ extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera
      // TODO: optimize to only draw to the part of the back buffer we can see
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
+
+               auto tile_value = map.get_coordinate_value ( x, y );
+
+               if ( !tile_value ) {
+                    continue;
+               }
+
                SDL_Rect dest_rect { x * Map::c_tile_dimension_in_pixels,
                                     y * Map::c_tile_dimension_in_pixels,
                                     Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };

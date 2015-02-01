@@ -28,7 +28,7 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
 {
      SDL_Rect dest_rect { position_x, position_y,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-     SDL_Rect clip_rect { 0, interactive.type * Map::c_tile_dimension_in_pixels,
+     SDL_Rect clip_rect { 0, ( interactive.type - 1 ) * Map::c_tile_dimension_in_pixels,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
      switch ( interactive.type ) {
@@ -69,7 +69,7 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           break;
      case Interactive::Type::exit:
           clip_rect.x = interactive.interactive_exit.direction * Map::c_tile_dimension_in_pixels;
-          clip_rect.y = interactive.interactive_exit.state * Map::c_tile_dimension_in_pixels;
+          clip_rect.y += interactive.interactive_exit.state * Map::c_tile_dimension_in_pixels;
           break;
      }
 

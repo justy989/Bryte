@@ -998,37 +998,39 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                Interactive::Type::lever, 0 );
+                                0, Interactive::Type::lever - 1 );
           break;
      case Mode::pushable_block:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                Interactive::Type::pushable_block, 0 );
+                                0, Interactive::Type::pushable_block - 1 );
           break;
      case Mode::torch:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                Interactive::Type::torch, 0 );
+                                0, Interactive::Type::torch - 1 );
           break;
      case Mode::pushable_torch:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                Interactive::Type::pushable_torch, 0 );
+                                0, Interactive::Type::pushable_torch - 1 );
           break;
      case Mode::light_detector:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                Interactive::Type::light_detector, 0 );
+                                2 * state->current_light_detector_bryte,
+                                Interactive::Type::light_detector - 1 );
           break;
      case Mode::exit:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
-                                Interactive::Type::exit, 0 );
+                                state->current_exit_direction,
+                                ( Interactive::Type::exit - 1 ) + state->current_exit_state );
           break;
      }
 

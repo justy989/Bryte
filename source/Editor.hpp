@@ -40,12 +40,12 @@ namespace editor
           decor,
           light,
           enemy,
-          exit,
           lever,
           pushable_block,
           torch,
           pushable_torch,
           light_detector,
+          exit,
           count
      };
 

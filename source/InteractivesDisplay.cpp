@@ -14,12 +14,51 @@ Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& inter
 {
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               render_interactive ( back_buffer, interactives.get_from_tile ( x, y ),
-                                    x * Map::c_tile_dimension_in_pixels,
-                                    y * Map::c_tile_dimension_in_pixels,
-                                    camera_x, camera_y );
+               Int32 position_x = x * Map::c_tile_dimension_in_pixels;
+               Int32 position_y = y * Map::c_tile_dimension_in_pixels;
+
+               Auto& interactive = interactives.get_from_tile ( x, y );
+
+               render_underneath ( back_buffer, interactive.underneath, position_x, position_y,
+                                   camera_x, camera_y );
+               render_interactive ( back_buffer, interactive, position_x, position_y, camera_x, camera_y );
           }
      }
+}
+
+Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, UnderneathInteractive& underneath,
+                                              Int32 position_x, Int32 position_y,
+                                              Real32 camera_x, Real32 camera_y )
+{
+
+     SDL_Rect dest_rect { position_x, position_y,
+                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+     SDL_Rect clip_rect { 0, ( Interactive::Type::count + underneath.type - 1 ) *
+                               Map::c_tile_dimension_in_pixels,
+                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     switch ( underneath.type ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case UnderneathInteractive::Type::none:
+          return;
+     case UnderneathInteractive::Type::pressure_plate:
+          if ( underneath.underneath_pressure_plate.entered ) {
+               clip_rect.x += Map::c_tile_dimension_in_pixels;
+          }
+          return;
+     case UnderneathInteractive::Type::popup_block:
+          if ( underneath.underneath_popup_block.up ) {
+               clip_rect.x += Map::c_tile_dimension_in_pixels;
+          }
+          return;
+     }
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( interactive_sheet, &clip_rect, back_buffer, &dest_rect );
+
 }
 
 Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interactive& interactive,

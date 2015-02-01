@@ -5,7 +5,7 @@
 #include "Application.hpp"
 #include "Bryte.hpp"
 
-void print_help ( )
+Void print_help ( )
 {
      printf ( "Bryte Application\n" );
      printf ( "Usage: ./bryte [ options ]\n" );
@@ -16,7 +16,7 @@ void print_help ( )
      printf ( "  -h displays this helpful information\n\n" );
 }
 
-int main ( int argc, char** argv )
+Int32 main ( Int32 argc, Char8** argv )
 {
      Application::Settings settings;
 

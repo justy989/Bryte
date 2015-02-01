@@ -8,14 +8,14 @@
 class Log {
 public:
 
-     static void info    ( const Char8* format, ... );
-     static void warning ( const Char8* format, ... );
-     static void error   ( const Char8* format, ... );
-     static void debug   ( const Char8* format, ... );
+     static Void info    ( const Char8* format, ... );
+     static Void warning ( const Char8* format, ... );
+     static Void error   ( const Char8* format, ... );
+     static Void debug   ( const Char8* format, ... );
 
 private:
 
-     static void make_timestamp ( Char8* destination );
+     static Void make_timestamp ( Char8* destination );
 
 };
 

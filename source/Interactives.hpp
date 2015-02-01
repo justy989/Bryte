@@ -32,7 +32,7 @@ namespace bryte
      struct Lever {
           Void reset ( );
 
-          Void update ( float time_delta );
+          Void update ( Real32 time_delta );
 
           Void activate ( Interactives& interactives );
 
@@ -52,7 +52,7 @@ namespace bryte
 
           Void reset ( );
 
-          Void update ( float time_delta );
+          Void update ( Real32 time_delta );
 
           Direction push ( Direction direction, Interactives& interactives );
 
@@ -78,7 +78,7 @@ namespace bryte
 
           Void reset ( );
 
-          Void update ( float time_delta );
+          Void update ( Real32 time_delta );
 
           Void activate  ( );
           Direction push ( Direction direction, Interactives& interactives );
@@ -107,6 +107,33 @@ namespace bryte
           static const Uint8 c_dark_value  = 128;
      };
 
+     struct PressurePlate {
+          Bool  entered;
+          Uint8 activate_coordinate_x;
+          Uint8 activate_coordinate_y;
+     };
+
+     struct PopupBlock {
+          Bool up;
+     };
+
+     struct UnderneathInteractive {
+          enum Type {
+               none,
+               pressure_plate,
+               popup_block
+          };
+
+          Void reset ( );
+
+          Type type;
+
+          union {
+               PressurePlate underneath_pressure_plate;
+               PopupBlock    underneath_popup_block;
+          };
+     };
+
      struct Interactive {
           enum Type {
                none,
@@ -121,11 +148,13 @@ namespace bryte
 
           Void      reset    ( );
 
-          Void      update   ( float time_delta );
+          Void      update   ( Real32 time_delta );
 
           Void      activate ( Interactives& interactives );
           Direction push     ( Direction direction, Interactives& interactives );
           Void      light    ( Uint8 light, Interactives& interactives );
+          Void      enter    ( Interactives& interactives );
+          Void      leave    ( Interactives& interactives );
 
           Bool is_solid ( ) const;
 
@@ -139,6 +168,8 @@ namespace bryte
                PushableTorch interactive_pushable_torch;
                LightDetector interactive_light_detector;
           };
+
+          UnderneathInteractive underneath;
      };
 
      class Interactives {
@@ -148,13 +179,15 @@ namespace bryte
 
           Interactive& add ( Interactive::Type type, Int32 tile_x, Int32 tile_y );
 
-          Void update ( float time_delta );
+          Void update ( Real32 time_delta );
 
           Void contribute_light ( Map& map );
 
           Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
           Void activate ( Int32 tile_x, Int32 tile_y );
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
+          Void enter ( Int32 tile_x, Int32 tile_y );
+          Void leave ( Int32 tile_x, Int32 tile_y );
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
           const Interactive& cget_from_tile ( Int32 tile_x, Int32 tile_y ) const;

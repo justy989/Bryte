@@ -19,27 +19,27 @@
 
 static const Uint32 timestamp_max_characters = 32;
 
-void Log::info ( const Char8* format, ... )
+Void Log::info ( const Char8* format, ... )
 {
     LOG_FUNC_BODY ( "INFO:   " );
 }
 
-void Log::warning ( const Char8* format, ... )
+Void Log::warning ( const Char8* format, ... )
 {
      LOG_FUNC_BODY ( "WARNING:" );
 }
 
-void Log::error ( const Char8* format, ... )
+Void Log::error ( const Char8* format, ... )
 {
      LOG_FUNC_BODY ( "ERROR:  " );
 }
 
-void Log::debug ( const Char8* format, ... )
+Void Log::debug ( const Char8* format, ... )
 {
      LOG_FUNC_BODY ( "DEBUG:  " );
 }
 
-void Log::make_timestamp ( Char8* destination )
+Void Log::make_timestamp ( Char8* destination )
 {
     time_t raw_time; // time since epoch in seconds
 

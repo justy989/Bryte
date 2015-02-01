@@ -250,7 +250,7 @@ namespace bryte
      T* Map::check_coordinates_for_fixture ( T* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y )
      {
           for ( Uint8 d = 0; d < fixture_count; ++d ) {
-               auto& fixture = fixture_array [ d ];
+               Auto& fixture = fixture_array [ d ];
 
                if ( fixture.location.x == x && fixture.location.y == y ) {
                     return &fixture;

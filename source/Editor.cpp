@@ -201,7 +201,7 @@ Void State::mouse_button_right_clicked ( )
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    auto& lever = interactives.get_from_tile ( current_interactive_x,
+                    Auto& lever = interactives.get_from_tile ( current_interactive_x,
                                                                current_interactive_y );
                     ASSERT ( lever.type == Interactive::Type::lever );
                     lever.interactive_lever.activate_coordinate_x = mouse_tile_x;
@@ -220,7 +220,7 @@ Void State::mouse_button_right_clicked ( )
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    auto& pushable_block = interactives.get_from_tile ( current_interactive_x,
+                    Auto& pushable_block = interactives.get_from_tile ( current_interactive_x,
                                                                current_interactive_y );
                     ASSERT ( pushable_block.type == Interactive::Type::pushable_block );
                     pushable_block.interactive_pushable_block.activate_coordinate_x = mouse_tile_x;
@@ -251,7 +251,7 @@ Void State::mouse_button_right_clicked ( )
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    auto& light_detector = interactives.get_from_tile ( current_interactive_x,
+                    Auto& light_detector = interactives.get_from_tile ( current_interactive_x,
                                                                         current_interactive_y );
                     ASSERT ( light_detector.type == Interactive::Type::light_detector );
                     light_detector.interactive_light_detector.activate_coordinate_x = mouse_tile_x;
@@ -292,7 +292,7 @@ Void State::option_button_up_pressed ( )
                break;
           }
 
-          auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::exit ) {
                switch ( current_field ) {
@@ -353,7 +353,7 @@ Void State::option_button_down_pressed ( )
                break;
           }
 
-          auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::exit ) {
                switch ( current_field ) {
@@ -393,7 +393,7 @@ Void State::mouse_scrolled ( Int32 scroll )
           break;
      case Mode::enemy:
           if ( mouse_on_map ( ) ) {
-               auto* enemy_spawn = map.check_coordinates_for_enemy_spawn ( mouse_tile_x, mouse_tile_y );
+               Auto* enemy_spawn = map.check_coordinates_for_enemy_spawn ( mouse_tile_x, mouse_tile_y );
 
                if ( enemy_spawn ) {
                     Int32 value = static_cast<Int32>( enemy_spawn->drop );
@@ -410,7 +410,7 @@ Void State::mouse_scrolled ( Int32 scroll )
           break;
      case Mode::pushable_block:
           if ( mouse_on_map ( ) ) {
-               auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+               Auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
                if ( interactive.type == Interactive::Type::pushable_block ) {
                     interactive.interactive_pushable_block.one_time =
@@ -565,7 +565,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
      State* state = get_state ( game_memory );
 
      for ( Uint32 i = 0; i < game_input.mouse_button_change_count; ++i ) {
-          auto change = game_input.mouse_button_changes [ i ];
+          Auto change = game_input.mouse_button_changes [ i ];
 
           switch ( change.button ) {
           default:
@@ -728,7 +728,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          auto* enemy_spawn = state->map.check_coordinates_for_enemy_spawn ( state->mouse_tile_x, state->mouse_tile_y );
+          Auto* enemy_spawn = state->map.check_coordinates_for_enemy_spawn ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( enemy_spawn ) {
                sprintf ( state->message_buffer, "PICKUP %s", Pickup::c_names [ enemy_spawn->drop ] );
@@ -740,10 +740,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::exit ) {
-               auto& exit = interactive.interactive_exit;
+               Auto& exit = interactive.interactive_exit;
                sprintf ( state->message_buffer, "MAP %d EXIT %d %d", exit.map_index,
                          exit.exit_index_x, exit.exit_index_y );
           }
@@ -760,10 +760,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::lever ) {
-               auto& lever = interactive.interactive_lever;
+               Auto& lever = interactive.interactive_lever;
                sprintf ( state->message_buffer, "ACT %d %d",
                          lever.activate_coordinate_x, lever.activate_coordinate_y );
           }
@@ -780,10 +780,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::pushable_block ) {
-               auto& pushable_block = interactive.interactive_pushable_block;
+               Auto& pushable_block = interactive.interactive_pushable_block;
                sprintf ( state->message_buffer, "ONCE %d DIR %d ACT %d %d",
                          pushable_block.one_time,
                          pushable_block.restricted_direction,
@@ -807,10 +807,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::light_detector ) {
-               auto& light_detector = interactive.interactive_light_detector;
+               Auto& light_detector = interactive.interactive_light_detector;
                sprintf ( state->message_buffer, "ACT %d %d",
                          light_detector.activate_coordinate_x, light_detector.activate_coordinate_y );
           }
@@ -869,7 +869,7 @@ static Void render_enemy_spawns ( SDL_Surface* back_buffer, SDL_Surface** enemy_
                                   Map& map, Real32 camera_x, Real32 camera_y )
 {
      for ( Uint8 i = 0; i < map.enemy_spawn_count ( ); ++i ) {
-          auto& enemy_spawn = map.enemy_spawn ( i );
+          Auto& enemy_spawn = map.enemy_spawn ( i );
 
           SDL_Rect enemy_spawn_rect { enemy_spawn.location.x * Map::c_tile_dimension_in_pixels,
                                       enemy_spawn.location.y * Map::c_tile_dimension_in_pixels,
@@ -974,7 +974,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::tile:
      {
-          auto tile = state->current_tile;
+          Auto tile = state->current_tile;
 
           if ( tile ) {
                render_current_icon ( back_buffer, state->map_display.tilesheet, state->mouse_x, state->mouse_y,
@@ -1035,7 +1035,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      }
 
      // text ui
-     char buffer [ 64 ];
+     Char8 buffer [ 64 ];
      sprintf ( buffer, "T %d %d", state->mouse_tile_x, state->mouse_tile_y );
      state->text.render ( back_buffer, buffer, 210, 4 );
 

@@ -15,7 +15,7 @@
      #define ASSERT( condition )\
      if ( !( condition ) ) {\
           LOG_ERROR ( "Assert failed %s:%d ( %s )\n", __FILE__, __LINE__, #condition );\
-          *reinterpret_cast<char*>(0) = 0;\
+          *reinterpret_cast<Char8*>(0) = 0;\
      }
 #else
      #define ASSERT( condition )
@@ -46,7 +46,7 @@ struct FileContents {
 };
 
 // allocates bytes using game memory
-extern "C" FileContents load_entire_file ( const char* filepath, GameMemory* game_memory );
+extern "C" FileContents load_entire_file ( const Char8* filepath, GameMemory* game_memory );
 
 // does not work for negative reals
 inline Int32 positive_real_to_int_round ( Real32 value )

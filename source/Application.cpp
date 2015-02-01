@@ -215,7 +215,7 @@ Bool Application::poll_sdl_events ( )
           }
 
           if ( sdl_event.type == SDL_KEYDOWN ) {
-               auto sc = sdl_event.key.keysym.scancode;
+               Auto sc = sdl_event.key.keysym.scancode;
 
                if ( sc == SDL_SCANCODE_ESCAPE ) {
                     LOG_INFO ( "Handling quit event\n" );
@@ -258,14 +258,14 @@ Bool Application::poll_sdl_events ( )
                }
 
           } else if ( sdl_event.type == SDL_KEYUP ) {
-               auto sc = sdl_event.key.keysym.scancode;
+               Auto sc = sdl_event.key.keysym.scancode;
 
                if ( !m_game_input.add_key_change ( sc, false ) ) {
                     LOG_WARNING ( "Unable to handle more than %d keys per frame\n",
                                   GameInput::c_max_key_change_count );
                }
           } else if ( sdl_event.type == SDL_MOUSEBUTTONDOWN ) {
-               auto button = sdl_event.button;
+               Auto button = sdl_event.button;
                Int32 x, y;
 
                translate_window_pos_to_back_buffer ( button.x, button.y, &x, &y );
@@ -275,7 +275,7 @@ Bool Application::poll_sdl_events ( )
                                   GameInput::c_max_mouse_button_change_count );
                }
           } else if ( sdl_event.type == SDL_MOUSEBUTTONUP ) {
-               auto button = sdl_event.button;
+               Auto button = sdl_event.button;
                Int32 x, y;
 
                translate_window_pos_to_back_buffer ( button.x, button.y, &x, &y );
@@ -285,7 +285,7 @@ Bool Application::poll_sdl_events ( )
                                   GameInput::c_max_mouse_button_change_count );
                }
           } else if ( sdl_event.type == SDL_MOUSEMOTION ) {
-               auto button = sdl_event.button;
+               Auto button = sdl_event.button;
                translate_window_pos_to_back_buffer ( button.x, button.y,
                                                      &m_game_input.mouse_position_x,
                                                      &m_game_input.mouse_position_y );
@@ -302,13 +302,13 @@ Real32 Application::time_and_limit_loop ( Int32 locked_frames_per_second )
      m_previous_update_timestamp = m_current_update_timestamp;
      m_current_update_timestamp  = high_resolution_clock::now ( );
 
-     auto duration = m_current_update_timestamp - m_previous_update_timestamp;
-     auto dt_ms = duration_cast<milliseconds>( duration ).count ( );
+     Auto duration = m_current_update_timestamp - m_previous_update_timestamp;
+     Auto dt_ms = duration_cast<milliseconds>( duration ).count ( );
 
-     auto max_allowed_milliseconds = 1000 / locked_frames_per_second;
+     Auto max_allowed_milliseconds = 1000 / locked_frames_per_second;
 
      if ( dt_ms < max_allowed_milliseconds ) {
-          auto time_until_limit = max_allowed_milliseconds - dt_ms;
+          Auto time_until_limit = max_allowed_milliseconds - dt_ms;
           std::this_thread::sleep_for ( milliseconds ( time_until_limit ) );
           dt_ms += time_until_limit;
      } else if ( dt_ms > max_allowed_milliseconds * 2 ) {
@@ -319,7 +319,7 @@ Real32 Application::time_and_limit_loop ( Int32 locked_frames_per_second )
      return static_cast<float>( dt_ms ) / 1000.0f;
 }
 
-Bool Application::run_game ( const Settings& settings, void* game_settings )
+Bool Application::run_game ( const Settings& settings, Void* game_settings )
 {
     m_settings = settings;
 

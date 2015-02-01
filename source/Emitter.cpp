@@ -160,7 +160,7 @@ Void Emitter::update ( float time_delta, Random& random )
 
      // update particles
      for ( Uint8 i = 0; i < c_max_particles; ++i ) {
-          auto& lifetime_watch = particle_lifetime_watches [ i ];
+          Auto& lifetime_watch = particle_lifetime_watches [ i ];
 
           if ( lifetime_watch.expired ( ) ) {
                continue;
@@ -168,7 +168,7 @@ Void Emitter::update ( float time_delta, Random& random )
 
           lifetime_watch.tick ( time_delta );
 
-          auto& particle = particles [ i ];
+          Auto& particle = particles [ i ];
 
           particle.position += ( particle.velocity * time_delta );
      }

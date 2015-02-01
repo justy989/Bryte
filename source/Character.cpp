@@ -288,7 +288,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           // loop over tile area
           for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
                for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
-                    auto& interactive = interactives.get_from_tile ( x, y );
+                    Auto& interactive = interactives.get_from_tile ( x, y );
 
                     if ( !map.get_coordinate_solid ( x, y ) &&
                          !interactive.is_solid ( ) ) {

@@ -24,7 +24,7 @@ namespace bryte
      E* EntityManager<E, MAX>::spawn ( const Vector& position )
      {
           for ( Uint32 i = 0; i < MAX; ++i ) {
-               auto& entity = entities [ i ];
+               Auto& entity = entities [ i ];
 
                if ( entity.is_dead ( ) ) {
                     entity.life_state = Entity::LifeState::spawning;
@@ -40,7 +40,7 @@ namespace bryte
      Void EntityManager<E, MAX>::clear ( )
      {
           for ( Uint32 i = 0; i < MAX; ++i ) {
-               auto& entity = entities [ i ];
+               Auto& entity = entities [ i ];
                entity.life_state = Entity::LifeState::dead;
                entity.position.set ( 0.0f, 0.0f );
                entity.clear ( );

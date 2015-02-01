@@ -18,7 +18,7 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
 
-               auto tile_value = map.get_coordinate_value ( x, y );
+               Auto tile_value = map.get_coordinate_value ( x, y );
 
                if ( !tile_value ) {
                     continue;
@@ -130,7 +130,7 @@ extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
 
-               auto tile_value = map.get_coordinate_value ( x, y );
+               Auto tile_value = map.get_coordinate_value ( x, y );
 
                if ( !tile_value ) {
                     continue;

@@ -72,7 +72,7 @@ Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
           return true;
      }
 
-     auto& interactive = interactives.get_from_tile ( tile_x, tile_y );
+     Auto& interactive = interactives.get_from_tile ( tile_x, tile_y );
 
      if ( interactive.is_solid ( ) ) {
           // do not activate exits!
@@ -352,7 +352,7 @@ Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pi
      enemy->init ( static_cast<Enemy::Type>( id ), position.x ( ), position.y ( ), facing, drop );
 
 #ifdef DEBUG
-     static const char* enemy_id_names [ ] = { "rat", "bat" };
+     static const Char8* enemy_id_names [ ] = { "rat", "bat" };
 #endif
 
      LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], position.x ( ), position.y ( ) );
@@ -362,7 +362,7 @@ Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pi
 
 Bool State::spawn_pickup ( const Vector& position, Pickup::Type type )
 {
-     auto* pickup = pickups.spawn ( position );
+     Auto* pickup = pickups.spawn ( position );
 
      if ( !pickup ) {
           return false;
@@ -377,7 +377,7 @@ Bool State::spawn_pickup ( const Vector& position, Pickup::Type type )
 
 bool State::spawn_arrow ( const Vector& position, Direction facing )
 {
-     auto* arrow = arrows.spawn ( position );
+     Auto* arrow = arrows.spawn ( position );
 
      if ( !arrow ) {
           return false;
@@ -387,7 +387,7 @@ bool State::spawn_arrow ( const Vector& position, Direction facing )
 
      LOG_DEBUG ( "spawning arrow at %f, %f\n", position.x ( ), position.y ( ) );
 
-     auto* emitter = emitters.spawn ( position );
+     Auto* emitter = emitters.spawn ( position );
 
      if ( emitter ) {
           emitter->setup_to_track_entity ( arrow, Arrow::collision_points [ facing ],
@@ -400,7 +400,7 @@ bool State::spawn_arrow ( const Vector& position, Direction facing )
 
 Bool State::spawn_bomb ( const Vector& position )
 {
-     auto* bomb = bombs.spawn ( position );
+     Auto* bomb = bombs.spawn ( position );
 
      if ( !bomb ) {
           return false;
@@ -410,7 +410,7 @@ Bool State::spawn_bomb ( const Vector& position )
 
      LOG_DEBUG ( "spawning bomb at %f, %f\n", position.x ( ), position.y ( ) );
 
-     auto* emitter = emitters.spawn ( position );
+     Auto* emitter = emitters.spawn ( position );
 
      if ( emitter ) {
           Vector offset { Map::c_tile_dimension_in_meters * 0.5f, Map::c_tile_dimension_in_meters };
@@ -425,7 +425,7 @@ Bool State::spawn_bomb ( const Vector& position )
 Void State::spawn_map_enemies ( )
 {
      for ( int i = 0; i < map.enemy_spawn_count ( ); ++i ) {
-          auto& enemy_spawn = map.enemy_spawn ( i );
+          Auto& enemy_spawn = map.enemy_spawn ( i );
 
           Vector position { pixels_to_meters ( enemy_spawn.location.x * Map::c_tile_dimension_in_pixels ),
                             pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ) };
@@ -458,7 +458,7 @@ Void State::drop_item_on_enemy_death ( const Enemy& enemy )
           }
 #if 0
           // generate an item to drop
-          auto roll = state->random.generate ( 1, 11 );
+          Auto roll = state->random.generate ( 1, 11 );
 
           if ( roll > 5 && roll < 8 ) {
                state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
@@ -472,14 +472,14 @@ Void State::drop_item_on_enemy_death ( const Enemy& enemy )
 Void State::setup_emitters_from_map_lamps ( )
 {
      for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
-          auto& lamp = map.lamp ( i );
+          Auto& lamp = map.lamp ( i );
 
           Vector position { pixels_to_meters ( lamp.location.x * Map::c_tile_dimension_in_pixels ),
                             pixels_to_meters ( lamp.location.y * Map::c_tile_dimension_in_pixels ) };
           Vector offset { Map::c_tile_dimension_in_meters * 0.4f,
                           Map::c_tile_dimension_in_meters * 0.7f };
 
-          auto* emitter = emitters.spawn ( position );
+          Auto* emitter = emitters.spawn ( position );
 
           if ( !emitter ) {
                break;
@@ -506,14 +506,14 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
 
 extern "C" Void game_destroy ( GameMemory& game_memory )
 {
-     auto* state = get_state ( game_memory );
+     Auto* state = get_state ( game_memory );
 
      state->destroy ( );
 }
 
 extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game_input )
 {
-     auto* state = get_state ( game_memory );
+     Auto* state = get_state ( game_memory );
 
      for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
           const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
@@ -605,7 +605,7 @@ Void character_adjacent_tile ( const Character& character, Int32* adjacent_tile_
 
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
-     auto* state = get_state ( game_memory );
+     Auto* state = get_state ( game_memory );
 
      if ( state->direction_keys [ Direction::up ] ) {
           state->player.walk ( Direction::up );
@@ -671,7 +671,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
-          auto& enemy = state->enemies [ i ];
+          Auto& enemy = state->enemies [ i ];
 
           if ( enemy.is_dead ( ) ) {
                continue;
@@ -741,7 +741,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( player_activate_tile_x >= 0 && player_activate_tile_x < state->interactives.width ( ) &&
                player_activate_tile_y >= 0 && player_activate_tile_y < state->interactives.height ( ) ) {
 
-               auto& interactive = state->interactives.get_from_tile ( player_activate_tile_x, player_activate_tile_y );
+               Auto& interactive = state->interactives.get_from_tile ( player_activate_tile_x, player_activate_tile_y );
 
                if ( interactive.type == Interactive::Type::exit ) {
                     if ( interactive.interactive_exit.state == Exit::State::locked &&
@@ -759,7 +759,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
-          auto& arrow = state->arrows [ i ];
+          Auto& arrow = state->arrows [ i ];
 
           if ( arrow.is_dead ( ) ) {
                continue;
@@ -774,7 +774,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           Vector arrow_collision_point = arrow.position + arrow.collision_points [ arrow.facing ];
 
           for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
-               auto& enemy = state->enemies [ c ];
+               Auto& enemy = state->enemies [ c ];
 
                if ( enemy.is_dead ( ) ) {
                     continue;
@@ -796,7 +796,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      for ( Uint32 i = 0; i < state->bombs.max ( ); ++i ) {
-          auto& bomb = state->bombs [ i ];
+          Auto& bomb = state->bombs [ i ];
 
           if ( bomb.is_dead ( ) ) {
                continue;
@@ -807,7 +807,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( bomb.explode_watch.expired ( ) ) {
                // damage nearby enemies
                for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
-                    auto& enemy = state->enemies [ c ];
+                    Auto& enemy = state->enemies [ c ];
 
                     if ( enemy.is_dead ( ) ) {
                          continue;
@@ -846,7 +846,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                }
 
                // create quick emitter
-               auto* emitter = state->emitters.spawn ( bomb.position );
+               Auto* emitter = state->emitters.spawn ( bomb.position );
 
                if ( emitter ) {
                     Vector offset { Map::c_tile_dimension_in_meters * 0.5f,
@@ -897,7 +897,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      for ( Uint32 i = 0; i < state->emitters.max ( ); ++i ) {
-          auto& emitter = state->emitters [ i ];
+          Auto& emitter = state->emitters [ i ];
           if ( emitter.is_dead ( ) ) {
                continue;
           }
@@ -905,7 +905,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           emitter.update ( time_delta, state->random );
      }
 
-     auto& map         = state->map;
+     Auto& map         = state->map;
 
      Vector player_center { state->player.collision_center_x ( ),
                             state->player.collision_center_y ( ) };
@@ -916,7 +916,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      if ( player_center_tile_x >= 0 && player_center_tile_x < state->interactives.width ( ) &&
           player_center_tile_y >= 0 && player_center_tile_y < state->interactives.height ( ) ) {
 
-          auto& interactive = state->interactives.get_from_tile ( player_center_tile_x, player_center_tile_y );
+          Auto& interactive = state->interactives.get_from_tile ( player_center_tile_x, player_center_tile_y );
 
           if ( interactive.type == Interactive::Type::exit &&
                interactive.interactive_exit.state == Exit::State::open &&
@@ -1024,7 +1024,7 @@ static Void render_particle ( SDL_Surface* back_buffer, const Particle& particle
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
-     auto* state = get_state ( game_memory );
+     Auto* state = get_state ( game_memory );
      Uint32 red    = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
      Uint32 white  = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
      Uint32 black  = SDL_MapRGB ( back_buffer->format, 0, 0, 0 );
@@ -1058,7 +1058,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // pickups
      for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
-          auto& pickup = state->pickups [ i ];
+          Auto& pickup = state->pickups [ i ];
 
           if ( pickup.is_dead ( ) ) {
                continue;
@@ -1069,7 +1069,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // arrows
      for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
-          auto& arrow = state->arrows [ i ];
+          Auto& arrow = state->arrows [ i ];
 
           if ( arrow.is_dead ( ) ) {
                continue;
@@ -1080,7 +1080,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // bombs
      for ( Uint32 i = 0; i < state->bombs.max ( ); ++i ) {
-          auto& bomb = state->bombs [ i ];
+          Auto& bomb = state->bombs [ i ];
 
           if ( bomb.is_dead ( ) ) {
                continue;
@@ -1091,10 +1091,10 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // emitters
      for ( Uint32 i = 0; i < state->emitters.max ( ); ++i ) {
-          auto& emitter = state->emitters [ i ];
+          Auto& emitter = state->emitters [ i ];
           if ( emitter.is_alive ( ) ) {
                for ( Uint8 i = 0; i < Emitter::c_max_particles; ++i ) {
-                    auto& particle_lifetime_watch = emitter.particle_lifetime_watches [ i ];
+                    Auto& particle_lifetime_watch = emitter.particle_lifetime_watches [ i ];
                     if ( !particle_lifetime_watch.expired ( ) ) {
                          render_particle ( back_buffer, emitter.particles [ i ], emitter.color,
                                            state->camera.x ( ), state->camera.y ( ) );

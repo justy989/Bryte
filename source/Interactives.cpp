@@ -7,6 +7,24 @@ using namespace bryte;
 static const Real32 c_lever_cooldown     = 0.75f;
 static const Real32 c_lean_on_block_time = 0.6f;
 
+Void UnderneathInteractive::reset ( )
+{
+     switch ( type ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case none:
+          break;
+     case pressure_plate:
+          underneath_popup_block.up = false;
+          break;
+     case popup_block:
+          underneath_pressure_plate.activate_coordinate_x = 0;
+          underneath_pressure_plate.activate_coordinate_y = 0;
+          break;
+     }
+}
+
 Interactive& Interactives::get_from_tile ( Int32 tile_x, Int32 tile_y )
 {
      ASSERT ( tile_x >= 0 && tile_x < m_width );
@@ -32,12 +50,13 @@ Void Interactives::reset ( Int32 width, Int32 height )
 
      for ( int i = 0; i < count; ++i ) {
           m_interactives [ i ].type = Interactive::Type::none;
+          m_interactives [ i ].underneath.type = UnderneathInteractive::Type::none;
      }
 }
 
 Interactive& Interactives::add ( Interactive::Type type, Int32 tile_x, Int32 tile_y )
 {
-     auto& i = get_from_tile ( tile_x, tile_y );
+     Auto& i = get_from_tile ( tile_x, tile_y );
 
      i.type = type;
      i.reset ( );
@@ -45,7 +64,7 @@ Interactive& Interactives::add ( Interactive::Type type, Int32 tile_x, Int32 til
      return i;
 }
 
-Void Interactives::update ( float time_delta )
+Void Interactives::update ( Real32 time_delta )
 {
      Int32 count = m_width * m_height;
 
@@ -58,7 +77,7 @@ Void Interactives::contribute_light ( Map& map )
 {
      for ( Int32 y = 0; y < height ( ); ++y ) {
           for ( Int32 x = 0; x < width ( ); ++x ) {
-               auto& interactive = get_from_tile ( x, y );
+               Auto& interactive = get_from_tile ( x, y );
 
                switch ( interactive.type ) {
                default:
@@ -153,8 +172,27 @@ Void Interactives::light ( Int32 tile_x, Int32 tile_y, Uint8 light )
      i.light ( light, *this );
 }
 
+Void Interactives::enter ( Int32 tile_x, Int32 tile_y )
+{
+     Interactive& i = get_from_tile ( tile_x, tile_y );
+
+     i.enter ( *this );
+}
+
+Void Interactives::leave ( Int32 tile_x, Int32 tile_y )
+{
+     Interactive& i = get_from_tile ( tile_x, tile_y );
+
+     i.leave ( *this );
+}
+
 Bool Interactive::is_solid ( ) const
 {
+     if ( underneath.type == UnderneathInteractive::Type::popup_block &&
+          underneath.underneath_popup_block.up ) {
+          return true;
+     }
+
      switch ( type ) {
      default:
           break;
@@ -197,12 +235,19 @@ Void Interactive::reset ( )
           interactive_light_detector.reset ( );
           break;
      }
+
+     underneath.reset ( );
 }
 
 Void Interactive::activate ( Interactives& interactives )
 {
      switch ( type ) {
      default:
+          if ( underneath.type == UnderneathInteractive::Type::popup_block ) {
+               underneath.underneath_popup_block.up = !underneath.underneath_popup_block.up;
+          }
+          break;
+     case Type::none:
           break;
      case Type::exit:
           interactive_exit.activate ( );
@@ -244,7 +289,35 @@ Void Interactive::light ( Uint8 light, Interactives& interactives )
      }
 }
 
-Void Interactive::update ( float time_delta )
+Void Interactive::enter ( Interactives& interactives )
+{
+     if ( type == Type::none && underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+          Auto& pressure_plate = underneath.underneath_pressure_plate;
+
+          pressure_plate.entered = true;
+
+          Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
+                                                           pressure_plate.activate_coordinate_y );
+
+          interactive.activate ( interactives );
+     }
+}
+
+Void Interactive::leave ( Interactives& interactives )
+{
+     if ( type == Type::none && underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+          Auto& pressure_plate = underneath.underneath_pressure_plate;
+
+          pressure_plate.entered = false;
+
+          Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
+                                                           pressure_plate.activate_coordinate_y );
+
+          interactive.activate ( interactives );
+     }
+}
+
+Void Interactive::update ( Real32 time_delta )
 {
      switch ( type ) {
      default:
@@ -275,7 +348,7 @@ Void Lever::reset ( )
      activate_coordinate_y = 0;
 }
 
-Void Lever::update ( float time_delta )
+Void Lever::update ( Real32 time_delta )
 {
      cooldown_watch.tick ( time_delta );
 }
@@ -286,7 +359,7 @@ Void Lever::activate ( Interactives& interactives )
           return;
      }
 
-     auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+     Auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
      interactive.activate ( interactives );
 
      // toggle
@@ -305,7 +378,7 @@ Void PushableBlock::reset ( )
      one_time             = false;
 }
 
-Void PushableBlock::update ( float time_delta )
+Void PushableBlock::update ( Real32 time_delta )
 {
      switch ( state) {
      default:
@@ -360,7 +433,7 @@ Direction PushableBlock::push ( Direction direction, Interactives& interactives 
           }
 
           if ( activate_coordinate_x || activate_coordinate_y ) {
-               auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+               Auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
                interactive.activate ( interactives );
           }
 
@@ -414,7 +487,7 @@ Void PushableTorch::reset ( )
      pushable_block.reset ( );
 }
 
-Void PushableTorch::update ( float time_delta )
+Void PushableTorch::update ( Real32 time_delta )
 {
      pushable_block.update ( time_delta );
 }

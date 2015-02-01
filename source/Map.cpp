@@ -49,7 +49,7 @@ Bool Map::load_master_list ( const Char8* filepath )
      return true;
 }
 
-void Map::initialize ( Uint8 width, Uint8 height )
+Void Map::initialize ( Uint8 width, Uint8 height )
 {
      m_width  = width;
      m_height = height;
@@ -57,7 +57,7 @@ void Map::initialize ( Uint8 width, Uint8 height )
      // clear all tiles
      for ( Uint32 y = 0; y < height; ++y ) {
           for ( Uint32 x = 0; x < width; ++x ) {
-               auto index = y * width + x;
+               Auto index = y * width + x;
 
                m_tiles [ index ].value = 1;
                m_tiles [ index ].solid = false;
@@ -197,7 +197,7 @@ Void Map::reset_light ( )
      }
 
      for ( Uint8 i = 0; i < m_lamp_count; ++i ) {
-          auto& lamp = m_lamps [ i ];
+          Auto& lamp = m_lamps [ i ];
           illuminate ( lamp.location.x * c_tile_dimension_in_pixels,
                        lamp.location.y * c_tile_dimension_in_pixels,
                        c_unique_lamps_light [ lamp.id ] );
@@ -243,7 +243,7 @@ Bool Map::add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id,
           return false;
      }
 
-     auto& enemy_spawn = m_enemy_spawns [ m_enemy_spawn_count - 1 ];
+     Auto& enemy_spawn = m_enemy_spawns [ m_enemy_spawn_count - 1 ];
 
      enemy_spawn.set ( location_x, location_y, id );
      enemy_spawn.facing = facing;
@@ -275,7 +275,7 @@ Void Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
      restore_exits ( interactives );
 }
 
-void Map::save ( const Char8* filepath, Interactives& interactives )
+Void Map::save ( const Char8* filepath, Interactives& interactives )
 {
      LOG_INFO ( "Saving Map '%s'\n", filepath );
 
@@ -291,7 +291,7 @@ void Map::save ( const Char8* filepath, Interactives& interactives )
 
      for ( Int32 y = 0; y < m_height; ++y ) {
           for ( Int32 x = 0; x < m_width; ++x ) {
-               auto& tile = m_tiles [ y * m_width + x ];
+               Auto& tile = m_tiles [ y * m_width + x ];
 
                file.write ( reinterpret_cast<const Char8*> ( &tile ), sizeof ( tile ) );
           }
@@ -300,14 +300,14 @@ void Map::save ( const Char8* filepath, Interactives& interactives )
      file.write ( reinterpret_cast<const Char8*>( &m_decor_count ), sizeof ( m_decor_count ) );
 
      for ( Int32 i = 0; i < m_decor_count; ++i ) {
-          auto& decor = m_decors [ i ];
+          Auto& decor = m_decors [ i ];
           file.write ( reinterpret_cast<const Char8*> ( &decor ), sizeof ( decor ) );
      }
 
      file.write ( reinterpret_cast<const Char8*>( &m_lamp_count ), sizeof ( m_lamp_count ) );
 
      for ( Int32 i = 0; i < m_lamp_count; ++i ) {
-          auto& lamp = m_lamps [ i ];
+          Auto& lamp = m_lamps [ i ];
           file.write ( reinterpret_cast<const Char8*> ( &lamp ), sizeof ( lamp ) );
      }
 
@@ -316,19 +316,19 @@ void Map::save ( const Char8* filepath, Interactives& interactives )
      file.write ( reinterpret_cast<const Char8*>( &m_enemy_spawn_count ), sizeof ( m_enemy_spawn_count ) );
 
      for ( Int32 i = 0; i < m_enemy_spawn_count; ++i ) {
-          auto& enemy_spawn = m_enemy_spawns [ i ];
+          Auto& enemy_spawn = m_enemy_spawns [ i ];
           file.write ( reinterpret_cast<const Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
      }
 
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               auto& interactive = interactives.get_from_tile ( x, y );
+               Auto& interactive = interactives.get_from_tile ( x, y );
                file.write ( reinterpret_cast<const Char8*> ( &interactive ), sizeof ( interactive ) );
           }
      }
 }
 
-void Map::load ( const Char8* filepath, Interactives& interactives )
+Void Map::load ( const Char8* filepath, Interactives& interactives )
 {
      LOG_INFO ( "Loading Map '%s'\n", filepath );
 
@@ -344,7 +344,7 @@ void Map::load ( const Char8* filepath, Interactives& interactives )
 
      for ( Int32 y = 0; y < m_height; ++y ) {
           for ( Int32 x = 0; x < m_width; ++x ) {
-               auto& tile = m_tiles [ y * m_width + x ];
+               Auto& tile = m_tiles [ y * m_width + x ];
 
                file.read ( reinterpret_cast<Char8*> ( &tile ), sizeof ( tile ) );
           }
@@ -353,14 +353,14 @@ void Map::load ( const Char8* filepath, Interactives& interactives )
      file.read ( reinterpret_cast<Char8*>( &m_decor_count ), sizeof ( m_decor_count ) );
 
      for ( Int32 i = 0; i < m_decor_count; ++i ) {
-          auto& decor = m_decors [ i ];
+          Auto& decor = m_decors [ i ];
           file.read ( reinterpret_cast<Char8*> ( &decor ), sizeof ( decor ) );
      }
 
      file.read ( reinterpret_cast<Char8*>( &m_lamp_count ), sizeof ( m_lamp_count ) );
 
      for ( Int32 i = 0; i < m_lamp_count; ++i ) {
-          auto& lamp = m_lamps [ i ];
+          Auto& lamp = m_lamps [ i ];
           file.read ( reinterpret_cast<Char8*> ( &lamp ), sizeof ( lamp ) );
      }
 
@@ -371,7 +371,7 @@ void Map::load ( const Char8* filepath, Interactives& interactives )
      file.read ( reinterpret_cast<Char8*>( &m_enemy_spawn_count ), sizeof ( m_enemy_spawn_count ) );
 
      for ( Int32 i = 0; i < m_enemy_spawn_count; ++i ) {
-          auto& enemy_spawn = m_enemy_spawns [ i ];
+          Auto& enemy_spawn = m_enemy_spawns [ i ];
           file.read ( reinterpret_cast<Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
      }
 
@@ -379,7 +379,7 @@ void Map::load ( const Char8* filepath, Interactives& interactives )
 
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               auto& interactive = interactives.get_from_tile ( x, y );
+               Auto& interactive = interactives.get_from_tile ( x, y );
                file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
           }
      }
@@ -391,21 +391,21 @@ Void Map::persist_exits ( const Interactives& interactives )
 
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               const auto& interactive = interactives.cget_from_tile ( x, y );
+               const Auto& interactive = interactives.cget_from_tile ( x, y );
 
                if ( interactive.type != Interactive::Type::exit ) {
                     continue;
                }
 
-               auto& exit = interactive.interactive_exit;
+               Auto& exit = interactive.interactive_exit;
 
-               auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
+               Auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
 
                if ( map_persisted_exits.exit_count >= PersistedExits::c_max_persisted_exits ) {
                     LOG_ERROR ( "Too many exits on map to persist: %u\n", map_persisted_exits.exit_count );
                }
 
-               auto& persisted_exit = map_persisted_exits.exits [ map_persisted_exits.exit_count ];
+               Auto& persisted_exit = map_persisted_exits.exits [ map_persisted_exits.exit_count ];
 
                persisted_exit.location.x = x;
                persisted_exit.location.y = y;
@@ -420,11 +420,11 @@ Void Map::persist_exits ( const Interactives& interactives )
 
 Void Map::restore_exits ( Interactives& interactives )
 {
-     auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
+     Auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
 
      for ( Uint8 i = 0; i < map_persisted_exits.exit_count; ++i ) {
-          auto& persisted_exit = map_persisted_exits.exits [ i ];
-          auto& interactive = interactives.get_from_tile ( persisted_exit.location.x,
+          Auto& persisted_exit = map_persisted_exits.exits [ i ];
+          Auto& interactive = interactives.get_from_tile ( persisted_exit.location.x,
                                                            persisted_exit.location.y );
 
           if ( interactive.type != Interactive::Type::exit ) {
@@ -437,7 +437,7 @@ Void Map::restore_exits ( Interactives& interactives )
                       persisted_exit.location.x, persisted_exit.location.y,
                       persisted_exit.id );
 
-          auto& exit = interactive.interactive_exit;
+          Auto& exit = interactive.interactive_exit;
           exit.state = static_cast<Exit::State> ( persisted_exit.id );
      }
 

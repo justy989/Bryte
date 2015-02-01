@@ -1,6 +1,8 @@
 #ifndef BRYTE_TYPES_HPP
 #define BRYTE_TYPES_HPP
 
+#define Auto auto
+
 #include <cstdint>
 
 using Void   = void;

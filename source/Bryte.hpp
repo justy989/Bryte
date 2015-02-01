@@ -102,10 +102,10 @@ namespace bryte
 
           Player player;
 
-          EntityManager<Enemy, 32> enemies;
-          EntityManager<Pickup, 8> pickups;
-          EntityManager<Arrow, 64> arrows;
-          EntityManager<Bomb,   8> bombs;
+          EntityManager<Enemy,   32> enemies;
+          EntityManager<Pickup,   8> pickups;
+          EntityManager<Arrow,   64> arrows;
+          EntityManager<Bomb,     8> bombs;
           EntityManager<Emitter, 32> emitters;
 
           Map          map;
@@ -148,7 +148,7 @@ namespace bryte
 }
 
 // exported functions to be called by the application
-extern "C" Bool game_init       ( GameMemory&, void* settings );
+extern "C" Bool game_init       ( GameMemory&, Void* settings );
 extern "C" Void game_destroy    ( GameMemory& );
 extern "C" Void game_user_input ( GameMemory&, const GameInput& );
 extern "C" Void game_update     ( GameMemory&, Real32 );

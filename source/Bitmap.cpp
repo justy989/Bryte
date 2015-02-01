@@ -5,8 +5,8 @@
 static Bool read_bitmap_headers ( const FileContents& bitmap_contents, BitmapFileHeader** file_header,
                                   BitmapInfoHeader** info_header )
 {
-     auto* bitmap_file_header  = reinterpret_cast<BitmapFileHeader*>( bitmap_contents.bytes );
-     auto* bitmap_info_header  = reinterpret_cast<BitmapInfoHeader*>( bitmap_contents.bytes +
+     Auto* bitmap_file_header  = reinterpret_cast<BitmapFileHeader*>( bitmap_contents.bytes );
+     Auto* bitmap_info_header  = reinterpret_cast<BitmapInfoHeader*>( bitmap_contents.bytes +
                                                                       sizeof ( BitmapFileHeader ) );
 
      LOG_DEBUG ( "'File Header' Type: %c%c Size: %u Bitmap Offset: %u\n",
@@ -40,7 +40,7 @@ static Bool read_bitmap_headers ( const FileContents& bitmap_contents, BitmapFil
      return true;
 }
 
-static Bool fill_surface_pixels ( char* bitmap_pixels, BitmapInfoHeader* info_header, SDL_Surface* surface )
+static Bool fill_surface_pixels ( Char8* bitmap_pixels, BitmapInfoHeader* info_header, SDL_Surface* surface )
 {
      if ( SDL_LockSurface ( surface ) ) {
           LOG_ERROR ( "SDL_LockSurface() failed: %s\n", SDL_GetError ( ) );

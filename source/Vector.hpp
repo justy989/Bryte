@@ -23,11 +23,11 @@ public:
      inline Real32 length_squared ( ) const;
      inline Real32 distance_to ( const Vector& v ) const;
 
-     inline void zero ( );
+     inline Void zero ( );
 
-     inline void set ( Real32 x, Real32 y );
-     inline void set_x ( Real32 x );
-     inline void set_y ( Real32 y );
+     inline Void set ( Real32 x, Real32 y );
+     inline Void set_x ( Real32 x );
+     inline Void set_y ( Real32 y );
 
      inline Real32 x ( ) const;
      inline Real32 y ( ) const;
@@ -102,24 +102,24 @@ inline Real32 Vector::length_squared ( ) const
      return inner_product ( *this );
 }
 
-inline void Vector::zero ( )
+inline Void Vector::zero ( )
 {
      m_x = 0.0f;
      m_y = 0.0f;
 }
 
-inline void Vector::set ( Real32 x, Real32 y )
+inline Void Vector::set ( Real32 x, Real32 y )
 {
      m_x = x;
      m_y = y;
 }
 
-inline void Vector::set_x ( Real32 x )
+inline Void Vector::set_x ( Real32 x )
 {
      m_x = x;
 }
 
-inline void Vector::set_y ( Real32 y )
+inline Void Vector::set_y ( Real32 y )
 {
      m_y = y;
 }

@@ -21,18 +21,18 @@
 namespace editor
 {
      struct Settings {
-          const char* map_load_filename;
+          const Char8* map_load_filename;
 
           Int32 map_width;
           Int32 map_height;
 
-          const char* map_tilesheet_filename;
-          const char* map_decorsheet_filename;
-          const char* map_lampsheet_filename;
+          const Char8* map_tilesheet_filename;
+          const Char8* map_decorsheet_filename;
+          const Char8* map_lampsheet_filename;
 
-          const char* map_rat_filename;
+          const Char8* map_rat_filename;
 
-          const char* map_save_filename;
+          const Char8* map_save_filename;
      };
 
      enum Mode {
@@ -46,6 +46,8 @@ namespace editor
           pushable_torch,
           light_detector,
           exit,
+          pressure_plate,
+          popup_block,
           count
      };
 
@@ -81,16 +83,16 @@ namespace editor
 
           Mode mode;
 
-          Int32  mouse_x;
-          Int32  mouse_y;
-          Int32  mouse_screen_x;
-          Int32  mouse_screen_y;
-          Int32  mouse_tile_x;
-          Int32  mouse_tile_y;
+          Int32 mouse_x;
+          Int32 mouse_y;
+          Int32 mouse_screen_x;
+          Int32 mouse_screen_y;
+          Int32 mouse_tile_x;
+          Int32 mouse_tile_y;
 
-          Bool camera_direction_keys [ 4 ];
-          Bool left_button_down;
-          Bool right_button_down;
+          Bool  camera_direction_keys [ 4 ];
+          Bool  left_button_down;
+          Bool  right_button_down;
 
           Uint8 current_tile;
           Bool  current_solid;
@@ -106,6 +108,7 @@ namespace editor
           Uint8 current_torch;
           Uint8 current_pushable_torch;
           Uint8 current_light_detector_bryte;
+          Uint8 current_popup_block;
           Uint8 current_field;
 
           Bool   track_current_interactive;
@@ -115,7 +118,7 @@ namespace editor
           Bool draw_solids;
           Bool draw_light;
 
-          char message_buffer [ 128 ];
+          Char8 message_buffer [ 128 ];
      };
 
      struct MemoryLocations {
@@ -124,7 +127,7 @@ namespace editor
 }
 
 // exported functions to be called by the application
-extern "C" Bool game_init       ( GameMemory&, void* );
+extern "C" Bool game_init       ( GameMemory&, Void* );
 extern "C" Void game_destroy    ( GameMemory& );
 extern "C" Void game_user_input ( GameMemory&, const GameInput& );
 extern "C" Void game_update     ( GameMemory&, Real32 );

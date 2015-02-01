@@ -140,7 +140,7 @@ Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
 Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
 {
      Stopwatch& timer     = bat_state.timer;
-     auto& move_direction = bat_state.move_direction;
+     Auto& move_direction = bat_state.move_direction;
 
      timer.tick ( time_delta );
 

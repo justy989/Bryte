@@ -156,6 +156,18 @@ Void State::mouse_button_left_clicked ( )
                                                                   current_light_detector_bryte );
           }
      } break;
+     case Mode::popup_block:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          UnderneathInteractive& underneath = interactive.underneath;
+
+          if ( underneath.type == UnderneathInteractive::Type::popup_block ) {
+               underneath.type = UnderneathInteractive::Type::none;
+          } else {
+               underneath.type = UnderneathInteractive::Type::popup_block;
+               underneath.underneath_popup_block.up = static_cast<Bool>( current_popup_block );
+          }
+     }  break;
      }
 }
 
@@ -258,6 +270,17 @@ Void State::mouse_button_right_clicked ( )
                     light_detector.interactive_light_detector.activate_coordinate_y = mouse_tile_y;
                     track_current_interactive = false;
                }
+          }
+     } break;
+     case Mode::popup_block:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          UnderneathInteractive underneath = interactive.underneath;
+
+          if ( underneath.type == UnderneathInteractive::Type::popup_block ) {
+               underneath.underneath_popup_block.up = !underneath.underneath_popup_block.up;
+          } else {
+               current_popup_block = !current_popup_block;
           }
      } break;
      }
@@ -1031,6 +1054,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->mouse_x, state->mouse_y,
                                 state->current_exit_direction,
                                 ( Interactive::Type::exit - 1 ) + state->current_exit_state );
+          break;
+     case Mode::popup_block:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheet,
+                                state->mouse_x, state->mouse_y,
+                                0,
+                                Interactive::Type::pushable_block - 1 );
           break;
      }
 

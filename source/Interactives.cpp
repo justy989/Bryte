@@ -243,11 +243,11 @@ Void Interactive::activate ( Interactives& interactives )
 {
      switch ( type ) {
      default:
+          break;
+     case Type::none:
           if ( underneath.type == UnderneathInteractive::Type::popup_block ) {
                underneath.underneath_popup_block.up = !underneath.underneath_popup_block.up;
           }
-          break;
-     case Type::none:
           break;
      case Type::exit:
           interactive_exit.activate ( );
@@ -321,7 +321,6 @@ Void Interactive::update ( Real32 time_delta )
 {
      switch ( type ) {
      default:
-          ASSERT ( 0 );
           break;
      case Type::none:
      case Type::exit:

@@ -46,6 +46,8 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           if ( underneath.underneath_pressure_plate.entered ) {
                clip_rect.x += Map::c_tile_dimension_in_pixels;
           }
+          clip_rect.y = ( Interactive::Type::exit + 2 ) + ( underneath.type - 1 );
+          clip_rect.y *= Map::c_tile_dimension_in_pixels;
           break;
      case UnderneathInteractive::Type::popup_block:
           if ( underneath.underneath_popup_block.up ) {

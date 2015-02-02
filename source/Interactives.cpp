@@ -153,8 +153,21 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
 #endif
 
      if ( free_to_move ) {
+          // save underneath the dest
+          UnderneathInteractive save_underneath = dest_i.underneath;
+
+          // copy to the dest
           dest_i = i;
+
+          // restore the underneath
+          dest_i.underneath = save_underneath;
+
+          // clear the source
           i.type = Interactive::Type::none;
+
+          // enter and leave both tiles
+          dest_i.enter ( *this );
+          i.leave ( *this );
      }
 }
 
@@ -291,10 +304,12 @@ Void Interactive::light ( Uint8 light, Interactives& interactives )
 
 Void Interactive::enter ( Interactives& interactives )
 {
-     if ( type == Type::none && underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+     if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
 
           pressure_plate.entered = true;
+
+          LOG_INFO ( "Entered!\n" );
 
           Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
                                                            pressure_plate.activate_coordinate_y );
@@ -305,10 +320,12 @@ Void Interactive::enter ( Interactives& interactives )
 
 Void Interactive::leave ( Interactives& interactives )
 {
-     if ( type == Type::none && underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+     if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
 
           pressure_plate.entered = false;
+
+          LOG_INFO ( "Leaved!\n" );
 
           Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
                                                            pressure_plate.activate_coordinate_y );

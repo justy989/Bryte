@@ -68,12 +68,34 @@ Void Map::initialize ( Uint8 width, Uint8 height )
      reset_light ( );
 }
 
-Int32 Map::position_to_tile_index ( Real32 x, Real32 y ) const
+Map::Coordinates Map::position_to_coordinates ( Real32 x, Real32 y )
 {
-     Int32 tile_x = x / c_tile_dimension_in_meters;
-     Int32 tile_y = y / c_tile_dimension_in_meters;
+     return Coordinates { meters_to_pixels ( x ) / Map::c_tile_dimension_in_pixels,
+                          meters_to_pixels ( y ) / Map::c_tile_dimension_in_pixels };
+}
 
-     return coordinate_to_tile_index ( tile_x, tile_y );
+Map::Coordinates Map::vector_to_coordinates ( const Vector& v )
+{
+     return Coordinates { meters_to_pixels ( v.x ( ) ) / Map::c_tile_dimension_in_pixels,
+                          meters_to_pixels ( v.y ( ) ) / Map::c_tile_dimension_in_pixels};
+}
+
+Vector Map::coordinates_to_vector ( Int32 tile_x, Int32 tile_y )
+{
+     return Vector { pixels_to_meters ( tile_x * Map::c_tile_dimension_in_pixels ),
+                     pixels_to_meters ( tile_y * Map::c_tile_dimension_in_pixels ) };
+}
+
+Vector Map::coordinates_to_vector ( const Coordinates& coords )
+{
+     return Vector { pixels_to_meters ( coords.x * Map::c_tile_dimension_in_pixels ),
+                     pixels_to_meters ( coords.y * Map::c_tile_dimension_in_pixels ) };
+}
+
+Vector Map::location_to_vector ( const Location& loc )
+{
+     return Vector { pixels_to_meters ( loc.x * Map::c_tile_dimension_in_pixels ),
+                     pixels_to_meters ( loc.y * Map::c_tile_dimension_in_pixels ) };
 }
 
 Int32 Map::coordinate_to_tile_index ( Int32 tile_x, Int32 tile_y ) const

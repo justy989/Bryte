@@ -59,20 +59,17 @@ Vector Arrow::collision_points [ Direction::count ];
 Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
 {
      Vector arrow_center = position + Arrow::collision_points [ facing ];
+     Map::Coordinates tile = Map::vector_to_coordinates ( arrow_center );
 
-     Int32 tile_x = static_cast<Int32>( arrow_center.x ( ) / Map::c_tile_dimension_in_meters );
-     Int32 tile_y = static_cast<Int32>( arrow_center.y ( ) / Map::c_tile_dimension_in_meters );
-
-     if ( tile_x < 0 || tile_x >= map.width ( ) ||
-          tile_y < 0 || tile_y >= map.height ( ) ) {
+     if ( !map.coordinates_valid ( tile ) ) {
           return false;
      }
 
-     if ( map.get_coordinate_solid ( tile_x, tile_y ) ) {
+     if ( map.get_coordinate_solid ( tile.x, tile.y ) ) {
           return true;
      }
 
-     Auto& interactive = interactives.get_from_tile ( tile_x, tile_y );
+     Auto& interactive = interactives.get_from_tile ( tile.x, tile.y );
 
      if ( interactive.is_solid ( ) ) {
           // do not activate exits!
@@ -206,8 +203,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      player.clear ( );
 
-     player.position.set ( pixels_to_meters ( player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
-                           pixels_to_meters ( player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
+     player.position = Map::coordinates_to_vector ( player_spawn_tile_x, player_spawn_tile_y );
 
      player.life_state = Entity::LifeState::alive;
 
@@ -427,8 +423,7 @@ Void State::spawn_map_enemies ( )
      for ( int i = 0; i < map.enemy_spawn_count ( ); ++i ) {
           Auto& enemy_spawn = map.enemy_spawn ( i );
 
-          Vector position { pixels_to_meters ( enemy_spawn.location.x * Map::c_tile_dimension_in_pixels ),
-                            pixels_to_meters ( enemy_spawn.location.y * Map::c_tile_dimension_in_pixels ) };
+          Vector position = Map::coordinates_to_vector ( enemy_spawn.location.x, enemy_spawn.location.y );
 
           spawn_enemy ( position, enemy_spawn.id, enemy_spawn.facing, enemy_spawn.drop );
      }
@@ -440,8 +435,7 @@ Void State::player_death ( )
 
      player.life_state = Entity::LifeState::alive;
 
-     player.position.set ( pixels_to_meters ( player_spawn_tile_x * Map::c_tile_dimension_in_pixels ),
-                           pixels_to_meters ( player_spawn_tile_y * Map::c_tile_dimension_in_pixels ) );
+     player.position = Map::coordinates_to_vector ( player_spawn_tile_x, player_spawn_tile_y );
 
      // load the first map
      map.load_from_master_list ( 0, interactives );
@@ -474,8 +468,8 @@ Void State::setup_emitters_from_map_lamps ( )
      for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
           Auto& lamp = map.lamp ( i );
 
-          Vector position { pixels_to_meters ( lamp.location.x * Map::c_tile_dimension_in_pixels ),
-                            pixels_to_meters ( lamp.location.y * Map::c_tile_dimension_in_pixels ) };
+          Vector position = map.location_to_vector ( lamp.location );
+
           Vector offset { Map::c_tile_dimension_in_meters * 0.4f,
                           Map::c_tile_dimension_in_meters * 0.7f };
 
@@ -576,31 +570,27 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 
 Void character_adjacent_tile ( const Character& character, Int32* adjacent_tile_x, Int32* adjacent_tile_y )
 {
-     Vector character_center { character.collision_center_x ( ),
-                               character.collision_center_y ( ) };
-
-     Int32 character_center_tile_x = meters_to_pixels ( character_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
-     Int32 character_center_tile_y = meters_to_pixels ( character_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+     Map::Coordinates character_center_tile = Map::vector_to_coordinates ( character.collision_center ( ) );
 
      switch ( character.facing ) {
           default:
                break;
           case Direction::left:
-               character_center_tile_x--;
+               character_center_tile.x--;
                break;
           case Direction::right:
-               character_center_tile_x++;
+               character_center_tile.x++;
                break;
           case Direction::up:
-               character_center_tile_y++;
+               character_center_tile.y++;
                break;
           case Direction::down:
-               character_center_tile_y--;
+               character_center_tile.y--;
                break;
      }
 
-     *adjacent_tile_x = character_center_tile_x;
-     *adjacent_tile_y = character_center_tile_y;
+     *adjacent_tile_x = character_center_tile.x;
+     *adjacent_tile_y = character_center_tile.y;
 }
 
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
@@ -907,24 +897,16 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      Auto& map         = state->map;
 
-     Vector player_center { state->player.collision_center_x ( ),
-                            state->player.collision_center_y ( ) };
+     Map::Coordinates player_center_tile = Map::vector_to_coordinates ( state->player.collision_center ( ) );
 
-     Int32 player_center_tile_x = meters_to_pixels ( player_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
-     Int32 player_center_tile_y = meters_to_pixels ( player_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
-
-     if ( player_center_tile_x >= 0 && player_center_tile_x < state->interactives.width ( ) &&
-          player_center_tile_y >= 0 && player_center_tile_y < state->interactives.height ( ) ) {
-
-          Auto& interactive = state->interactives.get_from_tile ( player_center_tile_x, player_center_tile_y );
+     if ( state->map.coordinates_valid ( player_center_tile ) ) {
+          Auto& interactive = state->interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
 
           if ( interactive.type == Interactive::Type::exit &&
                interactive.interactive_exit.state == Exit::State::open &&
                interactive.interactive_exit.direction == opposite_direction ( state->player.facing ) ) {
-               Vector new_position ( pixels_to_meters ( interactive.interactive_exit.exit_index_x *
-                                                        Map::c_tile_dimension_in_pixels ),
-                                     pixels_to_meters ( interactive.interactive_exit.exit_index_y *
-                                                        Map::c_tile_dimension_in_pixels ) );
+               Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
+                                                                  interactive.interactive_exit.exit_index_y );
 
                new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
                                         Map::c_tile_dimension_in_meters * 0.5f );

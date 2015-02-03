@@ -543,6 +543,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( state->character_display.enemy_sheets [ Enemy::Type::goo ],
+                                          game_memory,
+                                          "test_goo.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheet,
                                           game_memory,
                                           "castle_interactivesheet.bmp" ) ) {

@@ -23,6 +23,7 @@ static const Char8* c_test_lampsheet_path        = "castle_lampsheet.bmp";
 static const Char8* c_test_player_path           = "test_hero.bmp";
 static const Char8* c_test_rat_path              = "test_rat.bmp";
 static const Char8* c_test_bat_path              = "test_bat.bmp";
+static const Char8* c_test_goo_path              = "test_goo.bmp";
 static const Char8* c_test_pickups_path          = "test_pickups.bmp";
 
 static State* get_state ( GameMemory& game_memory )
@@ -250,6 +251,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( character_display.enemy_sheets [ Enemy::Type::goo ], game_memory,
+                                          c_test_goo_path ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( character_display.player_sheet, game_memory,
                                           c_test_player_path ) ) {
           return false;
@@ -348,7 +354,7 @@ Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pi
      enemy->init ( static_cast<Enemy::Type>( id ), position.x ( ), position.y ( ), facing, drop );
 
 #ifdef DEBUG
-     static const Char8* enemy_id_names [ ] = { "rat", "bat" };
+     static const Char8* enemy_id_names [ ] = { "rat", "bat", "goo" };
 #endif
 
      LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], position.x ( ), position.y ( ) );
@@ -793,6 +799,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
 
           bomb.update ( time_delta );
+
+          if ( bomb.is_dead ( ) ) {
+               continue;
+          }
 
           if ( bomb.explode_watch.expired ( ) ) {
                // damage nearby enemies

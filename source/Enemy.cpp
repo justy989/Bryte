@@ -3,6 +3,8 @@
 
 using namespace bryte;
 
+const Real32 Enemy::GooState::c_detect_radius = 1.6f * 3.0f;
+
 Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
 {
      life_state   = LifeState::alive;
@@ -51,6 +53,19 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           walk_acceleration.set ( 5.0f, 5.0f );
           break;
+     case Enemy::Type::goo:
+          health     = 6;
+          max_health = 6;
+
+          dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
+          collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 2 ) );
+          collision_dimension.set ( pixels_to_meters ( 10 ), pixels_to_meters ( 10 ) );
+
+          collides_with_solids = true;
+          collides_with_exits = true;
+
+          walk_acceleration.set ( 5.0f, 5.0f );
+          break;
      }
 }
 
@@ -65,6 +80,9 @@ Void Enemy::think ( const Vector& player, Random& random, float time_delta )
           break;
      case Type::bat:
           bat_think ( player, random, time_delta );
+          break;
+     case Type::goo:
+          goo_think ( player, random, time_delta );
           break;
      }
 }
@@ -171,5 +189,14 @@ Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
      }
 
      facing = Direction::left;
+}
+
+Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
+{
+     Bool found_player = goo_state.found_player;
+
+     if ( found_player ) {
+
+     }
 }
 

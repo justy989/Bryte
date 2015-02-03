@@ -13,6 +13,7 @@ namespace bryte
           enum Type {
                rat,
                bat,
+               goo,
                count
           };
 
@@ -35,6 +36,12 @@ namespace bryte
                Stopwatch timer;
           };
 
+          struct GooState {
+               Bool found_player;
+
+               static const Real32 c_detect_radius;
+          };
+
      public:
 
           Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
@@ -47,6 +54,7 @@ namespace bryte
 
           Void rat_think ( const Vector& player, Random& random, float time_delta );
           Void bat_think ( const Vector& player, Random& random, float time_delta );
+          Void goo_think ( const Vector& player, Random& random, float time_delta );
 
      public:
 
@@ -55,6 +63,7 @@ namespace bryte
           union {
                RatState rat_state;
                BatState bat_state;
+               GooState goo_state;
           };
 
           Pickup::Type drop;

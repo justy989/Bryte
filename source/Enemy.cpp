@@ -1,6 +1,8 @@
 #include "Enemy.hpp"
 #include "Utils.hpp"
 
+#include <cmath>
+
 using namespace bryte;
 
 const Real32 Enemy::GooState::c_detect_radius = 1.6f * 3.0f;
@@ -65,6 +67,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collides_with_exits = true;
 
           walk_acceleration.set ( 5.0f, 5.0f );
+
+          goo_state.found_player = false;
           break;
      }
 }
@@ -194,9 +198,20 @@ Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
 Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
 {
      Bool found_player = goo_state.found_player;
+     Vector center = collision_center ( );
 
      if ( found_player ) {
+          facing = direction_between ( player, center, random );
 
+          walk ( facing );
+     } else {
+          Real32 diff_x = fabs ( player.x ( ) - center.x ( ) );
+          Real32 diff_y = fabs ( player.y ( ) - center.y ( ) );
+
+          // the player is perpendicular to us
+          if ( diff_x < width ( ) || diff_y < height ( ) ) {
+               found_player = true;
+          }
      }
 }
 

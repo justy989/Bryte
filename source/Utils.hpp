@@ -3,6 +3,7 @@
 
 #include "Log.hpp"
 #include "Types.hpp"
+#include "Direction.hpp"
 
 #include <SDL2/SDL.h>
 
@@ -130,6 +131,14 @@ inline Bool rect_collides_with_rect ( Real32 a_left, Real32 a_bottom, Real32 a_w
 
      return false;
 }
+
+namespace bryte {
+     class Random;
+};
+
+class Vector;
+
+bryte::Direction direction_between ( const Vector& a, const Vector& b, bryte::Random& random );
 
 #endif
 

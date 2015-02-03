@@ -1,5 +1,7 @@
 #include "Utils.hpp"
 #include "GameMemory.hpp"
+#include "Vector.hpp"
+#include "Random.hpp"
 
 #include <fstream>
 
@@ -58,5 +60,48 @@ extern "C" FileContents load_entire_file ( const Char8* filepath, GameMemory* ga
      file.close ( );
 
      return contents;
+}
+
+bryte::Direction direction_between ( const Vector& a, const Vector& b, bryte::Random& random )
+{
+     Vector diff = b - a;
+
+     Real32 abs_x = fabs ( diff.x ( ) );
+     Real32 abs_y = fabs ( diff.y ( ) );
+
+     if ( abs_x > abs_y ) {
+          if ( diff.x ( ) > 0.0f ) {
+               return bryte::Direction::right;
+          }
+
+          return bryte::Direction::left;
+     } else if ( abs_y > abs_x ) {
+          if ( diff.y ( ) > 0.0f ) {
+               return bryte::Direction::up;
+          }
+
+          return bryte::Direction::down;
+     } else {
+          bryte::Direction valid_dirs [ 2 ];
+
+          if ( diff.x ( ) > 0.0f ) {
+               valid_dirs [ 0 ] = bryte::Direction::right;
+          } else {
+               valid_dirs [ 0 ] = bryte::Direction::left;
+          }
+
+          if ( diff.y ( ) > 0.0f ) {
+               valid_dirs [ 1 ] = bryte::Direction::up;
+          } else {
+               valid_dirs [ 1 ] = bryte::Direction::down;
+          }
+
+          // coin flip between using the x or y direction
+          return valid_dirs [ random.generate ( 0, 2 ) ];
+     }
+
+     // the above cases should catch all
+     ASSERT ( 0 );
+     return bryte::Direction::left;
 }
 

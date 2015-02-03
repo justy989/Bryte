@@ -151,50 +151,6 @@ Void Bomb::clear ( )
      explode_watch.reset ( 0.0f );
 }
 
-// assuming A attacks B
-static Direction determine_damage_direction ( const Vector& a, const Vector& b, Random& random )
-{
-     Vector diff = b - a;
-
-     Real32 abs_x = fabs ( diff.x ( ) );
-     Real32 abs_y = fabs ( diff.y ( ) );
-
-     if ( abs_x > abs_y ) {
-          if ( diff.x ( ) > 0.0f ) {
-               return Direction::right;
-          }
-
-          return Direction::left;
-     } else if ( abs_y > abs_x ) {
-          if ( diff.y ( ) > 0.0f ) {
-               return Direction::up;
-          }
-
-          return Direction::down;
-     } else {
-          Direction valid_dirs [ 2 ];
-
-          if ( diff.x ( ) > 0.0f ) {
-               valid_dirs [ 0 ] = Direction::right;
-          } else {
-               valid_dirs [ 0 ] = Direction::left;
-          }
-
-          if ( diff.y ( ) > 0.0f ) {
-               valid_dirs [ 1 ] = Direction::up;
-          } else {
-               valid_dirs [ 1 ] = Direction::down;
-          }
-
-          // coin flip between using the x or y direction
-          return valid_dirs [ random.generate ( 0, 2 ) ];
-     }
-
-     // the above cases should catch all
-     ASSERT ( 0 );
-     return Direction::left;
-}
-
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
      random.seed ( 13371 );
@@ -666,6 +622,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      }
 
+     Vector player_center = state->player.collision_center ( );
+
      for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
           Auto& enemy = state->enemies [ i ];
 
@@ -675,10 +633,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
 #ifdef DEBUG
           if ( state->enemy_think ) {
-               enemy.think ( state->player.position, state->random, time_delta );
+               enemy.think ( player_center, state->random, time_delta );
           }
 #else
-          enemy.think ( state->player.position, state->random, time_delta );
+          enemy.think ( player_center, state->random, time_delta );
 #endif
 
           enemy.update ( time_delta, state->map, state->interactives );
@@ -701,9 +659,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           // check collision between player and enemy
           if ( state->player.state != Character::State::blinking &&
                state->player.collides_with ( enemy ) ) {
-               Direction damage_dir = determine_damage_direction ( enemy.collision_center ( ),
-                                                                   state->player.collision_center ( ),
-                                                                   state->random );
+               Direction damage_dir = direction_between ( enemy.collision_center ( ),
+                                                          state->player.collision_center ( ),
+                                                          state->random );
                state->player.damage ( 1, damage_dir );
 
                if ( state->player.life_state == Entity::LifeState::dead ) {
@@ -715,9 +673,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( state->player.state == Character::State::attacking &&
                enemy.state != Character::State::blinking &&
                state->player.attack_collides_with ( enemy ) ) {
-               Direction damage_dir = determine_damage_direction ( state->player.collision_center ( ),
-                                                                   enemy.collision_center ( ),
-                                                                   state->random );
+               Direction damage_dir = direction_between ( state->player.collision_center ( ),
+                                                          enemy.collision_center ( ),
+                                                          state->random );
                enemy.damage ( 1, damage_dir );
                state->drop_item_on_enemy_death ( enemy );
           }
@@ -814,9 +772,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                     }
 
                     if ( enemy.collision_center ( ).distance_to ( bomb.position ) < Bomb::c_explode_radius ) {
-                         enemy.damage ( 5, determine_damage_direction ( bomb.position,
-                                                                        enemy.collision_center ( ),
-                                                                        state->random ) );
+                         enemy.damage ( 5, direction_between ( bomb.position,
+                                                               enemy.collision_center ( ),
+                                                               state->random ) );
                          state->drop_item_on_enemy_death ( enemy );
                     }
                }

@@ -309,8 +309,6 @@ Void Interactive::enter ( Interactives& interactives )
 
           pressure_plate.entered = true;
 
-          LOG_INFO ( "Entered!\n" );
-
           Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
                                                            pressure_plate.activate_coordinate_y );
 
@@ -324,8 +322,6 @@ Void Interactive::leave ( Interactives& interactives )
           Auto& pressure_plate = underneath.underneath_pressure_plate;
 
           pressure_plate.entered = false;
-
-          LOG_INFO ( "Leaved!\n" );
 
           Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
                                                            pressure_plate.activate_coordinate_y );

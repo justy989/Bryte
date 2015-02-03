@@ -5,7 +5,7 @@ SOURCE_DIR = ../source
 
 # vars
 CC             = g++
-CFLAGS         = -Wall -Werror -m64 -fPIC -std=c++11 -DLINUX
+CFLAGS         = -Wall -Werror -fPIC -std=c++11 -DLINUX
 INCLUDE        = -I$(SOURCE_DIR)
 LINK           = -lSDL2 -ldl
 GAME_SO        = bryte_game.so

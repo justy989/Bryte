@@ -6,6 +6,7 @@
 #include "Utils.hpp"
 #include "Direction.hpp"
 #include "Pickup.hpp"
+#include "Vector.hpp"
 
 namespace bryte
 {
@@ -63,8 +64,6 @@ namespace bryte
           Void load ( const Char8* filepath, Interactives& interactives );
           Void load_from_master_list ( Uint8 map_index, Interactives& interactives );
 
-          Int32 position_to_tile_index     ( Real32 x, Real32 y ) const;
-
           Int32 coordinate_to_tile_index   ( Int32 tile_x, Int32 tile_y ) const;
           Int32 tile_index_to_coordinate_x ( Int32 tile_index ) const;
           Int32 tile_index_to_coordinate_y ( Int32 tile_index ) const;
@@ -106,6 +105,18 @@ namespace bryte
           inline Fixture&    decor       ( Uint8 index );
           inline Fixture&    lamp        ( Uint8 index );
           inline EnemySpawn& enemy_spawn ( Uint8 index );
+
+          inline Bool coordinate_x_valid ( Int32 x ) const;
+          inline Bool coordinate_y_valid ( Int32 y ) const;
+          inline Bool coordinates_valid ( const Coordinates& coords ) const;
+
+     public:
+
+          static Coordinates position_to_coordinates ( Real32 x, Real32 y );
+          static Coordinates vector_to_coordinates ( const Vector& v );
+          static Vector coordinates_to_vector ( Int32 tile_x, Int32 tile_y );
+          static Vector coordinates_to_vector ( const Coordinates& coords );
+          static Vector location_to_vector ( const Location& loc );
 
      private:
 
@@ -258,6 +269,21 @@ namespace bryte
           }
 
           return nullptr;
+     }
+
+     inline Bool Map::coordinate_x_valid ( Int32 x ) const
+     {
+          return x >= 0 && x <= width ( );
+     }
+
+     inline Bool Map::coordinate_y_valid ( Int32 y ) const
+     {
+          return y >= 0 && y <= height ( );
+     }
+
+     inline Bool Map::coordinates_valid ( const Coordinates& coords ) const
+     {
+          return coordinate_x_valid ( coords.x ) && coordinate_y_valid ( coords.y );
      }
 }
 

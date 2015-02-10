@@ -83,6 +83,8 @@ namespace bryte
           Vector velocity;
           Vector acceleration;
 
+          Real32 deceleration_scale;
+
           Vector collision_offset;
           Vector collision_dimension;
 

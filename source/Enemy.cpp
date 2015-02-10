@@ -37,6 +37,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collides_with_exits  = true;
 
           walk_acceleration.set ( 9.0f, 9.0f );
+          deceleration_scale = 5.0f;
           break;
      case Enemy::Type::bat:
           health     = 2;
@@ -50,6 +51,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collides_with_exits = true;
 
           walk_acceleration.set ( 5.0f, 5.0f );
+          deceleration_scale = 2.0f;
           break;
      }
 }

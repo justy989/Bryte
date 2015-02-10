@@ -260,6 +260,20 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     character_display.blink_surface = SDL_CreateRGBSurface ( 0, 32, 32, 32, 0, 0, 0, 0 );
+     if ( !character_display.blink_surface ) {
+          LOG_ERROR ( "Failed to create character display blink surface: SDL_CreateRGBSurface(): %s\n",
+                      SDL_GetError ( ) );
+          return false;
+     }
+
+     if ( SDL_SetColorKey ( character_display.blink_surface, SDL_TRUE,
+                            SDL_MapRGB ( character_display.blink_surface->format, 255, 0, 255 ) ) ) {
+          LOG_ERROR ( "Failed to set color key for character display blink surface SDL_SetColorKey() failed: %s\n",
+                      SDL_GetError ( ) );
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( character_display.horizontal_sword_sheet, game_memory,
                                           "test_horizontal_sword.bmp" ) ) {
           return false;
@@ -1023,6 +1037,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // interactives
      state->interactives_display.render ( back_buffer, state->interactives,
                                           state->camera.x ( ), state->camera.y ( ) );
+
+     state->character_display.tick ( );
 
      // enemies
      for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {

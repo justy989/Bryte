@@ -251,7 +251,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      }
 
      // TEMPORARY, slow character down
-     acceleration += velocity * -4.0f;
+     acceleration += velocity * -deceleration_scale;
 
      Vector change_in_position = ( velocity * time_delta ) +
                                  ( acceleration * ( 0.5f * square ( time_delta ) ) );

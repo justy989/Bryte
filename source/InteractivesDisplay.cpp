@@ -79,7 +79,10 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::none:
           return;
      case Interactive::Type::lever:
-          if ( interactive.interactive_lever.on ) {
+          if ( interactive.interactive_lever.state == Lever::State::on ) {
+               clip_rect.x = Map::c_tile_dimension_in_pixels * 2;
+          } else if ( interactive.interactive_lever.state == Lever::State::changing_on ||
+                      interactive.interactive_lever.state == Lever::State::changing_off ) {
                clip_rect.x = Map::c_tile_dimension_in_pixels;
           }
           break;

@@ -30,13 +30,20 @@ namespace bryte
      };
 
      struct Lever {
+          enum State {
+               off,
+               on,
+               changing_on,
+               changing_off,
+          };
+
           Void reset ( );
 
-          Void update ( Real32 time_delta );
+          Void update ( Real32 time_delta, Interactives& interactives );
 
-          Void activate ( Interactives& interactives );
+          Void activate ( );
 
-          Bool      on;
+          State     state;
           Stopwatch cooldown_watch;
           Uint8     activate_coordinate_x;
           Uint8     activate_coordinate_y;
@@ -148,7 +155,7 @@ namespace bryte
 
           Void      reset    ( );
 
-          Void      update   ( Real32 time_delta );
+          Void      update   ( Real32 time_delta, Interactives& interactives );
 
           Void      activate ( Interactives& interactives );
           Direction push     ( Direction direction, Interactives& interactives );

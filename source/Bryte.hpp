@@ -119,6 +119,9 @@ namespace bryte
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
 
+          Int32 pickup_frame_counter;
+          Int32 pickup_frame;
+
           SDL_Surface* pickup_sheet;
           SDL_Surface* arrow_sheet;
           SDL_Surface* bomb_sheet;

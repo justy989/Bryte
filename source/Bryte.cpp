@@ -955,7 +955,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 }
 
 static Void render_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet, Pickup& pickup,
-                            Real32 camera_x, Real32 camera_y )
+                            Int32 pickup_frame, Real32 camera_x, Real32 camera_y )
 {
      if ( pickup.type == Pickup::Type::none ||
           pickup.type == Pickup::Type::ingredient ) {
@@ -966,7 +966,8 @@ static Void render_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
                                                  Pickup::c_dimension_in_meters,
                                                  Pickup::c_dimension_in_meters );
 
-     SDL_Rect clip_rect { ( static_cast<Int32>( pickup.type ) - 1) * Pickup::c_dimension_in_pixels, 0,
+     SDL_Rect clip_rect { pickup_frame * Pickup::c_dimension_in_pixels,
+                          ( static_cast<Int32>( pickup.type ) - 1) * Pickup::c_dimension_in_pixels,
                           Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -1054,6 +1055,16 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      state->character_display.render_player ( back_buffer, state->player,
                                               state->camera.x ( ), state->camera.y ( ) );
 
+     // tick the pickup frame timer
+     state->pickup_frame_counter++;
+
+     if ( state->pickup_frame_counter > 10 ) {
+          state->pickup_frame++;
+          state->pickup_frame %= 4;
+
+          state->pickup_frame_counter = 0;
+     }
+
      // pickups
      for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
           Auto& pickup = state->pickups [ i ];
@@ -1062,7 +1073,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                continue;
           }
 
-          render_pickup ( back_buffer, state->pickup_sheet, pickup, state->camera.x ( ), state->camera.y ( ) );
+          render_pickup ( back_buffer, state->pickup_sheet, pickup, state->pickup_frame, state->camera.x ( ), state->camera.y ( ) );
      }
 
      // arrows
@@ -1157,17 +1168,17 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      state->text.render ( back_buffer, buffer, 185, 4 );
 
      SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-     SDL_Rect pickup_clip_rect { Pickup::c_dimension_in_pixels, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect pickup_clip_rect { 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
 
      SDL_BlitSurface ( state->pickup_sheet, &pickup_clip_rect, back_buffer, &pickup_dest_rect );
 
      SDL_Rect bomb_dest_rect { 200, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-     SDL_Rect bomb_clip_rect { Pickup::c_dimension_in_pixels * 3, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect bomb_clip_rect { 0, Pickup::c_dimension_in_pixels * 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
 
      SDL_BlitSurface ( state->pickup_sheet, &bomb_clip_rect, back_buffer, &bomb_dest_rect );
 
      SDL_Rect arrow_dest_rect { 175, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-     SDL_Rect arrow_clip_rect { Pickup::c_dimension_in_pixels * 2, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect arrow_clip_rect { 0, Pickup::c_dimension_in_pixels * 2, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
 
      SDL_BlitSurface ( state->pickup_sheet, &arrow_clip_rect, back_buffer, &arrow_dest_rect );
 }

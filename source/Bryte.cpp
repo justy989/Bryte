@@ -474,6 +474,18 @@ Void State::drop_item_on_enemy_death ( const Enemy& enemy )
                state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
           }
 #endif
+
+          Auto* emitter = emitters.spawn ( enemy.collision_center ( ) );
+
+          if ( emitter ) {
+               Real32 explosion_size = enemy.collision_width ( ) > enemy.collision_height ( ) ?
+                                       enemy.collision_width ( ) : enemy.collision_height ( );
+               explosion_size *= 2.0f;
+               emitter->setup_limited_time ( enemy.collision_center ( ), 0.7f,
+                                             SDL_MapRGB ( pickup_sheet->format, 255, 0, 0 ),
+                                             0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
+                                             Emitter::c_max_particles, 0 );
+          }
      }
 }
 
@@ -1073,7 +1085,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                continue;
           }
 
-          render_pickup ( back_buffer, state->pickup_sheet, pickup, state->pickup_frame, state->camera.x ( ), state->camera.y ( ) );
+          render_pickup ( back_buffer, state->pickup_sheet, pickup, state->pickup_frame,
+                          state->camera.x ( ), state->camera.y ( ) );
      }
 
      // arrows

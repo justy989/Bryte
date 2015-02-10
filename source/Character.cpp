@@ -5,11 +5,11 @@
 
 using namespace bryte;
 
-const Real32 Character::c_damage_accel            = 40.0f;
+const Real32 Character::c_damage_accel            = 65.0f;
 const Real32 Character::c_damage_time             = 0.15f;
 const Real32 Character::c_blink_time              = 1.5f;
-const Int32  Character::c_attack_width_in_pixels  = 9;
-const Int32  Character::c_attack_height_in_pixels = 4;
+const Int32  Character::c_attack_width_in_pixels  = 16;
+const Int32  Character::c_attack_height_in_pixels = 10;
 const Real32 Character::c_attack_width_in_meters  = pixels_to_meters ( Character::c_attack_width_in_pixels );
 const Real32 Character::c_attack_height_in_meters = pixels_to_meters ( Character::c_attack_height_in_pixels );
 const Real32 Character::c_attack_time             = 0.35f;
@@ -40,13 +40,12 @@ Real32 Character::attack_x ( ) const
      default:
           ASSERT ( 0 );
      case Direction::left:
-          return position.x ( ) - Character::c_attack_height_in_meters;
+          return position.x ( ) - c_attack_width_in_meters;
      case Direction::right:
-          return position.x ( ) + dimension.x ( ) * 0.8f;
+          return position.x ( ) + dimension.x ( );
      case Direction::up:
-          return position.x ( ) + dimension.x ( ) * 0.33f;
      case Direction::down:
-          return position.x ( ) + dimension.x ( ) * 0.33f;
+          return position.x ( );
      }
 
      return 0.0f;
@@ -58,13 +57,12 @@ Real32 Character::attack_y ( ) const
      default:
           ASSERT ( 0 );
      case Direction::left:
-          return position.y ( ) + dimension.y ( ) * 0.2f;
      case Direction::right:
-          return position.y ( ) + dimension.y ( ) * 0.2f;
+          return position.y ( );
      case Direction::up:
           return position.y ( ) + dimension.y ( );
      case Direction::down:
-          return position.y ( ) - dimension.y ( ) * 0.5f;
+          return position.y ( ) - c_attack_height_in_meters;
      }
 
      return 0.0f;

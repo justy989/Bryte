@@ -9,6 +9,17 @@ InteractivesDisplay::InteractivesDisplay ( ) :
 
 }
 
+Void InteractivesDisplay::tick ( )
+{
+     torch_update_delay--;
+
+     if ( torch_update_delay <= 0 ) {
+          torch_frame++;
+          torch_frame %= c_torch_frame_count;
+          torch_update_delay = c_torch_frames_per_update;
+     }
+}
+
 Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& interactives,
                                    Real32 camera_x, Real32 camera_y )
 {
@@ -90,12 +101,12 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           break;
      case Interactive::Type::torch:
           if ( interactive.interactive_torch.on ) {
-               clip_rect.x = Map::c_tile_dimension_in_pixels;
+               clip_rect.x = Map::c_tile_dimension_in_pixels * ( 1 + torch_frame );
           }
           break;
      case Interactive::Type::pushable_torch:
           if ( interactive.interactive_pushable_torch.torch.on ) {
-               clip_rect.x = Map::c_tile_dimension_in_pixels;
+               clip_rect.x = Map::c_tile_dimension_in_pixels * ( 1 + torch_frame );
           }
           break;
      case Interactive::Type::light_detector:

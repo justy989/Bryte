@@ -1048,6 +1048,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      // interactives
+     state->interactives_display.tick ( );
      state->interactives_display.render ( back_buffer, state->interactives,
                                           state->camera.x ( ), state->camera.y ( ) );
 

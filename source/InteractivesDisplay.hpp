@@ -27,15 +27,17 @@ namespace bryte
 
      public:
 
+          static const Int32 c_frames_per_update = 12;
+
           static const Int32 c_torch_frame_count = 3;
-          static const Int32 c_torch_frames_per_update = 8;
+          static const Int32 c_light_detector_frame_count = 2;
 
      public:
 
           SDL_Surface* interactive_sheet;
 
-          Int32 torch_frame;
-          Int32 torch_update_delay;
+          Int32 frame;
+          Int32 frame_update_delay;
      };
 }
 

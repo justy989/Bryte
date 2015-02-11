@@ -126,8 +126,30 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           }
           break;
      case Interactive::Type::exit:
+          clip_rect.y += Map::c_tile_dimension_in_pixels;
           clip_rect.x = interactive.interactive_exit.direction * Map::c_tile_dimension_in_pixels;
-          clip_rect.y += interactive.interactive_exit.state * Map::c_tile_dimension_in_pixels;
+
+          switch ( interactive.interactive_exit.state ) {
+          default:
+               break;
+          case Exit::State::closed:
+               break;
+          case Exit::State::open:
+               clip_rect.y += 2 * Map::c_tile_dimension_in_pixels;
+               break;
+          case Exit::State::locked:
+               clip_rect.y += 4 * Map::c_tile_dimension_in_pixels;
+               break;
+          case Exit::State::changing_to_closed:
+          case Exit::State::changing_to_open:
+               clip_rect.y += Map::c_tile_dimension_in_pixels;
+               break;
+          case Exit::State::changing_to_locked:
+          case Exit::State::changing_to_unlocked:
+               clip_rect.y += 3 * Map::c_tile_dimension_in_pixels;
+               break;
+          }
+
           break;
      }
 

@@ -5,6 +5,7 @@
 using namespace bryte;
 
 static const Real32 c_lever_cooldown     = 0.75f;
+static const Real32 c_exit_change_time   = 0.5f;
 static const Real32 c_lean_on_block_time = 0.6f;
 
 Void UnderneathInteractive::reset ( )
@@ -336,7 +337,6 @@ Void Interactive::update ( Real32 time_delta, Interactives& interactives )
      default:
           break;
      case Type::none:
-     case Type::exit:
      case Type::torch:
      case Type::light_detector:
           break;
@@ -348,6 +348,9 @@ Void Interactive::update ( Real32 time_delta, Interactives& interactives )
           break;
      case Type::pushable_torch:
           interactive_pushable_torch.update ( time_delta );
+          break;
+     case Type::exit:
+          interactive_exit.update ( time_delta );
           break;
      }
 }
@@ -484,18 +487,55 @@ Void Exit::reset ( )
      exit_index_y = 0;
 }
 
+Void Exit::update ( Real32 time_delta )
+{
+     switch ( state ) {
+     default:
+          break;
+     case State::changing_to_open:
+     case State::changing_to_unlocked:
+     {
+          state_watch.tick ( time_delta );
+
+          if ( state_watch.expired ( ) ) {
+               state = State::open;
+          }
+     } break;
+     case State::changing_to_closed:
+     {
+          state_watch.tick ( time_delta );
+
+          if ( state_watch.expired ( ) ) {
+               state = State::closed;
+          }
+     } break;
+     case State::changing_to_locked:
+     {
+          state_watch.tick ( time_delta );
+
+          if ( state_watch.expired ( ) ) {
+               state = State::locked;
+          }
+     } break;
+     }
+}
+
 Void Exit::activate ( )
 {
      switch ( state ) {
      default:
-          ASSERT ( 0 );
           break;
      case State::open:
-          state = State::closed;
+          state = State::changing_to_closed;
+          state_watch.reset ( c_exit_change_time );
           break;
      case State::closed:
+          state = State::changing_to_open;
+          state_watch.reset ( c_exit_change_time );
+          break;
      case State::locked:
-          state = State::open;
+          state = State::changing_to_unlocked;
+          state_watch.reset ( c_exit_change_time );
           break;
      }
 }

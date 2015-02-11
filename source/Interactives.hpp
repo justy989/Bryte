@@ -15,14 +15,21 @@ namespace bryte
                open,
                closed,
                locked,
+               changing_to_open,
+               changing_to_closed,
+               changing_to_locked,
+               changing_to_unlocked,
                count
           };
 
           Void reset ( );
 
+          Void update ( Real32 time_delta );
+
           Void activate ( );
 
           Direction direction;
+          Stopwatch state_watch;
           State     state;
           Uint8     map_index;
           Uint8     exit_index_x;

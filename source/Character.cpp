@@ -260,15 +260,29 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      velocity = acceleration * time_delta + velocity;
 
-     walk_tracker += velocity.length ( );
+     if ( constant_animation ) {
+          walk_tracker += time_delta;
 
-     if ( walk_tracker > walk_frame_rate ) {
-          walk_frame += walk_frame_change;
-          if ( walk_frame <= 0 ||
-               walk_frame >= ( walk_frame_count - 1 ) ) {
-               walk_frame_change = -walk_frame_change;
+          if ( walk_tracker > walk_frame_rate ) {
+               walk_frame += walk_frame_change;
+               if ( walk_frame <= 0 ||
+                    walk_frame >= ( walk_frame_count - 1 ) ) {
+                    walk_frame_change = -walk_frame_change;
+               }
+               walk_tracker -= walk_frame_rate;
           }
-          walk_tracker -= walk_frame_rate;
+
+     } else {
+          walk_tracker += velocity.length ( );
+
+          if ( walk_tracker > walk_frame_rate ) {
+               walk_frame += walk_frame_change;
+               if ( walk_frame <= 0 ||
+                    walk_frame >= ( walk_frame_count - 1 ) ) {
+                    walk_frame_change = -walk_frame_change;
+               }
+               walk_tracker -= walk_frame_rate;
+          }
      }
 
      if ( walk_frame > walk_frame_count ) {

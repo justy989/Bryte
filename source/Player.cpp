@@ -29,6 +29,7 @@ Void Player::clear ( )
      walk_frame_count = 3;
      walk_frame_rate = 30.0f;
      walk_frame_change = 1;
+     constant_animation = false;
 
      damage_pushed = Direction::count;
 

@@ -97,6 +97,8 @@ namespace bryte
           Real32 walk_tracker;
           Real32 walk_frame_rate;
 
+          Bool constant_animation;
+
           Direction damage_pushed;
 
           Stopwatch damage_watch;

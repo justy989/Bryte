@@ -248,6 +248,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           break;
      }
 
+
      // TEMPORARY, slow character down
      acceleration += velocity * -deceleration_scale;
 
@@ -261,6 +262,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      Vector center { collision_x ( ) + half_width,
                      collision_y ( ) + half_height };
+
+     Map::Coordinates old_coords = Map::vector_to_coordinates ( center );
 
      Int32 center_tile_x = meters_to_pixels ( center.x ( ) ) / Map::c_tile_dimension_in_pixels;
      Int32 center_tile_y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
@@ -359,6 +362,14 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           change_in_position -= ( wall_normal * change_in_position.inner_product ( wall_normal ) );
 
           time_remaining -= closest_time_intersection;
+     }
+
+     Map::Coordinates new_coords = Map::vector_to_coordinates ( collision_center ( ) );
+
+     if ( old_coords.x != new_coords.x ||
+          old_coords.y != new_coords.y ) {
+          interactives.enter ( new_coords.x, new_coords.y );
+          interactives.leave ( old_coords.x, old_coords.y );
      }
 
      acceleration.zero ( );

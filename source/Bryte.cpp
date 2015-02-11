@@ -857,7 +857,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                for ( Int32 y = tile_min_y; y <= tile_max_y; ++y ) {
                     for ( Int32 x = tile_min_x; x <= tile_max_x; ++x ) {
-                         state->interactives.activate ( x, y );
+                         auto& interactive = state->interactives.get_from_tile ( x, y );
+                         if ( interactive.type != Interactive::Type::exit ) {
+                              state->interactives.activate ( x, y );
+                         }
                     }
                }
 

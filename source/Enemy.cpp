@@ -24,6 +24,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
      walk_tracker = 0.0f;
      walk_frame = 0;
+     walk_frame_change = 0;
 
      switch ( type ) {
      default:

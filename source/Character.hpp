@@ -91,6 +91,7 @@ namespace bryte
           Real32 walk_acceleration;
 
           Int8 walk_frame;
+          Int8 walk_frame_change;
           Int8 walk_frame_count;
 
           Real32 walk_tracker;

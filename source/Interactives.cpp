@@ -6,7 +6,7 @@ using namespace bryte;
 
 static const Real32 c_lever_cooldown     = 0.75f;
 static const Real32 c_exit_change_time   = 0.5f;
-static const Real32 c_lean_on_block_time = 0.6f;
+static const Real32 c_lean_on_block_time = 0.3f;
 
 Void UnderneathInteractive::reset ( )
 {

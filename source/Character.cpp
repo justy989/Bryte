@@ -263,8 +263,11 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      walk_tracker += velocity.length ( );
 
      if ( walk_tracker > walk_frame_rate ) {
-          walk_frame++;
-          walk_frame %= walk_frame_count;
+          walk_frame += walk_frame_change;
+          if ( walk_frame <= 0 ||
+               walk_frame >= ( walk_frame_count - 1 ) ) {
+               walk_frame_change = -walk_frame_change;
+          }
           walk_tracker -= walk_frame_rate;
      }
 

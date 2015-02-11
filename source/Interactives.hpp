@@ -12,13 +12,13 @@ namespace bryte
 
      struct Exit {
           enum State {
-               open,
                closed,
-               locked,
                changing_to_open,
+               open,
+               changing_to_unlocked,
+               locked,
                changing_to_closed,
                changing_to_locked,
-               changing_to_unlocked,
                count
           };
 

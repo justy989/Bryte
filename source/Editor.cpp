@@ -75,7 +75,7 @@ Void State::mouse_button_left_clicked ( )
                interactive.type = Interactive::Type::exit;
                interactive.reset ( );
                interactive.interactive_exit.direction    = static_cast<Direction>( current_exit_direction );
-               interactive.interactive_exit.state        = static_cast<Exit::State>( current_exit_state );
+               interactive.interactive_exit.state        = static_cast<Exit::State>( current_exit_state * 2 );
           }
      } break;
      case Mode::lever:
@@ -216,8 +216,8 @@ Void State::mouse_button_right_clicked ( )
 
           if ( interactive.type == Interactive::Type::exit ) {
                interactive.interactive_exit.state = static_cast<Exit::State>(
-                    ( static_cast<Int32>(interactive.interactive_exit.state) + 1 ) %
-                      Exit::State::count );
+                    ( static_cast<Int32>(interactive.interactive_exit.state) + 2 ) %
+                      ( Exit::State::locked + 2 ) );
           } else {
                current_exit_state++;
                current_exit_state %= 3;
@@ -1116,7 +1116,14 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
                                 state->current_exit_direction,
-                                ( Interactive::Type::exit - 1 ) + state->current_exit_state );
+                                Interactive::Type::exit + ( state->current_exit_state * 2 ) );
+          break;
+     case Mode::pressure_plate:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheet,
+                                state->mouse_x, state->mouse_y,
+                                0,
+                                Interactive::Type::exit + 5 );
           break;
      case Mode::popup_block:
           render_current_icon ( back_buffer,

@@ -88,7 +88,13 @@ namespace bryte
           Vector collision_offset;
           Vector collision_dimension;
 
-          Vector walk_acceleration;
+          Real32 walk_acceleration;
+
+          Int8 walk_frame;
+          Int8 walk_frame_count;
+
+          Real32 walk_tracker;
+          Real32 walk_frame_rate;
 
           Direction damage_pushed;
 

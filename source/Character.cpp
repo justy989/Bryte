@@ -200,6 +200,9 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      state_watch.tick ( time_delta );
      cooldown_watch.tick ( time_delta );
 
+     acceleration.normalize ( );
+     acceleration *= walk_acceleration;
+
      // logic based on current state
      switch ( state ) {
      case State::blinking:
@@ -256,6 +259,18 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                  ( acceleration * ( 0.5f * square ( time_delta ) ) );
 
      velocity = acceleration * time_delta + velocity;
+
+     walk_tracker += velocity.length ( );
+
+     if ( walk_tracker > walk_frame_rate ) {
+          walk_frame++;
+          walk_frame %= walk_frame_count;
+          walk_tracker -= walk_frame_rate;
+     }
+
+     if ( walk_frame > walk_frame_count ) {
+          LOG_ERROR ( "Bug!\n" );
+     }
 
      Real32 half_width  = collision_width ( ) * 0.5f;
      Real32 half_height = collision_height ( ) * 0.5f;
@@ -382,16 +397,16 @@ Void Character::walk ( Direction dir )
           ASSERT ( 0 );
           break;
      case Direction::left:
-          acceleration += Vector ( -walk_acceleration.x ( ), 0.0f );
+          acceleration += Vector ( -1.0f, 0.0f );
           break;
      case Direction::up:
-          acceleration += Vector ( 0.0f, walk_acceleration.y ( ) );
+          acceleration += Vector ( 0.0f, 1.0f );
           break;
      case Direction::right:
-          acceleration += Vector ( walk_acceleration.x ( ), 0.0f );
+          acceleration += Vector ( 1.0, 0.0f );
           break;
      case Direction::down:
-          acceleration += Vector ( 0.0f, -walk_acceleration.y ( ) );
+          acceleration += Vector ( 0.0f, -1.0f );
           break;
      }
 

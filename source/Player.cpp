@@ -21,8 +21,13 @@ Void Player::clear ( )
      collision_offset.set ( pixels_to_meters ( 5 ), pixels_to_meters ( 2 ) );
      collision_dimension.set ( pixels_to_meters ( 6 ), pixels_to_meters ( 7 ) );
 
-     walk_acceleration.set ( 9.5f, 9.5f );
+     walk_acceleration = 9.5f;
      deceleration_scale = 3.0f;
+
+     walk_tracker = 0.0f;
+     walk_frame = 0;
+     walk_frame_count = 3;
+     walk_frame_rate = 10.0f;
 
      damage_pushed = Direction::count;
 

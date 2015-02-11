@@ -119,7 +119,8 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
                                                  character.width ( ), character.height ( ) );
 
      SDL_Rect clip_rect = {
-          0, static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels,
+          character.walk_frame * Map::c_tile_dimension_in_pixels,
+          static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels,
           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
      };
 

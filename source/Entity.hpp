@@ -22,12 +22,14 @@ namespace bryte
 
      inline Bool Entity::is_dead ( ) const
      {
-          return life_state == LifeState::dead;
+          return life_state == LifeState::dead ||
+                 life_state == LifeState::dying;
      }
 
      inline Bool Entity::is_alive ( ) const
      {
-          return life_state != LifeState::dead;
+          return life_state != LifeState::dead &&
+                 life_state != LifeState::dying;
      }
 
      struct TrackEntity {

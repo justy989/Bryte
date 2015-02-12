@@ -68,21 +68,21 @@ static Void render_character_attack ( SDL_Surface* back_buffer, SDL_Surface* hor
           break;
      case Direction::left:
           dest_rect = build_world_sdl_rect ( character.position.x ( ) - pixels_to_meters ( clip_rect.w ),
-                                             character.position.y ( ) + character.dimension.y ( ) * 0.4f,
+                                             character.position.y ( ) + character.dimension.y ( ) * 0.2f,
                                              0.0f, 0.0f );
           break;
      case Direction::up:
           attack_sheet = vertical_attack_sheet;
           clip_rect.w = 4;
           clip_rect.h = 9;
-          dest_rect = build_world_sdl_rect ( character.position.x ( ) + character.dimension.x ( ) * 0.35f,
+          dest_rect = build_world_sdl_rect ( character.position.x ( ) + character.dimension.x ( ) * 0.5f,
                                              character.position.y ( ) + character.dimension.y ( ),
                                              0.0f, 0.0f );
           break;
      case Direction::right:
           clip_rect.x = 9;
           dest_rect = build_world_sdl_rect ( character.position.x ( ) + character.dimension.x ( ),
-                                             character.position.y ( ) + character.dimension.y ( ) * 0.4f,
+                                             character.position.y ( ) + character.dimension.y ( ) * 0.2f,
                                              0.0f, 0.0f );
           break;
      case Direction::down:
@@ -90,8 +90,8 @@ static Void render_character_attack ( SDL_Surface* back_buffer, SDL_Surface* hor
           clip_rect.w = 4;
           clip_rect.h = 9;
           clip_rect.y = 9;
-          dest_rect = build_world_sdl_rect ( character.position.x ( ) + character.dimension.x ( ) * 0.35f,
-                                             character.position.y ( ) - pixels_to_meters ( clip_rect.h ),
+          dest_rect = build_world_sdl_rect ( character.position.x ( ) + character.dimension.x ( ) * 0.3f,
+                                             character.position.y ( ) - ( pixels_to_meters ( clip_rect.h ) * 0.8f ),
                                              0.0f, 0.0f );
           break;
      }
@@ -123,6 +123,11 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
           static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels,
           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
      };
+
+     if ( character.state == Character::State::attacking ) {
+          clip_rect.y += Direction::count * Map::c_tile_dimension_in_pixels;
+          clip_rect.x = 0;
+     }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 

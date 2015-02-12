@@ -139,6 +139,8 @@ namespace bryte
 
           Int32 player_key_count;
 
+          Stopwatch player_deathwatch;
+
 #ifdef DEBUG
           Bool enemy_think;
 #endif

@@ -14,8 +14,7 @@
 
 using namespace bryte;
 
-static const Real32 c_lever_width             = 0.5f;
-static const Real32 c_lever_height            = 0.5f;
+static const Real32 c_player_death_delay      = 3.0f;
 
 static const Char8* c_test_tilesheet_path        = "castle_tilesheet.bmp";
 static const Char8* c_test_decorsheet_path       = "castle_decorsheet.bmp";
@@ -486,14 +485,15 @@ Void State::player_death ( )
 
      player.position = Map::coordinates_to_vector ( player_spawn_tile_x, player_spawn_tile_y );
 
-     // clear persisted exits and load the first map
-     map.clear_persisted_exits ( );
-     map.load_from_master_list ( 0, interactives );
-
      pickups.clear ( );
      arrows.clear ( );
      emitters.clear ( );
      enemies.clear ( );
+
+     // clear persisted exits and load the first map
+     map.clear_persisted_exits ( );
+     map.load_from_master_list ( 0, interactives );
+
      spawn_map_enemies ( );
 }
 
@@ -711,7 +711,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           }
      }
 
-     state->player.update ( time_delta, state->map, state->interactives );
+     if ( state->player.is_alive ( ) ){
+          state->player.update ( time_delta, state->map, state->interactives );
+     }
 
      if ( state->player.state == Character::State::pushing ) {
           Int32 push_tile_x = 0;
@@ -722,6 +724,12 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( push_tile_x >= 0 && push_tile_x < state->interactives.width ( ) &&
                push_tile_y >= 0 && push_tile_y < state->interactives.height ( ) ) {
                state->interactives.push ( push_tile_x, push_tile_y, state->player.facing, state->map );
+          }
+     } else if ( state->player.life_state == Entity::LifeState::dying ) {
+          state->player_deathwatch.tick ( time_delta );
+          if ( state->player_deathwatch.expired ( ) ) {
+               state->player.life_state = Entity::LifeState::dead;
+               state->player_death ( );
           }
      }
 
@@ -759,6 +767,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           // check collision between player and enemy
           if ( state->player.state != Character::State::blinking &&
+               state->player.is_alive ( ) &&
                state->player.collides_with ( enemy ) ) {
                Direction damage_dir = determine_damage_direction ( enemy.collision_center ( ),
                                                                    state->player.collision_center ( ),
@@ -766,7 +775,23 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->player.damage ( 1, damage_dir );
 
                if ( state->player.life_state == Entity::LifeState::dead ) {
-                    state->player_death ( );
+                    state->player.life_state = Entity::LifeState::dying;
+                    state->player_deathwatch.reset ( c_player_death_delay );
+
+                    LOG_INFO ( "Spawn emitter on player death!\n" );
+
+                    Auto* emitter = state->emitters.spawn ( state->player.collision_center ( ) );
+
+                    if ( emitter ) {
+                         Real32 explosion_size = state->player.collision_width ( ) > state->player.collision_height ( ) ?
+                                                 state->player.collision_width ( ) : state->player.collision_height ( );
+                         explosion_size *= 2.0f;
+                         emitter->setup_limited_time ( state->player.collision_center ( ), 0.7f,
+                                                       SDL_MapRGB ( state->pickup_sheet->format, 255, 0, 0 ),
+                                                       0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
+                                                       Emitter::c_max_particles, 0 );
+                    }
+
                }
           }
 

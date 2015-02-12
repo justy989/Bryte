@@ -10,8 +10,8 @@ Void Player::clear ( )
      facing = Direction::left;
      state_watch.reset ( 0.0f );
 
-     health           = 25;
-     max_health       = 25;
+     health           = 3;
+     max_health       = 3;
 
      velocity.zero ( );
      acceleration.zero ( );
@@ -21,7 +21,15 @@ Void Player::clear ( )
      collision_offset.set ( pixels_to_meters ( 5 ), pixels_to_meters ( 2 ) );
      collision_dimension.set ( pixels_to_meters ( 6 ), pixels_to_meters ( 7 ) );
 
-     walk_acceleration.set ( 8.5f, 8.5f );
+     walk_acceleration = 18.0f;
+     deceleration_scale = 6.0f;
+
+     walk_tracker = 0.0f;
+     walk_frame = 0;
+     walk_frame_count = 3;
+     walk_frame_rate = 30.0f;
+     walk_frame_change = 1;
+     constant_animation = false;
 
      damage_pushed = Direction::count;
 

@@ -22,6 +22,7 @@
 #include "MapDisplay.hpp"
 #include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
+#include "PickupDisplay.hpp"
 
 #include "Emitter.hpp"
 
@@ -50,6 +51,7 @@ namespace bryte
           Direction facing;
           Stopwatch stuck_watch;
           TrackEntity track_entity;
+          Bool on_fire;
      };
 
      struct Bomb : public Entity {
@@ -115,11 +117,15 @@ namespace bryte
 
           Text text;
 
+          SDL_PixelFormat      back_buffer_format;
+
           MapDisplay          map_display;
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
+          PickupDisplay       pickup_display;
 
-          SDL_Surface* pickup_sheet;
+          Animation arrow_animation;
+
           SDL_Surface* arrow_sheet;
           SDL_Surface* bomb_sheet;
 
@@ -134,6 +140,8 @@ namespace bryte
           Int32 player_spawn_tile_y;
 
           Int32 player_key_count;
+
+          Stopwatch player_deathwatch;
 
 #ifdef DEBUG
           Bool enemy_think;

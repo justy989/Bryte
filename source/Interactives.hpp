@@ -12,17 +12,24 @@ namespace bryte
 
      struct Exit {
           enum State {
-               open,
                closed,
+               changing_to_open,
+               open,
+               changing_to_unlocked,
                locked,
+               changing_to_closed,
+               changing_to_locked,
                count
           };
 
           Void reset ( );
 
+          Void update ( Real32 time_delta );
+
           Void activate ( );
 
           Direction direction;
+          Stopwatch state_watch;
           State     state;
           Uint8     map_index;
           Uint8     exit_index_x;
@@ -30,13 +37,20 @@ namespace bryte
      };
 
      struct Lever {
+          enum State {
+               off,
+               on,
+               changing_on,
+               changing_off,
+          };
+
           Void reset ( );
 
-          Void update ( Real32 time_delta );
+          Void update ( Real32 time_delta, Interactives& interactives );
 
-          Void activate ( Interactives& interactives );
+          Void activate ( );
 
-          Bool      on;
+          State     state;
           Stopwatch cooldown_watch;
           Uint8     activate_coordinate_x;
           Uint8     activate_coordinate_y;
@@ -58,7 +72,6 @@ namespace bryte
 
           State     state;
           Stopwatch cooldown_watch;
-          Direction restricted_direction;
           Bool      one_time;
           Bool      pushed_last_update;
           Uint8     activate_coordinate_x;
@@ -148,7 +161,7 @@ namespace bryte
 
           Void      reset    ( );
 
-          Void      update   ( Real32 time_delta );
+          Void      update   ( Real32 time_delta, Interactives& interactives );
 
           Void      activate ( Interactives& interactives );
           Direction push     ( Direction direction, Interactives& interactives );

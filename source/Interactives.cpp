@@ -5,7 +5,8 @@
 using namespace bryte;
 
 static const Real32 c_lever_cooldown     = 0.75f;
-static const Real32 c_lean_on_block_time = 0.6f;
+static const Real32 c_exit_change_time   = 0.5f;
+static const Real32 c_lean_on_block_time = 0.3f;
 
 Void UnderneathInteractive::reset ( )
 {
@@ -69,7 +70,7 @@ Void Interactives::update ( Real32 time_delta )
      Int32 count = m_width * m_height;
 
      for ( Int32 i = 0; i < count; ++i ) {
-          m_interactives[ i ].update ( time_delta );
+          m_interactives[ i ].update ( time_delta, *this );
      }
 }
 
@@ -266,7 +267,7 @@ Void Interactive::activate ( Interactives& interactives )
           interactive_exit.activate ( );
           break;
      case Type::lever:
-          interactive_lever.activate ( interactives );
+          interactive_lever.activate ( );
           break;
      case Type::torch:
           interactive_torch.activate ( );
@@ -330,18 +331,17 @@ Void Interactive::leave ( Interactives& interactives )
      }
 }
 
-Void Interactive::update ( Real32 time_delta )
+Void Interactive::update ( Real32 time_delta, Interactives& interactives )
 {
      switch ( type ) {
      default:
           break;
      case Type::none:
-     case Type::exit:
      case Type::torch:
      case Type::light_detector:
           break;
      case Type::lever:
-          interactive_lever.update ( time_delta );
+          interactive_lever.update ( time_delta, interactives );
           break;
      case Type::pushable_block:
           interactive_pushable_block.update ( time_delta );
@@ -349,43 +349,63 @@ Void Interactive::update ( Real32 time_delta )
      case Type::pushable_torch:
           interactive_pushable_torch.update ( time_delta );
           break;
+     case Type::exit:
+          interactive_exit.update ( time_delta );
+          break;
      }
 }
 
 Void Lever::reset ( )
 {
      cooldown_watch.reset ( 0.0f );
-     on                    = false;
+     state                 = State::off;
      activate_coordinate_x = 0;
      activate_coordinate_y = 0;
 }
 
-Void Lever::update ( Real32 time_delta )
+Void Lever::update ( Real32 time_delta, Interactives& interactives )
 {
-     cooldown_watch.tick ( time_delta );
+     switch ( state ) {
+     default:
+          break;
+     case State::changing_on:
+     {
+          cooldown_watch.tick ( time_delta );
+
+          if ( cooldown_watch.expired ( ) ) {
+               Auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+               interactive.activate ( interactives );
+               state = State::on;
+          }
+     } break;
+     case State::changing_off:
+     {
+          cooldown_watch.tick ( time_delta );
+
+          if ( cooldown_watch.expired ( ) ) {
+               Auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+               interactive.activate ( interactives );
+               state = State::off;
+          }
+     } break;
+     }
 }
 
-Void Lever::activate ( Interactives& interactives )
+Void Lever::activate ( )
 {
-     if ( !cooldown_watch.expired ( ) ) {
-          return;
+     if ( state == State::off ) {
+          state = State::changing_on;
+          cooldown_watch.reset ( c_lever_cooldown );
+     } else if ( state == State::on ) {
+          state = State::changing_off;
+          cooldown_watch.reset ( c_lever_cooldown );
      }
-
-     Auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
-     interactive.activate ( interactives );
-
-     // toggle
-     on = !on;
-
-     // reset the stopwatch
-     cooldown_watch.reset ( c_lever_cooldown );
 }
 
 Void PushableBlock::reset ( )
 {
      state                = idle;
      cooldown_watch.reset ( 0.0f );
-     restricted_direction = Direction::count;
      pushed_last_update   = false;
      one_time             = false;
 }
@@ -421,12 +441,6 @@ Direction PushableBlock::push ( Direction direction, Interactives& interactives 
           ASSERT ( 0 );
           break;
      case idle:
-          // restrict direction can be pushed if desired
-          if ( restricted_direction != Direction::count &&
-               restricted_direction != direction ) {
-               break;
-          }
-
           state = leaned_on;
           cooldown_watch.reset ( c_lean_on_block_time );
           pushed_last_update = true;
@@ -466,18 +480,61 @@ Void Exit::reset ( )
      exit_index_y = 0;
 }
 
+Void Exit::update ( Real32 time_delta )
+{
+     switch ( state ) {
+     default:
+          break;
+     case State::changing_to_open:
+     case State::changing_to_unlocked:
+     {
+          state_watch.tick ( time_delta );
+
+          if ( state_watch.expired ( ) ) {
+               state = State::open;
+          }
+     } break;
+     case State::changing_to_closed:
+     {
+          state_watch.tick ( time_delta );
+
+          if ( state_watch.expired ( ) ) {
+               state = State::closed;
+          }
+     } break;
+     case State::changing_to_locked:
+     {
+          state_watch.tick ( time_delta );
+
+          if ( state_watch.expired ( ) ) {
+               state = State::locked;
+          }
+     } break;
+     }
+}
+
 Void Exit::activate ( )
 {
      switch ( state ) {
      default:
-          ASSERT ( 0 );
           break;
      case State::open:
-          state = State::closed;
+          state = State::changing_to_closed;
+          state_watch.reset ( c_exit_change_time );
           break;
      case State::closed:
+          state = State::changing_to_open;
+          state_watch.reset ( c_exit_change_time );
+          break;
      case State::locked:
+          state = State::changing_to_unlocked;
+          state_watch.reset ( c_exit_change_time );
+          break;
+     case State::changing_to_closed:
           state = State::open;
+          break;
+     case State::changing_to_open:
+          state = State::closed;
           break;
      }
 }

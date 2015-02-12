@@ -407,6 +407,13 @@ Void Map::load ( const Char8* filepath, Interactives& interactives )
      }
 }
 
+void Map::clear_persisted_exits ( )
+{
+     for ( Uint32 i = 0; i < c_max_maps; ++i  ) {
+          m_persisted_exits [ i ].exit_count = 0;
+     }
+}
+
 Void Map::persist_exits ( const Interactives& interactives )
 {
      LOG_DEBUG ( "Persisting exits on map: %d\n", m_current_master_map );

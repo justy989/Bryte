@@ -95,6 +95,8 @@ namespace bryte
           Void remove_lamp        ( Fixture* lamp );
           Void remove_enemy_spawn ( EnemySpawn* enemy_spawn );
 
+          Void clear_persisted_exits ( );
+
           inline Int32 width  ( ) const;
           inline Int32 height ( ) const;
 

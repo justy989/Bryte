@@ -10,6 +10,8 @@ namespace bryte {
 
           CharacterDisplay ( );
 
+          Void tick ( );
+
           Void render_player ( SDL_Surface* back_buffer, const Character& character,
                                Real32 camera_x, Real32 camera_y );
 
@@ -21,6 +23,12 @@ namespace bryte {
 
           SDL_Surface* horizontal_sword_sheet;
           SDL_Surface* vertical_sword_sheet;
+
+          SDL_Surface* blink_surface;
+
+          Bool  blink_on;
+          Int32 blink_counter;
+
      };
 };
 

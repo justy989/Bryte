@@ -83,10 +83,21 @@ namespace bryte
           Vector velocity;
           Vector acceleration;
 
+          Real32 deceleration_scale;
+
           Vector collision_offset;
           Vector collision_dimension;
 
-          Vector walk_acceleration;
+          Real32 walk_acceleration;
+
+          Int8 walk_frame;
+          Int8 walk_frame_change;
+          Int8 walk_frame_count;
+
+          Real32 walk_tracker;
+          Real32 walk_frame_rate;
+
+          Bool constant_animation;
 
           Direction damage_pushed;
 

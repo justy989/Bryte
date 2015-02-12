@@ -5,11 +5,11 @@
 
 using namespace bryte;
 
-const Real32 Character::c_damage_accel            = 40.0f;
+const Real32 Character::c_damage_accel            = 65.0f;
 const Real32 Character::c_damage_time             = 0.15f;
 const Real32 Character::c_blink_time              = 1.5f;
-const Int32  Character::c_attack_width_in_pixels  = 9;
-const Int32  Character::c_attack_height_in_pixels = 4;
+const Int32  Character::c_attack_width_in_pixels  = 16;
+const Int32  Character::c_attack_height_in_pixels = 10;
 const Real32 Character::c_attack_width_in_meters  = pixels_to_meters ( Character::c_attack_width_in_pixels );
 const Real32 Character::c_attack_height_in_meters = pixels_to_meters ( Character::c_attack_height_in_pixels );
 const Real32 Character::c_attack_time             = 0.35f;
@@ -40,13 +40,12 @@ Real32 Character::attack_x ( ) const
      default:
           ASSERT ( 0 );
      case Direction::left:
-          return position.x ( ) - Character::c_attack_height_in_meters;
+          return position.x ( ) - c_attack_width_in_meters;
      case Direction::right:
-          return position.x ( ) + dimension.x ( ) * 0.8f;
+          return position.x ( ) + dimension.x ( );
      case Direction::up:
-          return position.x ( ) + dimension.x ( ) * 0.33f;
      case Direction::down:
-          return position.x ( ) + dimension.x ( ) * 0.33f;
+          return position.x ( );
      }
 
      return 0.0f;
@@ -58,13 +57,12 @@ Real32 Character::attack_y ( ) const
      default:
           ASSERT ( 0 );
      case Direction::left:
-          return position.y ( ) + dimension.y ( ) * 0.2f;
      case Direction::right:
-          return position.y ( ) + dimension.y ( ) * 0.2f;
+          return position.y ( );
      case Direction::up:
           return position.y ( ) + dimension.y ( );
      case Direction::down:
-          return position.y ( ) - dimension.y ( ) * 0.5f;
+          return position.y ( ) - c_attack_height_in_meters;
      }
 
      return 0.0f;
@@ -202,6 +200,9 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      state_watch.tick ( time_delta );
      cooldown_watch.tick ( time_delta );
 
+     acceleration.normalize ( );
+     acceleration *= walk_acceleration;
+
      // logic based on current state
      switch ( state ) {
      case State::blinking:
@@ -250,19 +251,51 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           break;
      }
 
+
      // TEMPORARY, slow character down
-     acceleration += velocity * -4.0f;
+     acceleration += velocity * -deceleration_scale;
 
      Vector change_in_position = ( velocity * time_delta ) +
                                  ( acceleration * ( 0.5f * square ( time_delta ) ) );
 
      velocity = acceleration * time_delta + velocity;
 
+     if ( constant_animation ) {
+          walk_tracker += time_delta;
+
+          if ( walk_tracker > walk_frame_rate ) {
+               walk_frame += walk_frame_change;
+               if ( walk_frame <= 0 ||
+                    walk_frame >= ( walk_frame_count - 1 ) ) {
+                    walk_frame_change = -walk_frame_change;
+               }
+               walk_tracker -= walk_frame_rate;
+          }
+
+     } else {
+          walk_tracker += velocity.length ( );
+
+          if ( walk_tracker > walk_frame_rate ) {
+               walk_frame += walk_frame_change;
+               if ( walk_frame <= 0 ||
+                    walk_frame >= ( walk_frame_count - 1 ) ) {
+                    walk_frame_change = -walk_frame_change;
+               }
+               walk_tracker -= walk_frame_rate;
+          }
+     }
+
+     if ( walk_frame > walk_frame_count ) {
+          LOG_ERROR ( "Bug!\n" );
+     }
+
      Real32 half_width  = collision_width ( ) * 0.5f;
      Real32 half_height = collision_height ( ) * 0.5f;
 
      Vector center { collision_x ( ) + half_width,
                      collision_y ( ) + half_height };
+
+     Map::Coordinates old_coords = Map::vector_to_coordinates ( center );
 
      Int32 center_tile_x = meters_to_pixels ( center.x ( ) ) / Map::c_tile_dimension_in_pixels;
      Int32 center_tile_y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
@@ -363,6 +396,14 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           time_remaining -= closest_time_intersection;
      }
 
+     Map::Coordinates new_coords = Map::vector_to_coordinates ( collision_center ( ) );
+
+     if ( old_coords.x != new_coords.x ||
+          old_coords.y != new_coords.y ) {
+          interactives.enter ( new_coords.x, new_coords.y );
+          interactives.leave ( old_coords.x, old_coords.y );
+     }
+
      acceleration.zero ( );
 }
 
@@ -373,16 +414,16 @@ Void Character::walk ( Direction dir )
           ASSERT ( 0 );
           break;
      case Direction::left:
-          acceleration += Vector ( -walk_acceleration.x ( ), 0.0f );
+          acceleration += Vector ( -1.0f, 0.0f );
           break;
      case Direction::up:
-          acceleration += Vector ( 0.0f, walk_acceleration.y ( ) );
+          acceleration += Vector ( 0.0f, 1.0f );
           break;
      case Direction::right:
-          acceleration += Vector ( walk_acceleration.x ( ), 0.0f );
+          acceleration += Vector ( 1.0, 0.0f );
           break;
      case Direction::down:
-          acceleration += Vector ( 0.0f, -walk_acceleration.y ( ) );
+          acceleration += Vector ( 0.0f, -1.0f );
           break;
      }
 

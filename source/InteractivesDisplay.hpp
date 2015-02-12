@@ -2,6 +2,7 @@
 #define BRYTE_INTERACTIVE_DISPLAY_HPP
 
 #include "Interactives.hpp"
+#include "Animation.hpp"
 
 namespace bryte
 {
@@ -11,6 +12,8 @@ namespace bryte
      public:
 
           InteractivesDisplay ( );
+
+          Void tick ( );
 
           Void render ( SDL_Surface* back_buffer, Interactives& interactives,
                         Real32 camera_x, Real32 camera_y );
@@ -23,7 +26,18 @@ namespace bryte
                                     Int32 position_x, Int32 position_y,
                                     Real32 camera_x, Real32 camera_y );
 
+     public:
+
+          static const Int32 c_frames_per_update = 12;
+
+          static const Int32 c_torch_frame_count = 3;
+          static const Int32 c_light_detector_frame_count = 2;
+
+     public:
+
           SDL_Surface* interactive_sheet;
+
+          Animation animation;
      };
 }
 

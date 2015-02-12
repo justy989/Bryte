@@ -9,6 +9,11 @@ InteractivesDisplay::InteractivesDisplay ( ) :
 
 }
 
+Void InteractivesDisplay::tick ( )
+{
+     animation.update_increment ( c_frames_per_update );
+}
+
 Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& interactives,
                                    Real32 camera_x, Real32 camera_y )
 {
@@ -46,7 +51,7 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           if ( underneath.underneath_pressure_plate.entered ) {
                clip_rect.x += Map::c_tile_dimension_in_pixels;
           }
-          clip_rect.y = ( Interactive::Type::exit + 2 ) + ( underneath.type - 1 );
+          clip_rect.y = ( Interactive::Type::exit + 5 ) + ( underneath.type - 1 );
           clip_rect.y *= Map::c_tile_dimension_in_pixels;
           break;
      case UnderneathInteractive::Type::popup_block:
@@ -79,7 +84,10 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::none:
           return;
      case Interactive::Type::lever:
-          if ( interactive.interactive_lever.on ) {
+          if ( interactive.interactive_lever.state == Lever::State::on ) {
+               clip_rect.x = Map::c_tile_dimension_in_pixels * 2;
+          } else if ( interactive.interactive_lever.state == Lever::State::changing_on ||
+                      interactive.interactive_lever.state == Lever::State::changing_off ) {
                clip_rect.x = Map::c_tile_dimension_in_pixels;
           }
           break;
@@ -87,30 +95,56 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           break;
      case Interactive::Type::torch:
           if ( interactive.interactive_torch.on ) {
-               clip_rect.x = Map::c_tile_dimension_in_pixels;
+               Int32 torch_frame = 1 + ( animation.frame % c_torch_frame_count );
+               clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
           }
           break;
      case Interactive::Type::pushable_torch:
           if ( interactive.interactive_pushable_torch.torch.on ) {
-               clip_rect.x = Map::c_tile_dimension_in_pixels;
+               Int32 torch_frame = 1 + ( animation.frame % c_torch_frame_count );
+               clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
           }
           break;
      case Interactive::Type::light_detector:
           if ( interactive.interactive_light_detector.type == LightDetector::Type::bryte ) {
                if ( !interactive.interactive_light_detector.below_value ) {
-                    clip_rect.x += Map::c_tile_dimension_in_pixels;
+                    Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
+                    clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
                }
           } else {
-               clip_rect.x = 2 * Map::c_tile_dimension_in_pixels;
+               clip_rect.y += Map::c_tile_dimension_in_pixels;
 
                if ( interactive.interactive_light_detector.below_value ) {
-                    clip_rect.x += Map::c_tile_dimension_in_pixels;
+                    Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
+                    clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
                }
           }
           break;
      case Interactive::Type::exit:
+          clip_rect.y += Map::c_tile_dimension_in_pixels;
           clip_rect.x = interactive.interactive_exit.direction * Map::c_tile_dimension_in_pixels;
-          clip_rect.y += interactive.interactive_exit.state * Map::c_tile_dimension_in_pixels;
+
+          switch ( interactive.interactive_exit.state ) {
+          default:
+               break;
+          case Exit::State::closed:
+               break;
+          case Exit::State::open:
+               clip_rect.y += 2 * Map::c_tile_dimension_in_pixels;
+               break;
+          case Exit::State::locked:
+               clip_rect.y += 4 * Map::c_tile_dimension_in_pixels;
+               break;
+          case Exit::State::changing_to_closed:
+          case Exit::State::changing_to_open:
+               clip_rect.y += Map::c_tile_dimension_in_pixels;
+               break;
+          case Exit::State::changing_to_locked:
+          case Exit::State::changing_to_unlocked:
+               clip_rect.y += 3 * Map::c_tile_dimension_in_pixels;
+               break;
+          }
+
           break;
      }
 

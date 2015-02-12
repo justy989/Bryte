@@ -26,6 +26,9 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
      damage_watch.reset ( 0.0f );
      cooldown_watch.reset ( 0.0f );
 
+     walk_tracker = 0.0f;
+     walk_frame = 0;
+
      switch ( type ) {
      default:
           break;
@@ -40,7 +43,13 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collides_with_solids = true;
           collides_with_exits  = true;
 
-          walk_acceleration.set ( 9.0f, 9.0f );
+          walk_acceleration = 9.0f;
+          deceleration_scale = 5.0f;
+
+          walk_frame_change = 0;
+          walk_frame_count = 1;
+          walk_frame_rate = 50.0f;
+          constant_animation = false;
           break;
      case Enemy::Type::bat:
           health     = 2;
@@ -53,7 +62,13 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collides_with_solids = true;
           collides_with_exits = true;
 
-          walk_acceleration.set ( 5.0f, 5.0f );
+          walk_acceleration = 5.0f;
+          deceleration_scale = 2.0f;
+
+          walk_frame_change = 1;
+          walk_frame_count = 3;
+          walk_frame_rate = 0.2f;
+          constant_animation = true;
           break;
      case Enemy::Type::goo:
           health     = 6;
@@ -107,7 +122,7 @@ Void Enemy::clear ( )
      collision_offset.zero ( );
      collision_dimension.zero ( );
 
-     walk_acceleration.zero ( );
+     walk_acceleration = 0.0f;
 
      damage_pushed = Direction::count;
 

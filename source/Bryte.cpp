@@ -159,12 +159,24 @@ const Real32 Bomb::c_explode_radius = Map::c_tile_dimension_in_meters * 2.0f;
 
 Void Bomb::update ( float dt )
 {
-     // allow 1 frame where the bomb has expired but isn't dead
-     if ( explode_watch.expired ( ) ) {
-          life_state = Entity::LifeState::dead;
-     }
+     switch ( life_state ) {
+     default:
+          break;
+     case LifeState::spawning:
+          life_state = LifeState::alive;
+          break;
+     case Entity::LifeState::alive:
+          explode_watch.tick ( dt );
 
-     explode_watch.tick ( dt );
+          // allow 1 frame where the bomb has expired but isn't dead
+          if ( explode_watch.expired ( ) ) {
+               life_state = Entity::LifeState::dying;
+          }
+          break;
+     case Entity::LifeState::dying:
+          life_state = Entity::LifeState::dead;
+          break;
+     }
 }
 
 Void Bomb::clear ( )
@@ -846,7 +858,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           bomb.update ( time_delta );
 
-          if ( bomb.explode_watch.expired ( ) ) {
+          if ( bomb.life_state == Entity::LifeState::dying ) {
                // damage nearby enemies
                for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
                     Auto& enemy = state->enemies [ c ];

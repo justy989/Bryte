@@ -98,9 +98,7 @@ Void State::mouse_button_left_clicked ( )
           } else {
                interactive.type = Interactive::Type::pushable_block;
                interactive.reset ( );
-               interactive.interactive_pushable_block.one_time = current_pushable_block_one_time;
-               interactive.interactive_pushable_block.restricted_direction =
-                    static_cast<Direction>( current_pushable_block_restricted_direction );
+               interactive.interactive_pushable_block.one_time = true;
           }
      } break;
      case Mode::enemy:
@@ -378,8 +376,6 @@ Void State::option_button_up_pressed ( )
      case Mode::lever:
           break;
      case Mode::pushable_block:
-          current_pushable_block_restricted_direction--;
-          current_pushable_block_restricted_direction %= ( Direction::count + 1 );
           break;
      case Mode::light_detector:
           current_light_detector_bryte++;
@@ -439,8 +435,6 @@ Void State::option_button_down_pressed ( )
      case Mode::lever:
           break;
      case Mode::pushable_block:
-          current_pushable_block_restricted_direction++;
-          current_pushable_block_restricted_direction %= ( Direction::count + 1);
           break;
      case Mode::light_detector:
           current_light_detector_bryte--;
@@ -473,20 +467,6 @@ Void State::mouse_scrolled ( Int32 scroll )
           current_enemy_drop %= Pickup::Type::count;
           break;
      case Mode::pushable_block:
-          if ( mouse_on_map ( ) ) {
-               Auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
-
-               if ( interactive.type == Interactive::Type::pushable_block ) {
-                    interactive.interactive_pushable_block.one_time =
-                         !interactive.interactive_pushable_block.one_time;
-               } else {
-                    current_pushable_block_one_time++;
-                    current_pushable_block_one_time %= 2;
-               }
-          } else {
-               current_pushable_block_one_time++;
-               current_pushable_block_one_time %= 2;
-          }
           break;
      }
 }
@@ -588,8 +568,6 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
      state->current_enemy_drop           = 0;
      state->current_exit_direction       = 0;
      state->current_exit_state           = 0;
-     state->current_pushable_block_one_time = 0;
-     state->current_pushable_block_restricted_direction = 4;
      state->current_torch                = 0;
      state->current_pushable_torch       = 0;
      state->current_light_detector_bryte = 0;
@@ -848,15 +826,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           if ( interactive.type == Interactive::Type::pushable_block ) {
                Auto& pushable_block = interactive.interactive_pushable_block;
-               sprintf ( state->message_buffer, "ONCE %d DIR %d ACT %d %d",
-                         pushable_block.one_time,
-                         pushable_block.restricted_direction,
+               sprintf ( state->message_buffer, "ACT %d %d",
                          pushable_block.activate_coordinate_y,
                          pushable_block.activate_coordinate_x );
-          } else {
-               sprintf ( state->message_buffer, "ONCE %d DIR %d",
-                         state->current_pushable_block_one_time,
-                         state->current_pushable_block_restricted_direction );
           }
      } break;
      case Mode::light_detector:

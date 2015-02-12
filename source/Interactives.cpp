@@ -406,7 +406,6 @@ Void PushableBlock::reset ( )
 {
      state                = idle;
      cooldown_watch.reset ( 0.0f );
-     restricted_direction = Direction::count;
      pushed_last_update   = false;
      one_time             = false;
 }
@@ -442,12 +441,6 @@ Direction PushableBlock::push ( Direction direction, Interactives& interactives 
           ASSERT ( 0 );
           break;
      case idle:
-          // restrict direction can be pushed if desired
-          if ( restricted_direction != Direction::count &&
-               restricted_direction != direction ) {
-               break;
-          }
-
           state = leaned_on;
           cooldown_watch.reset ( c_lean_on_block_time );
           pushed_last_update = true;

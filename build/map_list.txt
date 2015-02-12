@@ -1,6 +1,7 @@
 entrance.brm
-block.brm
-key.brm
-torch.brm
-push.brm
+first_key.brm
+locked.brm
+light_detector.brm
+pressure_plate.brm
+fire_arrow.brm
 map.brm

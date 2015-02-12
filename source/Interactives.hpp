@@ -72,7 +72,6 @@ namespace bryte
 
           State     state;
           Stopwatch cooldown_watch;
-          Direction restricted_direction;
           Bool      one_time;
           Bool      pushed_last_update;
           Uint8     activate_coordinate_x;

@@ -2,6 +2,7 @@
 #define BRYTE_INTERACTIVE_DISPLAY_HPP
 
 #include "Interactives.hpp"
+#include "Animation.hpp"
 
 namespace bryte
 {
@@ -36,8 +37,7 @@ namespace bryte
 
           SDL_Surface* interactive_sheet;
 
-          Int32 frame;
-          Int32 frame_update_delay;
+          Animation animation;
      };
 }
 

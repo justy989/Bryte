@@ -1162,14 +1162,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                               state->camera.x ( ), state->camera.y ( ) );
 
      // tick the pickup frame timer
-     state->pickup_frame_counter++;
-
-     if ( state->pickup_frame_counter > 10 ) {
-          state->pickup_frame++;
-          state->pickup_frame %= 4;
-
-          state->pickup_frame_counter = 0;
-     }
+     state->pickup_animation.update_increment ( 10, 4 );
 
      // pickups
      for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
@@ -1179,21 +1172,12 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                continue;
           }
 
-          render_pickup ( back_buffer, state->pickup_sheet, pickup, state->pickup_frame,
+          render_pickup ( back_buffer, state->pickup_sheet, pickup, state->pickup_animation.frame,
                           state->camera.x ( ), state->camera.y ( ) );
      }
 
      // arrows
-     static Int32 arrow_frame = 0;
-     static Int32 arrow_frame_delay = 0;
-
-     arrow_frame_delay++;
-
-     if ( arrow_frame_delay > 5 ) {
-          arrow_frame++;
-          arrow_frame %= 3;
-          arrow_frame_delay = 0;
-     }
+     state->arrow_animation.update_increment ( 5, 3 );
 
      for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
           Auto& arrow = state->arrows [ i ];
@@ -1202,7 +1186,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                continue;
           }
 
-          render_arrow ( back_buffer, state->arrow_sheet, arrow, arrow_frame,
+          render_arrow ( back_buffer, state->arrow_sheet, arrow, state->arrow_animation.frame,
                          state->camera.x ( ), state->camera.y ( ) );
      }
 

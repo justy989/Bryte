@@ -11,12 +11,7 @@ InteractivesDisplay::InteractivesDisplay ( ) :
 
 Void InteractivesDisplay::tick ( )
 {
-     frame_update_delay--;
-
-     if ( frame_update_delay <= 0 ) {
-          frame++;
-          frame_update_delay = c_frames_per_update;
-     }
+     animation.update_increment ( c_frames_per_update );
 }
 
 Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& interactives,
@@ -100,27 +95,27 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           break;
      case Interactive::Type::torch:
           if ( interactive.interactive_torch.on ) {
-               Int32 torch_frame = 1 + ( frame % c_torch_frame_count );
+               Int32 torch_frame = 1 + ( animation.frame % c_torch_frame_count );
                clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
           }
           break;
      case Interactive::Type::pushable_torch:
           if ( interactive.interactive_pushable_torch.torch.on ) {
-               Int32 torch_frame = 1 + ( frame % c_torch_frame_count );
+               Int32 torch_frame = 1 + ( animation.frame % c_torch_frame_count );
                clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
           }
           break;
      case Interactive::Type::light_detector:
           if ( interactive.interactive_light_detector.type == LightDetector::Type::bryte ) {
                if ( !interactive.interactive_light_detector.below_value ) {
-                    Int32 detector_frame = 1 + ( frame % c_light_detector_frame_count );
+                    Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
                     clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
                }
           } else {
                clip_rect.y += Map::c_tile_dimension_in_pixels;
 
                if ( interactive.interactive_light_detector.below_value ) {
-                    Int32 detector_frame = 1 + ( frame % c_light_detector_frame_count );
+                    Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
                     clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
                }
           }

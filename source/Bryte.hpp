@@ -120,8 +120,8 @@ namespace bryte
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
 
-          Int32 pickup_frame_counter;
-          Int32 pickup_frame;
+          Animation arrow_animation;
+          Animation pickup_animation;
 
           SDL_Surface* pickup_sheet;
           SDL_Surface* arrow_sheet;

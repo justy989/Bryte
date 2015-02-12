@@ -537,6 +537,12 @@ Void Exit::activate ( )
           state = State::changing_to_unlocked;
           state_watch.reset ( c_exit_change_time );
           break;
+     case State::changing_to_closed:
+          state = State::open;
+          break;
+     case State::changing_to_open:
+          state = State::closed;
+          break;
      }
 }
 

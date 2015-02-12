@@ -73,9 +73,31 @@ Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
 
      if ( interactive.is_solid ( ) ) {
           // do not activate exits!
-          if ( interactive.type != Interactive::Type::exit ) {
+          if ( interactive.type == Interactive::Type::torch ) {
+
+               if ( on_fire && !interactive.interactive_torch.on ) {
+                   interactive.interactive_torch.on = true;
+               }
+
+               if ( interactive.interactive_torch.on ) {
+                    on_fire = true;
+               }
+
+               return false;
+          } else if ( interactive.type == Interactive::Type::pushable_torch ) {
+               if ( on_fire && !interactive.interactive_pushable_torch.torch.on ) {
+                   interactive.interactive_pushable_torch.torch.on = true;
+               }
+
+               if ( interactive.interactive_pushable_torch.torch.on ) {
+                    on_fire = true;
+               }
+
+               return false;
+          } else if ( interactive.type != Interactive::Type::exit ) {
                interactive.activate ( interactives );
           }
+
           return true;
      } else {
           if ( interactive.type == Interactive::Type::exit ) {
@@ -394,6 +416,7 @@ bool State::spawn_arrow ( const Vector& position, Direction facing )
      }
 
      arrow->facing = facing;
+     arrow->on_fire = false;
 
      LOG_DEBUG ( "spawning arrow at %f, %f\n", position.x ( ), position.y ( ) );
 
@@ -766,6 +789,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
                          state->player_key_count--;
                     }
+               } else if ( interactive.type == Interactive::Type::torch ||
+                           interactive.type == Interactive::Type::pushable_torch ) {
+                    // pass
                } else {
                     LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
                     state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
@@ -961,12 +987,28 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      state->map.reset_light ( );
      state->interactives.contribute_light ( map );
 
+     /* arrows on fire contribute light */
+     for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
+          Auto& arrow = state->arrows [ i ];
+
+          if ( arrow.is_dead ( ) ) {
+               continue;
+          }
+
+          if ( arrow.on_fire ) {
+               state->map.illuminate ( meters_to_pixels ( arrow.position.x ( ) ),
+                                       meters_to_pixels ( arrow.position.y ( ) ),
+                                       192 );
+          }
+     }
+
      // give interactives their light values
      for ( Int32 y = 0; y < state->interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < state->interactives.width ( ); ++x ) {
                state->interactives.light ( x, y, map.get_coordinate_light ( x, y ) );
           }
      }
+
 }
 
 static Void render_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet, Pickup& pickup,
@@ -991,14 +1033,21 @@ static Void render_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
 }
 
 static Void render_arrow ( SDL_Surface* back_buffer, SDL_Surface* arrow_sheet, const Arrow& arrow,
-                           Real32 camera_x, Real32 camera_y )
+                           Int32 arrow_frame, Real32 camera_x, Real32 camera_y )
 {
 
      SDL_Rect dest_rect = build_world_sdl_rect ( arrow.position.x ( ), arrow.position.y ( ),
                                                  Map::c_tile_dimension_in_meters,
                                                  Map::c_tile_dimension_in_meters );
 
-     SDL_Rect clip_rect { 0, static_cast<Int32>( arrow.facing ) * Map::c_tile_dimension_in_pixels,
+     if ( !arrow.on_fire ) {
+          arrow_frame = 0;
+     } else {
+          arrow_frame++;
+     }
+
+     SDL_Rect clip_rect { arrow_frame * Map::c_tile_dimension_in_pixels,
+                          static_cast<Int32>( arrow.facing ) * Map::c_tile_dimension_in_pixels,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -1094,6 +1143,17 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      }
 
      // arrows
+     static Int32 arrow_frame = 0;
+     static Int32 arrow_frame_delay = 0;
+
+     arrow_frame_delay++;
+
+     if ( arrow_frame_delay > 5 ) {
+          arrow_frame++;
+          arrow_frame %= 3;
+          arrow_frame_delay = 0;
+     }
+
      for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
           Auto& arrow = state->arrows [ i ];
 
@@ -1101,7 +1161,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                continue;
           }
 
-          render_arrow ( back_buffer, state->arrow_sheet, arrow, state->camera.x ( ), state->camera.y ( ) );
+          render_arrow ( back_buffer, state->arrow_sheet, arrow, arrow_frame,
+                         state->camera.x ( ), state->camera.y ( ) );
      }
 
      // bombs

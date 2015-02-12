@@ -22,6 +22,7 @@
 #include "MapDisplay.hpp"
 #include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
+#include "PickupDisplay.hpp"
 
 #include "Emitter.hpp"
 
@@ -116,14 +117,15 @@ namespace bryte
 
           Text text;
 
+          SDL_PixelFormat      back_buffer_format;
+
           MapDisplay          map_display;
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
+          PickupDisplay       pickup_display;
 
           Animation arrow_animation;
-          Animation pickup_animation;
 
-          SDL_Surface* pickup_sheet;
           SDL_Surface* arrow_sheet;
           SDL_Surface* bomb_sheet;
 

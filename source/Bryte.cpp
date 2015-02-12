@@ -486,9 +486,13 @@ Void State::player_death ( )
 
      player.position = Map::coordinates_to_vector ( player_spawn_tile_x, player_spawn_tile_y );
 
-     // load the first map
+     // clear persisted exits and load the first map
+     map.clear_persisted_exits ( );
      map.load_from_master_list ( 0, interactives );
 
+     pickups.clear ( );
+     arrows.clear ( );
+     emitters.clear ( );
      enemies.clear ( );
      spawn_map_enemies ( );
 }
@@ -934,7 +938,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                default:
                     break;
                case Pickup::Type::health:
-                    state->player.health += 5;
+                    state->player.health += 2;
 
                     if ( state->player.health > state->player.max_health ) {
                          state->player.health = state->player.max_health;

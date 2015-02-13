@@ -71,8 +71,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           constant_animation = true;
           break;
      case Enemy::Type::goo:
-          health     = 6;
-          max_health = 6;
+          health     = 4;
+          max_health = 4;
 
           dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
           collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 2 ) );
@@ -81,7 +81,13 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collides_with_solids = true;
           collides_with_exits = true;
 
-          walk_acceleration.set ( 5.0f, 5.0f );
+          walk_acceleration = 5.0f;
+          deceleration_scale = 2.0f;
+
+          walk_frame_change = 1;
+          walk_frame_count = 3;
+          walk_frame_rate = 0.4f;
+          constant_animation = true;
 
           goo_state.found_player = false;
           break;

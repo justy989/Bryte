@@ -94,7 +94,7 @@ namespace bryte
 
           Void player_death ( );
 
-          Void drop_item_on_enemy_death ( const Enemy& enemy );
+          Void enemy_death ( const Enemy& enemy );
 
           Void setup_emitters_from_map_lamps ( );
 

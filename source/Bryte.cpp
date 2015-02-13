@@ -459,7 +459,7 @@ Void State::player_death ( )
      spawn_map_enemies ( );
 }
 
-Void State::drop_item_on_enemy_death ( const Enemy& enemy )
+Void State::enemy_death ( const Enemy& enemy )
 {
      if ( enemy.is_dead ( ) ) {
           if ( enemy.drop != Pickup::Type::none ) {
@@ -767,7 +767,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                                                           enemy.collision_center ( ),
                                                           state->random );
                enemy.damage ( 1, damage_dir );
-               state->drop_item_on_enemy_death ( enemy );
+               state->enemy_death ( enemy );
           }
      }
 
@@ -833,7 +833,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                                         enemy.collision_x ( ) + enemy.collision_width ( ),
                                         enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
                     enemy.damage ( 1, arrow.facing );
-                    state->drop_item_on_enemy_death ( enemy );
+
+                    state->enemy_death ( enemy );
+
                     arrow.track_entity.entity = &enemy;
                     arrow.track_entity.offset = arrow.position - enemy.position;
                     arrow.stuck_watch.reset ( Arrow::c_stuck_time );
@@ -864,7 +866,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          enemy.damage ( 5, direction_between ( bomb.position,
                                                                enemy.collision_center ( ),
                                                                state->random ) );
-                         state->drop_item_on_enemy_death ( enemy );
+                         state->enemy_death ( enemy );
                     }
                }
 

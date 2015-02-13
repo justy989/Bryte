@@ -30,130 +30,6 @@ static State* get_state ( GameMemory& game_memory )
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
 }
 
-Vector vector_from_direction ( Direction dir )
-{
-     switch ( dir )
-     {
-     default:
-          ASSERT ( 0 );
-          break;
-     case Direction::left:
-          return Vector { -1.0f, 0.0f };
-     case Direction::up:
-          return Vector { 0.0f, 1.0f };
-     case Direction::right:
-          return Vector { 1.0f, 0.0f };
-     case Direction::down:
-          return Vector { 0.0f, -1.0f };
-     }
-
-     // should not hit
-     return Vector { 0.0f, 0.0f };
-}
-
-const Real32 Arrow::c_speed = 20.0f;
-const Real32 Arrow::c_stuck_time = 1.5f;
-
-Vector Arrow::collision_points [ Direction::count ];
-
-Bool Arrow::check_for_solids ( const Map& map, Interactives& interactives )
-{
-     Vector arrow_center = position + Arrow::collision_points [ facing ];
-     Map::Coordinates tile = Map::vector_to_coordinates ( arrow_center );
-
-     if ( !map.coordinates_valid ( tile ) ) {
-          return false;
-     }
-
-     if ( map.get_coordinate_solid ( tile.x, tile.y ) ) {
-          return true;
-     }
-
-     Auto& interactive = interactives.get_from_tile ( tile.x, tile.y );
-
-     if ( interactive.is_solid ( ) ) {
-          // do not activate exits!
-          if ( interactive.type == Interactive::Type::torch ) {
-
-               if ( on_fire && !interactive.interactive_torch.on ) {
-                   interactive.interactive_torch.on = true;
-               }
-
-               if ( interactive.interactive_torch.on ) {
-                    on_fire = true;
-               }
-
-               return false;
-          } else if ( interactive.type == Interactive::Type::pushable_torch ) {
-               if ( on_fire && !interactive.interactive_pushable_torch.torch.on ) {
-                   interactive.interactive_pushable_torch.torch.on = true;
-               }
-
-               if ( interactive.interactive_pushable_torch.torch.on ) {
-                    on_fire = true;
-               }
-
-               return false;
-          } else if ( interactive.type != Interactive::Type::exit ) {
-               interactive.activate ( interactives );
-          }
-
-          return true;
-     } else {
-          if ( interactive.type == Interactive::Type::exit ) {
-               // otherwise arrows can escape when doors are open
-               // TODO: is this ok?
-               return true;
-          }
-     }
-
-     return false;
-}
-
-Void Arrow::update ( float time_delta, const Map& map, Interactives& interactives )
-{
-     switch ( life_state ) {
-     default:
-          ASSERT ( 0 );
-          break;
-     case LifeState::dead:
-          break;
-     case LifeState::spawning:
-          // nop for now ** pre-mature planning wooo **
-          life_state = LifeState::alive;
-          break;
-     case LifeState::alive:
-          if ( stuck_watch.expired ( ) ) {
-               position += vector_from_direction ( facing ) * c_speed * time_delta;
-
-               if ( check_for_solids ( map, interactives ) ) {
-                    stuck_watch.reset ( c_stuck_time );
-               }
-          } else {
-               stuck_watch.tick ( time_delta );
-
-               if ( track_entity.entity ) {
-                    position = track_entity.entity->position + track_entity.offset;
-               }
-
-               if ( stuck_watch.expired ( ) ) {
-                    life_state = dead;
-                    position.zero ( );
-                    clear ( );
-               }
-          }
-          break;
-     }
-}
-
-Void Arrow::clear ( )
-{
-     facing = Direction::left;
-     stuck_watch.reset ( 0.0f );
-     track_entity.entity = nullptr;
-     track_entity.offset.zero ( );
-}
-
 const Real32 Bomb::c_explode_time = 3.0f;
 const Real32 Bomb::c_explode_radius = Map::c_tile_dimension_in_meters * 2.0f;
 
@@ -301,7 +177,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      }
 
      pickups.clear ( );
-     arrows.clear ( );
+     projectiles.clear ( );
      emitters.clear ( );
      enemies.clear ( );
 
@@ -314,10 +190,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      attack_key = false;
      switch_attack_key = false;
 
-     Arrow::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
-     Arrow::collision_points [ Direction::up ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 14 ) );
-     Arrow::collision_points [ Direction::right ].set ( pixels_to_meters ( 14 ), pixels_to_meters ( 7 ) );
-     Arrow::collision_points [ Direction::down ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 1 ) );
+     Projectile::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
+     Projectile::collision_points [ Direction::up ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 14 ) );
+     Projectile::collision_points [ Direction::right ].set ( pixels_to_meters ( 14 ), pixels_to_meters ( 7 ) );
+     Projectile::collision_points [ Direction::down ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 1 ) );
 
 #ifdef DEBUG
      enemy_think = true;
@@ -380,26 +256,28 @@ Bool State::spawn_pickup ( const Vector& position, Pickup::Type type )
      return true;
 }
 
-bool State::spawn_arrow ( const Vector& position, Direction facing )
+bool State::spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing )
 {
-     Auto* arrow = arrows.spawn ( position );
+     Auto* projectile = projectiles.spawn ( position );
 
-     if ( !arrow ) {
+     if ( !projectile ) {
           return false;
      }
 
-     arrow->facing = facing;
-     arrow->on_fire = false;
+     projectile->facing = facing;
+     projectile->on_fire = false;
 
-     LOG_DEBUG ( "spawning arrow at %f, %f\n", position.x ( ), position.y ( ) );
+     LOG_DEBUG ( "spawning projectile at %f, %f\n", position.x ( ), position.y ( ) );
 
+#if 0
      Auto* emitter = emitters.spawn ( position );
 
      if ( emitter ) {
-          emitter->setup_to_track_entity ( arrow, Arrow::collision_points [ facing ],
+          emitter->setup_to_track_entity ( arrow, Projectile::collision_points [ facing ],
                                            SDL_MapRGB ( &back_buffer_format, 255, 255, 255 ),
                                            0.0f, 0.0f, 0.5f, 0.5f, 0.1f, 0.1f, 1, 2 );
      }
+#endif
 
      return true;
 }
@@ -448,7 +326,7 @@ Void State::player_death ( )
      player.position = Map::coordinates_to_vector ( player_spawn_tile_x, player_spawn_tile_y );
 
      pickups.clear ( );
-     arrows.clear ( );
+     projectiles.clear ( );
      emitters.clear ( );
      enemies.clear ( );
 
@@ -660,7 +538,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           case Player::AttackMode::arrow:
                if ( state->player.arrow_count > 0 ) {
-                    state->spawn_arrow ( state->player.position, state->player.facing );
+                    state->spawn_projectile ( Projectile::Type::arrow, state->player.position, state->player.facing );
                     state->player.arrow_count--;
                }
                break;
@@ -728,6 +606,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                }
           }
 #endif
+          if ( enemy.type == Enemy::Type::goo &&
+               enemy.goo_state.state == Enemy::GooState::State::shooting ) {
+               state->spawn_projectile ( Projectile::Type::goo, enemy.position, enemy.facing );
+          }
 
           // check collision between player and enemy
           if ( state->player.state != Character::State::blinking &&
@@ -805,8 +687,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      }
 
-     for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
-          Auto& arrow = state->arrows [ i ];
+     for ( Uint32 i = 0; i < state->projectiles.max ( ); ++i ) {
+          Auto& arrow = state->projectiles [ i ];
 
           if ( arrow.is_dead ( ) ) {
                continue;
@@ -838,7 +720,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
                     arrow.track_entity.entity = &enemy;
                     arrow.track_entity.offset = arrow.position - enemy.position;
-                    arrow.stuck_watch.reset ( Arrow::c_stuck_time );
+                    arrow.stuck_watch.reset ( Projectile::c_stuck_time );
                     break;
                }
           }
@@ -976,7 +858,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
                state->pickups.clear ( );
-               state->arrows.clear ( );
+               state->projectiles.clear ( );
                state->enemies.clear ( );
                state->emitters.clear ( );
                state->spawn_map_enemies ( );
@@ -994,9 +876,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      state->map.reset_light ( );
      state->interactives.contribute_light ( map );
 
-     /* arrows on fire contribute light */
-     for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
-          Auto& arrow = state->arrows [ i ];
+     /* projectiles on fire contribute light */
+     for ( Uint32 i = 0; i < state->projectiles.max ( ); ++i ) {
+          Auto& arrow = state->projectiles [ i ];
 
           if ( arrow.is_dead ( ) ) {
                continue;
@@ -1018,22 +900,22 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
 }
 
-static Void render_arrow ( SDL_Surface* back_buffer, SDL_Surface* arrow_sheet, const Arrow& arrow,
+static Void render_projectile ( SDL_Surface* back_buffer, SDL_Surface* arrow_sheet, const Projectile& projectile,
                            Int32 arrow_frame, Real32 camera_x, Real32 camera_y )
 {
 
-     SDL_Rect dest_rect = build_world_sdl_rect ( arrow.position.x ( ), arrow.position.y ( ),
+     SDL_Rect dest_rect = build_world_sdl_rect ( projectile.position.x ( ), projectile.position.y ( ),
                                                  Map::c_tile_dimension_in_meters,
                                                  Map::c_tile_dimension_in_meters );
 
-     if ( !arrow.on_fire ) {
+     if ( !projectile.on_fire ) {
           arrow_frame = 0;
      } else {
           arrow_frame++;
      }
 
      SDL_Rect clip_rect { arrow_frame * Map::c_tile_dimension_in_pixels,
-                          static_cast<Int32>( arrow.facing ) * Map::c_tile_dimension_in_pixels,
+                          static_cast<Int32>( projectile.facing ) * Map::c_tile_dimension_in_pixels,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -1120,18 +1002,18 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           state->pickup_display.render ( back_buffer, pickup, state->camera.x ( ), state->camera.y ( ) );
      }
 
-     // arrows
+     // projectiles
      state->arrow_animation.update_increment ( 5, 3 );
 
-     for ( Uint32 i = 0; i < state->arrows.max ( ); ++i ) {
-          Auto& arrow = state->arrows [ i ];
+     for ( Uint32 i = 0; i < state->projectiles.max ( ); ++i ) {
+          Auto& projectile = state->projectiles [ i ];
 
-          if ( arrow.is_dead ( ) ) {
+          if ( projectile.is_dead ( ) ) {
                continue;
           }
 
-          render_arrow ( back_buffer, state->arrow_sheet, arrow, state->arrow_animation.frame,
-                         state->camera.x ( ), state->camera.y ( ) );
+          render_projectile ( back_buffer, state->arrow_sheet, projectile, state->arrow_animation.frame,
+                              state->camera.x ( ), state->camera.y ( ) );
      }
 
      // bombs

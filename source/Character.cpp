@@ -313,6 +313,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      Real32 time_remaining = 1.0f;
 
+     collided_last_frame = false;
+
      for ( int i = 0; i < 4 && time_remaining > 0.0f; ++i ) {
           Vector wall_normal;
           Real32 closest_time_intersection = time_remaining;
@@ -387,6 +389,11 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           // push any interactives we are colliding with
           if ( push_direction != Direction::count && state == Character::State::idle ) {
                state = pushing;
+          }
+
+          // save that we have collided this frame, can be used for ai
+          if ( wall_normal.length_squared ( ) > 0.0f ) {
+               collided_last_frame = true;
           }
 
           position += ( change_in_position * ( closest_time_intersection - 0.01f ) );

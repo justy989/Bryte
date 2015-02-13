@@ -5,7 +5,7 @@
 
 using namespace bryte;
 
-const Real32 Enemy::GooState::c_detect_radius = 1.6f * 3.0f;
+const Real32 Enemy::GooState::c_shoot_time = 2.0f;
 
 Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
 {
@@ -88,8 +88,6 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           walk_frame_count = 3;
           walk_frame_rate = 0.4f;
           constant_animation = true;
-
-          goo_state.found_player = false;
           break;
      }
 }
@@ -168,14 +166,19 @@ Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
                moving = true;
           }
      } else {
-          walk ( facing );
+          if ( collided_last_frame ) {
+               moving = false;
+               timer.reset ( 0.0f );
+          } else {
+               walk ( facing );
 
-          timer.tick ( time_delta );
+               timer.tick ( time_delta );
 
-          if ( timer.expired ( ) ) {
-               timer.reset ( random.generate ( 0, 3 ) );
-               moving             = false;
-               reacting_to_attack = false;
+               if ( timer.expired ( ) ) {
+                    timer.reset ( random.generate ( 0, 3 ) );
+                    moving             = false;
+                    reacting_to_attack = false;
+               }
           }
      }
 }
@@ -187,7 +190,7 @@ Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
 
      timer.tick ( time_delta );
 
-     if ( timer.expired ( ) ) {
+     if ( timer.expired ( ) || collided_last_frame ) {
           move_direction = static_cast<BatState::Direction>( random.generate ( 0, BatState::Direction::count + 1 ) );
           timer.reset ( random.generate ( 1, 2 ) );
      }
@@ -218,21 +221,39 @@ Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
 
 Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
 {
-     Bool found_player = goo_state.found_player;
-     Vector center = collision_center ( );
+     GooState::State& state = goo_state.state;
+     Stopwatch& state_timer = goo_state.state_timer;
 
-     if ( found_player ) {
-          facing = direction_between ( player, center, random );
+     state_timer.tick ( time_delta );
 
-          walk ( facing );
-     } else {
-          Real32 diff_x = fabs ( player.x ( ) - center.x ( ) );
-          Real32 diff_y = fabs ( player.y ( ) - center.y ( ) );
+     switch ( state ) {
+     default:
+          break;
+     case GooState::State::walking:
+          if ( collided_last_frame ) {
+               state = GooState::State::picking_direction;
+          } else {
+               walk ( facing );
 
-          // the player is perpendicular to us
-          if ( diff_x < width ( ) || diff_y < height ( ) ) {
-               found_player = true;
+               if ( state_timer.expired ( ) ) {
+                    state = GooState::State::preparing_to_shoot;
+                    state_timer.reset ( GooState::c_shoot_time );
+               }
           }
+          break;
+     case GooState::State::preparing_to_shoot:
+          if ( state_timer.expired ( ) ) {
+               state = GooState::State::shooting;
+          }
+          break;
+     case GooState::State::shooting:
+          state = GooState::State::picking_direction;
+          break;
+     case GooState::State::picking_direction:
+          facing = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+          state_timer.reset ( random.generate ( 2, 4 ) );
+          state= GooState::State::walking;
+          break;
      }
 }
 

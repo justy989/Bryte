@@ -37,9 +37,17 @@ namespace bryte
           };
 
           struct GooState {
-               Bool found_player;
+               enum State {
+                    walking,
+                    preparing_to_shoot,
+                    shooting,
+                    picking_direction
+               };
 
-               static const Real32 c_detect_radius;
+               static const Real32 c_shoot_time;
+
+               State state;
+               Stopwatch state_timer;
           };
 
      public:

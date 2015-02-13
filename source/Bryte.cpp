@@ -160,7 +160,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( arrow_sheet, game_memory, "test_arrow.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( projectile_display.arrow_sheet, game_memory, "test_arrow.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( projectile_display.goo_sheet, game_memory, "test_goo_proj.bmp" ) ) {
           return false;
      }
 
@@ -264,6 +268,7 @@ bool State::spawn_projectile ( Projectile::Type type, const Vector& position, Di
           return false;
      }
 
+     projectile->type = type;
      projectile->facing = facing;
      projectile->on_fire = false;
 
@@ -688,42 +693,55 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      for ( Uint32 i = 0; i < state->projectiles.max ( ); ++i ) {
-          Auto& arrow = state->projectiles [ i ];
+          Auto& projectile = state->projectiles [ i ];
 
-          if ( arrow.is_dead ( ) ) {
+          if ( projectile.is_dead ( ) ) {
                continue;
           }
 
-          arrow.update ( time_delta, state->map, state->interactives );
+          projectile.update ( time_delta, state->map, state->interactives );
 
-          if ( !arrow.stuck_watch.expired ( ) ) {
+          if ( !projectile.stuck_watch.expired ( ) ) {
                continue;
           }
 
-          Vector arrow_collision_point = arrow.position + arrow.collision_points [ arrow.facing ];
+          Vector projectile_collision_point = projectile.position + projectile.collision_points [ projectile.facing ];
 
-          for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
-               Auto& enemy = state->enemies [ c ];
+          switch ( projectile.type ) {
+          default:
+               break;
+          case Projectile::Type::arrow:
+               for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
+                    Auto& enemy = state->enemies [ c ];
 
-               if ( enemy.is_dead ( ) ) {
-                    continue;
+                    if ( enemy.is_dead ( ) ) {
+                         continue;
+                    }
+
+                    if ( point_inside_rect ( projectile_collision_point.x ( ),
+                                             projectile_collision_point.y ( ),
+                                             enemy.collision_x ( ), enemy.collision_y ( ),
+                                             enemy.collision_x ( ) + enemy.collision_width ( ),
+                                             enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
+                         projectile.hit_character ( enemy );
+
+                         state->enemy_death ( enemy );
+
+                         break;
+                    }
                }
+               break;
+         case Projectile::Type::goo:
+               if ( point_inside_rect ( projectile_collision_point.x ( ),
+                                        projectile_collision_point.y ( ),
+                                        state->player.collision_x ( ), state->player.collision_y ( ),
+                                        state->player.collision_x ( ) + state->player.collision_width ( ),
+                                        state->player.collision_y ( ) + state->player.collision_height ( ) ) ) {
 
-               if ( point_inside_rect ( arrow_collision_point.x ( ),
-                                        arrow_collision_point.y ( ),
-                                        enemy.collision_x ( ), enemy.collision_y ( ),
-                                        enemy.collision_x ( ) + enemy.collision_width ( ),
-                                        enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
-                    enemy.damage ( 1, arrow.facing );
-
-                    state->enemy_death ( enemy );
-
-                    arrow.track_entity.entity = &enemy;
-                    arrow.track_entity.offset = arrow.position - enemy.position;
-                    arrow.stuck_watch.reset ( Projectile::c_stuck_time );
-                    break;
+                    projectile.hit_character ( state->player );
                }
-          }
+         break;
+         }
      }
 
      for ( Uint32 i = 0; i < state->bombs.max ( ); ++i ) {
@@ -897,30 +915,6 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->interactives.light ( x, y, map.get_coordinate_light ( x, y ) );
           }
      }
-
-}
-
-static Void render_projectile ( SDL_Surface* back_buffer, SDL_Surface* arrow_sheet, const Projectile& projectile,
-                           Int32 arrow_frame, Real32 camera_x, Real32 camera_y )
-{
-
-     SDL_Rect dest_rect = build_world_sdl_rect ( projectile.position.x ( ), projectile.position.y ( ),
-                                                 Map::c_tile_dimension_in_meters,
-                                                 Map::c_tile_dimension_in_meters );
-
-     if ( !projectile.on_fire ) {
-          arrow_frame = 0;
-     } else {
-          arrow_frame++;
-     }
-
-     SDL_Rect clip_rect { arrow_frame * Map::c_tile_dimension_in_pixels,
-                          static_cast<Int32>( projectile.facing ) * Map::c_tile_dimension_in_pixels,
-                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-
-     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
-
-     SDL_BlitSurface ( arrow_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
 static Void render_bomb ( SDL_Surface* back_buffer, SDL_Surface* bomb_sheet, const Bomb& bomb,
@@ -1003,7 +997,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      }
 
      // projectiles
-     state->arrow_animation.update_increment ( 5, 3 );
+     state->projectile_display.tick ( );
 
      for ( Uint32 i = 0; i < state->projectiles.max ( ); ++i ) {
           Auto& projectile = state->projectiles [ i ];
@@ -1012,8 +1006,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                continue;
           }
 
-          render_projectile ( back_buffer, state->arrow_sheet, projectile, state->arrow_animation.frame,
-                              state->camera.x ( ), state->camera.y ( ) );
+          state->projectile_display.render ( back_buffer, projectile,
+                                             state->camera.x ( ), state->camera.y ( ) );
      }
 
      // bombs

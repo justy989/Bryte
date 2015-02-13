@@ -81,7 +81,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collides_with_solids = true;
           collides_with_exits = true;
 
-          walk_acceleration = 5.0f;
+          walk_acceleration = 3.5f;
           deceleration_scale = 2.0f;
 
           walk_frame_change = 1;

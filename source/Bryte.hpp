@@ -24,6 +24,7 @@
 #include "CharacterDisplay.hpp"
 #include "InteractivesDisplay.hpp"
 #include "PickupDisplay.hpp"
+#include "ProjectileDisplay.hpp"
 
 #include "Emitter.hpp"
 
@@ -102,8 +103,7 @@ namespace bryte
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
           PickupDisplay       pickup_display;
-
-          Animation arrow_animation;
+          ProjectileDisplay   projectile_display;
 
           SDL_Surface* arrow_sheet;
           SDL_Surface* bomb_sheet;

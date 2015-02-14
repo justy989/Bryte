@@ -4,4 +4,6 @@ locked.brm
 light_detector.brm
 pressure_plate.brm
 fire_arrow.brm
+bombs.brm
+kill_all.brm
 map.brm

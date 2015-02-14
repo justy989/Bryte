@@ -917,6 +917,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                case Pickup::Type::arrow:
                     state->player.arrow_count++;
                     break;
+               case Pickup::Type::bomb:
+                    state->player.bomb_count++;
+                    break;
                }
 
                pickup.type = Pickup::Type::none;

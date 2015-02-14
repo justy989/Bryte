@@ -29,9 +29,10 @@ Void Character::attack ( )
           return;
      }
 
-     state_watch.reset ( Character::c_attack_time );
-
-     state = State::attacking;
+     if ( state != State::attacking ) {
+          state_watch.reset ( Character::c_attack_time );
+          state = State::attacking;
+     }
 }
 
 Real32 Character::attack_x ( ) const

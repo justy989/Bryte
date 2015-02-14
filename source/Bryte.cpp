@@ -543,6 +543,28 @@ Void character_adjacent_tile ( const Character& character, Int32* adjacent_tile_
      *adjacent_tile_y = character_center_tile.y;
 }
 
+static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
+{
+     switch ( dir ) {
+          default:
+               break;
+          case Direction::left:
+               coords.x--;
+               break;
+          case Direction::right:
+               coords.x++;
+               break;
+          case Direction::up:
+               coords.y++;
+               break;
+          case Direction::down:
+               coords.y--;
+               break;
+     }
+
+     return coords;
+}
+
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
      Auto* state = get_state ( game_memory );
@@ -601,14 +623,28 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      if ( state->player.state == Character::State::pushing ) {
-          Int32 push_tile_x = 0;
-          Int32 push_tile_y = 0;
+          Map::Coordinates push_location { 0, 0 };
 
-          character_adjacent_tile ( state->player, &push_tile_x, &push_tile_y );
+          character_adjacent_tile ( state->player, &push_location.x, &push_location.y );
 
-          if ( push_tile_x >= 0 && push_tile_x < state->interactives.width ( ) &&
-               push_tile_y >= 0 && push_tile_y < state->interactives.height ( ) ) {
-               state->interactives.push ( push_tile_x, push_tile_y, state->player.facing, state->map );
+          if ( push_location.x >= 0 && push_location.x < state->interactives.width ( ) &&
+               push_location.y >= 0 && push_location.y < state->interactives.height ( ) ) {
+
+               Bool enemy_on_tile = false;
+               Auto dest = adjacent_tile ( push_location, state->player.facing );
+
+               for ( Uint8 i = 0; i < state->enemies.max ( ); ++i ) {
+                    Auto coords = Map::vector_to_coordinates ( state->enemies [ i ].collision_center ( ) );
+
+                    if ( coords.x == dest.x && coords.y == dest.y ) {
+                         enemy_on_tile = true;
+                         break;
+                    }
+               }
+
+               if ( !enemy_on_tile ) {
+                    state->interactives.push ( push_location.x, push_location.y, state->player.facing, state->map );
+               }
           }
      } else if ( state->player.life_state == Entity::LifeState::dying ) {
           state->player_deathwatch.tick ( time_delta );

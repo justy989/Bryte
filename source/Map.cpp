@@ -1,6 +1,7 @@
 #include "Map.hpp"
 #include "Utils.hpp"
 #include "Interactives.hpp"
+#include "Enemy.hpp"
 
 #include <fstream>
 
@@ -41,10 +42,7 @@ Bool Map::load_master_list ( const Char8* filepath )
 
      m_current_master_map = c_first_master_map;
 
-     // clear our persisted exits
-     for ( Uint32 m = 0; m < c_max_maps; ++m ) {
-          m_persisted_exits [ m ].exit_count = 0;
-     }
+     clear_persistence ( );
 
      return true;
 }
@@ -286,15 +284,18 @@ Void Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
           return;
      }
 
+#if 0
      if ( m_current_master_map != c_first_master_map ) {
           persist_exits ( interactives );
      }
+#endif
 
      load ( m_master_list [ map_index ], interactives );
 
      m_current_master_map = map_index;
 
      restore_exits ( interactives );
+     restore_enemy_spawns ( );
 }
 
 Void Map::save ( const Char8* filepath, Interactives& interactives )
@@ -407,44 +408,52 @@ Void Map::load ( const Char8* filepath, Interactives& interactives )
      }
 }
 
-void Map::clear_persisted_exits ( )
+void Map::clear_persistence ( )
 {
      for ( Uint32 i = 0; i < c_max_maps; ++i  ) {
           m_persisted_exits [ i ].exit_count = 0;
+
+          for ( Uint32 j = 0; j < c_max_enemy_spawns; ++j ) {
+               Auto& persisted_enemy = m_persisted_enemies [ i ].enemies [ j ];
+
+               persisted_enemy.alive = true;
+               persisted_enemy.location.x = 0;
+               persisted_enemy.location.y = 0;
+          }
      }
 }
 
-Void Map::persist_exits ( const Interactives& interactives )
+Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
 {
-     LOG_DEBUG ( "Persisting exits on map: %d\n", m_current_master_map );
+     ASSERT ( exit.type == Interactive::Type::exit );
 
-     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
-          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               const Auto& interactive = interactives.cget_from_tile ( x, y );
+     Auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
 
-               if ( interactive.type != Interactive::Type::exit ) {
-                    continue;
-               }
-
-               Auto& exit = interactive.interactive_exit;
-
-               Auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
-
-               if ( map_persisted_exits.exit_count >= PersistedExits::c_max_persisted_exits ) {
-                    LOG_ERROR ( "Too many exits on map to persist: %u\n", map_persisted_exits.exit_count );
-               }
-
-               Auto& persisted_exit = map_persisted_exits.exits [ map_persisted_exits.exit_count ];
-
-               persisted_exit.location.x = x;
-               persisted_exit.location.y = y;
-               persisted_exit.id         = exit.state;
-
-               LOG_DEBUG ( "Persisted exit %d %d to state %d\n", x, y, exit.state );
-
-               map_persisted_exits.exit_count++;
-          }
+     if ( map_persisted_exits.exit_count >= PersistedExits::c_max_persisted_exits ) {
+          LOG_ERROR ( "Too many exits on map to persist: %u\n", map_persisted_exits.exit_count );
      }
+
+     Auto& persisted_exit = map_persisted_exits.exits [ map_persisted_exits.exit_count ];
+
+     persisted_exit.location.x = x;
+     persisted_exit.location.y = y;
+     persisted_exit.id         = exit.interactive_exit.state;
+
+     LOG_DEBUG ( "Persisted exit %d %d to state %d\n", x, y, exit.interactive_exit.state );
+
+     map_persisted_exits.exit_count++;
+}
+
+Void Map::persist_enemy ( const Enemy& enemy, Uint8 index )
+{
+     ASSERT ( index < Map::c_max_enemy_spawns );
+
+     Auto& persisted_enemy = m_persisted_enemies [ m_current_master_map ].enemies [ index ];
+     Auto center = enemy.collision_center ( );
+
+     persisted_enemy.alive = enemy.is_alive ( );
+     persisted_enemy.location.x = meters_to_pixels ( center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+     persisted_enemy.location.y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 }
 
 Void Map::restore_exits ( Interactives& interactives )
@@ -471,5 +480,44 @@ Void Map::restore_exits ( Interactives& interactives )
      }
 
      map_persisted_exits.exit_count = 0;
+}
+
+Void Map::restore_enemy_spawns ( )
+{
+     Uint8 delete_enemy_spawns [ c_max_enemy_spawns ];
+
+     Auto& persisted_enemies = m_persisted_enemies [ m_current_master_map ].enemies;
+
+     // figure out which enemies should not be persisted
+     for ( Uint8 i = 0; i < m_enemy_spawn_count; ++i ) {
+          Auto& persisted_enemy = persisted_enemies [ i ];
+
+          if ( persisted_enemy.alive ) {
+               // persist non-zero locations
+               if ( persisted_enemy.location.x && persisted_enemy.location.y ) {
+                    m_enemy_spawns [ i ].location = persisted_enemy.location;
+               }
+
+               delete_enemy_spawns [ i ] = false;
+          } else {
+               delete_enemy_spawns [ i ] = true;
+          }
+     }
+
+     Uint8 new_enemy_spawn_count = 0;
+     Uint8 last_enemy = m_enemy_spawn_count - 1;
+
+     // remove enemies that no longer need to be persisted
+     for ( Uint8 i = 0; i < m_enemy_spawn_count; ++i ) {
+          if ( delete_enemy_spawns [ i ] ) {
+               for ( Uint8 j = i; j < last_enemy; ++j ) {
+                    m_enemy_spawns [ j ] = m_enemy_spawns [ j + 1 ];
+               }
+          } else {
+               new_enemy_spawn_count++;
+          }
+     }
+
+     m_enemy_spawn_count = new_enemy_spawn_count;
 }
 

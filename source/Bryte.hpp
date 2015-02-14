@@ -70,6 +70,7 @@ namespace bryte
           Bool spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing );
           Bool spawn_bomb ( const Vector& position );
 
+          Void persist_map ( );
           Void spawn_map_enemies ( );
 
           Void player_death ( );

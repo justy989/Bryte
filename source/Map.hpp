@@ -11,8 +11,33 @@
 namespace bryte
 {
      class Interactives;
+     class Interactive;
+     struct Enemy;
 
      class Map {
+     public:
+
+          static const Uint32 c_max_map_name_size = 32;
+          static const Uint32 c_max_maps = 32;
+
+          static const Int32  c_first_master_map = -1;
+
+          static const Int32  c_tile_dimension_in_pixels = 16;
+          static const Real32 c_tile_dimension_in_meters;
+
+          static const Uint32 c_max_tiles = 1024;
+
+          static const Uint32 c_max_light = c_max_tiles;
+          static const Int32  c_light_decay = 32;
+
+          static const Uint32 c_max_decors = 64;
+
+          static const Uint32 c_max_lamps = 32;
+          static const Uint32 c_unique_lamp_count = 4;
+          static const Uint8  c_unique_lamps_light [ c_unique_lamp_count ];
+
+          static const Uint32 c_max_enemy_spawns = 32;
+
      public:
 
 // TODO: GTFO
@@ -49,6 +74,15 @@ namespace bryte
 
                Uint8   exit_count;
                Fixture exits [ c_max_persisted_exits ];
+          };
+
+          struct PersistEnemy {
+               Uint8 alive;
+               Location location;
+          };
+
+          struct PersistedEnemies {
+               PersistEnemy enemies [ c_max_enemy_spawns ];
           };
 #pragma pack(pop)
 
@@ -95,7 +129,10 @@ namespace bryte
           Void remove_lamp        ( Fixture* lamp );
           Void remove_enemy_spawn ( EnemySpawn* enemy_spawn );
 
-          Void clear_persisted_exits ( );
+          Void persist_exit ( const Interactive& exit, Uint8 x, Uint8 y );
+          Void persist_enemy ( const Enemy& enemy, Uint8 index );
+
+          Void clear_persistence ( );
 
           inline Int32 width  ( ) const;
           inline Int32 height ( ) const;
@@ -111,6 +148,8 @@ namespace bryte
           inline Bool coordinate_x_valid ( Int32 x ) const;
           inline Bool coordinate_y_valid ( Int32 y ) const;
           inline Bool coordinates_valid ( const Coordinates& coords ) const;
+
+          inline Bool current_master_map ( ) const;
 
      public:
 
@@ -131,38 +170,16 @@ namespace bryte
           template < typename T >
           T* check_coordinates_for_fixture ( T* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y );
 
-          Void persist_exits ( const Interactives& interactives );
           Void restore_exits ( Interactives& interactives );
-
-     public:
-
-          static const Uint32 c_max_map_name_size = 32;
-          static const Uint32 c_max_maps = 32;
-
-          static const Int32  c_first_master_map = -1;
-
-          static const Int32  c_tile_dimension_in_pixels = 16;
-          static const Real32 c_tile_dimension_in_meters;
-
-          static const Uint32 c_max_tiles = 1024;
-
-          static const Uint32 c_max_light = c_max_tiles;
-          static const Int32  c_light_decay = 32;
-
-          static const Uint32 c_max_decors = 64;
-
-          static const Uint32 c_max_lamps = 32;
-          static const Uint32 c_unique_lamp_count = 4;
-          static const Uint8  c_unique_lamps_light [ c_unique_lamp_count ];
-
-          static const Uint32 c_max_enemy_spawns = 32;
+          Void restore_enemy_spawns ( );
 
      private:
 
           Char8          m_master_list [ c_max_maps ][ c_max_map_name_size ];
           Uint8          m_master_count;
 
-          PersistedExits m_persisted_exits [ c_max_maps ];
+          PersistedExits   m_persisted_exits [ c_max_maps ];
+          PersistedEnemies m_persisted_enemies [ c_max_maps ];
 
           Int32          m_current_master_map;
 
@@ -286,6 +303,11 @@ namespace bryte
      inline Bool Map::coordinates_valid ( const Coordinates& coords ) const
      {
           return coordinate_x_valid ( coords.x ) && coordinate_y_valid ( coords.y );
+     }
+
+     inline Bool Map::current_master_map ( ) const
+     {
+          return m_current_master_map;
      }
 }
 

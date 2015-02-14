@@ -311,9 +311,34 @@ Bool State::spawn_bomb ( const Vector& position )
      return true;
 }
 
+Void State::persist_map ( )
+{
+     // persist map exits
+     LOG_DEBUG ( "Persisting exits for map: %d\n", map.current_master_map ( ) );
+
+     for ( Uint8 y = 0; y < interactives.height ( ); ++y ) {
+          for ( Uint8 x = 0; x < interactives.width ( ); ++x ) {
+               const Auto& exit = interactives.cget_from_tile ( x, y );
+
+               if ( exit.type != Interactive::Type::exit ) {
+                    continue;
+               }
+
+               map.persist_exit ( exit, x, y );
+          }
+     }
+
+     // persist map enemies
+     for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
+          Auto& enemy = enemies [ c ];
+
+          map.persist_enemy ( enemy, c );
+     }
+}
+
 Void State::spawn_map_enemies ( )
 {
-     for ( int i = 0; i < map.enemy_spawn_count ( ); ++i ) {
+     for ( Int32 i = 0; i < map.enemy_spawn_count ( ); ++i ) {
           Auto& enemy_spawn = map.enemy_spawn ( i );
 
           Vector position = Map::coordinates_to_vector ( enemy_spawn.location.x, enemy_spawn.location.y );
@@ -336,7 +361,7 @@ Void State::player_death ( )
      enemies.clear ( );
 
      // clear persisted exits and load the first map
-     map.clear_persisted_exits ( );
+     map.clear_persistence ( );
      map.load_from_master_list ( 0, interactives );
 
      spawn_map_enemies ( );
@@ -873,12 +898,14 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
                                         Map::c_tile_dimension_in_meters * 0.5f );
 
+               state->persist_map ( );
                map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
 
                state->pickups.clear ( );
                state->projectiles.clear ( );
                state->enemies.clear ( );
                state->emitters.clear ( );
+
                state->spawn_map_enemies ( );
 
                state->setup_emitters_from_map_lamps ( );

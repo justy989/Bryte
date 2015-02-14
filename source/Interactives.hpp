@@ -156,6 +156,7 @@ namespace bryte
                pushable_torch,
                light_detector,
                exit,
+               bombable_block,
                count
           };
 
@@ -164,6 +165,7 @@ namespace bryte
           Void      update   ( Real32 time_delta, Interactives& interactives );
 
           Void      activate ( Interactives& interactives );
+          Void      explode  ( Interactives& interactives );
           Direction push     ( Direction direction, Interactives& interactives );
           Void      light    ( Uint8 light, Interactives& interactives );
           Void      enter    ( Interactives& interactives );
@@ -198,6 +200,7 @@ namespace bryte
 
           Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
           Void activate ( Int32 tile_x, Int32 tile_y );
+          Void explode ( Int32 tile_x, Int32 tile_y );
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
           Void enter ( Int32 tile_x, Int32 tile_y );
           Void leave ( Int32 tile_x, Int32 tile_y );

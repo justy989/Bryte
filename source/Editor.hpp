@@ -49,6 +49,7 @@ namespace editor
           pressure_plate,
           popup_block,
           all_killed,
+          bombable_block,
           count
      };
 

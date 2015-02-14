@@ -191,6 +191,13 @@ Void State::mouse_button_left_clicked ( )
           Map::Location location =  { static_cast<Uint8>( mouse_tile_x ), static_cast<Uint8>( mouse_tile_y ) };
           map.set_activate_location_on_all_enemies_killed ( location );
      } break;
+     case Mode::bombable_block:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          interactive.type = Interactive::Type::bombable_block;
+          interactive.reset ( );
+     } break;
      }
 }
 
@@ -330,6 +337,15 @@ Void State::mouse_button_right_clicked ( )
      case Mode::all_killed:
      {
           map.set_activate_location_on_all_enemies_killed ( Map::Location { 0, 0 } );
+     } break;
+     case Mode::bombable_block:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::bombable_block ) {
+               interactive.type = Interactive::Type::none;
+               interactive.reset ( );
+          }
      } break;
      }
 }

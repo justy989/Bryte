@@ -179,6 +179,13 @@ Void Interactives::activate ( Int32 tile_x, Int32 tile_y )
      i.activate ( *this );
 }
 
+Void Interactives::explode ( Int32 tile_x, Int32 tile_y )
+{
+     Interactive& i = get_from_tile ( tile_x, tile_y );
+
+     i.explode ( *this );
+}
+
 Void Interactives::light ( Int32 tile_x, Int32 tile_y, Uint8 light )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
@@ -214,6 +221,7 @@ Bool Interactive::is_solid ( ) const
      case torch:
      case pushable_block:
      case pushable_torch:
+     case bombable_block:
           return true;
      case exit:
           return interactive_exit.state != Exit::State::open;
@@ -248,6 +256,8 @@ Void Interactive::reset ( )
      case Type::light_detector:
           interactive_light_detector.reset ( );
           break;
+     case Type::bombable_block:
+          break;
      }
 
      underneath.reset ( );
@@ -274,6 +284,30 @@ Void Interactive::activate ( Interactives& interactives )
           break;
      case Type::pushable_torch:
           interactive_pushable_torch.activate ( );
+          break;
+     }
+}
+
+Void Interactive::explode ( Interactives& interactives )
+{
+     switch ( type ) {
+     default:
+          break;
+     case Type::none:
+          break;
+     case Type::exit:
+          break;
+     case Type::lever:
+          interactive_lever.activate ( );
+          break;
+     case Type::torch:
+          interactive_torch.activate ( );
+          break;
+     case Type::pushable_torch:
+          interactive_pushable_torch.activate ( );
+          break;
+     case Type::bombable_block:
+          type = Type::none;
           break;
      }
 }

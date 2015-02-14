@@ -146,6 +146,10 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           }
 
           break;
+     case Interactive::Type::bombable_block:
+          //TODO: reorganize tilesheet because it's getting messy and hard to compute which parts to clip
+          clip_rect.y = ( Interactive::Type::exit + Direction::count + 2 ) * Map::c_tile_dimension_in_pixels;
+          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );

@@ -150,6 +150,8 @@ namespace bryte
           inline Bool coordinates_valid ( const Coordinates& coords ) const;
 
           inline Bool current_master_map ( ) const;
+          inline Void set_activate_location_on_all_enemies_killed ( Location loc );
+          inline Location activate_on_all_enemies_killed ( ) const;
 
      public:
 
@@ -199,6 +201,8 @@ namespace bryte
 
           EnemySpawn     m_enemy_spawns [ c_max_enemy_spawns ];
           Uint8          m_enemy_spawn_count;
+
+          Location       m_activate_on_all_enemies_killed;
      };
 
      inline Int32 Map::width ( ) const
@@ -309,6 +313,17 @@ namespace bryte
      {
           return m_current_master_map;
      }
+
+     inline Void Map::set_activate_location_on_all_enemies_killed ( Map::Location loc )
+     {
+          m_activate_on_all_enemies_killed = loc;
+     }
+
+     inline Map::Location Map::activate_on_all_enemies_killed ( ) const
+     {
+          return m_activate_on_all_enemies_killed;
+     }
+
 }
 
 #endif

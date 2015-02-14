@@ -186,6 +186,11 @@ Void State::mouse_button_left_clicked ( )
                underneath.underneath_popup_block.up = static_cast<Bool>( current_popup_block );
           }
      } break;
+     case Mode::all_killed:
+     {
+          Map::Location location =  { static_cast<Uint8>( mouse_tile_x ), static_cast<Uint8>( mouse_tile_y ) };
+          map.set_activate_location_on_all_enemies_killed ( location );
+     } break;
      }
 }
 
@@ -321,6 +326,10 @@ Void State::mouse_button_right_clicked ( )
           } else {
                current_popup_block = !current_popup_block;
           }
+     } break;
+     case Mode::all_killed:
+     {
+          map.set_activate_location_on_all_enemies_killed ( Map::Location { 0, 0 } );
      } break;
      }
 }
@@ -877,8 +886,11 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          pressure_plate.activate_coordinate_x, pressure_plate.activate_coordinate_y );
           }
      } break;
-
-
+     case Mode::all_killed:
+     {
+          Map::Location loc = state->map.activate_on_all_enemies_killed ( );
+          sprintf ( state->message_buffer, "ACT %d %d", loc.x, loc.y );
+     } break;
      }
 
      state->map.reset_light ( );

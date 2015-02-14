@@ -42,6 +42,9 @@ Bool Map::load_master_list ( const Char8* filepath )
 
      m_current_master_map = c_first_master_map;
 
+     m_activate_on_all_enemies_killed.x = 0;
+     m_activate_on_all_enemies_killed.y = 0;
+
      clear_persistence ( );
 
      return true;
@@ -349,6 +352,9 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
                file.write ( reinterpret_cast<const Char8*> ( &interactive ), sizeof ( interactive ) );
           }
      }
+
+     file.write ( reinterpret_cast<const Char8*> ( &m_activate_on_all_enemies_killed ),
+                  sizeof ( m_activate_on_all_enemies_killed ) );
 }
 
 Void Map::load ( const Char8* filepath, Interactives& interactives )
@@ -406,6 +412,9 @@ Void Map::load ( const Char8* filepath, Interactives& interactives )
                file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
           }
      }
+
+     file.read ( reinterpret_cast<Char8*> ( &m_activate_on_all_enemies_killed ),
+                 sizeof ( m_activate_on_all_enemies_killed ) );
 }
 
 void Map::clear_persistence ( )

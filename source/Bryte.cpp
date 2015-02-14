@@ -395,6 +395,21 @@ Void State::enemy_death ( const Enemy& enemy )
                                              0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
                                              Emitter::c_max_particles, 0 );
           }
+
+          // TODO: track entity count so we don't have to do this linear check
+          bool all_dead = true;
+
+          for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
+               if ( enemies [ i ].is_alive ( ) ) {
+                    all_dead = false;
+                    break;
+               }
+          }
+
+          if ( all_dead ) {
+               Map::Location loc = map.activate_on_all_enemies_killed ( );
+               interactives.activate ( loc.x, loc.y );
+          }
      }
 }
 

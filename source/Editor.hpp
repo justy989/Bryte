@@ -48,6 +48,7 @@ namespace editor
           exit,
           pressure_plate,
           popup_block,
+          all_killed,
           count
      };
 

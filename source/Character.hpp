@@ -4,6 +4,7 @@
 #include "Direction.hpp"
 #include "Entity.hpp"
 #include "StopWatch.hpp"
+#include "Random.hpp"
 
 namespace bryte
 {
@@ -29,8 +30,9 @@ namespace bryte
           Void walk ( Direction dir );
           Void attack ( );
           Void damage ( Int32 amount, Direction push );
+          Void light_on_fire ( );
 
-          Void update ( Real32 time_delta, const Map& map, Interactives& interactives );
+          Void update ( Real32 time_delta, const Map& map, Interactives& interactives, Random& random );
 
           Real32 attack_x ( ) const;
           Real32 attack_y ( ) const;
@@ -69,6 +71,9 @@ namespace bryte
           static const Real32 c_cooldown_time;
           static const Real32 c_accel;
 
+          static const Int32  c_fire_tick_max;
+          static const Real32 c_fire_tick_rate;
+
      public:
 
           State     state;
@@ -105,6 +110,9 @@ namespace bryte
 
           Stopwatch damage_watch;
           Stopwatch cooldown_watch;
+          Stopwatch fire_watch;
+
+          Uint8 fire_tick_count;
 
           Bool collides_with_solids;
           Bool collides_with_exits;

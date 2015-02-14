@@ -35,6 +35,10 @@ Void Projectile::hit_character ( Character& character )
 {
      character.damage ( 1, facing );
 
+     if ( on_fire ) {
+          character.light_on_fire ( );
+     }
+
      switch ( type ) {
      default:
           break;

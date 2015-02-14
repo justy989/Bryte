@@ -43,7 +43,6 @@ namespace bryte
           Direction facing;
           Stopwatch stuck_watch;
           TrackEntity track_entity;
-          Bool on_fire;
      };
 }
 

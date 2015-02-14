@@ -104,6 +104,24 @@ static Void render_character_attack ( SDL_Surface* back_buffer, SDL_Surface* hor
      SDL_BlitSurface ( attack_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
+static Void render_on_fire ( SDL_Surface* back_buffer, SDL_Surface* fire_surface,
+                             const Vector& position, Int32 frame, Real32 camera_x, Real32 camera_y )
+{
+     Int32 position_x = meters_to_pixels ( position.x ( ) );
+     Int32 position_y = meters_to_pixels ( position.y ( ) );
+
+     SDL_Rect dest_rect { position_x, position_y,
+                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     SDL_Rect clip_rect { frame * Map::c_tile_dimension_in_pixels, 0,
+                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( fire_surface, &clip_rect, back_buffer, &dest_rect );
+
+}
+
 static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_sheet,
                                SDL_Surface* blink_surface,
                                const Character& character,
@@ -149,6 +167,8 @@ Void CharacterDisplay::tick ( )
      } else {
           blink_counter--;
      }
+
+     fire_animation.update_increment ( fire_animation_max_frame, fire_animation_delay );
 }
 
 Void CharacterDisplay::render_player ( SDL_Surface* back_buffer, const Character& player,
@@ -159,19 +179,24 @@ Void CharacterDisplay::render_player ( SDL_Surface* back_buffer, const Character
                                     player, camera_x, camera_y );
      }
 
-     render_character ( back_buffer, player_sheet, blink_surface, player, camera_x, camera_y,
-                        blink_on );
+     render_character ( back_buffer, player_sheet, blink_surface,
+                        player, camera_x, camera_y, blink_on );
+
+     if ( player.on_fire ) {
+          render_on_fire ( back_buffer, fire_surface, player.position, fire_animation.frame,
+                           camera_x, camera_y );
+     }
 }
 
 Void CharacterDisplay::render_enemy ( SDL_Surface* back_buffer, const Enemy& enemy,
                                       Real32 camera_x, Real32 camera_y )
 {
-     if ( enemy.state == Character::State::attacking ) {
-          render_character_attack ( back_buffer, horizontal_sword_sheet, vertical_sword_sheet,
-                                    enemy, camera_x, camera_y );
-     }
+     render_character ( back_buffer, enemy_sheets [ enemy.type ], blink_surface,
+                        enemy, camera_x, camera_y, blink_on );
 
-     render_character ( back_buffer, enemy_sheets [ enemy.type ], blink_surface, enemy, camera_x, camera_y,
-                        blink_on );
+     if ( enemy.on_fire ) {
+          render_on_fire ( back_buffer, fire_surface, enemy.position, fire_animation.frame,
+                           camera_x, camera_y );
+     }
 }
 

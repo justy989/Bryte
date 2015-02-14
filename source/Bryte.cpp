@@ -131,6 +131,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( character_display.fire_surface, game_memory,
+                                          "test_effect_fire.bmp" ) ) {
+          return false;
+     }
+
      character_display.blink_surface = SDL_CreateRGBSurface ( 0, 32, 32, 32, 0, 0, 0, 0 );
      if ( !character_display.blink_surface ) {
           LOG_ERROR ( "Failed to create character display blink surface: SDL_CreateRGBSurface(): %s\n",
@@ -213,6 +218,13 @@ Void State::destroy ( )
      SDL_FreeSurface ( map_display.lampsheet );
 
      SDL_FreeSurface ( character_display.player_sheet );
+
+     SDL_FreeSurface ( character_display.horizontal_sword_sheet );
+     SDL_FreeSurface ( character_display.vertical_sword_sheet );
+
+     SDL_FreeSurface ( character_display.blink_surface );
+
+     SDL_FreeSurface ( character_display.fire_surface );
 
      for ( int i = 0; i < Enemy::Type::count; ++i ) {
           SDL_FreeSurface ( character_display.enemy_sheets [ i ] );
@@ -619,7 +631,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
 
      if ( state->player.is_alive ( ) ){
-          state->player.update ( time_delta, state->map, state->interactives );
+          state->player.update ( time_delta, state->map, state->interactives, state->random );
      }
 
      if ( state->player.state == Character::State::pushing ) {
@@ -671,7 +683,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           enemy.think ( player_center, state->random, time_delta );
 #endif
 
-          enemy.update ( time_delta, state->map, state->interactives );
+          enemy.update ( time_delta, state->map, state->interactives, state->random );
 
 #if 0
           // not sure I want enemies messing with your puzzles
@@ -700,6 +712,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                                                           state->player.collision_center ( ),
                                                           state->random );
                state->player.damage ( 1, damage_dir );
+
+               if ( enemy.on_fire ) {
+                    state->player.light_on_fire ( );
+               }
 
                if ( state->player.life_state == Entity::LifeState::dead ) {
                     state->player.life_state = Entity::LifeState::dying;

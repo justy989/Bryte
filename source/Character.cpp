@@ -14,6 +14,8 @@ const Real32 Character::c_attack_width_in_meters  = pixels_to_meters ( Character
 const Real32 Character::c_attack_height_in_meters = pixels_to_meters ( Character::c_attack_height_in_pixels );
 const Real32 Character::c_attack_time             = 0.35f;
 const Real32 Character::c_cooldown_time           = 0.25f;
+const Int32  Character::c_fire_tick_max           = 3;
+const Real32 Character::c_fire_tick_rate          = 2.0f;
 
 Bool Character::collides_with ( const Character& character )
 {
@@ -158,6 +160,15 @@ Void Character::damage ( Int32 amount, Direction push )
      }
 }
 
+Void Character::light_on_fire ( )
+{
+     if ( !on_fire ) {
+          on_fire = true;
+          fire_watch.reset ( c_fire_tick_rate );
+          fire_tick_count = 0;
+     }
+}
+
 Bool Character::in_tile ( Int32 x, Int32 y ) const
 {
      float tile_left   = pixels_to_meters ( x * Map::c_tile_dimension_in_pixels );
@@ -195,7 +206,7 @@ static Bool check_wall ( Real32 wall, Real32 wall_min, Real32 wall_max,
      return false;
 }
 
-Void Character::update ( Real32 time_delta, const Map& map, Interactives& interactives )
+Void Character::update ( Real32 time_delta, const Map& map, Interactives& interactives, Random& random )
 {
      // tick stopwatches
      state_watch.tick ( time_delta );
@@ -252,6 +263,22 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           break;
      }
 
+     if ( on_fire ) {
+          fire_watch.tick ( time_delta );
+
+          if ( fire_watch.expired ( ) ) {
+               Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+               damage ( 1, dir );
+
+               fire_tick_count++;
+
+               if ( fire_tick_count >= c_fire_tick_max ) {
+                    on_fire = false;
+               } else {
+                    fire_watch.reset ( c_fire_tick_rate );
+               }
+          }
+     }
 
      // TEMPORARY, slow character down
      acceleration += velocity * -deceleration_scale;

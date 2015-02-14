@@ -28,6 +28,7 @@ namespace bryte
 
                if ( entity.is_dead ( ) ) {
                     entity.life_state = Entity::LifeState::spawning;
+                    entity.on_fire = false;
                     entity.position = position;
                     return &entity;
                }
@@ -42,6 +43,7 @@ namespace bryte
           for ( Uint32 i = 0; i < MAX; ++i ) {
                Auto& entity = entities [ i ];
                entity.life_state = Entity::LifeState::dead;
+               entity.on_fire = false;
                entity.position.set ( 0.0f, 0.0f );
                entity.clear ( );
           }

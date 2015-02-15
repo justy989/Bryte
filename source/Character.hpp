@@ -4,7 +4,6 @@
 #include "Direction.hpp"
 #include "Entity.hpp"
 #include "StopWatch.hpp"
-#include "Random.hpp"
 
 namespace bryte
 {
@@ -32,7 +31,7 @@ namespace bryte
           Void damage ( Int32 amount, Direction push );
           Void light_on_fire ( );
 
-          Void update ( Real32 time_delta, const Map& map, Interactives& interactives, Random& random );
+          Void update ( Real32 time_delta, const Map& map, Interactives& interactives );
 
           Real32 attack_x ( ) const;
           Real32 attack_y ( ) const;

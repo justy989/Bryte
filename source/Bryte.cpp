@@ -500,6 +500,20 @@ Void State::setup_emitters_from_map_lamps ( )
      }
 }
 
+Void State::burn_character ( Character& character )
+{
+     character.fire_tick_count++;
+
+     if ( character.fire_tick_count >= Character::c_fire_tick_max ) {
+          character.on_fire = false;
+     } else {
+          character.fire_watch.reset ( Character::c_fire_tick_rate );
+     }
+
+     Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+     character.damage ( 1, dir );
+}
+
 Void State::update_player ( float time_delta )
 {
      if ( direction_keys [ Direction::up ] ) {
@@ -551,8 +565,16 @@ Void State::update_player ( float time_delta )
           }
      }
 
-     if ( player.is_alive ( ) ){
-          player.update ( time_delta, map, interactives, random );
+     if ( player.is_alive ( ) ) {
+          player.update ( time_delta, map, interactives );
+
+          if ( player.on_fire && player.fire_watch.expired ( ) ) {
+               burn_character ( player );
+
+               if ( player.is_dead ( ) ) {
+                    player_death ( );
+               }
+          }
      }
 
      Map::Coordinates player_center_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
@@ -675,12 +697,20 @@ Void State::update_enemies ( float time_delta )
           enemy.think ( player_center, random, time_delta );
 #endif
 
-          enemy.update ( time_delta, map, interactives, random );
+          enemy.update ( time_delta, map, interactives );
 
           // spawn a projectile if the goo is shooting
           if ( enemy.type == Enemy::Type::goo &&
                enemy.goo_state.state == Enemy::GooState::State::shooting ) {
                spawn_projectile ( Projectile::Type::goo, enemy.position, enemy.facing );
+          }
+
+          if ( enemy.on_fire && enemy.fire_watch.expired ( ) ) {
+               burn_character ( enemy );
+
+               if ( enemy.is_dead ( ) ) {
+                    enemy_death ( enemy );
+               }
           }
 
           // check collision between player and enemy

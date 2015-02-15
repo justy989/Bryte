@@ -206,7 +206,7 @@ static Bool check_wall ( Real32 wall, Real32 wall_min, Real32 wall_max,
      return false;
 }
 
-Void Character::update ( Real32 time_delta, const Map& map, Interactives& interactives, Random& random )
+Void Character::update ( Real32 time_delta, const Map& map, Interactives& interactives )
 {
      // tick stopwatches
      state_watch.tick ( time_delta );
@@ -265,19 +265,6 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      if ( on_fire ) {
           fire_watch.tick ( time_delta );
-
-          if ( fire_watch.expired ( ) ) {
-               Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
-               damage ( 1, dir );
-
-               fire_tick_count++;
-
-               if ( fire_tick_count >= c_fire_tick_max ) {
-                    on_fire = false;
-               } else {
-                    fire_watch.reset ( c_fire_tick_rate );
-               }
-          }
      }
 
      // TEMPORARY, slow character down

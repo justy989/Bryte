@@ -121,6 +121,13 @@ Void DamageNumber::update ( float time_delta )
      }
 }
 
+Void DamageNumber::clear ( )
+{
+     value = 0;
+     starting_y = 0.0f;
+     position.zero ( );
+}
+
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
      random.seed ( 13371 );
@@ -253,6 +260,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      bombs.clear ( );
      emitters.clear ( );
      enemies.clear ( );
+     damage_numbers.clear ( );
 
      map.load_master_list ( settings->map_master_list_filename );
 
@@ -412,6 +420,8 @@ Bool State::spawn_damage_number ( const Vector& position, Int32 value )
      damage_number->value = value;
      damage_number->starting_y = position.y ( );
 
+     LOG_DEBUG ( "spawning damage number at %f, %f\n", position.x ( ), position.y ( ) );
+
      return true;
 }
 
@@ -463,6 +473,7 @@ Void State::player_death ( )
      projectiles.clear ( );
      emitters.clear ( );
      enemies.clear ( );
+     damage_numbers.clear ( );
 
      // clear persisted exits and load the first map
      map.clear_persistence ( );
@@ -663,6 +674,10 @@ Void State::update_player ( float time_delta )
                Auto dest = adjacent_tile ( push_location, player.facing );
 
                for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
+                    if ( enemies [ i ].is_dead ( ) ) {
+                         continue;
+                    }
+
                     Auto coords = Map::vector_to_coordinates ( enemies [ i ].collision_center ( ) );
 
                     if ( coords.x == dest.x && coords.y == dest.y ) {
@@ -1078,6 +1093,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 {
      Auto* state = get_state ( game_memory );
 
+     // handle keyboard
      for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
           const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
 
@@ -1141,6 +1157,40 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                }
                break;
 #endif
+          }
+     }
+
+     // handle controller
+     for ( Uint32 i = 0; i < game_input.controller_button_change_count; ++i ) {
+          const GameInput::ButtonChange& btn_change = game_input.controller_button_changes [ i ];
+
+          switch ( btn_change.button ) {
+               default:
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                    state->direction_keys [ Direction::left ] = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    state->direction_keys [ Direction::up ] = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    state->direction_keys [ Direction::right ] = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    state->direction_keys [ Direction::down ] = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_A:
+                    state->attack_key = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_B:
+                    state->block_key = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_X:
+                    state->activate_key = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_Y:
+                    state->switch_attack_key = btn_change.down;
+                    break;
           }
      }
 }
@@ -1343,31 +1393,28 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      char buffer [ 64 ];
 
-#ifdef LINUX
+#ifdef WIN32
+     sprintf_s ( buffer, "%d", state->player.key_count );
+#else
      sprintf ( buffer, "%d", state->player.key_count );
 #endif
 
-#ifdef WIN32
-     sprintf_s ( buffer, "%d", state->player.key_count );
-#endif
      state->text.render ( back_buffer, buffer, 235, 4 );
-
-#ifdef LINUX
-     sprintf ( buffer, "%d", state->player.bomb_count );
-#endif
 
 #ifdef WIN32
      sprintf_s ( buffer, "%d", state->player.bomb_count );
+#else
+     sprintf ( buffer, "%d", state->player.bomb_count );
 #endif
-     state->text.render ( back_buffer, buffer, 210, 4 );
 
-#ifdef LINUX
-     sprintf ( buffer, "%d", state->player.arrow_count );
-#endif
+     state->text.render ( back_buffer, buffer, 210, 4 );
 
 #ifdef WIN32
      sprintf_s ( buffer, "%d", state->player.arrow_count );
+#else
+     sprintf ( buffer, "%d", state->player.arrow_count );
 #endif
+
      state->text.render ( back_buffer, buffer, 185, 4 );
 
      SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
@@ -1389,7 +1436,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      Auto player_coord = Map::vector_to_coordinates ( state->player.position );
 
-     sprintf ( buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
+// TODO: I wish I could just use snprintf so it is 'safe' on all platforms, but it doesn't seem to exist on windows?
+#ifdef WIN32
+     sprintf_s (
+#else
+     sprintf (
+#endif
+               buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
                state->player.position.x ( ), state->player.position.y ( ),
                player_coord.x, player_coord.y,
                state->map.current_master_map ( ),

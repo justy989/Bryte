@@ -53,6 +53,10 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           walk_frame_count = 1;
           walk_frame_rate = 50.0f;
           constant_animation = false;
+
+          rat_state.moving = false;
+          rat_state.reacting_to_attack = false;
+          rat_state.timer.reset ( 0.0f );
           break;
      case Enemy::Type::bat:
           health     = 2;
@@ -72,6 +76,9 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           walk_frame_count = 3;
           walk_frame_rate = 0.2f;
           constant_animation = true;
+
+          bat_state.move_direction = BatState::Direction::up_left;
+          bat_state.timer.reset ( 0.0f );
           break;
      case Enemy::Type::goo:
           health     = 4;
@@ -91,6 +98,9 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           walk_frame_count = 3;
           walk_frame_rate = 0.4f;
           constant_animation = true;
+
+          goo_state.state = GooState::State::walking;
+          goo_state.state_timer.reset ( 0.0f );
           break;
      }
 }

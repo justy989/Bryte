@@ -73,13 +73,15 @@ private:
 private:
 
      // SDL components required to make window and draw to it
-     SDL_Window*   m_window;
-     SDL_Renderer* m_renderer;
-     SDL_Texture*  m_back_buffer_texture;
-     SDL_Surface*  m_back_buffer_surface;
+     SDL_Window*         m_window;
+     SDL_Renderer*       m_renderer;
+     SDL_GameController* m_controller;
+     Int32               m_controller_id;
+     SDL_Texture*        m_back_buffer_texture;
+     SDL_Surface*        m_back_buffer_surface;
+
 
      GameFunctions m_game_functions;
-
      GameMemory    m_game_memory;
      GameInput     m_game_input;
 

@@ -54,6 +54,7 @@ namespace bryte
      public:
 
           Void update ( float time_delta );
+          Void clear ( );
 
      public:
 

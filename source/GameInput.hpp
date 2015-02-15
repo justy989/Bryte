@@ -13,23 +13,29 @@ public:
           bool         down;
      };
 
-     struct MouseButtonChange {
+     struct ButtonChange {
           Uint8 button;
           bool  down;
      };
 
 public:
 
-     GameInput ( ) : key_change_count ( 0 ) { }
+     GameInput ( ) : 
+          key_change_count ( 0 ), 
+          mouse_button_change_count ( 0 ),
+          controller_button_change_count ( 0 )
+     { }
 
      Void reset          ( );
      Bool add_key_change ( SDL_Scancode scan_code, Bool down );
      Bool add_mouse_button_change ( Uint8 button, Bool down, Int32 x, Int32 y );
+     Bool add_controller_button_change ( Uint8 button, Bool down );
 
 public:
 
      static const Uint32 c_max_key_change_count = 8;
      static const Uint32 c_max_mouse_button_change_count = 4;
+     static const Uint32 c_max_controller_button_change_count = 8;
 
 public:
 
@@ -41,8 +47,11 @@ public:
 
      Int32     mouse_scroll;
 
-     MouseButtonChange mouse_button_changes [ c_max_mouse_button_change_count ];
+     ButtonChange mouse_button_changes [ c_max_mouse_button_change_count ];
      Uint32 mouse_button_change_count;
+
+     ButtonChange controller_button_changes [ c_max_controller_button_change_count ];
+     Uint32 controller_button_change_count;
 };
 
 #endif

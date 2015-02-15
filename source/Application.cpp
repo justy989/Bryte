@@ -24,7 +24,7 @@ Application::Application ( ) :
      m_current_update_timestamp ( m_previous_update_timestamp )
 {
      LOG_INFO ( "Initializing SDL\n" );
-     SDL_Init ( SDL_INIT_VIDEO );
+     SDL_Init ( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER );
 }
 
 Application::~Application ( )
@@ -292,6 +292,46 @@ Bool Application::poll_sdl_events ( )
                                                      &m_game_input.mouse_position_y );
           } else if ( sdl_event.type == SDL_MOUSEWHEEL ) {
                m_game_input.mouse_scroll = sdl_event.wheel.y;
+          } else if ( sdl_event.type == SDL_CONTROLLERBUTTONDOWN ) {
+               Auto& btn = sdl_event.cbutton.button;
+
+               if ( !m_game_input.add_controller_button_change ( btn, true ) ) {
+                    LOG_WARNING ( "Unable to handle more than %d buttons per frame\n",
+                                  GameInput::c_max_controller_button_change_count );
+               }
+          } else if ( sdl_event.type == SDL_CONTROLLERBUTTONUP ) {
+               Auto& btn = sdl_event.cbutton.button;
+
+               if ( !m_game_input.add_controller_button_change ( btn, false ) ) {
+                    LOG_WARNING ( "Unable to handle more than %d buttons per frame\n",
+                                  GameInput::c_max_controller_button_change_count );
+               }
+          } else if ( sdl_event.type == SDL_CONTROLLERDEVICEADDED ) {
+               if ( m_controller ) {
+                    LOG_ERROR ( "Bryte only supports 1 controller.\n" );
+               } else {
+                    Auto controller_id = sdl_event.cdevice.which;
+
+                    m_controller = SDL_GameControllerOpen ( controller_id );
+
+                    if ( !m_controller ) {
+                         LOG_ERROR ( "Failed to open game controller: %d, SDL_Error(): %s\n",
+                                     controller_id, SDL_GetError ( ) );
+                    } else {
+                         m_controller_id = controller_id;
+
+                         LOG_INFO ( "Controller %d added.\n", controller_id );
+                    }
+               }
+          } else if ( sdl_event.type == SDL_CONTROLLERDEVICEREMOVED ) {
+               if ( m_controller && m_controller_id == sdl_event.cdevice.which ) {
+
+                    SDL_GameControllerClose ( m_controller );
+
+                    m_controller = nullptr;
+
+                    LOG_INFO ( "Controller %d removed.\n", sdl_event.cdevice.which );
+               }
           }
      }
 

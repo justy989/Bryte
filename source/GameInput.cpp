@@ -1,11 +1,13 @@
 #include "GameInput.hpp"
+#include "Log.hpp"
 
 Void GameInput::reset ( )
 {
-     key_change_count          = 0;
-     mouse_button_change_count = 0;
+     key_change_count               = 0;
+     mouse_button_change_count      = 0;
+     controller_button_change_count = 0;
 
-     mouse_scroll              = 0;
+     mouse_scroll = 0;
 }
 
 Bool GameInput::add_key_change ( SDL_Scancode scan_code, Bool down )
@@ -39,3 +41,16 @@ Bool GameInput::add_mouse_button_change ( Uint8 button, Bool down, Int32 x, Int3
      return false;
 }
 
+Bool GameInput::add_controller_button_change ( Uint8 button, Bool down )
+{
+     if ( controller_button_change_count < c_max_controller_button_change_count ) {
+          controller_button_changes [ controller_button_change_count ].button = button;
+          controller_button_changes [ controller_button_change_count ].down = down;
+
+          controller_button_change_count++;
+
+          return true;
+     }
+
+     return false;
+}

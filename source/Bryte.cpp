@@ -288,6 +288,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
 #ifdef DEBUG
      enemy_think = true;
+     invincible = false;
+     debug_text = true;
 #endif
 
      return true;
@@ -1156,6 +1158,11 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     state->player.bomb_count++;
                }
                break;
+          case SDL_SCANCODE_T:
+               if ( key_change.down ) {
+                    state->debug_text = !state->debug_text;
+               }
+               break;
 #endif
           }
      }
@@ -1384,7 +1391,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      SDL_FillRect ( back_buffer, &health_bar_border_rect, white );
      SDL_FillRect ( back_buffer, &health_bar_rect, red );
 
-     SDL_Rect attack_dest { ( back_buffer->w / 2 ) - ( Map::c_tile_dimension_in_pixels / 2 ), 0,
+     SDL_Rect attack_dest { ( back_buffer->w / 2 ) - ( Map::c_tile_dimension_in_pixels / 2 ), 1,
                             Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
      SDL_Rect attack_clip { state->player.attack_mode * Map::c_tile_dimension_in_pixels, 0,
                             Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
@@ -1440,23 +1447,24 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
 #ifdef DEBUG
 
-     Auto player_coord = Map::vector_to_coordinates ( state->player.position );
+     if ( state->debug_text ) {
+          Auto player_coord = Map::vector_to_coordinates ( state->player.position );
 
-// TODO: I wish I could just use snprintf so it is 'safe' on all platforms, but it doesn't seem to exist on windows?
+          // TODO: I wish I could just use snprintf so it is 'safe' on all platforms, but it doesn't seem to exist on windows?
 #ifdef WIN32
-     sprintf_s (
+          sprintf_s (
 #else
-     sprintf (
+          sprintf (
 #endif
-               buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
-               state->player.position.x ( ), state->player.position.y ( ),
-               player_coord.x, player_coord.y,
-               state->map.current_master_map ( ),
-               state->enemy_think ? "ON" : "OFF",
-               state->invincible ? "ON" : "OFF" );
+                    buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
+                    state->player.position.x ( ), state->player.position.y ( ),
+                    player_coord.x, player_coord.y,
+                    state->map.current_master_map ( ),
+                    state->enemy_think ? "ON" : "OFF",
+                    state->invincible ? "ON" : "OFF" );
 
-     state->text.render ( back_buffer, buffer, 0, 230 );
-
+          state->text.render ( back_buffer, buffer, 0, 230 );
 #endif
+     }
 }
 

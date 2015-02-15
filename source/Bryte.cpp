@@ -109,6 +109,18 @@ Void Bomb::clear ( )
      explode_watch.reset ( 0.0f );
 }
 
+const Real32 DamageNumber::c_rise_height = 1.0f;
+const Real32 DamageNumber::c_rise_speed = 1.0f;
+
+Void DamageNumber::update ( float time_delta )
+{
+     position += Vector ( 0.0f, c_rise_speed * time_delta );
+
+     if ( ( position.y ( ) - starting_y ) > c_rise_height ) {
+          life_state = Entity::LifeState::dead;
+     }
+}
+
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
      random.seed ( 13371 );
@@ -389,6 +401,20 @@ Bool State::spawn_bomb ( const Vector& position )
      return true;
 }
 
+Bool State::spawn_damage_number ( const Vector& position, Int32 value )
+{
+     Auto* damage_number = damage_numbers.spawn ( position );
+
+     if ( !damage_number ) {
+          return false;
+     }
+
+     damage_number->value = value;
+     damage_number->starting_y = position.y ( );
+
+     return true;
+}
+
 Void State::persist_map ( )
 {
      // persist map exits
@@ -512,7 +538,10 @@ Void State::burn_character ( Character& character )
      }
 
      Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+
      character.damage ( 1, dir );
+
+     spawn_damage_number ( character.collision_center ( ), 1 );
 }
 
 Void State::update_player ( float time_delta )
@@ -700,6 +729,8 @@ Void State::update_enemies ( float time_delta )
                continue;
           }
 
+          Vector enemy_center = enemy.collision_center ( );
+
 #ifdef DEBUG
           if ( enemy_think ) {
                enemy.think ( player_center, random, time_delta );
@@ -728,16 +759,16 @@ Void State::update_enemies ( float time_delta )
           if ( player.state != Character::State::blinking &&
                player.is_alive ( ) &&
                player.collides_with ( enemy ) ) {
-               Direction damage_dir = direction_between ( enemy.collision_center ( ),
-                                                          player.collision_center ( ),
-                                                          random );
+               Direction damage_dir = direction_between ( enemy_center, player_center, random );
 
                // check if player blocked the attack
                if ( player.state == Character::State::blocking &&
                     damage_dir == opposite_direction ( player.facing ) ) {
                     enemy.damage ( 0, opposite_direction ( damage_dir ) );
+                    spawn_damage_number ( enemy_center, 0 );
                } else {
                     player.damage ( 1, damage_dir );
+                    spawn_damage_number ( player_center, 1 );
                }
 
 #ifdef DEBUG
@@ -756,13 +787,13 @@ Void State::update_enemies ( float time_delta )
 
                     LOG_INFO ( "Spawn emitter on player death!\n" );
 
-                    Auto* emitter = emitters.spawn ( player.collision_center ( ) );
+                    Auto* emitter = emitters.spawn ( player_center );
 
                     if ( emitter ) {
                          Real32 explosion_size = player.collision_width ( ) > player.collision_height ( ) ?
                                                  player.collision_width ( ) : player.collision_height ( );
                          explosion_size *= 2.0f;
-                         emitter->setup_limited_time ( player.collision_center ( ), 0.7f,
+                         emitter->setup_limited_time ( player_center, 0.7f,
                                                        SDL_MapRGB ( &back_buffer_format, 255, 0, 0 ),
                                                        0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
                                                        Emitter::c_max_particles, 0 );
@@ -774,10 +805,11 @@ Void State::update_enemies ( float time_delta )
           if ( player.state == Character::State::attacking &&
                enemy.state != Character::State::blinking &&
                player.attack_collides_with ( enemy ) ) {
-               Direction damage_dir = direction_between ( player.collision_center ( ),
-                                                          enemy.collision_center ( ),
-                                                          random );
+               Direction damage_dir = direction_between ( player_center, enemy_center, random );
+
                enemy.damage ( 1, damage_dir );
+
+               spawn_damage_number ( enemy_center, 1 );
 
                if ( enemy.is_dead ( ) ) {
                     enemy_death ( enemy );
@@ -821,6 +853,8 @@ Void State::update_projectiles ( float time_delta )
                                              enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
                          projectile.hit_character ( enemy );
 
+                         spawn_damage_number ( projectile_collision_point, 1 );
+
                          if ( enemy.is_dead ( ) ) {
                               enemy_death ( enemy );
                          }
@@ -863,10 +897,14 @@ Void State::update_bombs ( float time_delta )
                          continue;
                     }
 
-                    if ( enemy.collision_center ( ).distance_to ( bomb.position ) < Bomb::c_explode_radius ) {
+                    Vector enemy_center = enemy.collision_center ( );
+
+                    if ( enemy_center.distance_to ( bomb.position ) < Bomb::c_explode_radius ) {
                          enemy.damage ( c_bomb_damage, direction_between ( bomb.position,
-                                                                           enemy.collision_center ( ),
+                                                                           enemy_center,
                                                                            random ) );
+
+                         spawn_damage_number ( enemy_center, c_bomb_damage );
 
                          if ( enemy.is_dead ( ) ) {
                               enemy_death ( enemy );
@@ -971,6 +1009,20 @@ Void State::update_emitters ( float time_delta )
           emitter.update ( time_delta, random );
      }
 }
+
+Void State::update_damage_numbers ( float time_delta )
+{
+     for ( Uint32 i = 0; i < damage_numbers.max ( ); ++i ) {
+          Auto& damage_number = damage_numbers [ i ];
+
+          if ( damage_number.is_dead ( ) ) {
+               continue;
+          }
+
+          damage_number.update ( time_delta );
+     }
+}
+
 
 Void State::update_light ( )
 {
@@ -1104,6 +1156,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      state->update_bombs ( time_delta );
      state->update_pickups ( time_delta );
      state->update_emitters ( time_delta );
+     state->update_damage_numbers ( time_delta );
      state->update_light ( );
 }
 
@@ -1133,6 +1186,31 @@ static Void render_particle ( SDL_Surface* back_buffer, const Particle& particle
      dest_rect.h = 1;
 
      SDL_FillRect ( back_buffer, &dest_rect, color );
+}
+
+static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const DamageNumber& damage_number,
+                                   Real32 camera_x, Real32 camera_y )
+{
+     char buffer [ 64 ];
+
+#if LINUX
+     sprintf ( buffer, "%d", damage_number.value );
+#endif
+
+#if WIN32
+     sprintf_s ( buffer, "%d", damage_number.value );
+#endif
+
+     SDL_Rect dest_rect = build_world_sdl_rect ( damage_number.position.x ( ), damage_number.position.y ( ),
+                                                 pixels_to_meters ( text.character_width ),
+                                                 pixels_to_meters ( text.character_height ) );
+
+     dest_rect.x -= ( text.character_width / 2 );
+     dest_rect.y -= ( text.character_height / 2 );
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     text.render ( back_buffer, buffer, dest_rect.x, dest_rect.y);
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -1223,6 +1301,18 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                     }
                }
           }
+     }
+
+     // damage numbers
+     for ( Uint32 i = 0; i < state->damage_numbers.max ( ); ++i ) {
+          Auto& damage_number = state->damage_numbers [ i ];
+
+          if ( damage_number.is_dead ( ) ) {
+               continue;
+          }
+
+          render_damage_number ( state->text, back_buffer, damage_number,
+                                 state->camera.x ( ), state->camera.y ( ) );
      }
 
      // light

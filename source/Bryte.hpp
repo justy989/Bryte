@@ -50,6 +50,23 @@ namespace bryte
           Stopwatch explode_watch;
      };
 
+     struct DamageNumber : public Entity {
+     public:
+
+          Void update ( float time_delta );
+
+     public:
+
+          static const Real32 c_rise_height;
+          static const Real32 c_rise_speed;
+
+     public:
+
+          Stopwatch life_watch;
+          Int32 value;
+          Real32 starting_y;
+     };
+
      struct Settings {
           const Char8* map_master_list_filename;
 
@@ -69,6 +86,7 @@ namespace bryte
           Bool spawn_pickup ( const Vector& position, Pickup::Type type );
           Bool spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing );
           Bool spawn_bomb ( const Vector& position );
+          Bool spawn_damage_number ( const Vector& position, Int32 value );
 
           Void persist_map ( );
           Void spawn_map_enemies ( );
@@ -85,6 +103,7 @@ namespace bryte
           Void update_bombs ( float time_delta );
           Void update_pickups ( float time_delta );
           Void update_emitters ( float time_delta );
+          Void update_damage_numbers ( float time_delta );
           Void update_light ( );
 
           Void setup_emitters_from_map_lamps ( );
@@ -99,11 +118,12 @@ namespace bryte
 
           Player player;
 
-          EntityManager<Enemy,      32> enemies;
-          EntityManager<Pickup,      8> pickups;
-          EntityManager<Projectile, 64> projectiles;
-          EntityManager<Bomb,        8> bombs;
-          EntityManager<Emitter,    32> emitters;
+          EntityManager<Enemy,       32> enemies;
+          EntityManager<Pickup,       8> pickups;
+          EntityManager<Projectile,  64> projectiles;
+          EntityManager<Bomb,         8> bombs;
+          EntityManager<Emitter,     32> emitters;
+          EntityManager<DamageNumber, 16> damage_numbers;
 
           Map          map;
           Interactives interactives;

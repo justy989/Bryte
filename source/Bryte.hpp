@@ -136,6 +136,7 @@ namespace bryte
 
 #ifdef DEBUG
           Bool enemy_think;
+          Bool invincible;
 #endif
      };
 

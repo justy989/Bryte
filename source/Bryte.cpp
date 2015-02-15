@@ -571,6 +571,12 @@ Void State::update_player ( float time_delta )
           if ( player.on_fire && player.fire_watch.expired ( ) ) {
                burn_character ( player );
 
+#ifdef DEBUG
+               if ( invincible ) {
+                    player.health = player.max_health;
+               }
+#endif
+
                if ( player.is_dead ( ) ) {
                     player_death ( );
                }
@@ -722,6 +728,12 @@ Void State::update_enemies ( float time_delta )
                                                           random );
 
                player.damage ( 1, damage_dir );
+
+#ifdef DEBUG
+               if ( invincible ) {
+                    player.health = player.max_health;
+               }
+#endif
 
                if ( enemy.on_fire ) {
                     player.light_on_fire ( );
@@ -1042,6 +1054,11 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     state->enemy_think = !state->enemy_think;
                }
                break;
+          case SDL_SCANCODE_P:
+               if ( key_change.down ) {
+                    state->invincible = !state->invincible;
+               }
+               break;
           case SDL_SCANCODE_K:
                if ( key_change.down ) {
                     state->player.key_count++;
@@ -1263,5 +1280,20 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      SDL_Rect arrow_clip_rect { 0, Pickup::c_dimension_in_pixels * 2, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
 
      SDL_BlitSurface ( state->pickup_display.pickup_sheet, &arrow_clip_rect, back_buffer, &arrow_dest_rect );
+
+#ifdef DEBUG
+
+     Auto player_coord = Map::vector_to_coordinates ( state->player.position );
+
+     sprintf ( buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
+               state->player.position.x ( ), state->player.position.y ( ),
+               player_coord.x, player_coord.y,
+               state->map.current_master_map ( ),
+               state->enemy_think ? "ON" : "OFF",
+               state->invincible ? "ON" : "OFF" );
+
+     state->text.render ( back_buffer, buffer, 0, 230 );
+
+#endif
 }
 

@@ -15,6 +15,8 @@ Void Text::render ( SDL_Surface* back_buffer, const Char8* message, Int32 positi
                clip.x = ( c - 'A' ) * character_width;
           } else if ( isdigit ( c ) ) {
                clip.x = ( ( c - '0' ) * character_width ) + ( ( ( 'Z' - 'A' ) + 1 ) * character_width );
+          } else if ( c == '.' ) {
+               clip.x = ( ( 'Z' - 'A' ) + ( '9' - '0' ) + 3 ) * character_width;
           } else if ( c == ' ' ) {
                message++;
                dest.x += ( character_width + character_spacing );

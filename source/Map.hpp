@@ -149,7 +149,7 @@ namespace bryte
           inline Bool coordinate_y_valid ( Int32 y ) const;
           inline Bool coordinates_valid ( const Coordinates& coords ) const;
 
-          inline Bool current_master_map ( ) const;
+          inline Int32 current_master_map ( ) const;
           inline Void set_activate_location_on_all_enemies_killed ( Location loc );
           inline Location activate_on_all_enemies_killed ( ) const;
 
@@ -309,7 +309,7 @@ namespace bryte
           return coordinate_x_valid ( coords.x ) && coordinate_y_valid ( coords.y );
      }
 
-     inline Bool Map::current_master_map ( ) const
+     inline Int32 Map::current_master_map ( ) const
      {
           return m_current_master_map;
      }

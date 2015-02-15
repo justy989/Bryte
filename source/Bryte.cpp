@@ -1275,7 +1275,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // calculate camera
      state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
                                                        state->player.position.x ( ), state->player.width ( ) ) );
-     state->camera.set_y ( calculate_camera_position ( back_buffer->h - 16, state->map.height ( ),
+     state->camera.set_y ( calculate_camera_position ( back_buffer->h - 18, state->map.height ( ),
                                                        state->player.position.y ( ), state->player.height ( ) ) );
 
      // map
@@ -1369,7 +1369,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      // ui
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, 16 };
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, 18 };
      SDL_FillRect ( back_buffer, &hud_rect, black );
 
      // draw player health bar
@@ -1390,6 +1390,12 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                             Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
      SDL_BlitSurface ( state->attack_icon_sheet, &attack_clip, back_buffer, &attack_dest );
+
+     SDL_Rect attack_outline { attack_dest.x - 1, attack_dest.y - 1,
+                               Map::c_tile_dimension_in_pixels + 2,
+                               Map::c_tile_dimension_in_pixels + 2 };
+
+     render_rect_outline ( back_buffer, attack_outline, white );
 
      char buffer [ 64 ];
 

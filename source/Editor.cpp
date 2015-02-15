@@ -930,31 +930,14 @@ static Void render_map_solids ( SDL_Surface* back_buffer, Map& map, Real32 camer
                     continue;
                }
 
-               SDL_Rect solid_rect_b { 0, 0, Map::c_tile_dimension_in_pixels, 1 };
-               SDL_Rect solid_rect_l { 0, 0, 1, Map::c_tile_dimension_in_pixels };
-               SDL_Rect solid_rect_t { 0, 0, Map::c_tile_dimension_in_pixels, 1 };
-               SDL_Rect solid_rect_r { 0, 0, 1, Map::c_tile_dimension_in_pixels };
+               SDL_Rect outline_rect { ( x * Map::c_tile_dimension_in_pixels ),
+                                       ( y * Map::c_tile_dimension_in_pixels ),
+                                       Map::c_tile_dimension_in_pixels,
+                                       Map::c_tile_dimension_in_pixels};
 
-               solid_rect_b.x = x * Map::c_tile_dimension_in_pixels;
-               solid_rect_b.y = y * Map::c_tile_dimension_in_pixels;
-               solid_rect_l.x = x * Map::c_tile_dimension_in_pixels;
-               solid_rect_l.y = y * Map::c_tile_dimension_in_pixels;
-               solid_rect_t.x = x * Map::c_tile_dimension_in_pixels;
-               solid_rect_t.y = y * Map::c_tile_dimension_in_pixels +
-                                Map::c_tile_dimension_in_pixels - 1;
-               solid_rect_r.x = x * Map::c_tile_dimension_in_pixels +
-                                Map::c_tile_dimension_in_pixels - 1;
-               solid_rect_r.y = y * Map::c_tile_dimension_in_pixels;
+               world_to_sdl ( outline_rect, back_buffer, camera_x, camera_y );
 
-               world_to_sdl ( solid_rect_b, back_buffer, camera_x, camera_y );
-               world_to_sdl ( solid_rect_l, back_buffer, camera_x, camera_y );
-               world_to_sdl ( solid_rect_t, back_buffer, camera_x, camera_y );
-               world_to_sdl ( solid_rect_r, back_buffer, camera_x, camera_y );
-
-               SDL_FillRect ( back_buffer, &solid_rect_b, red_color );
-               SDL_FillRect ( back_buffer, &solid_rect_l, red_color );
-               SDL_FillRect ( back_buffer, &solid_rect_t, red_color );
-               SDL_FillRect ( back_buffer, &solid_rect_r, red_color );
+               render_rect_outline ( back_buffer, outline_rect, red_color );
           }
      }
 }
@@ -1006,30 +989,15 @@ static Void render_mode_icons ( SDL_Surface* back_buffer, SDL_Surface* icon_surf
           SDL_BlitSurface ( icon_surface, &clip_rect, back_buffer, &dest_rect );
      }
 
-     static const Int32 c_border_dimension = c_icon_dimension + 1;
+     static const Int32 c_border_dimension = c_icon_dimension + 2;
 
      Int32 x = ( static_cast<Int32>( mode ) * c_icon_start_x );
      Int32 y = 2;
      Uint32 red_color = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
 
-     SDL_Rect mode_rect_b { 0, 0, c_border_dimension, 1 };
-     SDL_Rect mode_rect_l { 0, 0, 1, c_border_dimension };
-     SDL_Rect mode_rect_t { 0, 0, c_border_dimension + 1, 1 };
-     SDL_Rect mode_rect_r { 0, 0, 1, c_border_dimension };
+     SDL_Rect outline_rect { x, y, c_border_dimension, c_border_dimension };
 
-     mode_rect_b.x = x;
-     mode_rect_b.y = y;
-     mode_rect_l.x = x;
-     mode_rect_l.y = y;
-     mode_rect_t.x = x;
-     mode_rect_t.y = y + c_border_dimension;
-     mode_rect_r.x = x + c_border_dimension;
-     mode_rect_r.y = y;
-
-     SDL_FillRect ( back_buffer, &mode_rect_b, red_color );
-     SDL_FillRect ( back_buffer, &mode_rect_l, red_color );
-     SDL_FillRect ( back_buffer, &mode_rect_t, red_color );
-     SDL_FillRect ( back_buffer, &mode_rect_r, red_color );
+     render_rect_outline ( back_buffer, outline_rect, red_color );
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -1139,6 +1107,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->mouse_x, state->mouse_y,
                                 0,
                                 Interactive::Type::pushable_block - 1 );
+          break;
+     case Mode::bombable_block:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheet,
+                                state->mouse_x, state->mouse_y,
+                                0,
+                                ( Interactive::Type::exit + Direction::count + 2 ) );
           break;
      }
 

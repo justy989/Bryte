@@ -90,47 +90,8 @@ inline Bool point_inside_rect ( Real32 x, Real32 y, Real32 l, Real32 b, Real32 r
      return ( x >= l && x <= r && y >= b && y <= t );
 }
 
-inline Bool rect_collides_with_rect ( Real32 a_left, Real32 a_bottom, Real32 a_width, Real32 a_height,
-                                      Real32 b_left, Real32 b_bottom, Real32 b_width, Real32 b_height )
-{
-     Real32 b_right = b_left + b_width;
-     Real32 b_top = b_bottom + b_height;
-
-     // test A inside B
-     if ( point_inside_rect ( a_left, a_bottom,
-                              b_left, b_bottom, b_right, b_top ) ||
-          point_inside_rect ( a_left + a_width, a_bottom,
-                              b_left, b_bottom, b_right, b_top ) ||
-          point_inside_rect ( a_left, a_bottom + a_height,
-                              b_left, b_bottom, b_right, b_top ) ||
-          point_inside_rect ( a_left + a_width, a_bottom + a_height,
-                              b_left, b_bottom, b_right, b_top ) ) {
-          return true;
-     }
-
-     // test A inside B center
-     if ( point_inside_rect ( a_left + a_width * 0.5f, a_bottom + a_height * 0.5f,
-                              b_left, b_bottom, b_right, b_top ) ) {
-          return true;
-     }
-
-     Real32 a_right = a_left + a_width;
-     Real32 a_top = a_bottom + a_height;
-
-     // test B inside A
-     if ( point_inside_rect ( b_left, b_bottom,
-                              a_left, a_bottom, a_right, a_top ) ||
-          point_inside_rect ( b_left + b_width, b_bottom,
-                              a_left, a_bottom, a_right, a_top ) ||
-          point_inside_rect ( b_left, b_bottom + b_height,
-                              a_left, a_bottom, a_right, a_top ) ||
-          point_inside_rect ( b_left + b_width, b_bottom + b_height,
-                              a_left, a_bottom, a_right, a_top ) ) {
-          return true;
-     }
-
-     return false;
-}
+Bool rect_collides_with_rect ( Real32 a_left, Real32 a_bottom, Real32 a_width, Real32 a_height,
+                               Real32 b_left, Real32 b_bottom, Real32 b_width, Real32 b_height );
 
 namespace bryte {
      class Random;
@@ -139,6 +100,8 @@ namespace bryte {
 class Vector;
 
 bryte::Direction direction_between ( const Vector& a, const Vector& b, bryte::Random& random );
+
+Void render_rect_outline ( SDL_Surface* dest_surface, const SDL_Rect& rect, Uint32 color );
 
 #endif
 

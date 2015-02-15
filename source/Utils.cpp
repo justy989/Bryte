@@ -105,3 +105,58 @@ bryte::Direction direction_between ( const Vector& a, const Vector& b, bryte::Ra
      return bryte::Direction::left;
 }
 
+Bool rect_collides_with_rect ( Real32 a_left, Real32 a_bottom, Real32 a_width, Real32 a_height,
+                               Real32 b_left, Real32 b_bottom, Real32 b_width, Real32 b_height )
+{
+     Real32 b_right = b_left + b_width;
+     Real32 b_top = b_bottom + b_height;
+
+     // test A inside B
+     if ( point_inside_rect ( a_left, a_bottom,
+                              b_left, b_bottom, b_right, b_top ) ||
+          point_inside_rect ( a_left + a_width, a_bottom,
+                              b_left, b_bottom, b_right, b_top ) ||
+          point_inside_rect ( a_left, a_bottom + a_height,
+                              b_left, b_bottom, b_right, b_top ) ||
+          point_inside_rect ( a_left + a_width, a_bottom + a_height,
+                              b_left, b_bottom, b_right, b_top ) ) {
+          return true;
+     }
+
+     // test A inside B center
+     if ( point_inside_rect ( a_left + a_width * 0.5f, a_bottom + a_height * 0.5f,
+                              b_left, b_bottom, b_right, b_top ) ) {
+          return true;
+     }
+
+     Real32 a_right = a_left + a_width;
+     Real32 a_top = a_bottom + a_height;
+
+     // test B inside A
+     if ( point_inside_rect ( b_left, b_bottom,
+                              a_left, a_bottom, a_right, a_top ) ||
+          point_inside_rect ( b_left + b_width, b_bottom,
+                              a_left, a_bottom, a_right, a_top ) ||
+          point_inside_rect ( b_left, b_bottom + b_height,
+                              a_left, a_bottom, a_right, a_top ) ||
+          point_inside_rect ( b_left + b_width, b_bottom + b_height,
+                              a_left, a_bottom, a_right, a_top ) ) {
+          return true;
+     }
+
+     return false;
+}
+
+Void render_rect_outline ( SDL_Surface* dest_surface, const SDL_Rect& rect, Uint32 color )
+{
+     SDL_Rect left_line { rect.x, rect.y, 1, rect.h };
+     SDL_Rect right_line { rect.x + ( rect.w - 1 ), rect.y, 1, rect.h };
+     SDL_Rect bottom_line { rect.x, rect.y, rect.w, 1 };
+     SDL_Rect top_line { rect.x, rect.y + ( rect.h - 1 ), rect.w, 1 };
+
+     SDL_FillRect ( dest_surface, &left_line, color );
+     SDL_FillRect ( dest_surface, &right_line, color );
+     SDL_FillRect ( dest_surface, &bottom_line, color );
+     SDL_FillRect ( dest_surface, &top_line, color );
+}
+

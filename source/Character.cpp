@@ -160,6 +160,13 @@ Void Character::damage ( Int32 amount, Direction push )
      }
 }
 
+Void Character::block ( )
+{
+     if ( state == State::idle ) {
+          state = State::blocking;
+     }
+}
+
 Void Character::light_on_fire ( )
 {
      if ( !on_fire ) {
@@ -258,6 +265,11 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      case State::pushing:
           // must keep pushing to stay in that state
           state = State::idle;
+          break;
+     case State::blocking:
+          state = State::idle;
+          acceleration.zero ( );
+          velocity.zero ( );
           break;
      default:
           break;

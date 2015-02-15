@@ -126,6 +126,7 @@ namespace bryte
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;
+          Bool  block_key;
           Bool  switch_attack_key;
           Bool  activate_key;
 

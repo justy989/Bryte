@@ -253,6 +253,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      setup_emitters_from_map_lamps ( );
 
      attack_key = false;
+     block_key = false;
      switch_attack_key = false;
 
      Projectile::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
@@ -583,6 +584,10 @@ Void State::update_player ( float time_delta )
           }
      }
 
+     if ( block_key ) {
+          player.block ( );
+     }
+
      Map::Coordinates player_center_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
      Auto& interactive = interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
 
@@ -727,7 +732,13 @@ Void State::update_enemies ( float time_delta )
                                                           player.collision_center ( ),
                                                           random );
 
-               player.damage ( 1, damage_dir );
+               // check if player blocked the attack
+               if ( player.state == Character::State::blocking &&
+                    damage_dir == opposite_direction ( player.facing ) ) {
+                    enemy.damage ( 0, opposite_direction ( damage_dir ) );
+               } else {
+                    player.damage ( 1, damage_dir );
+               }
 
 #ifdef DEBUG
                if ( invincible ) {
@@ -1038,6 +1049,9 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_SPACE:
                state->attack_key = key_change.down;
+               break;
+          case SDL_SCANCODE_LCTRL:
+               state->block_key = key_change.down;
                break;
           case SDL_SCANCODE_E:
                state->activate_key = key_change.down;

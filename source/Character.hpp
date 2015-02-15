@@ -17,7 +17,8 @@ namespace bryte
                idle,
                blinking,
                attacking,
-               pushing
+               pushing,
+               blocking
           };
 
      public:
@@ -28,6 +29,7 @@ namespace bryte
 
           Void walk ( Direction dir );
           Void attack ( );
+          Void block ( );
           Void damage ( Int32 amount, Direction push );
           Void light_on_fire ( );
 

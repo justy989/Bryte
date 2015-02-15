@@ -137,6 +137,9 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
      if ( character.state == Character::State::attacking ) {
           clip_rect.y += Direction::count * Map::c_tile_dimension_in_pixels;
           clip_rect.x = 0;
+     } else if ( character.state == Character::State::blocking ) {
+          clip_rect.y += Direction::count * Map::c_tile_dimension_in_pixels;
+          clip_rect.x = Map::c_tile_dimension_in_pixels;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );

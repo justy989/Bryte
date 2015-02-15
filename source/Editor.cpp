@@ -481,7 +481,9 @@ Void State::mouse_scrolled ( Int32 scroll )
                if ( enemy_spawn ) {
                     Int32 value = static_cast<Int32>( enemy_spawn->drop );
                     value += scroll;
-                    enemy_spawn->drop = static_cast<Pickup::Type>( value % Pickup::Type::count );
+                    if ( value >= 0 ) {
+                         enemy_spawn->drop = static_cast<Pickup::Type>( value % Pickup::Type::count );
+                    }
                } else {
                     current_enemy_drop += scroll;
                }

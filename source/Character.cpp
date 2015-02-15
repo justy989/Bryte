@@ -273,7 +273,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      Vector change_in_position = ( velocity * time_delta ) +
                                  ( acceleration * ( 0.5f * square ( time_delta ) ) );
 
-     velocity = acceleration * time_delta + velocity;
+     velocity = ( acceleration * time_delta ) + velocity;
 
      if ( constant_animation ) {
           walk_tracker += time_delta;
@@ -298,10 +298,6 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                }
                walk_tracker -= walk_frame_rate;
           }
-     }
-
-     if ( walk_frame > walk_frame_count ) {
-          LOG_ERROR ( "Bug!\n" );
      }
 
      Real32 half_width  = collision_width ( ) * 0.5f;
@@ -412,6 +408,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           }
 
           position += ( change_in_position * ( closest_time_intersection - 0.01f ) );
+          center += ( change_in_position * ( closest_time_intersection - 0.01f ) );
           velocity -= ( wall_normal * velocity.inner_product ( wall_normal ) );
           change_in_position -= ( wall_normal * change_in_position.inner_product ( wall_normal ) );
 

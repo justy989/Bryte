@@ -323,7 +323,6 @@ namespace bryte
      {
           return m_activate_on_all_enemies_killed;
      }
-
 }
 
 #endif

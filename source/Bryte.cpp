@@ -30,6 +30,53 @@ static State* get_state ( GameMemory& game_memory )
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
 }
 
+Void character_adjacent_tile ( const Character& character, Int32* adjacent_tile_x, Int32* adjacent_tile_y )
+{
+     Map::Coordinates character_center_tile = Map::vector_to_coordinates ( character.collision_center ( ) );
+
+     switch ( character.facing ) {
+          default:
+               break;
+          case Direction::left:
+               character_center_tile.x--;
+               break;
+          case Direction::right:
+               character_center_tile.x++;
+               break;
+          case Direction::up:
+               character_center_tile.y++;
+               break;
+          case Direction::down:
+               character_center_tile.y--;
+               break;
+     }
+
+     *adjacent_tile_x = character_center_tile.x;
+     *adjacent_tile_y = character_center_tile.y;
+}
+
+static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
+{
+     switch ( dir ) {
+          default:
+               break;
+          case Direction::left:
+               coords.x--;
+               break;
+          case Direction::right:
+               coords.x++;
+               break;
+          case Direction::up:
+               coords.y++;
+               break;
+          case Direction::down:
+               coords.y--;
+               break;
+     }
+
+     return coords;
+}
+
 // NOTE: Windows compiler does static initialization different from gcc
 //       so I cannot have the explode radius rely on map tile dimension
 const Real32 Bomb::c_explode_time = 3.0f;
@@ -399,47 +446,36 @@ Void State::player_death ( )
 
 Void State::enemy_death ( const Enemy& enemy )
 {
-     if ( enemy.is_dead ( ) ) {
-          if ( enemy.drop != Pickup::Type::none ) {
-               spawn_pickup ( enemy.position, enemy.drop );
+     if ( enemy.drop ) {
+          spawn_pickup ( enemy.position, enemy.drop );
+     }
+
+     Auto* emitter = emitters.spawn ( enemy.collision_center ( ) );
+
+     if ( emitter ) {
+          Real32 explosion_size = enemy.collision_width ( ) > enemy.collision_height ( ) ?
+                                  enemy.collision_width ( ) : enemy.collision_height ( );
+          explosion_size *= 2.0f;
+          emitter->setup_limited_time ( enemy.collision_center ( ), 0.7f,
+                                        SDL_MapRGB ( &back_buffer_format, 255, 0, 0 ),
+                                        0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
+                                        Emitter::c_max_particles, 0 );
+     }
+
+     // TODO: track entity count so we don't have to do this linear check
+     bool all_dead = true;
+
+     for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
+          if ( enemies [ i ].is_alive ( ) ) {
+               all_dead = false;
+               break;
           }
-#if 0
-          // generate an item to drop
-          Auto roll = state->random.generate ( 1, 11 );
+     }
 
-          if ( roll > 5 && roll < 8 ) {
-               state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::health );
-          } else if ( roll >= 8 ) {
-               state->spawn_pickup ( enemy.position.x ( ), enemy.position.y ( ), Pickup::Type::key );
-          }
-#endif
-
-          Auto* emitter = emitters.spawn ( enemy.collision_center ( ) );
-
-          if ( emitter ) {
-               Real32 explosion_size = enemy.collision_width ( ) > enemy.collision_height ( ) ?
-                                       enemy.collision_width ( ) : enemy.collision_height ( );
-               explosion_size *= 2.0f;
-               emitter->setup_limited_time ( enemy.collision_center ( ), 0.7f,
-                                             SDL_MapRGB ( &back_buffer_format, 255, 0, 0 ),
-                                             0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
-                                             Emitter::c_max_particles, 0 );
-          }
-
-          // TODO: track entity count so we don't have to do this linear check
-          bool all_dead = true;
-
-          for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
-               if ( enemies [ i ].is_alive ( ) ) {
-                    all_dead = false;
-                    break;
-               }
-          }
-
-          if ( all_dead ) {
-               Map::Location loc = map.activate_on_all_enemies_killed ( );
-               interactives.activate ( loc.x, loc.y );
-          }
+     // if all the entities are dead, activate an the map's trigger
+     if ( all_dead ) {
+          Map::Location loc = map.activate_on_all_enemies_killed ( );
+          interactives.activate ( loc.x, loc.y );
      }
 }
 
@@ -461,6 +497,454 @@ Void State::setup_emitters_from_map_lamps ( )
 
           emitter->setup_immortal ( position + offset, SDL_MapRGB ( &back_buffer_format, 255, 255, 0 ),
                                     0.78f, 2.35f, 0.5f, 0.75f, 0.5f, 1.0f, 1, 10 );
+     }
+}
+
+Void State::update_player ( float time_delta )
+{
+     if ( direction_keys [ Direction::up ] ) {
+          player.walk ( Direction::up );
+     }
+
+     if ( direction_keys [ Direction::down ] ) {
+          player.walk ( Direction::down );
+     }
+
+     if ( direction_keys [ Direction::right ] ) {
+          player.walk ( Direction::right );
+     }
+
+     if ( direction_keys [ Direction::left ] ) {
+          player.walk ( Direction::left );
+     }
+
+     if ( switch_attack_key ) {
+          switch_attack_key = false;
+
+          Int32 new_attack_mode = ( static_cast<Int32>( player.attack_mode ) + 1 ) %
+                                  Player::AttackMode::count;
+          player.attack_mode = static_cast<Player::AttackMode>( new_attack_mode );
+     }
+
+     if ( attack_key ) {
+          attack_key = false;
+
+          switch ( player.attack_mode ) {
+          default:
+               ASSERT ( 0 );
+               break;
+          case Player::AttackMode::sword:
+               player.attack ( );
+               break;
+          case Player::AttackMode::arrow:
+               if ( player.arrow_count > 0 ) {
+                    spawn_projectile ( Projectile::Type::arrow, player.position, player.facing );
+                    player.arrow_count--;
+               }
+               break;
+          case Player::AttackMode::bomb:
+               if ( player.bomb_count > 0 ) {
+                    spawn_bomb ( player.position );
+                    player.bomb_count--;
+               }
+               break;
+          }
+     }
+
+     if ( player.is_alive ( ) ){
+          player.update ( time_delta, map, interactives, random );
+     }
+
+     Map::Coordinates player_center_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
+     Auto& interactive = interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
+
+     if ( interactive.type == Interactive::Type::exit &&
+          interactive.interactive_exit.state == Exit::State::open &&
+          interactive.interactive_exit.direction == opposite_direction ( player.facing ) ) {
+          Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
+                                                             interactive.interactive_exit.exit_index_y );
+
+          new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
+                                   Map::c_tile_dimension_in_meters * 0.5f );
+
+          persist_map ( );
+          map.load_from_master_list ( interactive.interactive_exit.map_index, interactives );
+
+          pickups.clear ( );
+          projectiles.clear ( );
+          enemies.clear ( );
+          emitters.clear ( );
+
+          spawn_map_enemies ( );
+
+          setup_emitters_from_map_lamps ( );
+
+          player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
+
+          LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
+                      player.position.x ( ),
+                      player.position.y ( ) );
+
+          // no need to finish this update
+          return;
+     }
+
+     if ( player.state == Character::State::pushing ) {
+          Map::Coordinates push_location { 0, 0 };
+
+          character_adjacent_tile ( player, &push_location.x, &push_location.y );
+
+          if ( push_location.x >= 0 && push_location.x < interactives.width ( ) &&
+               push_location.y >= 0 && push_location.y < interactives.height ( ) ) {
+
+               Bool enemy_on_tile = false;
+               Auto dest = adjacent_tile ( push_location, player.facing );
+
+               for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
+                    Auto coords = Map::vector_to_coordinates ( enemies [ i ].collision_center ( ) );
+
+                    if ( coords.x == dest.x && coords.y == dest.y ) {
+                         enemy_on_tile = true;
+                         break;
+                    }
+               }
+
+               if ( !enemy_on_tile ) {
+                    interactives.push ( push_location.x, push_location.y, player.facing, map );
+               }
+          }
+     } else if ( player.life_state == Entity::LifeState::dying ) {
+          player_deathwatch.tick ( time_delta );
+
+          if ( player_deathwatch.expired ( ) ) {
+               player.life_state = Entity::LifeState::dead;
+               player_death ( );
+          }
+     } else {
+
+          // check if player wants to activate any interactives
+          if ( activate_key ) {
+               activate_key = false;
+
+               Int32 player_activate_tile_x = 0;
+               Int32 player_activate_tile_y = 0;
+
+               character_adjacent_tile ( player, &player_activate_tile_x, &player_activate_tile_y );
+
+               if ( player_activate_tile_x >= 0 && player_activate_tile_x < interactives.width ( ) &&
+                    player_activate_tile_y >= 0 && player_activate_tile_y < interactives.height ( ) ) {
+
+                    Auto& interactive = interactives.get_from_tile ( player_activate_tile_x, player_activate_tile_y );
+
+                    if ( interactive.type == Interactive::Type::exit ) {
+                         if ( interactive.interactive_exit.state == Exit::State::locked &&
+                              player.key_count > 0 ) {
+                              LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
+                              interactives.activate ( player_activate_tile_x, player_activate_tile_y );
+                              player.key_count--;
+                         }
+                    } else if ( interactive.type == Interactive::Type::torch ||
+                                interactive.type == Interactive::Type::pushable_torch ) {
+                         // pass
+                    } else {
+                         LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
+                         interactives.activate ( player_activate_tile_x, player_activate_tile_y );
+                    }
+               }
+
+          }
+     }
+}
+
+Void State::update_enemies ( float time_delta )
+{
+     Vector player_center = player.collision_center ( );
+
+     for ( Uint32 i = 0; i < enemies.max ( ); ++i ) {
+          Auto& enemy = enemies [ i ];
+
+          if ( enemy.is_dead ( ) ) {
+               continue;
+          }
+
+#ifdef DEBUG
+          if ( enemy_think ) {
+               enemy.think ( player_center, random, time_delta );
+          }
+#else
+          enemy.think ( player_center, random, time_delta );
+#endif
+
+          enemy.update ( time_delta, map, interactives, random );
+
+          // spawn a projectile if the goo is shooting
+          if ( enemy.type == Enemy::Type::goo &&
+               enemy.goo_state.state == Enemy::GooState::State::shooting ) {
+               spawn_projectile ( Projectile::Type::goo, enemy.position, enemy.facing );
+          }
+
+          // check collision between player and enemy
+          if ( player.state != Character::State::blinking &&
+               player.is_alive ( ) &&
+               player.collides_with ( enemy ) ) {
+               Direction damage_dir = direction_between ( enemy.collision_center ( ),
+                                                          player.collision_center ( ),
+                                                          random );
+
+               player.damage ( 1, damage_dir );
+
+               if ( enemy.on_fire ) {
+                    player.light_on_fire ( );
+               }
+
+               if ( player.life_state == Entity::LifeState::dead ) {
+                    player.life_state = Entity::LifeState::dying;
+                    player_deathwatch.reset ( c_player_death_delay );
+
+                    LOG_INFO ( "Spawn emitter on player death!\n" );
+
+                    Auto* emitter = emitters.spawn ( player.collision_center ( ) );
+
+                    if ( emitter ) {
+                         Real32 explosion_size = player.collision_width ( ) > player.collision_height ( ) ?
+                                                 player.collision_width ( ) : player.collision_height ( );
+                         explosion_size *= 2.0f;
+                         emitter->setup_limited_time ( player.collision_center ( ), 0.7f,
+                                                       SDL_MapRGB ( &back_buffer_format, 255, 0, 0 ),
+                                                       0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
+                                                       Emitter::c_max_particles, 0 );
+                    }
+               }
+          }
+
+          // check if player's attack hits enemy
+          if ( player.state == Character::State::attacking &&
+               enemy.state != Character::State::blinking &&
+               player.attack_collides_with ( enemy ) ) {
+               Direction damage_dir = direction_between ( player.collision_center ( ),
+                                                          enemy.collision_center ( ),
+                                                          random );
+               enemy.damage ( 1, damage_dir );
+
+               if ( enemy.is_dead ( ) ) {
+                    enemy_death ( enemy );
+               }
+          }
+     }
+}
+
+Void State::update_projectiles ( float time_delta )
+{
+     for ( Uint32 i = 0; i < projectiles.max ( ); ++i ) {
+          Auto& projectile = projectiles [ i ];
+
+          if ( projectile.is_dead ( ) ) {
+               continue;
+          }
+
+          projectile.update ( time_delta, map, interactives );
+
+          if ( !projectile.stuck_watch.expired ( ) ) {
+               continue;
+          }
+
+          Vector projectile_collision_point = projectile.position + projectile.collision_points [ projectile.facing ];
+
+          switch ( projectile.type ) {
+          default:
+               break;
+          case Projectile::Type::arrow:
+               for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
+                    Auto& enemy = enemies [ c ];
+
+                    if ( enemy.is_dead ( ) ) {
+                         continue;
+                    }
+
+                    if ( point_inside_rect ( projectile_collision_point.x ( ),
+                                             projectile_collision_point.y ( ),
+                                             enemy.collision_x ( ), enemy.collision_y ( ),
+                                             enemy.collision_x ( ) + enemy.collision_width ( ),
+                                             enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
+                         projectile.hit_character ( enemy );
+
+                         if ( enemy.is_dead ( ) ) {
+                              enemy_death ( enemy );
+                         }
+
+                         break;
+                    }
+               }
+               break;
+         case Projectile::Type::goo:
+               if ( point_inside_rect ( projectile_collision_point.x ( ),
+                                        projectile_collision_point.y ( ),
+                                        player.collision_x ( ), player.collision_y ( ),
+                                        player.collision_x ( ) + player.collision_width ( ),
+                                        player.collision_y ( ) + player.collision_height ( ) ) ) {
+
+                    projectile.hit_character ( player );
+               }
+         break;
+         }
+     }
+}
+
+Void State::update_bombs ( float time_delta )
+{
+     for ( Uint32 i = 0; i < bombs.max ( ); ++i ) {
+          Auto& bomb = bombs [ i ];
+
+          if ( bomb.is_dead ( ) ) {
+               continue;
+          }
+
+          bomb.update ( time_delta );
+
+          if ( bomb.life_state == Entity::LifeState::dying ) {
+               // damage nearby enemies
+               for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
+                    Auto& enemy = enemies [ c ];
+
+                    if ( enemy.is_dead ( ) ) {
+                         continue;
+                    }
+
+                    if ( enemy.collision_center ( ).distance_to ( bomb.position ) < Bomb::c_explode_radius ) {
+                         enemy.damage ( c_bomb_damage, direction_between ( bomb.position,
+                                                                           enemy.collision_center ( ),
+                                                                           random ) );
+
+                         if ( enemy.is_dead ( ) ) {
+                              enemy_death ( enemy );
+                         }
+                    }
+               }
+
+               // activate nearby objects
+               Vector bomb_center { bomb.position.x ( ) + Map::c_tile_dimension_in_meters * 0.5f,
+                                    bomb.position.y ( ) + Map::c_tile_dimension_in_meters * 0.5f };
+               Int32 tile_radius = meters_to_pixels ( Bomb::c_explode_radius ) / Map::c_tile_dimension_in_pixels;
+               Int32 tile_min_x = meters_to_pixels ( bomb_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+               Int32 tile_min_y = meters_to_pixels ( bomb_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+
+               tile_min_x -= tile_radius;
+               tile_min_y -= tile_radius;
+
+               Int32 tile_max_x = tile_min_x + tile_radius * 2;
+               Int32 tile_max_y = tile_min_y + tile_radius * 2;
+
+               CLAMP ( tile_min_x, 0, interactives.width ( ) - 1 );
+               CLAMP ( tile_min_y, 0, interactives.height ( ) - 1 );
+               CLAMP ( tile_max_x, 0, interactives.width ( ) - 1 );
+               CLAMP ( tile_max_y, 0, interactives.height ( ) - 1 );
+
+               for ( Int32 y = tile_min_y; y <= tile_max_y; ++y ) {
+                    for ( Int32 x = tile_min_x; x <= tile_max_x; ++x ) {
+                         auto& interactive = interactives.get_from_tile ( x, y );
+                         if ( interactive.type != Interactive::Type::exit ) {
+                              interactives.explode ( x, y );
+                         }
+                    }
+               }
+
+               // create quick emitterl
+               Auto* emitter = emitters.spawn ( bomb.position );
+
+               if ( emitter ) {
+                    Vector offset { Map::c_tile_dimension_in_meters * 0.5f,
+                                    Map::c_tile_dimension_in_meters * 0.5f };
+                    emitter->setup_limited_time ( bomb.position + offset, 0.5f,
+                                                  SDL_MapRGB ( &back_buffer_format, 200, 200, 200 ),
+                                                  0.0f, 6.28f, 0.5f, 0.5f, 6.0f, 6.0f,
+                                                  Emitter::c_max_particles, 0 );
+               }
+          }
+     }
+}
+
+Void State::update_pickups ( float time_delta )
+{
+     for ( Uint32 i = 0; i < pickups.max ( ); ++i ) {
+          Pickup& pickup = pickups [ i ];
+
+          if ( pickup.is_dead ( ) ) {
+               continue;
+          }
+
+          if ( rect_collides_with_rect ( player.collision_x ( ), player.collision_y ( ),
+                                         player.collision_width ( ), player.collision_height ( ),
+                                         pickup.position.x ( ), pickup.position.y ( ),
+                                         Pickup::c_dimension_in_meters, Pickup::c_dimension_in_meters ) ) {
+
+               LOG_DEBUG ( "Player got pickup %s\n", Pickup::c_names [ pickup.type ] );
+
+               switch ( pickup.type ) {
+               default:
+                    break;
+               case Pickup::Type::health:
+                    player.health += 2;
+
+                    if ( player.health > player.max_health ) {
+                         player.health = player.max_health;
+                    }
+                    break;
+               case Pickup::Type::key:
+                    player.key_count++;
+                    break;
+               case Pickup::Type::arrow:
+                    player.arrow_count++;
+                    break;
+               case Pickup::Type::bomb:
+                    player.bomb_count++;
+                    break;
+               }
+
+               pickup.type = Pickup::Type::none;
+               pickup.life_state = Entity::LifeState::dead;
+          }
+     }
+}
+
+Void State::update_emitters ( float time_delta )
+{
+     for ( Uint32 i = 0; i < emitters.max ( ); ++i ) {
+          Auto& emitter = emitters [ i ];
+
+          if ( emitter.is_dead ( ) ) {
+               continue;
+          }
+
+          emitter.update ( time_delta, random );
+     }
+}
+
+Void State::update_light ( )
+{
+     map.reset_light ( );
+
+     interactives.contribute_light ( map );
+
+     // projectiles on fire contribute light
+     for ( Uint32 i = 0; i < projectiles.max ( ); ++i ) {
+          Auto& arrow = projectiles [ i ];
+
+          if ( arrow.is_dead ( ) ) {
+               continue;
+          }
+
+          if ( arrow.on_fire ) {
+               map.illuminate ( meters_to_pixels ( arrow.position.x ( ) ),
+                                       meters_to_pixels ( arrow.position.y ( ) ),
+                                       192 );
+          }
+     }
+
+     // give interactives the light values on their respective tiles
+     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
+          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
+               interactives.light ( x, y, map.get_coordinate_light ( x, y ) );
+          }
      }
 }
 
@@ -548,488 +1032,18 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
      }
 }
 
-Void character_adjacent_tile ( const Character& character, Int32* adjacent_tile_x, Int32* adjacent_tile_y )
-{
-     Map::Coordinates character_center_tile = Map::vector_to_coordinates ( character.collision_center ( ) );
-
-     switch ( character.facing ) {
-          default:
-               break;
-          case Direction::left:
-               character_center_tile.x--;
-               break;
-          case Direction::right:
-               character_center_tile.x++;
-               break;
-          case Direction::up:
-               character_center_tile.y++;
-               break;
-          case Direction::down:
-               character_center_tile.y--;
-               break;
-     }
-
-     *adjacent_tile_x = character_center_tile.x;
-     *adjacent_tile_y = character_center_tile.y;
-}
-
-static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
-{
-     switch ( dir ) {
-          default:
-               break;
-          case Direction::left:
-               coords.x--;
-               break;
-          case Direction::right:
-               coords.x++;
-               break;
-          case Direction::up:
-               coords.y++;
-               break;
-          case Direction::down:
-               coords.y--;
-               break;
-     }
-
-     return coords;
-}
-
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
      Auto* state = get_state ( game_memory );
 
-     if ( state->direction_keys [ Direction::up ] ) {
-          state->player.walk ( Direction::up );
-     }
-
-     if ( state->direction_keys [ Direction::down ] ) {
-          state->player.walk ( Direction::down );
-     }
-
-     if ( state->direction_keys [ Direction::right ] ) {
-          state->player.walk ( Direction::right );
-     }
-
-     if ( state->direction_keys [ Direction::left ] ) {
-          state->player.walk ( Direction::left );
-     }
-
-     if ( state->switch_attack_key ) {
-          state->switch_attack_key = false;
-
-          Int32 new_attack_mode = ( static_cast<Int32>( state->player.attack_mode ) + 1 ) %
-                                  Player::AttackMode::count;
-          state->player.attack_mode = static_cast<Player::AttackMode>( new_attack_mode );
-     }
-
-     if ( state->attack_key ) {
-          state->attack_key = false;
-
-          switch ( state->player.attack_mode ) {
-          default:
-               ASSERT ( 0 );
-               break;
-          case Player::AttackMode::sword:
-               state->player.attack ( );
-               break;
-          case Player::AttackMode::arrow:
-               if ( state->player.arrow_count > 0 ) {
-                    state->spawn_projectile ( Projectile::Type::arrow, state->player.position, state->player.facing );
-                    state->player.arrow_count--;
-               }
-               break;
-          case Player::AttackMode::bomb:
-               if ( state->player.bomb_count > 0 ) {
-                    state->spawn_bomb ( state->player.position );
-                    state->player.bomb_count--;
-               }
-               break;
-          }
-     }
-
-     if ( state->player.is_alive ( ) ){
-          state->player.update ( time_delta, state->map, state->interactives, state->random );
-     }
-
-     if ( state->player.state == Character::State::pushing ) {
-          Map::Coordinates push_location { 0, 0 };
-
-          character_adjacent_tile ( state->player, &push_location.x, &push_location.y );
-
-          if ( push_location.x >= 0 && push_location.x < state->interactives.width ( ) &&
-               push_location.y >= 0 && push_location.y < state->interactives.height ( ) ) {
-
-               Bool enemy_on_tile = false;
-               Auto dest = adjacent_tile ( push_location, state->player.facing );
-
-               for ( Uint8 i = 0; i < state->enemies.max ( ); ++i ) {
-                    Auto coords = Map::vector_to_coordinates ( state->enemies [ i ].collision_center ( ) );
-
-                    if ( coords.x == dest.x && coords.y == dest.y ) {
-                         enemy_on_tile = true;
-                         break;
-                    }
-               }
-
-               if ( !enemy_on_tile ) {
-                    state->interactives.push ( push_location.x, push_location.y, state->player.facing, state->map );
-               }
-          }
-     } else if ( state->player.life_state == Entity::LifeState::dying ) {
-          state->player_deathwatch.tick ( time_delta );
-          if ( state->player_deathwatch.expired ( ) ) {
-               state->player.life_state = Entity::LifeState::dead;
-               state->player_death ( );
-          }
-     }
-
-     Vector player_center = state->player.collision_center ( );
-
-     for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
-          Auto& enemy = state->enemies [ i ];
-
-          if ( enemy.is_dead ( ) ) {
-               continue;
-          }
-
-#ifdef DEBUG
-          if ( state->enemy_think ) {
-               enemy.think ( player_center, state->random, time_delta );
-          }
-#else
-          enemy.think ( player_center, state->random, time_delta );
-#endif
-
-          enemy.update ( time_delta, state->map, state->interactives, state->random );
-
-#if 0
-          // not sure I want enemies messing with your puzzles
-          if ( enemy.state == Character::State::pushing ) {
-               Int32 push_tile_x = 0;
-               Int32 push_tile_y = 0;
-
-               character_adjacent_tile ( enemy, &push_tile_x, &push_tile_y );
-
-               if ( push_tile_x >= 0 && push_tile_x < state->interactives.width ( ) &&
-                    push_tile_y >= 0 && push_tile_y < state->interactives.height ( ) ) {
-                    state->interactives.push ( push_tile_x, push_tile_y, enemy.facing, state->map, state->enemies, state->enemy_count, state->player );
-               }
-          }
-#endif
-          if ( enemy.type == Enemy::Type::goo &&
-               enemy.goo_state.state == Enemy::GooState::State::shooting ) {
-               state->spawn_projectile ( Projectile::Type::goo, enemy.position, enemy.facing );
-          }
-
-          // check collision between player and enemy
-          if ( state->player.state != Character::State::blinking &&
-               state->player.is_alive ( ) &&
-               state->player.collides_with ( enemy ) ) {
-               Direction damage_dir = direction_between ( enemy.collision_center ( ),
-                                                          state->player.collision_center ( ),
-                                                          state->random );
-               state->player.damage ( 1, damage_dir );
-
-               if ( enemy.on_fire ) {
-                    state->player.light_on_fire ( );
-               }
-
-               if ( state->player.life_state == Entity::LifeState::dead ) {
-                    state->player.life_state = Entity::LifeState::dying;
-                    state->player_deathwatch.reset ( c_player_death_delay );
-
-                    LOG_INFO ( "Spawn emitter on player death!\n" );
-
-                    Auto* emitter = state->emitters.spawn ( state->player.collision_center ( ) );
-
-                    if ( emitter ) {
-                         Real32 explosion_size = state->player.collision_width ( ) > state->player.collision_height ( ) ?
-                                                 state->player.collision_width ( ) : state->player.collision_height ( );
-                         explosion_size *= 2.0f;
-                         emitter->setup_limited_time ( state->player.collision_center ( ), 0.7f,
-                                                       SDL_MapRGB ( &state->back_buffer_format, 255, 0, 0 ),
-                                                       0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
-                                                       Emitter::c_max_particles, 0 );
-                    }
-
-               }
-          }
-
-          // attacking enemy
-          if ( state->player.state == Character::State::attacking &&
-               enemy.state != Character::State::blinking &&
-               state->player.attack_collides_with ( enemy ) ) {
-               Direction damage_dir = direction_between ( state->player.collision_center ( ),
-                                                          enemy.collision_center ( ),
-                                                          state->random );
-               enemy.damage ( 1, damage_dir );
-               state->enemy_death ( enemy );
-          }
-     }
-
-     // update interactives
+     state->update_player ( time_delta );
+     state->update_enemies ( time_delta );
      state->interactives.update ( time_delta );
-
-     if ( state->activate_key ) {
-          state->activate_key = false;
-
-          Int32 player_activate_tile_x = 0;
-          Int32 player_activate_tile_y = 0;
-
-          character_adjacent_tile ( state->player, &player_activate_tile_x, &player_activate_tile_y );
-
-          if ( player_activate_tile_x >= 0 && player_activate_tile_x < state->interactives.width ( ) &&
-               player_activate_tile_y >= 0 && player_activate_tile_y < state->interactives.height ( ) ) {
-
-               Auto& interactive = state->interactives.get_from_tile ( player_activate_tile_x, player_activate_tile_y );
-
-               if ( interactive.type == Interactive::Type::exit ) {
-                    if ( interactive.interactive_exit.state == Exit::State::locked &&
-                         state->player.key_count > 0 ) {
-                         LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
-                         state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
-                         state->player.key_count--;
-                    }
-               } else if ( interactive.type == Interactive::Type::torch ||
-                           interactive.type == Interactive::Type::pushable_torch ) {
-                    // pass
-               } else {
-                    LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
-                    state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
-               }
-          }
-
-     }
-
-     for ( Uint32 i = 0; i < state->projectiles.max ( ); ++i ) {
-          Auto& projectile = state->projectiles [ i ];
-
-          if ( projectile.is_dead ( ) ) {
-               continue;
-          }
-
-          projectile.update ( time_delta, state->map, state->interactives );
-
-          if ( !projectile.stuck_watch.expired ( ) ) {
-               continue;
-          }
-
-          Vector projectile_collision_point = projectile.position + projectile.collision_points [ projectile.facing ];
-
-          switch ( projectile.type ) {
-          default:
-               break;
-          case Projectile::Type::arrow:
-               for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
-                    Auto& enemy = state->enemies [ c ];
-
-                    if ( enemy.is_dead ( ) ) {
-                         continue;
-                    }
-
-                    if ( point_inside_rect ( projectile_collision_point.x ( ),
-                                             projectile_collision_point.y ( ),
-                                             enemy.collision_x ( ), enemy.collision_y ( ),
-                                             enemy.collision_x ( ) + enemy.collision_width ( ),
-                                             enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
-                         projectile.hit_character ( enemy );
-
-                         state->enemy_death ( enemy );
-
-                         break;
-                    }
-               }
-               break;
-         case Projectile::Type::goo:
-               if ( point_inside_rect ( projectile_collision_point.x ( ),
-                                        projectile_collision_point.y ( ),
-                                        state->player.collision_x ( ), state->player.collision_y ( ),
-                                        state->player.collision_x ( ) + state->player.collision_width ( ),
-                                        state->player.collision_y ( ) + state->player.collision_height ( ) ) ) {
-
-                    projectile.hit_character ( state->player );
-               }
-         break;
-         }
-     }
-
-     for ( Uint32 i = 0; i < state->bombs.max ( ); ++i ) {
-          Auto& bomb = state->bombs [ i ];
-
-          if ( bomb.is_dead ( ) ) {
-               continue;
-          }
-
-          bomb.update ( time_delta );
-
-          if ( bomb.life_state == Entity::LifeState::dying ) {
-               // damage nearby enemies
-               for ( Uint32 c = 0; c < state->enemies.max ( ); ++c ) {
-                    Auto& enemy = state->enemies [ c ];
-
-                    if ( enemy.is_dead ( ) ) {
-                         continue;
-                    }
-
-                    if ( enemy.collision_center ( ).distance_to ( bomb.position ) < Bomb::c_explode_radius ) {
-                         enemy.damage ( 5, direction_between ( bomb.position,
-                                                               enemy.collision_center ( ),
-                                                               state->random ) );
-                         state->enemy_death ( enemy );
-                    }
-               }
-
-               // activate nearby objects
-               Vector bomb_center { bomb.position.x ( ) + Map::c_tile_dimension_in_meters * 0.5f,
-                                    bomb.position.y ( ) + Map::c_tile_dimension_in_meters * 0.5f };
-               Int32 tile_radius = meters_to_pixels ( Bomb::c_explode_radius ) / Map::c_tile_dimension_in_pixels;
-               Int32 tile_min_x = meters_to_pixels ( bomb_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
-               Int32 tile_min_y = meters_to_pixels ( bomb_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
-
-               tile_min_x -= tile_radius;
-               tile_min_y -= tile_radius;
-
-               Int32 tile_max_x = tile_min_x + tile_radius * 2;
-               Int32 tile_max_y = tile_min_y + tile_radius * 2;
-
-               CLAMP ( tile_min_x, 0, state->interactives.width ( ) - 1 );
-               CLAMP ( tile_min_y, 0, state->interactives.height ( ) - 1 );
-               CLAMP ( tile_max_x, 0, state->interactives.width ( ) - 1 );
-               CLAMP ( tile_max_y, 0, state->interactives.height ( ) - 1 );
-
-               for ( Int32 y = tile_min_y; y <= tile_max_y; ++y ) {
-                    for ( Int32 x = tile_min_x; x <= tile_max_x; ++x ) {
-                         auto& interactive = state->interactives.get_from_tile ( x, y );
-                         if ( interactive.type != Interactive::Type::exit ) {
-                              state->interactives.explode ( x, y );
-                         }
-                    }
-               }
-
-               // create quick emitterl
-               Auto* emitter = state->emitters.spawn ( bomb.position );
-
-               if ( emitter ) {
-                    Vector offset { Map::c_tile_dimension_in_meters * 0.5f,
-                                    Map::c_tile_dimension_in_meters * 0.5f };
-                    emitter->setup_limited_time ( bomb.position + offset, 0.5f,
-                                                  SDL_MapRGB ( &state->back_buffer_format, 200, 200, 200 ),
-                                                  0.0f, 6.28f, 0.5f, 0.5f, 6.0f, 6.0f,
-                                                  Emitter::c_max_particles, 0 );
-               }
-          }
-     }
-
-     for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
-          Pickup& pickup = state->pickups [ i ];
-
-          if ( pickup.is_dead ( ) ) {
-               continue;
-          }
-
-          if ( rect_collides_with_rect ( state->player.collision_x ( ), state->player.collision_y ( ),
-                                         state->player.collision_width ( ), state->player.collision_height ( ),
-                                         pickup.position.x ( ), pickup.position.y ( ),
-                                         Pickup::c_dimension_in_meters, Pickup::c_dimension_in_meters ) ) {
-
-               LOG_DEBUG ( "Player got pickup %s\n", Pickup::c_names [ pickup.type ] );
-
-               switch ( pickup.type ) {
-               default:
-                    break;
-               case Pickup::Type::health:
-                    state->player.health += 2;
-
-                    if ( state->player.health > state->player.max_health ) {
-                         state->player.health = state->player.max_health;
-                    }
-                    break;
-               case Pickup::Type::key:
-                    state->player.key_count++;
-                    break;
-               case Pickup::Type::arrow:
-                    state->player.arrow_count++;
-                    break;
-               case Pickup::Type::bomb:
-                    state->player.bomb_count++;
-                    break;
-               }
-
-               pickup.type = Pickup::Type::none;
-               pickup.life_state = Entity::LifeState::dead;
-          }
-     }
-
-     for ( Uint32 i = 0; i < state->emitters.max ( ); ++i ) {
-          Auto& emitter = state->emitters [ i ];
-          if ( emitter.is_dead ( ) ) {
-               continue;
-          }
-
-          emitter.update ( time_delta, state->random );
-     }
-
-     Auto& map         = state->map;
-
-     Map::Coordinates player_center_tile = Map::vector_to_coordinates ( state->player.collision_center ( ) );
-
-     if ( state->map.coordinates_valid ( player_center_tile ) ) {
-          Auto& interactive = state->interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
-
-          if ( interactive.type == Interactive::Type::exit &&
-               interactive.interactive_exit.state == Exit::State::open &&
-               interactive.interactive_exit.direction == opposite_direction ( state->player.facing ) ) {
-               Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
-                                                                  interactive.interactive_exit.exit_index_y );
-
-               new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
-                                        Map::c_tile_dimension_in_meters * 0.5f );
-
-               state->persist_map ( );
-               map.load_from_master_list ( interactive.interactive_exit.map_index, state->interactives );
-
-               state->pickups.clear ( );
-               state->projectiles.clear ( );
-               state->enemies.clear ( );
-               state->emitters.clear ( );
-
-               state->spawn_map_enemies ( );
-
-               state->setup_emitters_from_map_lamps ( );
-
-               state->player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
-
-               LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
-                           state->player.position.x ( ),
-                           state->player.position.y ( ) );
-          }
-     }
-
-     state->map.reset_light ( );
-     state->interactives.contribute_light ( map );
-
-     /* projectiles on fire contribute light */
-     for ( Uint32 i = 0; i < state->projectiles.max ( ); ++i ) {
-          Auto& arrow = state->projectiles [ i ];
-
-          if ( arrow.is_dead ( ) ) {
-               continue;
-          }
-
-          if ( arrow.on_fire ) {
-               state->map.illuminate ( meters_to_pixels ( arrow.position.x ( ) ),
-                                       meters_to_pixels ( arrow.position.y ( ) ),
-                                       192 );
-          }
-     }
-
-     // give interactives their light values
-     for ( Int32 y = 0; y < state->interactives.height ( ); ++y ) {
-          for ( Int32 x = 0; x < state->interactives.width ( ); ++x ) {
-               state->interactives.light ( x, y, map.get_coordinate_light ( x, y ) );
-          }
-     }
+     state->update_projectiles ( time_delta );
+     state->update_bombs ( time_delta );
+     state->update_pickups ( time_delta );
+     state->update_emitters ( time_delta );
+     state->update_light ( );
 }
 
 static Void render_bomb ( SDL_Surface* back_buffer, SDL_Surface* bomb_sheet, const Bomb& bomb,

@@ -73,11 +73,23 @@ namespace bryte
           Void persist_map ( );
           Void spawn_map_enemies ( );
 
+          Void update_player ( float time_delta );
           Void player_death ( );
 
+          Void update_enemies ( float time_delta );
           Void enemy_death ( const Enemy& enemy );
 
+          Void update_projectiles ( float time_delta );
+          Void update_bombs ( float time_delta );
+          Void update_pickups ( float time_delta );
+          Void update_emitters ( float time_delta );
+          Void update_light ( );
+
           Void setup_emitters_from_map_lamps ( );
+
+     public:
+
+          static const Int32 c_bomb_damage = 4;
 
      public:
 

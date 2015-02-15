@@ -106,7 +106,6 @@ namespace bryte
           PickupDisplay       pickup_display;
           ProjectileDisplay   projectile_display;
 
-          SDL_Surface* arrow_sheet;
           SDL_Surface* bomb_sheet;
 
           SDL_Surface* attack_icon_sheet;
@@ -118,8 +117,6 @@ namespace bryte
 
           Int32 player_spawn_tile_x;
           Int32 player_spawn_tile_y;
-
-          Int32 player_key_count;
 
           Stopwatch player_deathwatch;
 

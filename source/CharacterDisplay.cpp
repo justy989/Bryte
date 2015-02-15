@@ -4,14 +4,6 @@
 
 using namespace bryte;
 
-CharacterDisplay::CharacterDisplay ( ) :
-     player_sheet ( nullptr )
-{
-     for ( Int32 i = 0; i < Enemy::Type::count; ++i ) {
-          enemy_sheets [ i ] = nullptr;
-     }
-}
-
 static void render_blink ( SDL_Surface* back_buffer, SDL_Surface* character_sheet, SDL_Surface* blink_surface,
                            SDL_Rect* dest_rect, SDL_Rect* clip_rect, Real32 camera_x, Real32 camera_y )
 {

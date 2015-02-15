@@ -30,8 +30,10 @@ static State* get_state ( GameMemory& game_memory )
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
 }
 
+// NOTE: Windows compiler does static initialization different from gcc
+//       so I cannot have the explode radius rely on map tile dimension
 const Real32 Bomb::c_explode_time = 3.0f;
-const Real32 Bomb::c_explode_radius = Map::c_tile_dimension_in_meters * 2.0f;
+const Real32 Bomb::c_explode_radius = 3.2f;
 
 Void Bomb::update ( float dt )
 {
@@ -95,6 +97,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
                                           c_test_tilesheet_path ) ) {
           return false;
      }
+
+     back_buffer_format = *map_display.tilesheet->format;
 
      if ( !load_bitmap_with_game_memory ( map_display.decorsheet, game_memory,
                                           c_test_decorsheet_path ) ) {
@@ -187,11 +191,16 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      pickups.clear ( );
      projectiles.clear ( );
+     bombs.clear ( );
      emitters.clear ( );
      enemies.clear ( );
 
      map.load_master_list ( settings->map_master_list_filename );
-     map.load_from_master_list ( settings->map_index, interactives );
+
+     if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
+          return false;
+     }
+
      spawn_map_enemies ( );
 
      setup_emitters_from_map_lamps ( );
@@ -203,6 +212,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      Projectile::collision_points [ Direction::up ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 14 ) );
      Projectile::collision_points [ Direction::right ].set ( pixels_to_meters ( 14 ), pixels_to_meters ( 7 ) );
      Projectile::collision_points [ Direction::down ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 1 ) );
+
+     character_display.fire_animation.clear ( );
+     interactives_display.animation.clear ( );
+     pickup_display.animation.clear ( );
+     projectile_display.animation.clear ( );
 
 #ifdef DEBUG
      enemy_think = true;
@@ -233,7 +247,11 @@ Void State::destroy ( )
      SDL_FreeSurface ( interactives_display.interactive_sheet );
 
      SDL_FreeSurface ( pickup_display.pickup_sheet );
-     SDL_FreeSurface ( arrow_sheet );
+
+     SDL_FreeSurface ( projectile_display.arrow_sheet );
+     SDL_FreeSurface ( projectile_display.goo_sheet );
+
+     SDL_FreeSurface ( bomb_sheet );
 
      SDL_FreeSurface ( attack_icon_sheet );
 }
@@ -771,7 +789,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          state->player.key_count > 0 ) {
                          LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
                          state->interactives.activate ( player_activate_tile_x, player_activate_tile_y );
-                         state->player_key_count--;
+                         state->player.key_count--;
                     }
                } else if ( interactive.type == Interactive::Type::torch ||
                            interactive.type == Interactive::Type::pushable_torch ) {
@@ -889,7 +907,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                     }
                }
 
-               // create quick emitter
+               // create quick emitterl
                Auto* emitter = state->emitters.spawn ( bomb.position );
 
                if ( emitter ) {

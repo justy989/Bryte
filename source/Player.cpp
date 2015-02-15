@@ -35,6 +35,9 @@ Void Player::clear ( )
 
      damage_watch.reset ( 0.0f );
      cooldown_watch.reset ( 0.0f );
+     fire_watch.reset ( 0.0f );
+
+     on_fire = false;
 
      position.zero ( );
 
@@ -43,5 +46,7 @@ Void Player::clear ( )
 
      attack_mode = AttackMode::sword;
      key_count   = 0;
+     arrow_count = 0;
+     bomb_count  = 0;
 }
 

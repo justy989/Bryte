@@ -22,12 +22,16 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
      damage_pushed = Direction::left;
 
+     on_fire = false;
+
      state_watch.reset ( 0.0f );
      damage_watch.reset ( 0.0f );
      cooldown_watch.reset ( 0.0f );
+     fire_watch.reset ( 0.0f );
 
      walk_tracker = 0.0f;
      walk_frame = 0;
+
 
      switch ( type ) {
      default:

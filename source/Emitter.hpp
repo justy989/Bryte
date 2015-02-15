@@ -12,10 +12,12 @@ namespace bryte {
           Vector velocity;
      };
 
-     struct Emitter : public Entity {
+     struct Emitter : public Entity
+     {
      public:
 
-          enum LifeType {
+          enum LifeType
+          {
                immortal,
                stopwatch,
                entity,
@@ -37,7 +39,7 @@ namespace bryte {
                                        Real32 min_particle_angle, Real32 max_particle_angle,
                                        Real32 min_particle_lifetime, Real32 max_particle_lifetime,
                                        Real32 min_particle_speed, Real32 max_particle_speed,
-                                       Uint8 particles_per_frame, Uint8 frames_per_particle_batch  );
+                                       Uint8 particles_per_frame, Uint8 frames_per_particle_batch );
 
           Void clear ( );
 
@@ -73,10 +75,15 @@ namespace bryte {
           LifeType life_type;
 
           // either tracking an enemy or have a limited lifetime
+#ifdef LINUX
           union {
+#endif
                TrackEntity track_entity;
                Stopwatch lifetime_watch;
+
+#ifdef LINUX
           };
+#endif
      };
 
 };

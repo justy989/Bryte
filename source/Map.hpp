@@ -94,9 +94,7 @@ namespace bryte
 
           Void initialize ( Uint8 width, Uint8 height );
 
-          Void save ( const Char8* filepath, Interactives& interactives );
-          Void load ( const Char8* filepath, Interactives& interactives );
-          Void load_from_master_list ( Uint8 map_index, Interactives& interactives );
+          Bool load_from_master_list ( Uint8 map_index, Interactives& interactives );
 
           Int32 coordinate_to_tile_index   ( Int32 tile_x, Int32 tile_y ) const;
           Int32 tile_index_to_coordinate_x ( Int32 tile_index ) const;
@@ -171,6 +169,9 @@ namespace bryte
 
           template < typename T >
           T* check_coordinates_for_fixture ( T* fixture_array, Uint8 fixture_count, Uint8 x, Uint8 y );
+
+          Void save ( const Char8* filepath, Interactives& interactives );
+          Bool load ( const Char8* filepath, Interactives& interactives );
 
           Void restore_exits ( Interactives& interactives );
           Void restore_enemy_spawns ( );

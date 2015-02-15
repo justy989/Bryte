@@ -280,25 +280,21 @@ Void Map::remove_enemy_spawn ( EnemySpawn* enemy_spawn )
      remove_element<EnemySpawn> ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
 }
 
-Void Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
+Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
 {
      if ( map_index >= m_master_count ) {
           LOG_ERROR ( "Failed to load map. Invalid map index %d\n", map_index );
-          return;
+          return false;
      }
 
-#if 0
-     if ( m_current_master_map != c_first_master_map ) {
-          persist_exits ( interactives );
-     }
-#endif
-
-     load ( m_master_list [ map_index ], interactives );
+     Bool success = load ( m_master_list [ map_index ], interactives );
 
      m_current_master_map = map_index;
 
      restore_exits ( interactives );
      restore_enemy_spawns ( );
+
+     return success;
 }
 
 Void Map::save ( const Char8* filepath, Interactives& interactives )
@@ -357,7 +353,7 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
                   sizeof ( m_activate_on_all_enemies_killed ) );
 }
 
-Void Map::load ( const Char8* filepath, Interactives& interactives )
+Bool Map::load ( const Char8* filepath, Interactives& interactives )
 {
      LOG_INFO ( "Loading Map '%s'\n", filepath );
 
@@ -365,11 +361,17 @@ Void Map::load ( const Char8* filepath, Interactives& interactives )
 
      if ( !file.is_open ( ) ) {
           LOG_ERROR ( "Unable to save room: %s\n", filepath );
-          return;
+          return false;
      }
 
      file.read ( reinterpret_cast<Char8*>( &m_width ), sizeof ( m_width ) );
      file.read ( reinterpret_cast<Char8*>( &m_height ), sizeof ( m_height ) );
+
+     if ( m_width <= 0 || m_height <= 0 ||
+          m_width * m_height > c_max_tiles ) {
+          LOG_ERROR ( "Invalid map dimensions: %d, %d\n", m_width, m_height );
+          return false;
+     }
 
      for ( Int32 y = 0; y < m_height; ++y ) {
           for ( Int32 x = 0; x < m_width; ++x ) {
@@ -415,6 +417,8 @@ Void Map::load ( const Char8* filepath, Interactives& interactives )
 
      file.read ( reinterpret_cast<Char8*> ( &m_activate_on_all_enemies_killed ),
                  sizeof ( m_activate_on_all_enemies_killed ) );
+
+     return true;
 }
 
 void Map::clear_persistence ( )

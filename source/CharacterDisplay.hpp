@@ -10,8 +10,6 @@ namespace bryte {
      struct CharacterDisplay {
      public:
 
-          CharacterDisplay ( );
-
           Void tick ( );
 
           Void render_player ( SDL_Surface* back_buffer, const Character& character,
@@ -41,7 +39,6 @@ namespace bryte {
 
           Bool  blink_on;
           Int32 blink_counter;
-
      };
 };
 

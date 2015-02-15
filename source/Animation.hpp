@@ -7,9 +7,17 @@ struct Animation {
      Int32 frame;
      Int32 delay_tracker;
 
+     inline Void clear ( );
+
      inline Void update_increment ( Int32 delay );
      inline Void update_increment ( Int32 delay, Int32 max_frame );
 };
+
+inline Void Animation::clear ( )
+{
+     frame = 0;
+     delay_tracker = 0;
+}
 
 inline Void Animation::update_increment ( Int32 delay )
 {

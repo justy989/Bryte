@@ -5,7 +5,8 @@
 using namespace bryte;
 
 static void render_blink ( SDL_Surface* back_buffer, SDL_Surface* character_sheet, SDL_Surface* blink_surface,
-                           SDL_Rect* dest_rect, SDL_Rect* clip_rect, Real32 camera_x, Real32 camera_y )
+                           SDL_Rect* dest_rect, SDL_Rect* clip_rect, Bool is_dying,
+                           Real32 camera_x, Real32 camera_y )
 {
      // clear the blink surface
      SDL_Rect clear_rect { 0, 0, blink_surface->w, blink_surface->h };
@@ -22,21 +23,43 @@ static void render_blink ( SDL_Surface* back_buffer, SDL_Surface* character_shee
           return;
      }
 
-     for ( Int32 y = 0; y < blink_surface->h; ++y ) {
-          for ( Int32 x = 0; x < blink_surface->w; ++x ) {
-               Uint32* p_pixel = reinterpret_cast< Uint32* >( blink_surface->pixels ) + x + ( y * blink_surface->w );
+     if ( is_dying ) {
+          for ( Int32 y = 0; y < blink_surface->h; ++y ) {
+               for ( Int32 x = 0; x < blink_surface->w; ++x ) {
+                    Uint32* p_pixel = reinterpret_cast< Uint32* >( blink_surface->pixels ) + x + ( y * blink_surface->w );
 
-               Uint8* blue   = reinterpret_cast< Uint8* >( p_pixel );
-               Uint8* green = blue + 1;
-               Uint8* red  = blue + 2;
+                    Uint8* blue   = reinterpret_cast< Uint8* >( p_pixel );
+                    Uint8* green = blue + 1;
+                    Uint8* red  = blue + 2;
 
-               // skip magenta
-               if ( *red == 255 && *green == 0 && *blue == 255 ) {
-                    continue;
+                    // skip magenta
+                    if ( *red == 255 && *green == 0 && *blue == 255 ) {
+                         continue;
+                    }
+
+                    // make it white
+                    *red = 255;
+                    *blue = 255;
+                    *green = 255;
                }
+          }
+     } else {
+          for ( Int32 y = 0; y < blink_surface->h; ++y ) {
+               for ( Int32 x = 0; x < blink_surface->w; ++x ) {
+                    Uint32* p_pixel = reinterpret_cast< Uint32* >( blink_surface->pixels ) + x + ( y * blink_surface->w );
 
-               // add lots of red!
-               *red = 255;
+                    Uint8* blue   = reinterpret_cast< Uint8* >( p_pixel );
+                    Uint8* green = blue + 1;
+                    Uint8* red  = blue + 2;
+
+                    // skip magenta
+                    if ( *red == 255 && *green == 0 && *blue == 255 ) {
+                         continue;
+                    }
+
+                    // add lots of red!
+                    *red = 255;
+               }
           }
      }
 
@@ -146,7 +169,7 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
 
      if ( blink_on && character.is_blinking ( ) ) {
           render_blink ( back_buffer, character_sheet, blink_surface, &dest_rect, &clip_rect,
-                         camera_x, camera_y );
+                         character.is_dying ( ), camera_x, camera_y );
      } else {
           SDL_BlitSurface ( character_sheet, &clip_rect, back_buffer, &dest_rect );
      }

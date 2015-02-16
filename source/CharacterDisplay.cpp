@@ -144,7 +144,7 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
-     if ( blink_on && character.state == Character::State::blinking ) {
+     if ( blink_on && character.is_blinking ( ) ) {
           render_blink ( back_buffer, character_sheet, blink_surface, &dest_rect, &clip_rect,
                          camera_x, camera_y );
      } else {

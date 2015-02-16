@@ -14,6 +14,7 @@ const Real32 Character::c_attack_width_in_meters  = pixels_to_meters ( Character
 const Real32 Character::c_attack_height_in_meters = pixels_to_meters ( Character::c_attack_height_in_pixels );
 const Real32 Character::c_attack_time             = 0.35f;
 const Real32 Character::c_cooldown_time           = 0.25f;
+const Real32 Character::c_dying_time              = 1.0f;
 const Int32  Character::c_fire_tick_max           = 3;
 const Real32 Character::c_fire_tick_rate          = 2.0f;
 
@@ -27,7 +28,7 @@ Bool Character::collides_with ( const Character& character )
 
 Void Character::attack ( )
 {
-     if ( life_state != LifeState::alive || !cooldown_watch.expired ( ) ) {
+     if ( !is_alive ( ) || !cooldown_watch.expired ( ) ) {
           return;
      }
 
@@ -145,23 +146,31 @@ Bool Character::attack_collides_with ( const Character& character )
 
 Void Character::damage ( Int32 amount, Direction push )
 {
+     if ( !is_alive ( ) ) {
+          return;
+     }
+
      health -= amount;
 
-     if ( health > 0 ) {
-          damage_pushed = push;
+     damage_pushed = push;
 
-          damage_watch.reset ( Character::c_damage_time );
-          state_watch.reset ( Character::c_blink_time );
+     damage_watch.reset ( Character::c_damage_time );
+     state_watch.reset ( Character::c_blink_time );
 
-          state = State::blinking;
-     } else {
-          // TODO: change to dying and handle transition to death
-          life_state = LifeState::dead;
+     state = State::blinking;
+
+     if ( health <= 0 ) {
+          life_state = LifeState::dying;
+          cooldown_watch.reset ( Character::c_dying_time );
      }
 }
 
 Void Character::block ( )
 {
+     if ( !is_alive ( ) ) {
+          return;
+     }
+
      if ( state == State::idle ) {
           state = State::blocking;
      }
@@ -221,6 +230,13 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      acceleration.normalize ( );
      acceleration *= walk_acceleration;
+
+     // if we are dying, wait til our cooldown expires
+     if ( is_dying ( ) ) {
+          if ( cooldown_watch.expired ( ) ) {
+               life_state = Entity::LifeState::dead;
+          }
+     }
 
      // logic based on current state
      switch ( state ) {
@@ -440,6 +456,10 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
 Void Character::walk ( Direction dir )
 {
+     if ( !is_alive ( ) ) {
+          return;
+     }
+
      switch ( dir ) {
      default:
           ASSERT ( 0 );

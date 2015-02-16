@@ -606,22 +606,20 @@ Void State::update_player ( float time_delta )
           }
      }
 
-     if ( player.is_alive ( ) ) {
-          player.update ( time_delta, map, interactives );
+     player.update ( time_delta, map, interactives );
 
-          if ( player.on_fire && player.fire_watch.expired ( ) ) {
-               burn_character ( player );
+     if ( player.is_dead ( ) ) {
+          player_death ( );
+     }
+
+     if ( player.on_fire && player.fire_watch.expired ( ) ) {
+          burn_character ( player );
 
 #ifdef DEBUG
-               if ( invincible ) {
-                    player.health = player.max_health;
-               }
-#endif
-
-               if ( player.is_dead ( ) ) {
-                    player_death ( );
-               }
+          if ( invincible ) {
+               player.health = player.max_health;
           }
+#endif
      }
 
      if ( block_key ) {
@@ -662,7 +660,7 @@ Void State::update_player ( float time_delta )
           return;
      }
 
-     if ( player.state == Character::State::pushing ) {
+     if ( player.is_pushing ( ) ) {
           Map::Coordinates push_location { 0, 0 };
 
           character_adjacent_tile ( player, &push_location.x, &push_location.y );
@@ -690,15 +688,7 @@ Void State::update_player ( float time_delta )
                     interactives.push ( push_location.x, push_location.y, player.facing, map );
                }
           }
-     } else if ( player.life_state == Entity::LifeState::dying ) {
-          player_deathwatch.tick ( time_delta );
-
-          if ( player_deathwatch.expired ( ) ) {
-               player.life_state = Entity::LifeState::dead;
-               player_death ( );
-          }
      } else {
-
           // check if player wants to activate any interactives
           if ( activate_key ) {
                activate_key = false;
@@ -728,9 +718,24 @@ Void State::update_player ( float time_delta )
                          interactives.activate ( player_activate_tile_x, player_activate_tile_y );
                     }
                }
-
           }
      }
+
+#if 0
+     if ( player.is_dying ( ) ) {
+
+          Auto* emitter = emitters.spawn ( player_center );
+
+          if ( emitter ) {
+               Real32 explosion_size = player.collision_width ( ) > player.collision_height ( ) ?
+                                       player.collision_width ( ) : player.collision_height ( );
+               explosion_size *= 2.0f;
+               emitter->setup_limited_time ( player_center, 0.7f,
+                                             SDL_MapRGB ( &back_buffer_format, 255, 0, 0 ),
+                                             0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
+                                             Emitter::c_max_particles, 0 );
+          }
+#endif
 }
 
 Void State::update_enemies ( float time_delta )
@@ -756,6 +761,12 @@ Void State::update_enemies ( float time_delta )
 
           enemy.update ( time_delta, map, interactives );
 
+          // check if the enemy has died after updating
+          if ( enemy.is_dead ( ) ) {
+               enemy_death ( enemy );
+               continue;
+          }
+
           // spawn a projectile if the goo is shooting
           if ( enemy.type == Enemy::Type::goo &&
                enemy.goo_state.state == Enemy::GooState::State::shooting ) {
@@ -764,23 +775,20 @@ Void State::update_enemies ( float time_delta )
 
           if ( enemy.on_fire && enemy.fire_watch.expired ( ) ) {
                burn_character ( enemy );
-
-               if ( enemy.is_dead ( ) ) {
-                    enemy_death ( enemy );
-               }
           }
 
           // check collision between player and enemy
-          if ( player.state != Character::State::blinking &&
-               player.is_alive ( ) &&
+          if ( !player.is_blinking ( ) && player.is_alive ( ) &&
                player.collides_with ( enemy ) ) {
                Direction damage_dir = direction_between ( enemy_center, player_center, random );
 
                // check if player blocked the attack
-               if ( player.state == Character::State::blocking &&
+               if ( player.is_blocking ( ) &&
                     damage_dir == opposite_direction ( player.facing ) ) {
                     enemy.damage ( 0, opposite_direction ( damage_dir ) );
                     spawn_damage_number ( enemy_center, 0 );
+                    spawn_pickup ( enemy.position, enemy.drop );
+                    enemy.drop = Pickup::Type::none;
                } else {
                     player.damage ( 1, damage_dir );
                     spawn_damage_number ( player_center, 1 );
@@ -795,40 +803,16 @@ Void State::update_enemies ( float time_delta )
                if ( enemy.on_fire ) {
                     player.light_on_fire ( );
                }
-
-               if ( player.life_state == Entity::LifeState::dead ) {
-                    player.life_state = Entity::LifeState::dying;
-                    player_deathwatch.reset ( c_player_death_delay );
-
-                    LOG_INFO ( "Spawn emitter on player death!\n" );
-
-                    Auto* emitter = emitters.spawn ( player_center );
-
-                    if ( emitter ) {
-                         Real32 explosion_size = player.collision_width ( ) > player.collision_height ( ) ?
-                                                 player.collision_width ( ) : player.collision_height ( );
-                         explosion_size *= 2.0f;
-                         emitter->setup_limited_time ( player_center, 0.7f,
-                                                       SDL_MapRGB ( &back_buffer_format, 255, 0, 0 ),
-                                                       0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
-                                                       Emitter::c_max_particles, 0 );
-                    }
-               }
           }
 
           // check if player's attack hits enemy
-          if ( player.state == Character::State::attacking &&
-               enemy.state != Character::State::blinking &&
+          if ( player.is_attacking ( ) && !enemy.is_blinking ( ) &&
                player.attack_collides_with ( enemy ) ) {
                Direction damage_dir = direction_between ( player_center, enemy_center, random );
 
                enemy.damage ( 1, damage_dir );
 
                spawn_damage_number ( enemy_center, 1 );
-
-               if ( enemy.is_dead ( ) ) {
-                    enemy_death ( enemy );
-               }
           }
      }
 }
@@ -869,10 +853,6 @@ Void State::update_projectiles ( float time_delta )
                          projectile.hit_character ( enemy );
 
                          spawn_damage_number ( projectile_collision_point, 1 );
-
-                         if ( enemy.is_dead ( ) ) {
-                              enemy_death ( enemy );
-                         }
 
                          break;
                     }
@@ -920,10 +900,6 @@ Void State::update_bombs ( float time_delta )
                                                                            random ) );
 
                          spawn_damage_number ( enemy_center, c_bomb_damage );
-
-                         if ( enemy.is_dead ( ) ) {
-                              enemy_death ( enemy );
-                         }
                     }
                }
 

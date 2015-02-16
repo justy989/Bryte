@@ -57,6 +57,12 @@ namespace bryte
 
           inline Vector collision_center ( ) const;
 
+          inline Bool is_idle ( ) const;
+          inline Bool is_blinking ( ) const;
+          inline Bool is_attacking ( ) const;
+          inline Bool is_pushing ( ) const;
+          inline Bool is_blocking ( ) const;
+
           Void set_collision_center ( Real32 x, Real32 y );
 
      public:
@@ -70,6 +76,7 @@ namespace bryte
           static const Real32 c_attack_height_in_meters;
           static const Real32 c_attack_time;
           static const Real32 c_cooldown_time;
+          static const Real32 c_dying_time;
           static const Real32 c_accel;
 
           static const Int32  c_fire_tick_max;
@@ -174,6 +181,11 @@ namespace bryte
           return Vector { collision_center_x ( ), collision_center_y ( ) };
      }
 
+     inline Bool Character::is_idle ( ) const { return state == Character::State::idle; }
+     inline Bool Character::is_blinking ( ) const { return state == Character::State::blinking; }
+     inline Bool Character::is_attacking ( ) const { return state == Character::State::attacking; }
+     inline Bool Character::is_pushing ( ) const { return state == Character::State::pushing; }
+     inline Bool Character::is_blocking ( ) const { return state == Character::State::blocking; }
 }
 
 #endif

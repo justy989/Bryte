@@ -154,8 +154,6 @@ namespace bryte
           Int32 player_spawn_tile_x;
           Int32 player_spawn_tile_y;
 
-          Stopwatch player_deathwatch;
-
 #ifdef DEBUG
           Bool enemy_think;
           Bool invincible;

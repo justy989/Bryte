@@ -130,6 +130,8 @@ Void DamageNumber::clear ( )
 
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
+     sound.load_effects ( );
+
      random.seed ( 13371 );
 
      player_spawn_tile_x = settings->player_spawn_tile_x;
@@ -591,7 +593,9 @@ Void State::update_player ( float time_delta )
                ASSERT ( 0 );
                break;
           case Player::AttackMode::sword:
-               player.attack ( );
+               if ( player.attack ( ) ) {
+                    sound.play_effect ( Sound::Effect::player_attack );
+               }
                break;
           case Player::AttackMode::arrow:
                if ( player.arrow_count > 0 ) {

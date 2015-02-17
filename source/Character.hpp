@@ -28,7 +28,7 @@ namespace bryte
           Bool in_tile ( Int32 x, Int32 y ) const;
 
           Void walk ( Direction dir );
-          Void attack ( );
+          Bool attack ( );
           Void block ( );
           Void damage ( Int32 amount, Direction push );
           Void light_on_fire ( );

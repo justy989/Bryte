@@ -6,6 +6,8 @@
 #include "GameMemory.hpp"
 #include "GameInput.hpp"
 
+#include "Sound.hpp"
+
 #include "Map.hpp"
 #include "Interactives.hpp"
 #include "Player.hpp"
@@ -114,6 +116,8 @@ namespace bryte
           static const Int32 c_bomb_damage = 4;
 
      public:
+
+          Sound sound;
 
           Random random;
 

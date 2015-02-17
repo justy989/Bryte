@@ -26,16 +26,19 @@ Bool Character::collides_with ( const Character& character )
                                       character.collision_width ( ), character.collision_height ( ) );
 }
 
-Void Character::attack ( )
+Bool Character::attack ( )
 {
      if ( !is_alive ( ) || !cooldown_watch.expired ( ) ) {
-          return;
+          return false;
      }
 
      if ( state != State::attacking ) {
           state_watch.reset ( Character::c_attack_time );
           state = State::attacking;
+          return true;
      }
+
+     return false;
 }
 
 Real32 Character::attack_x ( ) const

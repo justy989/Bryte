@@ -32,7 +32,7 @@ Bool Character::attack ( )
           return false;
      }
 
-     if ( state != State::attacking ) {
+     if ( !is_blinking ( ) && !is_attacking ( ) ) {
           state_watch.reset ( Character::c_attack_time );
           state = State::attacking;
           return true;
@@ -159,6 +159,7 @@ Void Character::damage ( Int32 amount, Direction push )
 
      damage_watch.reset ( Character::c_damage_time );
      state_watch.reset ( Character::c_blink_time );
+     cooldown_watch.reset ( 0.0f );
 
      state = State::blinking;
 

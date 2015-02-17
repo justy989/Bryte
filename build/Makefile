@@ -7,7 +7,7 @@ SOURCE_DIR = ../source
 CC             = g++
 CFLAGS         = -Wall -Werror -fPIC -std=c++11 -DLINUX
 INCLUDE        = -I$(SOURCE_DIR)
-LINK           = -lSDL2 -ldl
+LINK           = -lSDL2 -lSDL2_mixer -ldl
 GAME_SO        = bryte_game.so
 GAME_SO_OBJS   = Log.o Utils.o Bitmap.o Map.o Interactives.o Character.o Player.o Enemy.o Pickup.o \
 			  Projectile.o MapDisplay.o CharacterDisplay.o InteractivesDisplay.o PickupDisplay.o \

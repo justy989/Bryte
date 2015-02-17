@@ -1,6 +1,8 @@
 #include "Application.hpp"
 #include "Utils.hpp"
 
+#include <SDL2/SDL_mixer.h>
+
 #include <thread>
 #include <fstream>
 
@@ -23,8 +25,6 @@ Application::Application ( ) :
      m_previous_update_timestamp ( high_resolution_clock::now ( ) ),
      m_current_update_timestamp ( m_previous_update_timestamp )
 {
-     LOG_INFO ( "Initializing SDL\n" );
-     SDL_Init ( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER );
 }
 
 Application::~Application ( )
@@ -57,6 +57,25 @@ Application::~Application ( )
 
      LOG_INFO ( "Quitting SDL\n" );
      SDL_Quit ( );
+}
+
+Bool Application::init_sdl ( )
+{
+     LOG_INFO ( "Initializing SDL: Video, Audio, and Game Controller\n" );
+
+     if ( SDL_Init ( SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO ) ) {
+          LOG_ERROR ( "SDL_Init() failed: %s\n", SDL_GetError ( ) );
+          return false;
+     }
+
+     LOG_INFO ( "Initializing SDL_Mixer\n" );
+
+     if ( Mix_OpenAudio ( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) ) {
+          LOG_ERROR ( "Mix_OpenAudio() failed: %s\n", Mix_GetError ( ) );
+          return false;
+     }
+
+     return true;
 }
 
 Bool Application::create_window ( const Char8* window_title, Int32 window_width, Int32 window_height,
@@ -363,6 +382,10 @@ Real32 Application::time_and_limit_loop ( Int32 locked_frames_per_second )
 Bool Application::run_game ( const Settings& settings, Void* game_settings )
 {
     m_settings = settings;
+
+     if ( !init_sdl ( ) ) {
+          return false;
+     }
 
      if ( !create_window ( settings.window_title, settings.window_width, settings.window_height,
                            settings.back_buffer_width, settings.back_buffer_height ) ) {

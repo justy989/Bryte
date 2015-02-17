@@ -47,6 +47,7 @@ private:
 
 private:
 
+     Bool init_sdl ( );
      Bool create_window        ( const Char8* window_title, Int32 window_width, Int32 window_height,
                                  Int32 back_buffer_width, Int32 back_buffer_height );
      Bool allocate_game_memory ( Uint32 size );

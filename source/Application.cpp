@@ -70,7 +70,7 @@ Bool Application::init_sdl ( )
 
      LOG_INFO ( "Initializing SDL_Mixer\n" );
 
-     if ( Mix_OpenAudio ( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) ) {
+     if ( Mix_OpenAudio ( 44100, MIX_DEFAULT_FORMAT, 2, 1024 ) ) {
           LOG_ERROR ( "Mix_OpenAudio() failed: %s\n", Mix_GetError ( ) );
           return false;
      }

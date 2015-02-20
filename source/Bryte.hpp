@@ -102,6 +102,8 @@ namespace bryte
           Void update_enemies ( float time_delta );
           Void enemy_death ( const Enemy& enemy );
 
+          Void update_interactives ( float time_delta );
+
           Void update_projectiles ( float time_delta );
           Void update_bombs ( float time_delta );
           Void update_pickups ( float time_delta );
@@ -111,9 +113,14 @@ namespace bryte
 
           Void setup_emitters_from_map_lamps ( );
 
+          Void enqueue_pickup ( Pickup::Type type );
+          Void dequeue_pickup ( );
+
      public:
 
           static const Int32 c_bomb_damage = 4;
+          static const Int32 c_pickup_queue_size = 8;
+          static const Real32 c_pickup_show_time;
 
      public:
 
@@ -157,6 +164,10 @@ namespace bryte
 
           Int32 player_spawn_tile_x;
           Int32 player_spawn_tile_y;
+
+          Pickup::Type pickup_queue [ c_pickup_queue_size ];
+
+          Stopwatch pickup_stopwatch;
 
 #ifdef DEBUG
           Bool enemy_think;

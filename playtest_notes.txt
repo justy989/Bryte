@@ -1,0 +1,35 @@
+February 15th 2015
+
+Playtesters:
+-Michael Muse
+-Stephen Muse
+-Octavio Zuniga
+
+Notes:
+-Delayed controls: Perhaps just due to slow to start animation. Sound might improve (responsiveness)
+-Blocks having 3 functions seems confusing
+ -Not pushable
+ -Pushable once
+ -Appear/Disappear
+-Tried to activate banners, maybe we could put secrets behind them
+-Unsure what the tables were supposed to look like
+-It is not obvious when weapons are switched, and it is easy to forget after you have switched weapons
+-Should activate and attack be the same button?
+-It's not obvious that pushing the block moved it, so one player kept activating it
+-Should bombs self damage?
+-Should the doors be opened by just walking into them?
+-Unsure what the arrow was at first
+-its easy to pickup items that enemies drop without noticing what they you picked up
+ perhaps do a zelda thing where the item appears above your head?
+-No one used the block feature, keep experimenting to see if it has it's place.
+
+Lessons learned:
+-Using sound as a tool to communicate to the player that things have happened will likely eliminate
+ a lot of the confusion about game mechanic interactions
+-A visual indicator on the player himself
+
+Bugs found:
+-When dead, player can still attack
+-When player is hit, it's possible for them to take damage twice
+-When killed by a projectile, we don't respawn the player
+

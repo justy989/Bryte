@@ -9,7 +9,31 @@ Bool Sound::load_effects ( )
           m_effects [ i ] = nullptr;
      }
 
-     if ( !load_effect ( Effect::player_attack, "hit.wav" ) ) {
+     if ( !load_effect ( Effect::player_sword_attack, "player_sword_attack.wav" ) ) {
+          return false;
+     }
+
+     if ( !load_effect ( Effect::player_damaged, "player_damaged.wav" ) ) {
+          return false;
+     }
+
+     if ( !load_effect ( Effect::player_pickup, "player_pickup.wav" ) ) {
+          return false;
+     }
+
+     if ( !load_effect ( Effect::place_bomb, "place_bomb.wav" ) ) {
+          return false;
+     }
+
+     if ( !load_effect ( Effect::enemy_damaged, "enemy_damaged.wav" ) ) {
+          return false;
+     }
+
+     if ( !load_effect ( Effect::bomb_exploded, "bomb_exploded.wav" ) ) {
+          return false;
+     }
+
+     if ( !load_effect ( Effect::activate_interactive, "activate_interactive.wav" ) ) {
           return false;
      }
 

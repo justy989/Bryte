@@ -22,11 +22,13 @@ namespace bryte
                count
           };
 
+          Bool changing ( ) const;
+
           Void reset ( );
 
           Void update ( Real32 time_delta );
 
-          Void activate ( );
+          Bool activate ( );
 
           Direction direction;
           Stopwatch state_watch;
@@ -44,11 +46,13 @@ namespace bryte
                changing_off,
           };
 
+          Bool changing ( ) const;
+
           Void reset ( );
 
           Void update ( Real32 time_delta, Interactives& interactives );
 
-          Void activate ( );
+          Bool activate ( );
 
           State     state;
           Stopwatch cooldown_watch;
@@ -81,7 +85,7 @@ namespace bryte
      struct Torch {
 
           Void reset ( );
-          Void activate ( );
+          Bool activate ( );
 
           Bool  on;
           Int32 value;
@@ -93,7 +97,7 @@ namespace bryte
 
           Void update ( Real32 time_delta );
 
-          Void activate  ( );
+          Bool activate  ( );
           Direction push ( Direction direction, Interactives& interactives );
 
           Torch torch;
@@ -164,7 +168,7 @@ namespace bryte
 
           Void      update   ( Real32 time_delta, Interactives& interactives );
 
-          Void      activate ( Interactives& interactives );
+          Bool      activate ( Interactives& interactives );
           Void      explode  ( Interactives& interactives );
           Direction push     ( Direction direction, Interactives& interactives );
           Void      light    ( Uint8 light, Interactives& interactives );
@@ -198,8 +202,8 @@ namespace bryte
 
           Void contribute_light ( Map& map );
 
-          Void push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
-          Void activate ( Int32 tile_x, Int32 tile_y );
+          Bool push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
+          Bool activate ( Int32 tile_x, Int32 tile_y );
           Void explode ( Int32 tile_x, Int32 tile_y );
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
           Void enter ( Int32 tile_x, Int32 tile_y );
@@ -215,7 +219,7 @@ namespace bryte
 
           static const Int32 c_max_interactives = Map::c_max_tiles;
 
-     private:
+     public:
 
           Interactive m_interactives [ c_max_interactives ];
 

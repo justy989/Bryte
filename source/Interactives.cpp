@@ -102,7 +102,7 @@ Void Interactives::contribute_light ( Map& map )
      }
 }
 
-Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
+Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
@@ -113,7 +113,7 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
 
      switch ( result_dir ) {
      default:
-          break;
+          return false;
      case Direction::left:
           dest_x--;
           break;
@@ -137,22 +137,6 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           free_to_move = false;
      }
 
-#if 0
-     // TODO: put checking for characters back in when it is quicker to find them
-     if ( free_to_move && player.in_tile ( dest_x, dest_y ) ) {
-          free_to_move = false;
-     }
-
-     if ( free_to_move ) {
-          for ( Int32 i = 0; i < enemy_count; ++i ) {
-               if ( enemies [ i ].in_tile ( dest_x, dest_y ) ) {
-                    free_to_move = false;
-                    break;
-               }
-          }
-     }
-#endif
-
      if ( free_to_move ) {
           // save underneath the dest
           UnderneathInteractive save_underneath = dest_i.underneath;
@@ -169,14 +153,18 @@ Void Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           // enter and leave both tiles
           dest_i.enter ( *this );
           i.leave ( *this );
+
+          return true;
      }
+
+     return false;
 }
 
-Void Interactives::activate ( Int32 tile_x, Int32 tile_y )
+Bool Interactives::activate ( Int32 tile_x, Int32 tile_y )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
-     i.activate ( *this );
+     return i.activate ( *this );
 }
 
 Void Interactives::explode ( Int32 tile_x, Int32 tile_y )
@@ -263,7 +251,7 @@ Void Interactive::reset ( )
      underneath.reset ( );
 }
 
-Void Interactive::activate ( Interactives& interactives )
+Bool Interactive::activate ( Interactives& interactives )
 {
      switch ( type ) {
      default:
@@ -274,18 +262,16 @@ Void Interactive::activate ( Interactives& interactives )
           }
           break;
      case Type::exit:
-          interactive_exit.activate ( );
-          break;
+          return interactive_exit.activate ( );
      case Type::lever:
-          interactive_lever.activate ( );
-          break;
+          return interactive_lever.activate ( );
      case Type::torch:
-          interactive_torch.activate ( );
-          break;
+          return interactive_torch.activate ( );
      case Type::pushable_torch:
-          interactive_pushable_torch.activate ( );
-          break;
+          return interactive_pushable_torch.activate ( );
      }
+
+     return false;
 }
 
 Void Interactive::explode ( Interactives& interactives )
@@ -389,6 +375,12 @@ Void Interactive::update ( Real32 time_delta, Interactives& interactives )
      }
 }
 
+Bool Lever::changing ( ) const
+{
+     return ( state == State::changing_on ||
+              state == State::changing_off );
+}
+
 Void Lever::reset ( )
 {
      cooldown_watch.reset ( 0.0f );
@@ -425,7 +417,7 @@ Void Lever::update ( Real32 time_delta, Interactives& interactives )
      }
 }
 
-Void Lever::activate ( )
+Bool Lever::activate ( )
 {
      if ( state == State::off ) {
           state = State::changing_on;
@@ -434,6 +426,8 @@ Void Lever::activate ( )
           state = State::changing_off;
           cooldown_watch.reset ( c_lever_cooldown );
      }
+
+     return true;
 }
 
 Void PushableBlock::reset ( )
@@ -505,6 +499,14 @@ Direction PushableBlock::push ( Direction direction, Interactives& interactives 
      return Direction::count;
 }
 
+Bool Exit::changing ( ) const
+{
+     return ( state == changing_to_open ||
+              state == changing_to_unlocked ||
+              state == changing_to_closed ||
+              state == changing_to_locked );
+}
+
 Void Exit::reset ( )
 {
      direction    = Direction::up;
@@ -547,7 +549,7 @@ Void Exit::update ( Real32 time_delta )
      }
 }
 
-Void Exit::activate ( )
+Bool Exit::activate ( )
 {
      switch ( state ) {
      default:
@@ -571,6 +573,8 @@ Void Exit::activate ( )
           state = State::closed;
           break;
      }
+
+     return true;
 }
 
 Void Torch::reset ( )
@@ -579,9 +583,11 @@ Void Torch::reset ( )
      value = 255;
 }
 
-Void Torch::activate ( )
+Bool Torch::activate ( )
 {
      on = !on;
+
+     return true;
 }
 
 Void PushableTorch::reset ( )
@@ -595,9 +601,10 @@ Void PushableTorch::update ( Real32 time_delta )
      pushable_block.update ( time_delta );
 }
 
-Void PushableTorch::activate ( )
+Bool PushableTorch::activate ( )
 {
      torch.activate ( );
+     return false;
 }
 
 Direction PushableTorch::push ( Direction direction, Interactives& interactives )

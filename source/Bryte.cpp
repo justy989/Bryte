@@ -14,7 +14,7 @@
 
 using namespace bryte;
 
-static const Real32 c_player_death_delay      = 3.0f;
+const Real32 State::c_pickup_show_time    = 2.0f;
 
 static const Char8* c_test_tilesheet_path        = "castle_tilesheet.bmp";
 static const Char8* c_test_decorsheet_path       = "castle_decorsheet.bmp";
@@ -130,7 +130,9 @@ Void DamageNumber::clear ( )
 
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
-     sound.load_effects ( );
+     if ( !sound.load_effects ( ) ) {
+          return false;
+     }
 
      random.seed ( 13371 );
 
@@ -288,6 +290,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      pickup_display.animation.clear ( );
      projectile_display.animation.clear ( );
 
+     for ( Int32 i = 0; i < c_pickup_queue_size; ++i ) {
+          pickup_queue [ i ] = Pickup::Type::none;
+     }
+
+     pickup_stopwatch.reset ( c_pickup_show_time );
+
 #ifdef DEBUG
      enemy_think = true;
      invincible = false;
@@ -299,6 +307,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
 Void State::destroy ( )
 {
+     sound.unload_effects ( );
+
      SDL_FreeSurface ( map_display.tilesheet );
      SDL_FreeSurface ( map_display.decorsheet );
      SDL_FreeSurface ( map_display.lampsheet );
@@ -594,7 +604,7 @@ Void State::update_player ( float time_delta )
                break;
           case Player::AttackMode::sword:
                if ( player.attack ( ) ) {
-                    sound.play_effect ( Sound::Effect::player_attack );
+                    sound.play_effect ( Sound::Effect::player_sword_attack );
                }
                break;
           case Player::AttackMode::arrow:
@@ -607,6 +617,7 @@ Void State::update_player ( float time_delta )
                if ( player.bomb_count > 0 ) {
                     spawn_bomb ( player.position );
                     player.bomb_count--;
+                    sound.play_effect ( Sound::Effect::place_bomb );
                }
                break;
           }
@@ -691,7 +702,11 @@ Void State::update_player ( float time_delta )
                }
 
                if ( !enemy_on_tile ) {
-                    interactives.push ( push_location.x, push_location.y, player.facing, map );
+                    Bool pushed = interactives.push ( push_location.x, push_location.y, player.facing, map );
+
+                    if ( pushed ) {
+                         sound.play_effect ( Sound::Effect::activate_interactive );
+                    }
                }
           }
      } else {
@@ -715,33 +730,23 @@ Void State::update_player ( float time_delta )
                               LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
                               interactives.activate ( player_activate_tile_x, player_activate_tile_y );
                               player.key_count--;
+                              sound.play_effect ( Sound::Effect::activate_interactive );
                          }
                     } else if ( interactive.type == Interactive::Type::torch ||
                                 interactive.type == Interactive::Type::pushable_torch ) {
                          // pass
                     } else {
                          LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
-                         interactives.activate ( player_activate_tile_x, player_activate_tile_y );
+
+                         Bool success = interactives.activate ( player_activate_tile_x, player_activate_tile_y );
+
+                         if ( success ) {
+                              sound.play_effect ( Sound::Effect::activate_interactive );
+                         }
                     }
                }
           }
      }
-
-#if 0
-     if ( player.is_dying ( ) ) {
-
-          Auto* emitter = emitters.spawn ( player_center );
-
-          if ( emitter ) {
-               Real32 explosion_size = player.collision_width ( ) > player.collision_height ( ) ?
-                                       player.collision_width ( ) : player.collision_height ( );
-               explosion_size *= 2.0f;
-               emitter->setup_limited_time ( player_center, 0.7f,
-                                             SDL_MapRGB ( &back_buffer_format, 255, 0, 0 ),
-                                             0.0f, 6.28f, 0.3f, 0.7f, 0.25f, explosion_size,
-                                             Emitter::c_max_particles, 0 );
-          }
-#endif
 }
 
 Void State::update_enemies ( float time_delta )
@@ -798,6 +803,7 @@ Void State::update_enemies ( float time_delta )
                } else {
                     player.damage ( 1, damage_dir );
                     spawn_damage_number ( player_center, 1 );
+                    sound.play_effect ( Sound::Effect::player_damaged );
                }
 
 #ifdef DEBUG
@@ -817,8 +823,40 @@ Void State::update_enemies ( float time_delta )
                Direction damage_dir = direction_between ( player_center, enemy_center, random );
 
                enemy.damage ( 1, damage_dir );
-
                spawn_damage_number ( enemy_center, 1 );
+               sound.play_effect ( Sound::Effect::player_damaged );
+          }
+     }
+}
+
+Void State::update_interactives ( float time_delta )
+{
+     Int32 count = map.width ( ) * map.height ( );
+
+     for ( Int32 i = 0; i < count; ++i ) {
+          Auto& interactive = interactives.m_interactives [ i ];
+
+          switch ( interactive.type ) {
+          default:
+          case Interactive::Type::none:
+          case Interactive::Type::bombable_block:
+          case Interactive::Type::torch:
+               break;
+          case Interactive::Type::lever:
+               interactive.update ( time_delta, interactives );
+               break;
+          case Interactive::Type::pushable_block:
+               interactive.update ( time_delta, interactives );
+               break;
+          case Interactive::Type::pushable_torch:
+               interactive.update ( time_delta, interactives );
+               break;
+          case Interactive::Type::light_detector:
+               interactive.update ( time_delta, interactives );
+               break;
+          case Interactive::Type::exit:
+               interactive.update ( time_delta, interactives );
+               break;
           }
      }
 }
@@ -936,17 +974,20 @@ Void State::update_bombs ( float time_delta )
                     }
                }
 
-               // create quick emitterl
+               // create quick emitter
                Auto* emitter = emitters.spawn ( bomb.position );
 
                if ( emitter ) {
                     Vector offset { Map::c_tile_dimension_in_meters * 0.5f,
                                     Map::c_tile_dimension_in_meters * 0.5f };
+                    // TODO: Make fire color
                     emitter->setup_limited_time ( bomb.position + offset, 0.5f,
                                                   SDL_MapRGB ( &back_buffer_format, 200, 200, 200 ),
                                                   0.0f, 6.28f, 0.5f, 0.5f, 6.0f, 6.0f,
                                                   Emitter::c_max_particles, 0 );
                }
+
+               sound.play_effect ( Sound::Effect::bomb_exploded );
           }
      }
 }
@@ -988,8 +1029,20 @@ Void State::update_pickups ( float time_delta )
                     break;
                }
 
+               enqueue_pickup ( pickup.type );
+
                pickup.type = Pickup::Type::none;
                pickup.life_state = Entity::LifeState::dead;
+
+               sound.play_effect ( Sound::Effect::player_pickup );
+          }
+     }
+
+     if ( pickup_queue [ 0 ] ) {
+          pickup_stopwatch.tick ( time_delta );
+
+          if ( pickup_stopwatch.expired ( ) ) {
+               dequeue_pickup ( );
           }
      }
 }
@@ -1048,6 +1101,27 @@ Void State::update_light ( )
                interactives.light ( x, y, map.get_coordinate_light ( x, y ) );
           }
      }
+}
+
+Void State::enqueue_pickup ( Pickup::Type type )
+{
+     for( Int32 i = 0; i < c_pickup_queue_size; ++i ) {
+          if ( pickup_queue [ i ] == Pickup::Type::none ) {
+               pickup_queue [ i ] = type;
+               break;
+          }
+     }
+}
+
+Void State::dequeue_pickup ( )
+{
+     Int32 last_index = c_pickup_queue_size - 1;
+
+     for( Int32 i = 0; i < last_index; ++i ) {
+          pickup_queue [ i ] = pickup_queue [ i + 1 ];
+     }
+
+     pickup_stopwatch.reset ( c_pickup_show_time );
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
@@ -1188,7 +1262,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
      state->update_player ( time_delta );
      state->update_enemies ( time_delta );
-     state->interactives.update ( time_delta );
+     state->update_interactives ( time_delta );
      state->update_projectiles ( time_delta );
      state->update_bombs ( time_delta );
      state->update_pickups ( time_delta );
@@ -1248,6 +1322,23 @@ static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const D
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      text.render ( back_buffer, buffer, dest_rect.x, dest_rect.y);
+}
+
+Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
+                           Character& player, Pickup::Type pickup_type,
+                           Real32 camera_x, Real32 camera_y )
+{
+     SDL_Rect dest_rect = build_world_sdl_rect ( player.position.x ( ) + Pickup::c_dimension_in_meters * 0.4f,
+                                                 player.position.y ( ) + player.height ( ) + pixels_to_meters ( 1 ),
+                                                 Pickup::c_dimension_in_meters,
+                                                 Pickup::c_dimension_in_meters );
+
+     SDL_Rect clip_rect { 0, ( static_cast<Int32>( pickup_type ) - 1 ) * Pickup::c_dimension_in_pixels,
+                          Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( pickup_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -1338,6 +1429,12 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                     }
                }
           }
+     }
+
+     // pickup queue
+     if ( state->pickup_queue [ 0 ] ) {
+          render_shown_pickup ( back_buffer, state->pickup_display.pickup_sheet, state->player,
+                                state->pickup_queue [ 0 ], state->camera.x ( ), state->camera.y ( ) );
      }
 
      // damage numbers

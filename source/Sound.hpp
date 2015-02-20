@@ -11,7 +11,13 @@ namespace bryte
      public:
 
           enum Effect {
-               player_attack,
+               player_sword_attack,
+               player_damaged,
+               player_pickup,
+               place_bomb,
+               enemy_damaged,
+               bomb_exploded,
+               activate_interactive,
                count
           };
 

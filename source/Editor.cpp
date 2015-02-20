@@ -67,37 +67,30 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::exit:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::exit,
+                                                                  mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::exit ) {
-               interactive.type = Interactive::Type::none;
-          } else {
-               interactive.type = Interactive::Type::exit;
-               interactive.reset ( );
                interactive.interactive_exit.direction    = static_cast<Direction>( current_exit_direction );
                interactive.interactive_exit.state        = static_cast<Exit::State>( current_exit_state * 2 );
           }
      } break;
      case Mode::lever:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::lever,
+                                                                  mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::lever ) {
-               interactive.type = Interactive::Type::none;
-          } else {
                interactive.type = Interactive::Type::lever;
                interactive.reset ( );
           }
      } break;
      case Mode::pushable_block:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::pushable_block,
+                                                                  mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::pushable_block ) {
-               interactive.type = Interactive::Type::none;
-          } else {
-               interactive.type = Interactive::Type::pushable_block;
-               interactive.reset ( );
                interactive.interactive_pushable_block.one_time = true;
           }
      } break;
@@ -119,40 +112,28 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::torch:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::torch,
+                                                                  mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::torch ) {
-               interactive.type = Interactive::Type::none;
-               interactive.reset ( );
-          } else {
-               interactive.type = Interactive::Type::torch;
-               interactive.reset ( );
                interactive.interactive_torch.on = current_torch;
           }
      } break;
      case Mode::pushable_torch:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::pushable_torch,
+                                                                  mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::pushable_torch ) {
-               interactive.reset ( );
-               interactive.type = Interactive::Type::none;
-          } else {
-               interactive.type = Interactive::Type::pushable_torch;
-               interactive.reset ( );
                interactive.interactive_pushable_torch.torch.on = current_pushable_torch;
           }
      } break;
      case Mode::light_detector:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::light_detector,
+                                                                  mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::light_detector ) {
-               interactive.type = Interactive::Type::none;
-               interactive.reset ( );
-          } else {
-               interactive.type = Interactive::Type::light_detector;
-               interactive.reset ( );
                interactive.interactive_light_detector.type = static_cast<bryte::LightDetector::Type>(
                                                                   current_light_detector_bryte );
           }
@@ -192,11 +173,17 @@ Void State::mouse_button_left_clicked ( )
           map.set_activate_location_on_all_enemies_killed ( location );
      } break;
      case Mode::bombable_block:
+          place_or_clear_interactive ( Interactive::Type::bombable_block, mouse_tile_x, mouse_tile_y );
+          break;
+     case Mode::turret:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::turret,
+                                                                  mouse_tile_x, mouse_tile_y );
 
-          interactive.type = Interactive::Type::bombable_block;
-          interactive.reset ( );
+          if ( interactive.type == Interactive::Type::turret ) {
+               interactive.interactive_turret.facing = static_cast<Direction>(current_turret_direction);
+               interactive.interactive_turret.automatic = static_cast<Bool>(current_turret_automatic);
+          }
      } break;
      }
 }
@@ -347,6 +334,9 @@ Void State::mouse_button_right_clicked ( )
                interactive.reset ( );
           }
      } break;
+     case Mode::turret:
+          current_turret_automatic = !current_turret_automatic;
+          break;
      }
 }
 
@@ -405,6 +395,10 @@ Void State::option_button_up_pressed ( )
      case Mode::light_detector:
           current_light_detector_bryte++;
           current_light_detector_bryte %= 2;
+          break;
+     case Mode::turret:
+          current_turret_direction++;
+          current_turret_direction %= 4;
           break;
      }
 }
@@ -465,6 +459,10 @@ Void State::option_button_down_pressed ( )
           current_light_detector_bryte--;
           current_light_detector_bryte %= 2;
           break;
+     case Mode::turret:
+          current_turret_direction--;
+          current_turret_direction %= 4;
+          break;
      }
 }
 
@@ -496,6 +494,22 @@ Void State::mouse_scrolled ( Int32 scroll )
      case Mode::pushable_block:
           break;
      }
+}
+
+Interactive& State::place_or_clear_interactive ( Interactive::Type type,
+                                                 Int32 mouse_tile_x, Int32 mouse_tile_y )
+{
+     Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+     if ( interactive.type == type ) {
+          interactive.type = Interactive::Type::none;
+          interactive.reset ( );
+     } else {
+          interactive.type = type;
+          interactive.reset ( );
+     }
+
+     return interactive;
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
@@ -909,12 +923,20 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           Map::Location loc = state->map.activate_on_all_enemies_killed ( );
           sprintf ( state->message_buffer, "ACT %d %d", loc.x, loc.y );
      } break;
+     case Mode::turret:
+     {
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::turret ) {
+               Auto& turret = interactive.interactive_turret;
+               sprintf ( state->message_buffer, "DIR %d AUTO %d", turret.facing, turret.automatic );
+          }
+     } break;
      }
 
      state->map.reset_light ( );
 
      state->interactives.contribute_light ( state->map );
-
 }
 
 static Void render_map_solids ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y )
@@ -1114,6 +1136,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->mouse_x, state->mouse_y,
                                 0,
                                 ( Interactive::Type::exit + Direction::count + 2 ) );
+          break;
+     case Mode::turret:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheet,
+                                state->mouse_x, state->mouse_y,
+                                state->current_turret_direction,
+                                ( Interactive::Type::exit + Direction::count + 3 ) );
           break;
      }
 

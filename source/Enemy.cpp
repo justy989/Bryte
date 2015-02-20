@@ -99,7 +99,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           walk_frame_rate = 0.4f;
           constant_animation = true;
 
-          goo_state.state = GooState::State::walking;
+          goo_state.state = GooState::State::picking_direction;
           goo_state.state_timer.reset ( 0.0f );
           break;
      }
@@ -250,10 +250,14 @@ Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
                walk ( facing );
 
                if ( state_timer.expired ( ) ) {
-                    state = GooState::State::preparing_to_shoot;
-                    state_timer.reset ( GooState::c_shoot_time );
+                    state = GooState::State::picking_direction;
                }
           }
+          break;
+     case GooState::State::picking_direction:
+          facing = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+          state_timer.reset ( 1 );
+          state= GooState::State::preparing_to_shoot;
           break;
      case GooState::State::preparing_to_shoot:
           if ( state_timer.expired ( ) ) {
@@ -261,12 +265,8 @@ Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
           }
           break;
      case GooState::State::shooting:
-          state = GooState::State::picking_direction;
-          break;
-     case GooState::State::picking_direction:
-          facing = static_cast<Direction>( random.generate ( 0, Direction::count ) );
-          state_timer.reset ( random.generate ( 2, 4 ) );
-          state= GooState::State::walking;
+          state_timer.reset ( random.generate ( 0, 3 ) );
+          state = GooState::State::walking;
           break;
      }
 }

@@ -87,7 +87,8 @@ namespace bryte
 
           Bool spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop );
           Bool spawn_pickup ( const Vector& position, Pickup::Type type );
-          Bool spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing );
+          Bool spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing,
+                                  Projectile::Alliance alliance );
           Bool spawn_bomb ( const Vector& position );
           Bool spawn_damage_number ( const Vector& position, Int32 value );
 

@@ -8,6 +8,8 @@ static const Real32 c_lever_cooldown     = 0.75f;
 static const Real32 c_exit_change_time   = 0.5f;
 static const Real32 c_lean_on_block_time = 0.3f;
 
+const Real32 Turret::c_shoot_interval = 3.0f;
+
 Void UnderneathInteractive::reset ( )
 {
      switch ( type ) {
@@ -246,6 +248,9 @@ Void Interactive::reset ( )
           break;
      case Type::bombable_block:
           break;
+     case Type::turret:
+          interactive_turret.reset ( );
+          break;
      }
 
      underneath.reset ( );
@@ -269,6 +274,8 @@ Bool Interactive::activate ( Interactives& interactives )
           return interactive_torch.activate ( );
      case Type::pushable_torch:
           return interactive_pushable_torch.activate ( );
+     case Type::turret:
+          return interactive_turret.activate ( );
      }
 
      return false;
@@ -371,6 +378,9 @@ Void Interactive::update ( Real32 time_delta, Interactives& interactives )
           break;
      case Type::exit:
           interactive_exit.update ( time_delta );
+          break;
+     case Type::turret:
+          interactive_turret.update ( time_delta );
           break;
      }
 }
@@ -647,3 +657,33 @@ Void LightDetector::light ( Uint8 value, Interactives& interactives )
           break;
      }
 }
+
+Void Turret::reset ( )
+{
+     automatic = false;
+     wants_to_shoot = false;
+     automatic_watch.reset ( 0.0f );
+     facing = Direction::left;
+}
+
+Bool Turret::activate ( )
+{
+     wants_to_shoot = true;
+
+     return true;
+}
+
+Void Turret::update ( Real32 time_delta )
+{
+     wants_to_shoot = false;
+
+     if ( automatic ) {
+          automatic_watch.tick ( time_delta );
+
+          if ( automatic_watch.expired ( ) ) {
+               wants_to_shoot = true;
+               automatic_watch.reset ( c_shoot_interval );
+          }
+     }
+}
+

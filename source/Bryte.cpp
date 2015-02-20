@@ -372,7 +372,8 @@ Bool State::spawn_pickup ( const Vector& position, Pickup::Type type )
      return true;
 }
 
-bool State::spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing )
+bool State::spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing,
+                               Projectile::Alliance alliance )
 {
      Auto* projectile = projectiles.spawn ( position );
 
@@ -383,6 +384,7 @@ bool State::spawn_projectile ( Projectile::Type type, const Vector& position, Di
      projectile->type = type;
      projectile->facing = facing;
      projectile->on_fire = false;
+     projectile->alliance = alliance;
 
      LOG_DEBUG ( "spawning projectile at %f, %f\n", position.x ( ), position.y ( ) );
 
@@ -609,7 +611,8 @@ Void State::update_player ( float time_delta )
                break;
           case Player::AttackMode::arrow:
                if ( player.arrow_count > 0 ) {
-                    spawn_projectile ( Projectile::Type::arrow, player.position, player.facing );
+                    spawn_projectile ( Projectile::Type::arrow, player.position, player.facing,
+                                       Projectile::Alliance::good );
                     player.arrow_count--;
                }
                break;
@@ -781,7 +784,8 @@ Void State::update_enemies ( float time_delta )
           // spawn a projectile if the goo is shooting
           if ( enemy.type == Enemy::Type::goo &&
                enemy.goo_state.state == Enemy::GooState::State::shooting ) {
-               spawn_projectile ( Projectile::Type::goo, enemy.position, enemy.facing );
+               spawn_projectile ( Projectile::Type::goo, enemy.position, enemy.facing,
+                                  Projectile::Alliance::evil );
           }
 
           if ( enemy.on_fire && enemy.fire_watch.expired ( ) ) {
@@ -857,6 +861,21 @@ Void State::update_interactives ( float time_delta )
           case Interactive::Type::exit:
                interactive.update ( time_delta, interactives );
                break;
+          case Interactive::Type::turret:
+               if ( interactive.interactive_turret.wants_to_shoot ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    Vector interactive_pos = Map::coordinates_to_vector ( tile_x, tile_y );
+
+                    spawn_projectile ( Projectile::Type::arrow,
+                                       interactive_pos,
+                                       interactive.interactive_turret.facing,
+                                       Projectile::Alliance::neutral );
+
+               }
+
+               interactive.update ( time_delta, interactives );
+               break;
           }
      }
 }
@@ -878,10 +897,10 @@ Void State::update_projectiles ( float time_delta )
 
           Vector projectile_collision_point = projectile.position + projectile.collision_points [ projectile.facing ];
 
-          switch ( projectile.type ) {
+          switch ( projectile.alliance ) {
           default:
                break;
-          case Projectile::Type::arrow:
+          case Projectile::Alliance::good:
                for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
                     Auto& enemy = enemies [ c ];
 
@@ -902,7 +921,7 @@ Void State::update_projectiles ( float time_delta )
                     }
                }
                break;
-         case Projectile::Type::goo:
+         case Projectile::Alliance::evil:
                if ( point_inside_rect ( projectile_collision_point.x ( ),
                                         projectile_collision_point.y ( ),
                                         player.collision_x ( ), player.collision_y ( ),
@@ -911,7 +930,38 @@ Void State::update_projectiles ( float time_delta )
 
                     projectile.hit_character ( player );
                }
-         break;
+               break;
+         case Projectile::Alliance::neutral:
+               for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
+                    Auto& enemy = enemies [ c ];
+
+                    if ( enemy.is_dead ( ) ) {
+                         continue;
+                    }
+
+                    if ( point_inside_rect ( projectile_collision_point.x ( ),
+                                             projectile_collision_point.y ( ),
+                                             enemy.collision_x ( ), enemy.collision_y ( ),
+                                             enemy.collision_x ( ) + enemy.collision_width ( ),
+                                             enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
+                         projectile.hit_character ( enemy );
+
+                         spawn_damage_number ( projectile_collision_point, 1 );
+
+                         break;
+                    }
+               }
+
+               if ( point_inside_rect ( projectile_collision_point.x ( ),
+                                        projectile_collision_point.y ( ),
+                                        player.collision_x ( ), player.collision_y ( ),
+                                        player.collision_x ( ) + player.collision_width ( ),
+                                        player.collision_y ( ) + player.collision_height ( ) ) ) {
+
+                    projectile.hit_character ( player );
+               }
+
+               break;
          }
      }
 }
@@ -1437,6 +1487,9 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->pickup_queue [ 0 ], state->camera.x ( ), state->camera.y ( ) );
      }
 
+     // light
+     render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+
      // damage numbers
      for ( Uint32 i = 0; i < state->damage_numbers.max ( ); ++i ) {
           Auto& damage_number = state->damage_numbers [ i ];
@@ -1448,9 +1501,6 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_damage_number ( state->text, back_buffer, damage_number,
                                  state->camera.x ( ), state->camera.y ( ) );
      }
-
-     // light
-     render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
 
      // ui
      SDL_Rect hud_rect { 0, 0, back_buffer->w, 18 };

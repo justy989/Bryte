@@ -39,9 +39,9 @@ namespace bryte
           struct GooState {
                enum State {
                     walking,
+                    picking_direction,
                     preparing_to_shoot,
-                    shooting,
-                    picking_direction
+                    shooting
                };
 
                static const Real32 c_shoot_time;

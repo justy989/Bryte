@@ -124,6 +124,22 @@ namespace bryte
           static const Uint8 c_dark_value  = 128;
      };
 
+     struct Turret {
+
+          Void reset ( );
+
+          Bool activate ( );
+
+          Void update ( Real32 time_delta );
+
+          static const Real32 c_shoot_interval;
+
+          bool automatic;
+          bool wants_to_shoot;
+          Stopwatch automatic_watch;
+          Direction facing;
+     };
+
      struct PressurePlate {
           Bool  entered;
           Uint8 activate_coordinate_x;
@@ -161,6 +177,7 @@ namespace bryte
                light_detector,
                exit,
                bombable_block,
+               turret,
                count
           };
 
@@ -186,6 +203,7 @@ namespace bryte
                Torch         interactive_torch;
                PushableTorch interactive_pushable_torch;
                LightDetector interactive_light_detector;
+               Turret        interactive_turret;
           };
 
           UnderneathInteractive underneath;

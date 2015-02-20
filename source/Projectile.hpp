@@ -17,6 +17,12 @@ namespace bryte
                goo
           };
 
+          enum Alliance {
+               good,
+               evil,
+               neutral
+          };
+
      public:
 
           Void hit_character ( Character& character );
@@ -43,6 +49,8 @@ namespace bryte
           Direction facing;
           Stopwatch stuck_watch;
           TrackEntity track_entity;
+
+          Alliance alliance;
      };
 }
 

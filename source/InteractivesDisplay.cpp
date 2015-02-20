@@ -150,6 +150,10 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           //TODO: reorganize tilesheet because it's getting messy and hard to compute which parts to clip
           clip_rect.y = ( Interactive::Type::exit + Direction::count + 2 ) * Map::c_tile_dimension_in_pixels;
           break;
+     case Interactive::Type::turret:
+          clip_rect.x = interactive.interactive_turret.facing * Map::c_tile_dimension_in_pixels;
+          clip_rect.y = ( Interactive::Type::exit + Direction::count + 3 ) * Map::c_tile_dimension_in_pixels;
+          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );

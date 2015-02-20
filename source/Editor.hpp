@@ -50,6 +50,7 @@ namespace editor
           popup_block,
           all_killed,
           bombable_block,
+          turret,
           count
      };
 
@@ -65,6 +66,9 @@ namespace editor
           Void mouse_scrolled ( Int32 scroll );
 
           Bool mouse_on_map ( );
+
+          bryte::Interactive& place_or_clear_interactive ( bryte::Interactive::Type type,
+                                                           Int32 mouse_tile_x, Int32 mouse_tile_y );
 
      public:
 
@@ -110,6 +114,8 @@ namespace editor
           Uint8 current_light_detector_bryte;
           Uint8 current_popup_block;
           Uint8 current_field;
+          Uint8 current_turret_direction;
+          Uint8 current_turret_automatic;
 
           Bool   track_current_interactive;
           Uint32 current_interactive_x;

@@ -52,7 +52,7 @@ Bool Sound::play_effect ( Effect effect )
 {
      ASSERT ( effect < Effect::count );
 
-     if ( Mix_PlayChannel ( -1, m_effects [ effect ], 0 ) ) {
+     if ( Mix_PlayChannel ( -1, m_effects [ effect ], 0 ) < 0 ) {
           LOG_ERROR ( "Mix_PlayChannel() failed: %s\n", Mix_GetError ( ) );
           return false;
      }

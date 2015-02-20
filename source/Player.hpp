@@ -6,9 +6,10 @@
 namespace bryte
 {
      struct Player : public Character {
+     public:
 
-          enum AttackMode {
-               sword,
+          enum ItemMode {
+               shield,
                arrow,
                bomb,
                count
@@ -16,10 +17,18 @@ namespace bryte
 
           Void clear ( );
 
-          AttackMode attack_mode;
-          Uint8      key_count;
-          Uint8      arrow_count;
-          Uint8      bomb_count;
+     public:
+
+          static const Real32 c_item_cooldown;
+
+     public:
+
+          ItemMode item_mode;
+          Stopwatch item_cooldown;
+
+          Uint8    key_count;
+          Uint8    arrow_count;
+          Uint8    bomb_count;
      };
 }
 

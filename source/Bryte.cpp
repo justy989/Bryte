@@ -277,8 +277,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      setup_emitters_from_map_lamps ( );
 
      attack_key = false;
-     block_key = false;
-     switch_attack_key = false;
+     item_key = false;
+     switch_item_key = false;
 
      Projectile::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
      Projectile::collision_points [ Direction::up ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 14 ) );
@@ -589,40 +589,19 @@ Void State::update_player ( float time_delta )
           player.walk ( Direction::left );
      }
 
-     if ( switch_attack_key ) {
-          switch_attack_key = false;
+     if ( switch_item_key ) {
+          switch_item_key = false;
 
-          Int32 new_attack_mode = ( static_cast<Int32>( player.attack_mode ) + 1 ) %
-                                  Player::AttackMode::count;
-          player.attack_mode = static_cast<Player::AttackMode>( new_attack_mode );
+          Int32 new_item_mode = ( static_cast<Int32>( player.item_mode ) + 1 ) %
+                                  Player::ItemMode::count;
+          player.item_mode = static_cast<Player::ItemMode>( new_item_mode );
      }
 
      if ( attack_key ) {
           attack_key = false;
 
-          switch ( player.attack_mode ) {
-          default:
-               ASSERT ( 0 );
-               break;
-          case Player::AttackMode::sword:
-               if ( player.attack ( ) ) {
-                    sound.play_effect ( Sound::Effect::player_sword_attack );
-               }
-               break;
-          case Player::AttackMode::arrow:
-               if ( player.arrow_count > 0 ) {
-                    spawn_projectile ( Projectile::Type::arrow, player.position, player.facing,
-                                       Projectile::Alliance::good );
-                    player.arrow_count--;
-               }
-               break;
-          case Player::AttackMode::bomb:
-               if ( player.bomb_count > 0 ) {
-                    spawn_bomb ( player.position );
-                    player.bomb_count--;
-                    sound.play_effect ( Sound::Effect::place_bomb );
-               }
-               break;
+          if ( player.attack ( ) ) {
+               sound.play_effect ( Sound::Effect::player_sword_attack );
           }
      }
 
@@ -642,8 +621,33 @@ Void State::update_player ( float time_delta )
 #endif
      }
 
-     if ( block_key ) {
-          player.block ( );
+     player.item_cooldown.tick ( time_delta );
+
+     if ( item_key ) {
+          switch ( player.item_mode ) {
+          default:
+               ASSERT ( 0 );
+               break;
+          case Player::ItemMode::shield:
+               player.block ( );
+               break;
+          case Player::ItemMode::arrow:
+               if ( player.item_cooldown.expired ( ) && player.arrow_count > 0 ) {
+                    spawn_projectile ( Projectile::Type::arrow, player.position, player.facing,
+                                       Projectile::Alliance::good );
+                    player.arrow_count--;
+                    player.item_cooldown.reset ( Player::c_item_cooldown );
+               }
+               break;
+          case Player::ItemMode::bomb:
+               if ( player.item_cooldown.expired ( ) && player.bomb_count > 0 ) {
+                    spawn_bomb ( player.position );
+                    player.bomb_count--;
+                    sound.play_effect ( Sound::Effect::place_bomb );
+                    player.item_cooldown.reset ( Player::c_item_cooldown );
+               }
+               break;
+          }
      }
 
      Map::Coordinates player_center_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
@@ -1219,13 +1223,13 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                state->direction_keys [ Direction::right ] = key_change.down;
                break;
           case SDL_SCANCODE_Q:
-               state->switch_attack_key = key_change.down;
+               state->switch_item_key = key_change.down;
                break;
           case SDL_SCANCODE_SPACE:
                state->attack_key = key_change.down;
                break;
           case SDL_SCANCODE_LCTRL:
-               state->block_key = key_change.down;
+               state->item_key = key_change.down;
                break;
           case SDL_SCANCODE_E:
                state->activate_key = key_change.down;
@@ -1294,13 +1298,13 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     state->attack_key = btn_change.down;
                     break;
                case SDL_CONTROLLER_BUTTON_B:
-                    state->block_key = btn_change.down;
+                    state->item_key = btn_change.down;
                     break;
                case SDL_CONTROLLER_BUTTON_X:
                     state->activate_key = btn_change.down;
                     break;
                case SDL_CONTROLLER_BUTTON_Y:
-                    state->switch_attack_key = btn_change.down;
+                    state->switch_item_key = btn_change.down;
                     break;
           }
      }
@@ -1389,6 +1393,23 @@ Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      SDL_BlitSurface ( pickup_sheet, &clip_rect, back_buffer, &dest_rect );
+}
+
+Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 frame, Int32 x, Int32 y )
+{
+     Uint32 white  = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
+
+     SDL_Rect attack_dest { x, y, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+     SDL_Rect attack_clip { frame * Map::c_tile_dimension_in_pixels, 0,
+                            Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     SDL_BlitSurface ( icon_sheet, &attack_clip, back_buffer, &attack_dest );
+
+     SDL_Rect attack_outline { attack_dest.x - 1, attack_dest.y - 1,
+                               Map::c_tile_dimension_in_pixels + 2,
+                               Map::c_tile_dimension_in_pixels + 2 };
+
+     render_rect_outline ( back_buffer, attack_outline, white );
 }
 
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -1518,18 +1539,11 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      SDL_FillRect ( back_buffer, &health_bar_border_rect, white );
      SDL_FillRect ( back_buffer, &health_bar_rect, red );
 
-     SDL_Rect attack_dest { ( back_buffer->w / 2 ) - ( Map::c_tile_dimension_in_pixels / 2 ), 1,
-                            Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-     SDL_Rect attack_clip { state->player.attack_mode * Map::c_tile_dimension_in_pixels, 0,
-                            Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+     render_icon ( back_buffer, state->attack_icon_sheet, 0,
+                   ( back_buffer->w / 2 ) - Map::c_tile_dimension_in_pixels, 1 );
 
-     SDL_BlitSurface ( state->attack_icon_sheet, &attack_clip, back_buffer, &attack_dest );
-
-     SDL_Rect attack_outline { attack_dest.x - 1, attack_dest.y - 1,
-                               Map::c_tile_dimension_in_pixels + 2,
-                               Map::c_tile_dimension_in_pixels + 2 };
-
-     render_rect_outline ( back_buffer, attack_outline, white );
+     render_icon ( back_buffer, state->attack_icon_sheet, state->player.item_mode + 1,
+                   ( back_buffer->w / 2 ) + 3, 1 );
 
      char buffer [ 64 ];
 

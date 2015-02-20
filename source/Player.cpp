@@ -3,6 +3,8 @@
 
 using namespace bryte;
 
+const Real32 Player::c_item_cooldown = 1.0f;
+
 Void Player::clear ( )
 {
      state = State::idle;
@@ -44,7 +46,8 @@ Void Player::clear ( )
      collides_with_solids = true;
      collides_with_exits = false;
 
-     attack_mode = AttackMode::sword;
+     item_mode = ItemMode::arrow;
+     item_cooldown.reset ( 0.0f );
      key_count   = 0;
      arrow_count = 0;
      bomb_count  = 0;

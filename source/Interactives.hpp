@@ -163,7 +163,8 @@ namespace bryte
                none,
                pressure_plate,
                popup_block,
-               ice
+               ice,
+               count
           };
 
           Void reset ( );

@@ -4,7 +4,8 @@
 using namespace bryte;
 
 InteractivesDisplay::InteractivesDisplay ( ) :
-     interactive_sheet ( nullptr )
+     interactive_sheet ( nullptr ),
+     ice_sleep_counter ( 0 )
 {
 
 }
@@ -12,6 +13,21 @@ InteractivesDisplay::InteractivesDisplay ( ) :
 Void InteractivesDisplay::tick ( )
 {
      animation.update_increment ( c_frames_per_update );
+
+     ice_sleep_counter++;
+
+     if ( ice_sleep_counter > c_ice_frame_sleep ) {
+          Int32 current_frame = ice_animation.frame;
+
+          ice_animation.update_increment ( c_ice_frame_delay, c_ice_frame_count );
+
+          // check for when we wrap around
+          if ( current_frame > ice_animation.frame ) {
+               ice_sleep_counter = 0;
+               ice_animation.frame = 0;
+               ice_animation.delay_tracker = 0;
+          }
+     }
 }
 
 Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& interactives,
@@ -62,6 +78,7 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           }
           break;
      case UnderneathInteractive::Type::ice:
+          clip_rect.x = ice_animation.frame * Map::c_tile_dimension_in_pixels;
           clip_rect.y = ( Interactive::Type::exit + Direction::count + 4 ) * Map::c_tile_dimension_in_pixels;
           break;
      }

@@ -33,11 +33,19 @@ namespace bryte
           static const Int32 c_torch_frame_count = 3;
           static const Int32 c_light_detector_frame_count = 2;
 
+          static const Int32 c_ice_frame_delay = 10;
+          static const Int32 c_ice_frame_count = 4;
+          static const Int32 c_ice_frame_sleep = 60;
+
      public:
 
           SDL_Surface* interactive_sheet;
 
           Animation animation;
+
+          Animation ice_animation;
+
+          Int32 ice_sleep_counter;
      };
 }
 

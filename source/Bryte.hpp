@@ -154,8 +154,8 @@ namespace bryte
           ProjectileDisplay   projectile_display;
 
           SDL_Surface* bomb_sheet;
-
           SDL_Surface* attack_icon_sheet;
+          SDL_Surface* player_heart_sheet;
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;

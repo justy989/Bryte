@@ -12,8 +12,8 @@ Void Player::clear ( )
      facing = Direction::left;
      state_watch.reset ( 0.0f );
 
-     health           = 3;
-     max_health       = 3;
+     health           = 6;
+     max_health       = 6;
 
      velocity.zero ( );
      acceleration.zero ( );

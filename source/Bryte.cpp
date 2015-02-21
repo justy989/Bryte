@@ -255,6 +255,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( player_heart_sheet, game_memory, "player_heart.bmp" ) ) {
+          return false;
+     }
+
      for ( Int32 i = 0; i < 4; ++i ) {
           direction_keys [ i ] = false;
      }
@@ -1419,11 +1423,34 @@ Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 fram
      render_rect_outline ( back_buffer, attack_outline, white );
 }
 
+Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 health, Int32 max_health,
+                     Int32 x, Int32 y )
+{
+     Int32 heart_count = max_health / 2;
+     Int32 heart_state = 0;
+
+     SDL_Rect clip_rect { 0, 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect dest_rect { x, y, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     for ( Int32 i = 0; i < heart_count; ++i ) {
+          heart_state += 2;
+
+          if ( heart_state == health + 1 ) {
+               clip_rect.x = Pickup::c_dimension_in_pixels;
+          } else if ( heart_state > health ) {
+               clip_rect.x = 2 * Pickup::c_dimension_in_pixels;
+          }
+
+          SDL_BlitSurface ( heart_sheet, &clip_rect, back_buffer, &dest_rect );
+
+          dest_rect.x += Pickup::c_dimension_in_pixels + 2;
+          clip_rect.x = 0;
+     }
+}
+
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      Auto* state = get_state ( game_memory );
-     Uint32 red    = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
-     Uint32 white  = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
      Uint32 black  = SDL_MapRGB ( back_buffer->format, 0, 0, 0 );
 
      state->back_buffer_format = *back_buffer->format;
@@ -1534,17 +1561,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      SDL_Rect hud_rect { 0, 0, back_buffer->w, 18 };
      SDL_FillRect ( back_buffer, &hud_rect, black );
 
-     // draw player health bar
-     Real32 pct = static_cast<Real32>( state->player.health ) /
-                  static_cast<Real32>( state->player.max_health );
-
-     Int32 bar_len = static_cast<Int32>( 50.0f * pct );
-
-     SDL_Rect health_bar_rect { 3, 3, bar_len, 10 };
-     SDL_Rect health_bar_border_rect { 2, 2, 52, 12 };
-
-     SDL_FillRect ( back_buffer, &health_bar_border_rect, white );
-     SDL_FillRect ( back_buffer, &health_bar_rect, red );
+     render_hearts ( back_buffer, state->player_heart_sheet, state->player.health, state->player.max_health,
+                     2, 2 );
 
      render_icon ( back_buffer, state->attack_icon_sheet, 0,
                    ( back_buffer->w / 2 ) - Map::c_tile_dimension_in_pixels, 1 );

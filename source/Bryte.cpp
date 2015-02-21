@@ -241,6 +241,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( interactives_display.exit_sheet,
+                                          game_memory,
+                                          "castle_exitsheet.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( interactives_display.torch_element_sheet,
                                           game_memory,
                                           "torch_fire.bmp" ) ) {

@@ -105,6 +105,8 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      SDL_Rect clip_rect { 0, ( interactive.type - 1 ) * Map::c_tile_dimension_in_pixels,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
+     SDL_Surface* sheet = interactive_sheet;
+
      switch ( interactive.type ) {
      default:
           ASSERT ( 0 );
@@ -141,7 +143,8 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           }
           break;
      case Interactive::Type::exit:
-          clip_rect.y += Map::c_tile_dimension_in_pixels;
+          sheet = exit_sheet;
+          clip_rect.y = 0;
           clip_rect.x = interactive.interactive_exit.direction * Map::c_tile_dimension_in_pixels;
 
           switch ( interactive.interactive_exit.state ) {
@@ -182,7 +185,7 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
-     SDL_BlitSurface ( interactive_sheet, &clip_rect, back_buffer, &dest_rect );
+     SDL_BlitSurface ( sheet, &clip_rect, back_buffer, &dest_rect );
 
      switch ( interactive.type ) {
      default:

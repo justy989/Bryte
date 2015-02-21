@@ -38,7 +38,7 @@ namespace bryte
           static const Int32 c_ice_frame_sleep = 60;
 
           static const Int32 c_moving_walkway_frame_delay = 15;
-          static const Int32 c_moving_walkway_frame_count = 4;
+          static const Int32 c_moving_walkway_frame_count = 2;
 
      public:
 

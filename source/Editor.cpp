@@ -646,6 +646,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.light_detector_sheet,
+                                          game_memory,
+                                          "test_light_detector.bmp" ) ) {
+          return false;
+     }
+
      if ( state->settings->map_load_filename ) {
           if ( !state->settings->map_save_filename ) {
                state->settings->map_save_filename = state->settings->map_load_filename;
@@ -1194,24 +1200,24 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::light_detector:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.light_detector_sheet,
                                 state->mouse_x, state->mouse_y,
                                 2 * state->current_light_detector_bryte,
-                                Interactive::Type::light_detector - 1 );
+                                0 );
           break;
      case Mode::exit:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.exit_sheet,
                                 state->mouse_x, state->mouse_y,
                                 state->current_exit_direction,
-                                Interactive::Type::exit + ( state->current_exit_state * 2 ) );
+                                state->current_exit_state * 2 );
           break;
      case Mode::pressure_plate:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
                                 0,
-                                Interactive::Type::exit + 5 );
+                                ( Interactive::Type::count - 2 ) + UnderneathInteractive::Type::pressure_plate );
           break;
      case Mode::popup_block:
           render_current_icon ( back_buffer,
@@ -1225,31 +1231,45 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
                                 0,
-                                ( Interactive::Type::exit + Direction::count + 2 ) );
+                                Interactive::Type::bombable_block - 1);
           break;
      case Mode::turret:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
                                 state->current_turret_direction,
-                                ( Interactive::Type::exit + Direction::count + 3 ) );
+                                Interactive::Type::turret - 1 );
           break;
      case Mode::ice:
           render_current_icon ( back_buffer,
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
                                 0,
-                                ( Interactive::Type::exit + Direction::count + 4 ) );
+                                ( Interactive::Type::count - 2 ) + UnderneathInteractive::Type::ice );
+          break;
+     case Mode::moving_walkway:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.moving_walkway_sheet,
+                                state->mouse_x, state->mouse_y,
+                                0,
+                                state->current_moving_walkway );
+          break;
+     case Mode::ice_detector:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheet,
+                                state->mouse_x, state->mouse_y,
+                                0,
+                                Interactive::Type::ice_detector - 1 );
           break;
      }
 
      // text ui
      Char8 buffer [ 64 ];
      sprintf ( buffer, "T %d %d", state->mouse_tile_x, state->mouse_tile_y );
-     state->text.render ( back_buffer, buffer, 210, 4 );
+     state->text.render ( back_buffer, buffer, 210, 24 );
 
      sprintf ( buffer, "FIELD %d", state->current_field );
-     state->text.render ( back_buffer, buffer, 210, 20 );
+     state->text.render ( back_buffer, buffer, 210, 40 );
 
      state->text.render ( back_buffer, state->message_buffer,
                           1 * ( state->text.character_width + state->text.character_spacing ), 20 );

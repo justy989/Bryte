@@ -52,10 +52,9 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
                                               Int32 position_x, Int32 position_y,
                                               Real32 camera_x, Real32 camera_y )
 {
-
      SDL_Rect dest_rect { position_x, position_y,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
-     SDL_Rect clip_rect { 0, 0,
+     SDL_Rect clip_rect { 0, ( ( Interactive::Type::count - 2 ) + underneath.type ) * Map::c_tile_dimension_in_pixels,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
      SDL_Surface* underneath_sheet = interactive_sheet;
@@ -70,8 +69,6 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           if ( underneath.underneath_pressure_plate.entered ) {
                clip_rect.x += Map::c_tile_dimension_in_pixels;
           }
-          clip_rect.y = ( Interactive::Type::exit + 5 ) + ( underneath.type - 1 );
-          clip_rect.y *= Map::c_tile_dimension_in_pixels;
           break;
      case UnderneathInteractive::Type::popup_block:
           if ( underneath.underneath_popup_block.up ) {
@@ -82,7 +79,6 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           break;
      case UnderneathInteractive::Type::ice:
           clip_rect.x = ice_animation.frame * Map::c_tile_dimension_in_pixels;
-          clip_rect.y = ( Interactive::Type::exit + Direction::count + 4 ) * Map::c_tile_dimension_in_pixels;
           break;
      case UnderneathInteractive::Type::moving_walkway:
           underneath_sheet = moving_walkway_sheet;
@@ -128,6 +124,8 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::pushable_torch:
           break;
      case Interactive::Type::light_detector:
+          sheet = light_detector_sheet;
+
           if ( interactive.interactive_light_detector.type == LightDetector::Type::bryte ) {
                if ( !interactive.interactive_light_detector.below_value ) {
                     Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
@@ -170,16 +168,12 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
 
           break;
      case Interactive::Type::bombable_block:
-          //TODO: reorganize tilesheet because it's getting messy and hard to compute which parts to clip
-          clip_rect.y = ( Interactive::Type::exit + Direction::count + 2 ) * Map::c_tile_dimension_in_pixels;
           break;
      case Interactive::Type::turret:
           clip_rect.x = interactive.interactive_turret.facing * Map::c_tile_dimension_in_pixels;
-          clip_rect.y = ( Interactive::Type::exit + Direction::count + 3 ) * Map::c_tile_dimension_in_pixels;
           break;
      case Interactive::Type::ice_detector:
           clip_rect.x = interactive.interactive_ice_detector.detected * Map::c_tile_dimension_in_pixels;
-          clip_rect.y = ( Interactive::Type::exit + Direction::count + 5 ) * Map::c_tile_dimension_in_pixels;
           break;
      }
 

@@ -40,8 +40,6 @@ namespace bryte
 
      public:
 
-// TODO: GTFO
-#pragma pack(push, 1)
           struct Coordinates {
                Int32 x;
                Int32 y;
@@ -84,7 +82,6 @@ namespace bryte
           struct PersistedEnemies {
                PersistEnemy enemies [ c_max_enemy_spawns ];
           };
-#pragma pack(pop)
 
      public:
 

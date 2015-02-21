@@ -199,6 +199,20 @@ Void State::mouse_button_left_clicked ( )
                interactive.reset ( );
           }
      } break;
+     case Mode::moving_walkway:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          UnderneathInteractive& underneath = interactive.underneath;
+
+          if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
+               underneath.type = UnderneathInteractive::Type::none;
+               interactive.reset ( );
+          } else {
+               underneath.type = UnderneathInteractive::Type::moving_walkway;
+               interactive.reset ( );
+               underneath.underneath_moving_walkway.facing = static_cast<Direction>( current_moving_walkway );
+          }
+     } break;
      }
 }
 
@@ -414,6 +428,10 @@ Void State::option_button_up_pressed ( )
           current_turret_direction++;
           current_turret_direction %= 4;
           break;
+     case Mode::moving_walkway:
+          current_moving_walkway++;
+          current_moving_walkway %= 4;
+          break;
      }
 }
 
@@ -476,6 +494,10 @@ Void State::option_button_down_pressed ( )
      case Mode::turret:
           current_turret_direction--;
           current_turret_direction %= 4;
+          break;
+     case Mode::moving_walkway:
+          current_moving_walkway--;
+          current_moving_walkway %= 4;
           break;
      }
 }
@@ -587,6 +609,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
      if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheet,
                                           game_memory,
                                           "castle_interactivesheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.moving_walkway_sheet,
+                                          game_memory,
+                                          "test_moving_walkway.bmp" ) ) {
           return false;
      }
 

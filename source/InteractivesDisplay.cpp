@@ -13,6 +13,7 @@ InteractivesDisplay::InteractivesDisplay ( ) :
 Void InteractivesDisplay::tick ( )
 {
      animation.update_increment ( c_frames_per_update );
+     moving_walkway_animation.update_increment ( c_moving_walkway_frame_delay, c_moving_walkway_frame_count );
 
      ice_sleep_counter++;
 
@@ -57,6 +58,8 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
      SDL_Rect clip_rect { 0, 0,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
+     SDL_Surface* underneath_sheet = interactive_sheet;
+
      switch ( underneath.type ) {
      default:
           ASSERT ( 0 );
@@ -81,11 +84,16 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           clip_rect.x = ice_animation.frame * Map::c_tile_dimension_in_pixels;
           clip_rect.y = ( Interactive::Type::exit + Direction::count + 4 ) * Map::c_tile_dimension_in_pixels;
           break;
+     case UnderneathInteractive::Type::moving_walkway:
+          underneath_sheet = moving_walkway_sheet;
+          clip_rect.x = moving_walkway_animation.frame * Map::c_tile_dimension_in_pixels;
+          clip_rect.y = underneath.underneath_moving_walkway.facing * Map::c_tile_dimension_in_pixels;
+          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
-     SDL_BlitSurface ( interactive_sheet, &clip_rect, back_buffer, &dest_rect );
+     SDL_BlitSurface ( underneath_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
 Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interactive& interactive,

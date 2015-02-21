@@ -41,6 +41,7 @@ Void Player::clear ( )
 
      effected_by_element = Element::none;
      on_ice = false;
+     on_moving_walkway = Direction::count;
 
      position.zero ( );
 

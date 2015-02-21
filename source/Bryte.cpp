@@ -235,6 +235,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( interactives_display.moving_walkway_sheet,
+                                          game_memory,
+                                          "test_moving_walkway.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( interactives_display.torch_element_sheet,
                                           game_memory,
                                           "torch_fire.bmp" ) ) {
@@ -662,37 +668,40 @@ Void State::update_player ( float time_delta )
      }
 
      Map::Coordinates player_center_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
-     Auto& interactive = interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
 
-     if ( interactive.type == Interactive::Type::exit &&
-          interactive.interactive_exit.state == Exit::State::open &&
-          interactive.interactive_exit.direction == opposite_direction ( player.facing ) ) {
-          Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
-                                                             interactive.interactive_exit.exit_index_y );
+     if ( map.coordinates_valid ( player_center_tile ) ) {
+          Auto& interactive = interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
 
-          new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
-                                   Map::c_tile_dimension_in_meters * 0.5f );
+          if ( interactive.type == Interactive::Type::exit &&
+               interactive.interactive_exit.state == Exit::State::open &&
+               interactive.interactive_exit.direction == opposite_direction ( player.facing ) ) {
+               Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
+                                                                  interactive.interactive_exit.exit_index_y );
 
-          persist_map ( );
-          map.load_from_master_list ( interactive.interactive_exit.map_index, interactives );
+               new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
+                                        Map::c_tile_dimension_in_meters * 0.5f );
 
-          pickups.clear ( );
-          projectiles.clear ( );
-          enemies.clear ( );
-          emitters.clear ( );
+               persist_map ( );
+               map.load_from_master_list ( interactive.interactive_exit.map_index, interactives );
 
-          spawn_map_enemies ( );
+               pickups.clear ( );
+               projectiles.clear ( );
+               enemies.clear ( );
+               emitters.clear ( );
 
-          setup_emitters_from_map_lamps ( );
+               spawn_map_enemies ( );
 
-          player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
+               setup_emitters_from_map_lamps ( );
 
-          LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
-                      player.position.x ( ),
-                      player.position.y ( ) );
+               player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
 
-          // no need to finish this update
-          return;
+               LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
+                           player.position.x ( ),
+                           player.position.y ( ) );
+
+               // no need to finish this update
+               return;
+          }
      }
 
      if ( player.is_pushing ( ) ) {
@@ -860,6 +869,13 @@ Void State::update_interactives ( float time_delta )
                Int32 tile_x = map.tile_index_to_coordinate_x ( i );
                Int32 tile_y = map.tile_index_to_coordinate_y ( i );
                interactives.push ( tile_x, tile_y, interactive.underneath.underneath_ice.force_dir, map );
+          }
+
+          if ( interactive.underneath.type == UnderneathInteractive::Type::moving_walkway &&
+               interactive.underneath.underneath_ice.force_dir != Direction::count ) {
+               Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+               Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+               interactives.push ( tile_x, tile_y, interactive.underneath.underneath_moving_walkway.facing, map );
           }
 
           switch ( interactive.type ) {

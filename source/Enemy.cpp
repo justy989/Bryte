@@ -24,6 +24,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
      effected_by_element = Element::none;
      on_ice = false;
+     on_moving_walkway = Direction::count;
 
      state_watch.reset ( 0.0f );
      damage_watch.reset ( 0.0f );

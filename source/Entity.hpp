@@ -21,7 +21,6 @@ namespace bryte
 
           Vector    position;
           LifeState life_state;
-          Bool      on_ice;
           Element   effected_by_element;
      };
 

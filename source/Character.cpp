@@ -18,6 +18,7 @@ const Real32 Character::c_dying_time              = 1.0f;
 const Int32  Character::c_fire_tick_max           = 3;
 const Real32 Character::c_fire_tick_rate          = 2.0f;
 const Real32 Character::c_ice_decel               = 0.5f;
+const Real32 Character::c_moving_walkway_accel    = 4.0f;
 
 Bool Character::collides_with ( const Character& character )
 {
@@ -298,6 +299,23 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      if ( effected_by_element == Element::fire ) {
           fire_watch.tick ( time_delta );
+     }
+
+     switch ( on_moving_walkway ) {
+     default:
+          break;
+     case Direction::left:
+          acceleration += Vector ( -1.0f, 0.0f ) * c_moving_walkway_accel;
+          break;
+     case Direction::up:
+          acceleration += Vector ( 0.0f, 1.0f ) * c_moving_walkway_accel;
+          break;
+     case Direction::right:
+          acceleration += Vector ( 1.0f, 0.0f ) * c_moving_walkway_accel;
+          break;
+     case Direction::down:
+          acceleration += Vector ( 0.0f, -1.0f ) * c_moving_walkway_accel;
+          break;
      }
 
      // TEMPORARY, slow character down

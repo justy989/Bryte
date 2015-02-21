@@ -84,6 +84,8 @@ namespace bryte
 
           static const Real32 c_ice_decel;
 
+          static const Real32 c_moving_walkway_accel;
+
      public:
 
           State     state;
@@ -126,6 +128,9 @@ namespace bryte
 
           Bool collides_with_solids;
           Bool collides_with_exits;
+
+          Bool on_ice;
+          Direction on_moving_walkway;
      };
 
      inline Real32 Character::width ( ) const

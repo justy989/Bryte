@@ -52,6 +52,7 @@ namespace editor
           bombable_block,
           turret,
           ice,
+          moving_walkway,
           count
      };
 
@@ -117,6 +118,7 @@ namespace editor
           Uint8 current_field;
           Uint8 current_turret_direction;
           Uint8 current_turret_automatic;
+          Uint8 current_moving_walkway;
 
           Bool   track_current_interactive;
           Uint32 current_interactive_x;

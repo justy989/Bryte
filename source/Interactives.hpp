@@ -158,12 +158,19 @@ namespace bryte
           Direction force_dir;
      };
 
+     struct MovingWalkway {
+          Void reset ( );
+
+          Direction facing;
+     };
+
      struct UnderneathInteractive {
           enum Type {
                none,
                pressure_plate,
                popup_block,
                ice,
+               moving_walkway,
                count
           };
 
@@ -175,6 +182,7 @@ namespace bryte
                PressurePlate underneath_pressure_plate;
                PopupBlock    underneath_popup_block;
                Ice           underneath_ice;
+               MovingWalkway underneath_moving_walkway;
           };
      };
 

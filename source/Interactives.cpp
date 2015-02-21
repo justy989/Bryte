@@ -28,6 +28,9 @@ Void UnderneathInteractive::reset ( )
      case ice:
           underneath_ice.reset ( );
           break;
+     case moving_walkway:
+          underneath_moving_walkway.reset ( );
+          break;
      }
 }
 
@@ -220,7 +223,9 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
                          continue;
                     }
 
-                    interactive.underneath.type = UnderneathInteractive::Type::none;
+                    if ( interactive.underneath.type == UnderneathInteractive::Type::ice ) {
+                         interactive.underneath.type = UnderneathInteractive::Type::none;
+                    }
                }
           }
      } else {
@@ -232,7 +237,10 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
                          continue;
                     }
 
-                    interactive.underneath.type = UnderneathInteractive::Type::ice;
+                    if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
+                         interactive.underneath.type = UnderneathInteractive::Type::ice;
+                         interactive.underneath.underneath_ice.force_dir = Direction::count;
+                    }
                }
           }
      }
@@ -305,6 +313,9 @@ Bool Interactive::activate ( Interactives& interactives )
      case Type::none:
           if ( underneath.type == UnderneathInteractive::Type::popup_block ) {
                underneath.underneath_popup_block.up = !underneath.underneath_popup_block.up;
+          } else if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
+               underneath.underneath_moving_walkway.facing =
+                    opposite_direction ( underneath.underneath_moving_walkway.facing );
           }
           break;
      case Type::exit:
@@ -384,6 +395,8 @@ Void Interactive::character_enter ( Direction from, Interactives& interactives, 
           interactive.activate ( interactives );
      } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
           character.on_ice = true;
+     } else if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
+          character.on_moving_walkway = underneath.underneath_moving_walkway.facing;
      }
 }
 
@@ -400,6 +413,8 @@ Void Interactive::character_leave ( Direction to, Interactives& interactives, Ch
           interactive.activate ( interactives );
      } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
           character.on_ice = false;
+     } else if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
+          character.on_moving_walkway = Direction::count;
      }
 }
 
@@ -780,5 +795,10 @@ Void Turret::update ( Real32 time_delta )
 Void Ice::reset ( )
 {
      force_dir = Direction::count;
+}
+
+Void MovingWalkway::reset ( )
+{
+     facing = Direction::left;
 }
 

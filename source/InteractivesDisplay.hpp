@@ -37,14 +37,18 @@ namespace bryte
           static const Int32 c_ice_frame_count = 4;
           static const Int32 c_ice_frame_sleep = 60;
 
+          static const Int32 c_moving_walkway_frame_delay = 15;
+          static const Int32 c_moving_walkway_frame_count = 4;
+
      public:
 
           SDL_Surface* interactive_sheet;
+          SDL_Surface* moving_walkway_sheet;
           SDL_Surface* torch_element_sheet;
 
           Animation animation;
-
           Animation ice_animation;
+          Animation moving_walkway_animation;
 
           Int32 ice_sleep_counter;
      };

@@ -23,6 +23,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
      damage_pushed = Direction::left;
 
      effected_by_element = Element::none;
+     on_ice = false;
 
      state_watch.reset ( 0.0f );
      damage_watch.reset ( 0.0f );

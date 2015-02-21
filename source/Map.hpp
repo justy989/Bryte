@@ -296,12 +296,12 @@ namespace bryte
 
      inline Bool Map::coordinate_x_valid ( Int32 x ) const
      {
-          return x >= 0 && x <= width ( );
+          return x >= 0 && x < width ( );
      }
 
      inline Bool Map::coordinate_y_valid ( Int32 y ) const
      {
-          return y >= 0 && y <= height ( );
+          return y >= 0 && y < height ( );
      }
 
      inline Bool Map::coordinates_valid ( const Coordinates& coords ) const

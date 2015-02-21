@@ -40,6 +40,7 @@ Void Player::clear ( )
      fire_watch.reset ( 0.0f );
 
      effected_by_element = Element::none;
+     on_ice = false;
 
      position.zero ( );
 

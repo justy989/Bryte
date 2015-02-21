@@ -59,6 +59,8 @@ static void render_blink ( SDL_Surface* back_buffer, SDL_Surface* character_shee
 
                     // add lots of red!
                     *red = 255;
+                    *green = 0;
+                    *blue = 0;
                }
           }
      }

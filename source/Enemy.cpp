@@ -5,7 +5,8 @@
 
 using namespace bryte;
 
-const Real32 Enemy::GooState::c_shoot_time = 2.0f;
+const Real32 Enemy::GooState::c_shoot_time        = 2.0f;
+const Real32 Enemy::SkeletonState::c_attack_range = 4.0f;
 
 Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
 {
@@ -38,8 +39,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
      default:
           break;
      case Enemy::Type::rat:
-          health     = 3;
-          max_health = 3;
+          health     = 2;
+          max_health = 2;
 
           dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
           collision_offset.set ( pixels_to_meters ( 1 ), pixels_to_meters ( 4 ) );
@@ -61,8 +62,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           rat_state.timer.reset ( 0.0f );
           break;
      case Enemy::Type::bat:
-          health     = 2;
-          max_health = 2;
+          health     = 1;
+          max_health = 1;
 
           dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
           collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 4 ) );
@@ -83,8 +84,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           bat_state.timer.reset ( 0.0f );
           break;
      case Enemy::Type::goo:
-          health     = 4;
-          max_health = 4;
+          health     = 2;
+          max_health = 2;
 
           dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
           collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 2 ) );
@@ -104,6 +105,26 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           goo_state.state = GooState::State::picking_direction;
           goo_state.state_timer.reset ( 0.0f );
           break;
+     case Enemy::Type::skeleton:
+          health     = 3;
+          max_health = 3;
+
+          dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
+          collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 1 ) );
+          collision_dimension.set ( pixels_to_meters ( 14 ), pixels_to_meters ( 14 ) );
+
+          collides_with_solids = true;
+          collides_with_exits = true;
+
+          walk_acceleration = 3.0f;
+          deceleration_scale = 2.0f;
+
+          walk_frame_change = 1;
+          walk_frame_count = 3;
+          walk_frame_rate = 15.0f;
+          constant_animation = false;
+
+          break;
      }
 }
 
@@ -121,6 +142,9 @@ Void Enemy::think ( const Vector& player, Random& random, float time_delta )
           break;
      case Type::goo:
           goo_think ( player, random, time_delta );
+          break;
+     case Type::skeleton:
+          skeleton_think ( player, random, time_delta );
           break;
      }
 }
@@ -271,5 +295,29 @@ Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
           state = GooState::State::walking;
           break;
      }
+}
+
+Void Enemy::skeleton_think ( const Vector& player, Random& random, float time_delta )
+{
+     Auto& wander_timer = skeleton_state.wander_timer;
+     Auto& wander_direction = skeleton_state.wander_direction;
+
+     Real32 distance_to_player = position.distance_to ( player );
+
+     if ( distance_to_player < SkeletonState::c_attack_range ) {
+          walk ( direction_between ( position, player, random ) );
+     } else {
+          wander_timer.tick ( time_delta );
+
+          walk ( wander_direction );
+
+          if ( wander_timer.expired ( ) || collided_last_frame ) {
+               wander_direction = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+               wander_timer.reset ( random.generate ( 0, 3 ) );
+          }
+     }
+
+     // TODO: Setup Character to not always draw all directions
+     facing = Direction::left;
 }
 

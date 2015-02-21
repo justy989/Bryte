@@ -14,6 +14,7 @@ namespace bryte
                rat,
                bat,
                goo,
+               skeleton,
                count
           };
 
@@ -50,6 +51,13 @@ namespace bryte
                Stopwatch state_timer;
           };
 
+          struct SkeletonState {
+               static const Real32 c_attack_range;
+
+               Stopwatch wander_timer;
+               Direction wander_direction; // TODO: get rid of once we allow single line animation
+          };
+
      public:
 
           Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
@@ -63,6 +71,7 @@ namespace bryte
           Void rat_think ( const Vector& player, Random& random, float time_delta );
           Void bat_think ( const Vector& player, Random& random, float time_delta );
           Void goo_think ( const Vector& player, Random& random, float time_delta );
+          Void skeleton_think ( const Vector& player, Random& random, float time_delta );
 
      public:
 
@@ -72,6 +81,7 @@ namespace bryte
                RatState rat_state;
                BatState bat_state;
                GooState goo_state;
+               SkeletonState skeleton_state;
           };
 
           Pickup::Type drop;

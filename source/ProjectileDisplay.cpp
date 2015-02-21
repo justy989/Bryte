@@ -36,6 +36,10 @@ Void ProjectileDisplay::render ( SDL_Surface* back_buffer, const Projectile& pro
           break;
      }
 
+     if ( projectile.effected_by_element == Element::ice ) {
+          frame += c_frame_count;
+     }
+
      SDL_Rect clip_rect { frame * Map::c_tile_dimension_in_pixels,
                           static_cast<Int32>( projectile.facing ) * Map::c_tile_dimension_in_pixels,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };

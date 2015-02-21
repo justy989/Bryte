@@ -82,6 +82,8 @@ namespace bryte
           static const Int32  c_fire_tick_max;
           static const Real32 c_fire_tick_rate;
 
+          static const Real32 c_ice_decel;
+
      public:
 
           State     state;

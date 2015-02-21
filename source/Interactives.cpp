@@ -25,6 +25,9 @@ Void UnderneathInteractive::reset ( )
           underneath_pressure_plate.activate_coordinate_x = 0;
           underneath_pressure_plate.activate_coordinate_y = 0;
           break;
+     case ice:
+          underneath_ice.reset ( );
+          break;
      }
 }
 
@@ -65,15 +68,6 @@ Interactive& Interactives::add ( Interactive::Type type, Int32 tile_x, Int32 til
      i.reset ( );
 
      return i;
-}
-
-Void Interactives::update ( Real32 time_delta )
-{
-     Int32 count = m_width * m_height;
-
-     for ( Int32 i = 0; i < count; ++i ) {
-          m_interactives[ i ].update ( time_delta, *this );
-     }
 }
 
 Void Interactives::contribute_light ( Map& map )
@@ -153,8 +147,8 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           i.type = Interactive::Type::none;
 
           // enter and leave both tiles
-          dest_i.enter ( *this );
-          i.leave ( *this );
+          i.interactive_leave ( result_dir, *this );
+          dest_i.interactive_enter ( result_dir, *this );
 
           return true;
      }
@@ -183,18 +177,18 @@ Void Interactives::light ( Int32 tile_x, Int32 tile_y, Uint8 light )
      i.light ( light, *this );
 }
 
-Void Interactives::enter ( Int32 tile_x, Int32 tile_y )
+Void Interactives::character_enter ( Int32 tile_x, Int32 tile_y, Character& character )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
-     i.enter ( *this );
+     i.character_enter ( character.facing, *this, character );
 }
 
-Void Interactives::leave ( Int32 tile_x, Int32 tile_y )
+Void Interactives::character_leave ( Int32 tile_x, Int32 tile_y, Character& character )
 {
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
-     i.leave ( *this );
+     i.character_leave ( character.facing, *this, character );
 }
 
 Bool Interactive::is_solid ( ) const
@@ -330,7 +324,7 @@ Void Interactive::light ( Uint8 light, Interactives& interactives )
      }
 }
 
-Void Interactive::enter ( Interactives& interactives )
+Void Interactive::character_enter ( Direction from, Interactives& interactives, Character& character )
 {
      if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
@@ -341,10 +335,12 @@ Void Interactive::enter ( Interactives& interactives )
                                                            pressure_plate.activate_coordinate_y );
 
           interactive.activate ( interactives );
+     } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
+          character.on_ice = true;
      }
 }
 
-Void Interactive::leave ( Interactives& interactives )
+Void Interactive::character_leave ( Direction to, Interactives& interactives, Character& character )
 {
      if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
@@ -355,6 +351,42 @@ Void Interactive::leave ( Interactives& interactives )
                                                            pressure_plate.activate_coordinate_y );
 
           interactive.activate ( interactives );
+     } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
+          character.on_ice = false;
+     }
+}
+
+Void Interactive::interactive_enter ( Direction from, Interactives& interactives )
+{
+     if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+          Auto& pressure_plate = underneath.underneath_pressure_plate;
+
+          pressure_plate.entered = true;
+
+          Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
+                                                           pressure_plate.activate_coordinate_y );
+
+          interactive.activate ( interactives );
+     } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
+          Auto& ice = underneath.underneath_ice;
+          ice.force_dir = from;
+     }
+}
+
+Void Interactive::interactive_leave ( Direction to, Interactives& interactives )
+{
+     if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+          Auto& pressure_plate = underneath.underneath_pressure_plate;
+
+          pressure_plate.entered = false;
+
+          Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
+                                                           pressure_plate.activate_coordinate_y );
+
+          interactive.activate ( interactives );
+     } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
+          Auto& ice = underneath.underneath_ice;
+          ice.force_dir = Direction::count;
      }
 }
 
@@ -685,5 +717,10 @@ Void Turret::update ( Real32 time_delta )
                automatic_watch.reset ( c_shoot_interval );
           }
      }
+}
+
+Void Ice::reset ( )
+{
+     force_dir = Direction::count;
 }
 

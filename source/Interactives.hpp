@@ -9,6 +9,7 @@
 namespace bryte
 {
      class Interactives;
+     class Character;
 
      struct Exit {
           enum State {
@@ -150,11 +151,19 @@ namespace bryte
           Bool up;
      };
 
+     struct Ice {
+
+          Void reset ( );
+
+          Direction force_dir;
+     };
+
      struct UnderneathInteractive {
           enum Type {
                none,
                pressure_plate,
-               popup_block
+               popup_block,
+               ice
           };
 
           Void reset ( );
@@ -164,6 +173,7 @@ namespace bryte
           union {
                PressurePlate underneath_pressure_plate;
                PopupBlock    underneath_popup_block;
+               Ice           underneath_ice;
           };
      };
 
@@ -189,8 +199,10 @@ namespace bryte
           Void      explode  ( Interactives& interactives );
           Direction push     ( Direction direction, Interactives& interactives );
           Void      light    ( Uint8 light, Interactives& interactives );
-          Void      enter    ( Interactives& interactives );
-          Void      leave    ( Interactives& interactives );
+          Void      character_enter   ( Direction from, Interactives& interactives, Character& character );
+          Void      character_leave   ( Direction to, Interactives& interactives, Character& character );
+          Void      interactive_enter ( Direction from, Interactives& interactives );
+          Void      interactive_leave ( Direction to, Interactives& interactives );
 
           Bool is_solid ( ) const;
 
@@ -216,16 +228,14 @@ namespace bryte
 
           Interactive& add ( Interactive::Type type, Int32 tile_x, Int32 tile_y );
 
-          Void update ( Real32 time_delta );
-
           Void contribute_light ( Map& map );
 
           Bool push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
           Bool activate ( Int32 tile_x, Int32 tile_y );
           Void explode ( Int32 tile_x, Int32 tile_y );
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
-          Void enter ( Int32 tile_x, Int32 tile_y );
-          Void leave ( Int32 tile_x, Int32 tile_y );
+          Void character_enter ( Int32 tile_x, Int32 tile_y, Character& character );
+          Void character_leave ( Int32 tile_x, Int32 tile_y, Character& character );
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
           const Interactive& cget_from_tile ( Int32 tile_x, Int32 tile_y ) const;

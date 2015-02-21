@@ -29,6 +29,7 @@ namespace bryte
                if ( entity.is_dead ( ) ) {
                     entity.life_state = Entity::LifeState::spawning;
                     entity.on_fire = false;
+                    entity.on_ice  = false;
                     entity.position = position;
                     return &entity;
                }

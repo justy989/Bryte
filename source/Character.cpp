@@ -17,6 +17,7 @@ const Real32 Character::c_cooldown_time           = 0.25f;
 const Real32 Character::c_dying_time              = 1.0f;
 const Int32  Character::c_fire_tick_max           = 3;
 const Real32 Character::c_fire_tick_rate          = 2.0f;
+const Real32 Character::c_ice_decel               = 0.5f;
 
 Bool Character::collides_with ( const Character& character )
 {
@@ -300,7 +301,11 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      }
 
      // TEMPORARY, slow character down
-     acceleration += velocity * -deceleration_scale;
+     if ( on_ice ) {
+          acceleration += velocity * -( c_ice_decel * deceleration_scale );
+     } else {
+          acceleration += velocity * -deceleration_scale;
+     }
 
      Vector change_in_position = ( velocity * time_delta ) +
                                  ( acceleration * ( 0.5f * square ( time_delta ) ) );
@@ -451,8 +456,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      if ( old_coords.x != new_coords.x ||
           old_coords.y != new_coords.y ) {
-          interactives.enter ( new_coords.x, new_coords.y );
-          interactives.leave ( old_coords.x, old_coords.y );
+          interactives.character_leave ( old_coords.x, old_coords.y, *this );
+          interactives.character_enter ( new_coords.x, new_coords.y, *this );
      }
 
      acceleration.zero ( );

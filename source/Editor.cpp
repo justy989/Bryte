@@ -185,6 +185,19 @@ Void State::mouse_button_left_clicked ( )
                interactive.interactive_turret.automatic = static_cast<Bool>(current_turret_automatic);
           }
      } break;
+     case Mode::ice:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+          UnderneathInteractive& underneath = interactive.underneath;
+
+          if ( underneath.type == UnderneathInteractive::Type::ice ) {
+               underneath.type = UnderneathInteractive::Type::none;
+               interactive.reset ( );
+          } else {
+               underneath.type = UnderneathInteractive::Type::ice;
+               interactive.reset ( );
+          }
+     } break;
      }
 }
 
@@ -1143,6 +1156,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->mouse_x, state->mouse_y,
                                 state->current_turret_direction,
                                 ( Interactive::Type::exit + Direction::count + 3 ) );
+          break;
+     case Mode::ice:
+          render_current_icon ( back_buffer,
+                                state->interactives_display.interactive_sheet,
+                                state->mouse_x, state->mouse_y,
+                                0,
+                                ( Interactive::Type::exit + Direction::count + 4 ) );
           break;
      }
 

@@ -61,6 +61,9 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
                return;
           }
           break;
+     case UnderneathInteractive::Type::ice:
+          clip_rect.y = ( Interactive::Type::exit + Direction::count + 4 ) * Map::c_tile_dimension_in_pixels;
+          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );

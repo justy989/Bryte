@@ -844,6 +844,13 @@ Void State::update_interactives ( float time_delta )
      for ( Int32 i = 0; i < count; ++i ) {
           Auto& interactive = interactives.m_interactives [ i ];
 
+          if ( interactive.underneath.type == UnderneathInteractive::Type::ice &&
+               interactive.underneath.underneath_ice.force_dir != Direction::count ) {
+               Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+               Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+               interactives.push ( tile_x, tile_y, interactive.underneath.underneath_ice.force_dir, map );
+          }
+
           switch ( interactive.type ) {
           default:
           case Interactive::Type::none:

@@ -21,6 +21,7 @@ namespace bryte
           Vector    position;
           LifeState life_state;
           Bool      on_fire;
+          Bool      on_ice;
      };
 
      inline Bool Entity::is_dead ( ) const

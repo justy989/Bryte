@@ -51,6 +51,7 @@ namespace editor
           all_killed,
           bombable_block,
           turret,
+          ice,
           count
      };
 

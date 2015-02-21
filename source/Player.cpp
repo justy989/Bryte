@@ -39,7 +39,7 @@ Void Player::clear ( )
      cooldown_watch.reset ( 0.0f );
      fire_watch.reset ( 0.0f );
 
-     on_fire = false;
+     effected_by_element = Element::none;
 
      position.zero ( );
 

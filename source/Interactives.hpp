@@ -5,6 +5,7 @@
 #include "Map.hpp"
 #include "StopWatch.hpp"
 #include "Direction.hpp"
+#include "Element.hpp"
 
 namespace bryte
 {
@@ -84,11 +85,10 @@ namespace bryte
      };
 
      struct Torch {
-
           Void reset ( );
           Bool activate ( );
 
-          Bool  on;
+          Element element;
           Int32 value;
      };
 
@@ -236,6 +236,8 @@ namespace bryte
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
           Void character_enter ( Int32 tile_x, Int32 tile_y, Character& character );
           Void character_leave ( Int32 tile_x, Int32 tile_y, Character& character );
+
+          Void spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear = false );
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
           const Interactive& cget_from_tile ( Int32 tile_x, Int32 tile_y ) const;

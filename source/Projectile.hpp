@@ -51,6 +51,8 @@ namespace bryte
           TrackEntity track_entity;
 
           Alliance alliance;
+
+          Int32 current_tile;
      };
 }
 

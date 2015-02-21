@@ -200,7 +200,7 @@ Void CharacterDisplay::render_player ( SDL_Surface* back_buffer, const Character
      render_character ( back_buffer, player_sheet, blink_surface,
                         player, camera_x, camera_y, blink_on );
 
-     if ( player.on_fire ) {
+     if ( player.effected_by_element == Element::fire ) {
           render_on_fire ( back_buffer, fire_surface, player.position, fire_animation.frame,
                            camera_x, camera_y );
      }
@@ -212,7 +212,7 @@ Void CharacterDisplay::render_enemy ( SDL_Surface* back_buffer, const Enemy& ene
      render_character ( back_buffer, enemy_sheets [ enemy.type ], blink_surface,
                         enemy, camera_x, camera_y, blink_on );
 
-     if ( enemy.on_fire ) {
+     if ( enemy.effected_by_element == Element::fire ) {
           render_on_fire ( back_buffer, fire_surface, enemy.position, fire_animation.frame,
                            camera_x, camera_y );
      }

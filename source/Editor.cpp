@@ -116,7 +116,7 @@ Void State::mouse_button_left_clicked ( )
                                                                   mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::torch ) {
-               interactive.interactive_torch.on = current_torch;
+               interactive.interactive_torch.element = static_cast<Element>(current_torch);
           }
      } break;
      case Mode::pushable_torch:
@@ -125,7 +125,8 @@ Void State::mouse_button_left_clicked ( )
                                                                   mouse_tile_x, mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::pushable_torch ) {
-               interactive.interactive_pushable_torch.torch.on = current_pushable_torch;
+               interactive.interactive_pushable_torch.torch.element =
+                    static_cast<Element>(current_pushable_torch);
           }
      } break;
      case Mode::light_detector:
@@ -277,11 +278,11 @@ Void State::mouse_button_right_clicked ( )
           break;
      case Mode::torch:
           current_torch++;
-          current_torch %= 2;
+          current_torch %= 3;
           break;
      case Mode::pushable_torch:
           current_pushable_torch++;
-          current_pushable_torch %= 2;
+          current_pushable_torch %= 3;
           break;
      case Mode::light_detector:
      {
@@ -586,6 +587,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
      if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheet,
                                           game_memory,
                                           "castle_interactivesheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.torch_element_sheet,
+                                          game_memory,
+                                          "torch_fire.bmp" ) ) {
           return false;
      }
 

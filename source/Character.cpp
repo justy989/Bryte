@@ -183,8 +183,8 @@ Void Character::block ( )
 
 Void Character::light_on_fire ( )
 {
-     if ( !on_fire ) {
-          on_fire = true;
+     if ( !effected_by_element ) {
+          effected_by_element = Element::fire;
           fire_watch.reset ( c_fire_tick_rate );
           fire_tick_count = 0;
      }
@@ -296,7 +296,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           break;
      }
 
-     if ( on_fire ) {
+     if ( effected_by_element == Element::fire ) {
           fire_watch.tick ( time_delta );
      }
 

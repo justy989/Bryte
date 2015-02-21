@@ -235,6 +235,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( interactives_display.torch_element_sheet,
+                                          game_memory,
+                                          "torch_fire.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( pickup_display.pickup_sheet, game_memory, c_test_pickups_path ) ) {
           return false;
      }
@@ -387,7 +393,7 @@ bool State::spawn_projectile ( Projectile::Type type, const Vector& position, Di
 
      projectile->type = type;
      projectile->facing = facing;
-     projectile->on_fire = false;
+     projectile->effected_by_element = Element::none;
      projectile->alliance = alliance;
 
      LOG_DEBUG ( "spawning projectile at %f, %f\n", position.x ( ), position.y ( ) );
@@ -563,7 +569,8 @@ Void State::burn_character ( Character& character )
      character.fire_tick_count++;
 
      if ( character.fire_tick_count >= Character::c_fire_tick_max ) {
-          character.on_fire = false;
+          // effect has expired
+          character.effected_by_element = Element::none;
      } else {
           character.fire_watch.reset ( Character::c_fire_tick_rate );
      }
@@ -615,7 +622,7 @@ Void State::update_player ( float time_delta )
           player_death ( );
      }
 
-     if ( player.on_fire && player.fire_watch.expired ( ) ) {
+     if ( player.effected_by_element == Element::fire && player.fire_watch.expired ( ) ) {
           burn_character ( player );
 
 #ifdef DEBUG
@@ -796,7 +803,7 @@ Void State::update_enemies ( float time_delta )
                                   Projectile::Alliance::evil );
           }
 
-          if ( enemy.on_fire && enemy.fire_watch.expired ( ) ) {
+          if ( enemy.effected_by_element == Element::fire && enemy.fire_watch.expired ( ) ) {
                burn_character ( enemy );
           }
 
@@ -824,7 +831,7 @@ Void State::update_enemies ( float time_delta )
                }
 #endif
 
-               if ( enemy.on_fire ) {
+               if ( enemy.effected_by_element == Element::fire ) {
                     player.light_on_fire ( );
                }
           }
@@ -859,7 +866,16 @@ Void State::update_interactives ( float time_delta )
           default:
           case Interactive::Type::none:
           case Interactive::Type::bombable_block:
+               break;
           case Interactive::Type::torch:
+               if ( interactive.interactive_torch.element ) {
+                    Auto& element = interactive.interactive_pushable_torch.torch.element;
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    interactives.spread_ice ( tile_x, tile_y, map,
+                                              element == Element::ice ? false : true );
+               }
+
                break;
           case Interactive::Type::lever:
                interactive.update ( time_delta, interactives );
@@ -868,6 +884,15 @@ Void State::update_interactives ( float time_delta )
                interactive.update ( time_delta, interactives );
                break;
           case Interactive::Type::pushable_torch:
+               if ( interactive.interactive_pushable_torch.torch.element ) {
+                    Auto& element = interactive.interactive_pushable_torch.torch.element;
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+
+                    interactives.spread_ice ( tile_x, tile_y, map,
+                                              element == Element::ice ? false : true );
+               }
+
                interactive.update ( time_delta, interactives );
                break;
           case Interactive::Type::light_detector:
@@ -1153,10 +1178,10 @@ Void State::update_light ( )
                continue;
           }
 
-          if ( arrow.on_fire ) {
+          if ( arrow.effected_by_element == Element::fire ) {
                map.illuminate ( meters_to_pixels ( arrow.position.x ( ) ),
-                                       meters_to_pixels ( arrow.position.y ( ) ),
-                                       192 );
+                                meters_to_pixels ( arrow.position.y ( ) ),
+                                192 );
           }
      }
 

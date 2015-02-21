@@ -35,7 +35,7 @@ Void Projectile::hit_character ( Character& character )
 {
      character.damage ( 1, facing );
 
-     if ( on_fire ) {
+     if ( effected_by_element == Element::fire ) {
           character.light_on_fire ( );
      }
 
@@ -59,6 +59,14 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
      Vector arrow_center = position + Projectile::collision_points [ facing ];
      Map::Coordinates tile = Map::vector_to_coordinates ( arrow_center );
 
+     Int32 tile_index = map.coordinate_to_tile_index ( tile.x, tile.y );
+
+     if ( tile_index == current_tile ) {
+          return false;
+     } else {
+          current_tile = tile_index;
+     }
+
      if ( !map.coordinates_valid ( tile ) ) {
           return false;
      }
@@ -72,23 +80,22 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
      if ( interactive.is_solid ( ) ) {
           // do not activate exits!
           if ( interactive.type == Interactive::Type::torch ) {
-
-               if ( on_fire && !interactive.interactive_torch.on ) {
-                   interactive.interactive_torch.on = true;
-               }
-
-               if ( interactive.interactive_torch.on ) {
-                    on_fire = true;
+               if ( effected_by_element ) {
+                    Auto& torch_element = interactive.interactive_torch.element;
+                    torch_element = transition_element ( torch_element, effected_by_element );
+               } else if ( interactive.interactive_torch.element ) {
+                    Auto& torch_element = interactive.interactive_torch.element;
+                    effected_by_element = transition_element ( effected_by_element, torch_element );
                }
 
                return false;
           } else if ( interactive.type == Interactive::Type::pushable_torch ) {
-               if ( on_fire && !interactive.interactive_pushable_torch.torch.on ) {
-                   interactive.interactive_pushable_torch.torch.on = true;
-               }
-
-               if ( interactive.interactive_pushable_torch.torch.on ) {
-                    on_fire = true;
+               if ( effected_by_element ) {
+                    Auto& torch_element = interactive.interactive_pushable_torch.torch.element;
+                    torch_element = transition_element ( torch_element, effected_by_element );
+               } else if ( interactive.interactive_pushable_torch.torch.element ) {
+                    Auto& torch_element = interactive.interactive_pushable_torch.torch.element;
+                    effected_by_element = transition_element ( effected_by_element, torch_element );
                }
 
                return false;

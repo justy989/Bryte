@@ -25,7 +25,7 @@ Void ProjectileDisplay::render ( SDL_Surface* back_buffer, const Projectile& pro
           break;
      case Projectile::Type::arrow:
           projectile_sheet = arrow_sheet;
-          if ( !projectile.on_fire ) {
+          if ( !projectile.effected_by_element ) {
                frame = 0;
           } else {
                frame++;

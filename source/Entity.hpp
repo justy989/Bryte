@@ -2,6 +2,7 @@
 #define BRYTE_ENTITY_HPP
 
 #include "Vector.hpp"
+#include "Element.hpp"
 
 namespace bryte
 {
@@ -20,8 +21,8 @@ namespace bryte
 
           Vector    position;
           LifeState life_state;
-          Bool      on_fire;
           Bool      on_ice;
+          Element   effected_by_element;
      };
 
      inline Bool Entity::is_dead ( ) const

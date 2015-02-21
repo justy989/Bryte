@@ -114,16 +114,8 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::pushable_block:
           break;
      case Interactive::Type::torch:
-          if ( interactive.interactive_torch.on ) {
-               Int32 torch_frame = 1 + ( animation.frame % c_torch_frame_count );
-               clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
-          }
           break;
      case Interactive::Type::pushable_torch:
-          if ( interactive.interactive_pushable_torch.torch.on ) {
-               Int32 torch_frame = 1 + ( animation.frame % c_torch_frame_count );
-               clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
-          }
           break;
      case Interactive::Type::light_detector:
           if ( interactive.interactive_light_detector.type == LightDetector::Type::bryte ) {
@@ -179,5 +171,39 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      SDL_BlitSurface ( interactive_sheet, &clip_rect, back_buffer, &dest_rect );
+
+     switch ( interactive.type ) {
+     default:
+          break;
+     case Interactive::Type::torch:
+          if ( interactive.interactive_torch.element ) {
+               Int32 torch_frame = animation.frame % c_torch_frame_count;
+               Int32 torch_row = interactive.interactive_torch.element;
+
+               torch_row -= 1;
+               torch_row *= Map::c_tile_dimension_in_pixels;
+
+               clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
+               clip_rect.y = torch_row;
+
+               SDL_BlitSurface ( torch_element_sheet, &clip_rect, back_buffer, &dest_rect );
+          }
+          break;
+     case Interactive::Type::pushable_torch:
+          if ( interactive.interactive_pushable_torch.torch.element ) {
+               // TODO: clearly the torch and pushabled torch have the same element display code
+               Int32 torch_frame = animation.frame % c_torch_frame_count;
+               Int32 torch_row = interactive.interactive_torch.element;
+
+               torch_row -= 1;
+               torch_row *= Map::c_tile_dimension_in_pixels;
+
+               clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
+               clip_rect.y = torch_row;
+               SDL_BlitSurface ( torch_element_sheet, &clip_rect, back_buffer, &dest_rect );
+          }
+          break;
+     }
+
 }
 

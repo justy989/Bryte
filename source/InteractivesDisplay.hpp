@@ -40,6 +40,7 @@ namespace bryte
      public:
 
           SDL_Surface* interactive_sheet;
+          SDL_Surface* torch_element_sheet;
 
           Animation animation;
 

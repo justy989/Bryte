@@ -80,14 +80,14 @@ Void Interactives::contribute_light ( Map& map )
                default:
                     break;
                case Interactive::Type::torch:
-                    if ( interactive.interactive_torch.on ) {
+                    if ( interactive.interactive_torch.element == Element::fire ) {
                          map.illuminate ( x * Map::c_tile_dimension_in_pixels,
                                           y * Map::c_tile_dimension_in_pixels,
                                           interactive.interactive_torch.value );
                     }
                     break;
                case Interactive::Type::pushable_torch:
-                    if ( interactive.interactive_pushable_torch.torch.on ) {
+                    if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
                          map.illuminate ( x * Map::c_tile_dimension_in_pixels,
                                           y * Map::c_tile_dimension_in_pixels,
                                           interactive.interactive_pushable_torch.torch.value );
@@ -189,6 +189,47 @@ Void Interactives::character_leave ( Int32 tile_x, Int32 tile_y, Character& char
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
      i.character_leave ( character.facing, *this, character );
+}
+
+Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear )
+{
+     const Int32 c_tile_radius = 1;
+
+     Int32 min_tile_x  = tile_x - c_tile_radius;
+     Int32 max_tile_x  = tile_x + c_tile_radius;
+     Int32 min_tile_y  = tile_y - c_tile_radius;
+     Int32 max_tile_y  = tile_y + c_tile_radius;
+
+     CLAMP ( min_tile_x, 0, m_width - 1 );
+     CLAMP ( max_tile_x, 0, m_width - 1 );
+     CLAMP ( min_tile_y, 0, m_height - 1 );
+     CLAMP ( max_tile_y, 0, m_height - 1 );
+
+     if ( clear ) {
+          for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
+               for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
+                    Auto& interactive = get_from_tile ( x, y );
+
+                    if ( map.get_coordinate_solid ( x, y ) ) {
+                         continue;
+                    }
+
+                    interactive.underneath.type = UnderneathInteractive::Type::none;
+               }
+          }
+     } else {
+          for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
+               for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
+                    Auto& interactive = get_from_tile ( x, y );
+
+                    if ( map.get_coordinate_solid ( x, y ) ) {
+                         continue;
+                    }
+
+                    interactive.underneath.type = UnderneathInteractive::Type::ice;
+               }
+          }
+     }
 }
 
 Bool Interactive::is_solid ( ) const
@@ -621,13 +662,24 @@ Bool Exit::activate ( )
 
 Void Torch::reset ( )
 {
-     on    = true;
-     value = 255;
+     element = Element::fire;
+     value   = 255;
 }
 
 Bool Torch::activate ( )
 {
-     on = !on;
+     switch ( element ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case Element::none:
+          element = Element::fire;
+          break;
+     case Element::ice:
+     case Element::fire:
+          element = Element::none;
+          break;
+     }
 
      return true;
 }

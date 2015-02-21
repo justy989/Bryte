@@ -153,6 +153,12 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           return true;
      }
 
+     // stop ice from pushing if we can't go to the next square
+     if ( i.underneath.type == UnderneathInteractive::Type::ice &&
+          i.underneath.underneath_ice.force_dir != Direction::count ) {
+          i.underneath.underneath_ice.force_dir = Direction::count;
+     }
+
      return false;
 }
 

@@ -53,6 +53,7 @@ namespace editor
           turret,
           ice,
           moving_walkway,
+          ice_detector,
           count
      };
 

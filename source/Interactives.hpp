@@ -141,6 +141,14 @@ namespace bryte
           Direction facing;
      };
 
+     struct IceDetector {
+          Void reset ( );
+
+          Bool detected;
+          Uint8 activate_coordinate_x;
+          Uint8 activate_coordinate_y;
+     };
+
      struct PressurePlate {
           Bool  entered;
           Uint8 activate_coordinate_x;
@@ -197,6 +205,7 @@ namespace bryte
                exit,
                bombable_block,
                turret,
+               ice_detector,
                count
           };
 
@@ -225,6 +234,7 @@ namespace bryte
                PushableTorch interactive_pushable_torch;
                LightDetector interactive_light_detector;
                Turret        interactive_turret;
+               IceDetector   interactive_ice_detector;
           };
 
           UnderneathInteractive underneath;

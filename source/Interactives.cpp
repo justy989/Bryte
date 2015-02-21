@@ -225,6 +225,13 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
 
                     if ( interactive.underneath.type == UnderneathInteractive::Type::ice ) {
                          interactive.underneath.type = UnderneathInteractive::Type::none;
+
+                         if ( interactive.type == Interactive::Type::ice_detector ) {
+                              interactive.interactive_ice_detector.detected =
+                                   !interactive.interactive_ice_detector.detected;
+                              activate ( interactive.interactive_ice_detector.activate_coordinate_x,
+                                         interactive.interactive_ice_detector.activate_coordinate_y );
+                         }
                     }
                }
           }
@@ -240,6 +247,13 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
                     if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
                          interactive.underneath.type = UnderneathInteractive::Type::ice;
                          interactive.underneath.underneath_ice.force_dir = Direction::count;
+
+                         if ( interactive.type == Interactive::Type::ice_detector ) {
+                              interactive.interactive_ice_detector.detected =
+                                   !interactive.interactive_ice_detector.detected;
+                              activate ( interactive.interactive_ice_detector.activate_coordinate_x,
+                                         interactive.interactive_ice_detector.activate_coordinate_y );
+                         }
                     }
                }
           }
@@ -299,6 +313,9 @@ Void Interactive::reset ( )
           break;
      case Type::turret:
           interactive_turret.reset ( );
+          break;
+     case Type::ice_detector:
+          interactive_ice_detector.reset ( );
           break;
      }
 
@@ -800,5 +817,12 @@ Void Ice::reset ( )
 Void MovingWalkway::reset ( )
 {
      facing = Direction::left;
+}
+
+Void IceDetector::reset ( )
+{
+     detected = false;
+     activate_coordinate_x = 0;
+     activate_coordinate_y = 0;
 }
 

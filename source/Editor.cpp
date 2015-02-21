@@ -213,6 +213,9 @@ Void State::mouse_button_left_clicked ( )
                underneath.underneath_moving_walkway.facing = static_cast<Direction>( current_moving_walkway );
           }
      } break;
+     case Mode::ice_detector:
+          place_or_clear_interactive ( Interactive::Type::ice_detector, mouse_tile_x, mouse_tile_y );
+          break;
      }
 }
 
@@ -365,6 +368,25 @@ Void State::mouse_button_right_clicked ( )
      case Mode::turret:
           current_turret_automatic = !current_turret_automatic;
           break;
+     case Mode::ice_detector:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::ice_detector ) {
+               current_interactive_x = mouse_tile_x;
+               current_interactive_y = mouse_tile_y;
+               track_current_interactive = true;
+          } else {
+               if ( track_current_interactive ) {
+                    Auto& lever = interactives.get_from_tile ( current_interactive_x,
+                                                               current_interactive_y );
+                    ASSERT ( lever.type == Interactive::Type::ice_detector );
+                    lever.interactive_ice_detector.activate_coordinate_x = mouse_tile_x;
+                    lever.interactive_ice_detector.activate_coordinate_y = mouse_tile_y;
+                    track_current_interactive = false;
+               }
+          }
+     } break;
      }
 }
 
@@ -978,6 +1000,26 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( interactive.type == Interactive::Type::turret ) {
                Auto& turret = interactive.interactive_turret;
                sprintf ( state->message_buffer, "DIR %d AUTO %d", turret.facing, turret.automatic );
+          }
+     } break;
+     case Mode::ice_detector:
+     {
+          if ( state->track_current_interactive ) {
+               sprintf ( state->message_buffer, "C ACT %d %d",
+                         state->current_interactive_x, state->current_interactive_y );
+               break;
+          }
+
+          if ( !state->mouse_on_map ( ) ) {
+               break;
+          }
+
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::ice_detector ) {
+               Auto& ice_detector = interactive.interactive_ice_detector;
+               sprintf ( state->message_buffer, "ACT %d %d",
+                         ice_detector.activate_coordinate_x, ice_detector.activate_coordinate_y );
           }
      } break;
      }

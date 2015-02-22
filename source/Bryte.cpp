@@ -452,7 +452,7 @@ Bool State::spawn_bomb ( const Vector& position )
      if ( emitter ) {
           Vector offset { Map::c_tile_dimension_in_meters * 0.5f, Map::c_tile_dimension_in_meters };
           emitter->setup_to_track_entity ( bomb, offset,
-                                           SDL_MapRGB ( &back_buffer_format, 255, 255, 255 ),
+                                           SDL_MapRGB ( &back_buffer_format, 255, 255, 0 ),
                                            0.785f, 2.356f, 1.0f, 1.0f, 0.5f, 0.5f, 1, 10 );
      }
 

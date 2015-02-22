@@ -20,6 +20,8 @@ namespace bryte
           static const Uint32 c_max_map_name_size = 32;
           static const Uint32 c_max_maps = 32;
 
+          static const Uint32 c_max_exits = 128;
+
           static const Int32  c_first_master_map = -1;
 
           static const Int32  c_tile_dimension_in_pixels = 16;
@@ -72,11 +74,14 @@ namespace bryte
                Pickup::Type drop;
           };
 
-          struct PersistedExits {
-               static const Uint32 c_max_persisted_exits = 8;
+          struct PersistedExit {
+               struct Map {
+                    Uint8 index;
+                    Location location;
+               };
 
-               Uint8   exit_count;
-               Fixture exits [ c_max_persisted_exits ];
+               PersistedExit::Map map [ 2 ];
+               Uint8 state;
           };
 
           struct PersistEnemy {
@@ -200,7 +205,9 @@ namespace bryte
           Char8          m_master_list [ c_max_maps ][ c_max_map_name_size ];
           Uint8          m_master_count;
 
-          PersistedExits   m_persisted_exits [ c_max_maps ];
+          PersistedExit  m_persisted_exits [ c_max_exits ];
+          Uint8          m_persisted_exit_count;
+
           PersistedEnemies m_persisted_enemies [ c_max_maps ];
 
           Int32          m_current_master_map;

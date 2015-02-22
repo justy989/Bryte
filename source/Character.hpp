@@ -116,9 +116,6 @@ namespace bryte
           Real32 walk_tracker;
           Real32 walk_frame_rate;
 
-          Bool constant_animation;
-          Bool draw_facing;
-
           Direction damage_pushed;
 
           Stopwatch damage_watch;
@@ -127,10 +124,15 @@ namespace bryte
 
           Uint8 fire_tick_count;
 
+          // TODO: condense these bools to flags
+          Bool constant_animation;
+          Bool draw_facing;
+
           Bool collides_with_solids;
           Bool collides_with_exits;
 
           Bool on_ice;
+
           Direction on_moving_walkway;
      };
 

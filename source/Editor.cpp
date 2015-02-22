@@ -677,6 +677,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( state->interactives_display.exit_sheet,
+                                          game_memory,
+                                          "castle_exitsheet.bmp" ) ) {
+          return false;
+     }
+
      if ( state->settings->map_load_filename ) {
           if ( !state->settings->map_save_filename ) {
                state->settings->map_save_filename = state->settings->map_load_filename;

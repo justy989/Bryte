@@ -453,9 +453,17 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
 
 void Map::clear_persistence ( )
 {
-     for ( Uint32 i = 0; i < c_max_maps; ++i  ) {
-          m_persisted_exits [ i ].exit_count = 0;
+     m_persisted_exit_count = 0;
 
+     for ( Uint32 i = 0; i < c_max_exits; ++i ) {
+          m_persisted_exits [ i ].map [ 0 ].index = 0;
+          m_persisted_exits [ i ].map [ 1 ].index = 0;
+          m_persisted_exits [ i ].map [ 0 ].location = Location { 0, 0 };
+          m_persisted_exits [ i ].map [ 1 ].location = Location { 0, 0 };
+          m_persisted_exits [ i ].state = 0;
+     }
+
+     for ( Uint32 i = 0; i < c_max_maps; ++i  ) {
           for ( Uint32 j = 0; j < c_max_enemy_spawns; ++j ) {
                Auto& persisted_enemy = m_persisted_enemies [ i ].enemies [ j ];
 
@@ -468,23 +476,37 @@ void Map::clear_persistence ( )
 
 Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
 {
-     ASSERT ( exit.type == Interactive::Type::exit );
+     // try to find the exit
+     for ( Uint32 i = 0; i < m_persisted_exit_count; ++i ) {
+          for ( Uint32 m = 0; m < 2; ++m ) {
+               PersistedExit::Map& map_info = m_persisted_exits [ i ].map [ m ];
+               Location& map_location = map_info.location;
 
-     Auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
-
-     if ( map_persisted_exits.exit_count >= PersistedExits::c_max_persisted_exits ) {
-          LOG_ERROR ( "Too many exits on map to persist: %u\n", map_persisted_exits.exit_count );
+               if ( map_info.index == m_current_master_map &&
+                    map_location.x == x && map_location.y == y ) {
+                    m_persisted_exits [ i ].state = exit.interactive_exit.state;
+                    return;
+               }
+          }
      }
 
-     Auto& persisted_exit = map_persisted_exits.exits [ map_persisted_exits.exit_count ];
+     // if we didn't find the exit, create one
+     if ( m_persisted_exit_count >= c_max_exits ) {
+          LOG_INFO ( "Error persisting exit at %d, %d, on map %d, hit max persisted exits %d\n",
+                      x, y, m_current_master_map, c_max_exits );
+          return;
+     }
 
-     persisted_exit.location.x = x;
-     persisted_exit.location.y = y;
-     persisted_exit.id         = exit.interactive_exit.state;
+     PersistedExit& new_exit = m_persisted_exits [ m_persisted_exit_count ];
 
-     LOG_DEBUG ( "Persisted exit %d %d to state %d\n", x, y, exit.interactive_exit.state );
+     new_exit.state = exit.interactive_exit.state;
+     new_exit.map [ 0 ].location = Location { x, y };
+     new_exit.map [ 0 ].index = m_current_master_map;
+     new_exit.map [ 1 ].location = Location { exit.interactive_exit.exit_index_x,
+                                              exit.interactive_exit.exit_index_y };
+     new_exit.map [ 1 ].index = exit.interactive_exit.map_index;
 
-     map_persisted_exits.exit_count++;
+     m_persisted_exit_count++;
 }
 
 Void Map::persist_enemy ( const Enemy& enemy, Uint8 index )
@@ -501,6 +523,29 @@ Void Map::persist_enemy ( const Enemy& enemy, Uint8 index )
 
 Void Map::restore_exits ( Interactives& interactives )
 {
+     // try to find an exit that matches this map_index
+     for ( Uint32 i = 0; i < m_persisted_exit_count; ++i ) {
+          for ( Uint32 m = 0; m < 2; ++m ) {
+               PersistedExit::Map& map_info = m_persisted_exits [ i ].map [ m ];
+
+               if ( map_info.index == m_current_master_map ) {
+                    Auto& exit = interactives.get_from_tile ( map_info.location.x,
+                                                              map_info.location.y );
+
+                    if ( exit.type != Interactive::Type::exit ) {
+                         LOG_ERROR ( "Failed to restore persisted exit at %d, %d on map %d, map has changed?\n",
+                                     map_info.location.x, map_info.location.y,
+                                     m_current_master_map );
+                         continue;
+                    }
+
+                    exit.interactive_exit.state =
+                         static_cast<Exit::State>( m_persisted_exits [ i ].state );
+               }
+          }
+     }
+
+#if 0
      Auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
 
      for ( Uint8 i = 0; i < map_persisted_exits.exit_count; ++i ) {
@@ -523,6 +568,7 @@ Void Map::restore_exits ( Interactives& interactives )
      }
 
      map_persisted_exits.exit_count = 0;
+#endif
 }
 
 Void Map::restore_enemy_spawns ( )

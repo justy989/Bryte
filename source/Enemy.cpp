@@ -259,9 +259,6 @@ Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
           walk ( Direction::right );
           break;
      }
-
-     // purely since the bat bitmap only has 1 direction
-     facing = Direction::left;
 }
 
 Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
@@ -304,9 +301,8 @@ Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
 
 Void Enemy::skeleton_think ( const Vector& player, Random& random, float time_delta )
 {
-     Auto& wander_timer = skeleton_state.wander_timer;
-     Auto& wander_direction = skeleton_state.wander_direction;
 
+     Auto& wander_timer = skeleton_state.wander_timer;
      Real32 distance_to_player = position.distance_to ( player );
 
      if ( distance_to_player < SkeletonState::c_attack_range ) {
@@ -314,15 +310,12 @@ Void Enemy::skeleton_think ( const Vector& player, Random& random, float time_de
      } else {
           wander_timer.tick ( time_delta );
 
-          walk ( wander_direction );
+          walk ( facing );
 
           if ( wander_timer.expired ( ) || collided_last_frame ) {
-               wander_direction = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+               facing = static_cast<Direction>( random.generate ( 0, Direction::count ) );
                wander_timer.reset ( random.generate ( 0, 3 ) );
           }
      }
-
-     // TODO: Setup Character to not always draw all directions
-     facing = Direction::left;
 }
 

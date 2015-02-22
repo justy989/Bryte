@@ -55,7 +55,6 @@ namespace bryte
                static const Real32 c_attack_range;
 
                Stopwatch wander_timer;
-               Direction wander_direction; // TODO: get rid of once we allow single line animation
           };
 
      public:

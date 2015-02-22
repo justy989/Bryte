@@ -940,9 +940,6 @@ Void State::update_interactives ( float time_delta )
 
                interactive.update ( time_delta, interactives );
                break;
-          case Interactive::Type::light_detector:
-               interactive.update ( time_delta, interactives );
-               break;
           case Interactive::Type::exit:
                interactive.update ( time_delta, interactives );
                break;

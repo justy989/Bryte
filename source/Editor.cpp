@@ -131,12 +131,14 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::light_detector:
      {
-          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::light_detector,
-                                                                  mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
-          if ( interactive.type == Interactive::Type::light_detector ) {
-               interactive.interactive_light_detector.type = static_cast<bryte::LightDetector::Type>(
-                                                                  current_light_detector_bryte );
+          if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
+               interactive.underneath.type = UnderneathInteractive::Type::light_detector;
+               Auto& detector = interactive.underneath.underneath_light_detector;
+               detector.type = static_cast<LightDetector::Type>( current_light_detector_bryte );
+          } else {
+               interactive.underneath.type = UnderneathInteractive::Type::none;
           }
      } break;
      case Mode::pressure_plate:
@@ -314,17 +316,18 @@ Void State::mouse_button_right_clicked ( )
      {
           Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
-          if ( interactive.type == Interactive::Type::light_detector ) {
+          if ( interactive.underneath.type == UnderneathInteractive::Type::light_detector ) {
                current_interactive_x = mouse_tile_x;
                current_interactive_y = mouse_tile_y;
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    Auto& light_detector = interactives.get_from_tile ( current_interactive_x,
+                    Auto& interactive = interactives.get_from_tile ( current_interactive_x,
                                                                         current_interactive_y );
-                    ASSERT ( light_detector.type == Interactive::Type::light_detector );
-                    light_detector.interactive_light_detector.activate_coordinate_x = mouse_tile_x;
-                    light_detector.interactive_light_detector.activate_coordinate_y = mouse_tile_y;
+                    ASSERT ( interactive.underneath.type == UnderneathInteractive::Type::light_detector );
+                    Auto& light_detector = interactive.underneath.underneath_light_detector;
+                    light_detector.activate_coordinate_x = mouse_tile_x;
+                    light_detector.activate_coordinate_y = mouse_tile_y;
                     track_current_interactive = false;
                }
           }
@@ -1012,10 +1015,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
-          if ( interactive.type == Interactive::Type::light_detector ) {
-               Auto& light_detector = interactive.interactive_light_detector;
+          if ( interactive.underneath.type == UnderneathInteractive::Type::light_detector ) {
+               Auto& detector = interactive.underneath.underneath_light_detector;
                sprintf ( state->message_buffer, "ACT %d %d",
-                         light_detector.activate_coordinate_x, light_detector.activate_coordinate_y );
+                         detector.activate_coordinate_x, detector.activate_coordinate_y );
           }
      } break;
      case Mode::pressure_plate:
@@ -1035,7 +1038,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
           if ( interactive.underneath.type == UnderneathInteractive::Type::pressure_plate ) {
                Auto& pressure_plate = interactive.underneath.underneath_pressure_plate;
                sprintf ( state->message_buffer, "ACT %d %d",
-                         pressure_plate.activate_coordinate_x, pressure_plate.activate_coordinate_y );
+                         pressure_plate.activate_coordinate_x,
+                         pressure_plate.activate_coordinate_y );
           }
      } break;
      case Mode::all_killed:

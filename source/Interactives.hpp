@@ -179,6 +179,7 @@ namespace bryte
                popup_block,
                ice,
                moving_walkway,
+               light_detector,
                count
           };
 
@@ -191,6 +192,7 @@ namespace bryte
                PopupBlock    underneath_popup_block;
                Ice           underneath_ice;
                MovingWalkway underneath_moving_walkway;
+               LightDetector underneath_light_detector;
           };
      };
 
@@ -201,7 +203,6 @@ namespace bryte
                pushable_block,
                torch,
                pushable_torch,
-               light_detector,
                exit,
                bombable_block,
                turret,
@@ -232,7 +233,6 @@ namespace bryte
                Exit          interactive_exit;
                Torch         interactive_torch;
                PushableTorch interactive_pushable_torch;
-               LightDetector interactive_light_detector;
                Turret        interactive_turret;
                IceDetector   interactive_ice_detector;
           };

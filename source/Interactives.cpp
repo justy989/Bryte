@@ -31,6 +31,9 @@ Void UnderneathInteractive::reset ( )
      case moving_walkway:
           underneath_moving_walkway.reset ( );
           break;
+     case light_detector:
+          underneath_light_detector.reset ( );
+          break;
      }
 }
 
@@ -306,9 +309,6 @@ Void Interactive::reset ( )
      case Type::pushable_torch:
           interactive_pushable_torch.reset ( );
           break;
-     case Type::light_detector:
-          interactive_light_detector.reset ( );
-          break;
      case Type::bombable_block:
           break;
      case Type::turret:
@@ -390,12 +390,10 @@ Direction Interactive::push ( Direction direction, Interactives& interactives )
 
 Void Interactive::light ( Uint8 light, Interactives& interactives )
 {
-     switch ( type ) {
-     default:
-          break;
-     case Type::light_detector:
-          interactive_light_detector.light ( light, interactives );
-          break;
+     // only light if not covered
+     if ( type == Interactive::Type::none &&
+          underneath.type == UnderneathInteractive::Type::light_detector ) {
+          underneath.underneath_light_detector.light ( light, interactives );
      }
 }
 
@@ -449,6 +447,9 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
      } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
           Auto& ice = underneath.underneath_ice;
           ice.force_dir = from;
+     } else if ( underneath.type == UnderneathInteractive::Type::light_detector ) {
+          Auto& detector = underneath.underneath_light_detector;
+          detector.light ( 0, interactives );
      }
 }
 
@@ -476,8 +477,6 @@ Void Interactive::update ( Real32 time_delta, Interactives& interactives )
           break;
      case Type::none:
      case Type::torch:
-     case Type::light_detector:
-          break;
      case Type::lever:
           interactive_lever.update ( time_delta, interactives );
           break;

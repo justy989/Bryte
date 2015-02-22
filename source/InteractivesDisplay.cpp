@@ -85,6 +85,24 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           clip_rect.x = moving_walkway_animation.frame * Map::c_tile_dimension_in_pixels;
           clip_rect.y = underneath.underneath_moving_walkway.facing * Map::c_tile_dimension_in_pixels;
           break;
+     case UnderneathInteractive::Type::light_detector:
+          underneath_sheet = light_detector_sheet;
+          clip_rect.y = 0;
+
+          if ( underneath.underneath_light_detector.type == LightDetector::Type::bryte ) {
+               if ( !underneath.underneath_light_detector.below_value ) {
+                    Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
+                    clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
+               }
+          } else {
+               clip_rect.y += Map::c_tile_dimension_in_pixels;
+
+               if ( underneath.underneath_light_detector.below_value ) {
+                    Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
+                    clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
+               }
+          }
+          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -122,23 +140,6 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::torch:
           break;
      case Interactive::Type::pushable_torch:
-          break;
-     case Interactive::Type::light_detector:
-          sheet = light_detector_sheet;
-
-          if ( interactive.interactive_light_detector.type == LightDetector::Type::bryte ) {
-               if ( !interactive.interactive_light_detector.below_value ) {
-                    Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
-                    clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
-               }
-          } else {
-               clip_rect.y += Map::c_tile_dimension_in_pixels;
-
-               if ( interactive.interactive_light_detector.below_value ) {
-                    Int32 detector_frame = 1 + ( animation.frame % c_light_detector_frame_count );
-                    clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
-               }
-          }
           break;
      case Interactive::Type::exit:
           sheet = exit_sheet;

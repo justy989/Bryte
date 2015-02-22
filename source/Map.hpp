@@ -50,9 +50,14 @@ namespace bryte
                Uint8 y;
           };
 
+          enum TileFlags {
+               solid = 1,
+               invisible = 2,
+          };
+
           struct Tile {
                Uint8 value;
-               Bool  solid;
+               Uint8 flags;
           };
 
           struct Fixture {
@@ -83,6 +88,14 @@ namespace bryte
                PersistEnemy enemies [ c_max_enemy_spawns ];
           };
 
+          struct Secret {
+               Bool found;
+               Location clear_tile;
+               Location location;
+          };
+
+          // TODO: persisted secrets
+
      public:
 
           Map ( );
@@ -101,10 +114,12 @@ namespace bryte
 
           Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const;
           Bool  get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const;
+          Bool  get_coordinate_invisible ( Int32 tile_x, Int32 tile_y ) const;
           Uint8 get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const;
 
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
+          Void  set_coordinate_invisible ( Int32 tile_x, Int32 tile_y, Bool invisible );
 
           Fixture*    check_coordinates_for_decor       ( Int32 x, Int32 y );
           Fixture*    check_coordinates_for_lamp        ( Int32 x, Int32 y );
@@ -131,6 +146,8 @@ namespace bryte
 
           Void clear_persistence ( );
 
+          Void find_secret ( );
+
           inline Int32 width  ( ) const;
           inline Int32 height ( ) const;
 
@@ -149,6 +166,12 @@ namespace bryte
           inline Int32 current_master_map ( ) const;
           inline Void set_activate_location_on_all_enemies_killed ( Location loc );
           inline Location activate_on_all_enemies_killed ( ) const;
+
+          inline Bool found_secret ( ) const;
+          inline Secret& secret ( );
+
+          inline Void set_secret_location ( Location loc );
+          inline Void set_secret_clear_tile ( Location loc );
 
      public:
 
@@ -200,6 +223,8 @@ namespace bryte
           Uint8          m_enemy_spawn_count;
 
           Location       m_activate_on_all_enemies_killed;
+
+          Secret         m_secret;
      };
 
      inline Int32 Map::width ( ) const
@@ -319,6 +344,26 @@ namespace bryte
      inline Map::Location Map::activate_on_all_enemies_killed ( ) const
      {
           return m_activate_on_all_enemies_killed;
+     }
+
+     inline Bool Map::found_secret ( ) const
+     {
+          return m_secret.found;
+     }
+
+     inline Map::Secret& Map::secret ( )
+     {
+          return m_secret;
+     }
+
+     inline Void Map::set_secret_location ( Location loc )
+     {
+          m_secret.location = loc;
+     }
+
+     inline Void Map::set_secret_clear_tile ( Location loc )
+     {
+          m_secret.clear_tile = loc;
      }
 }
 

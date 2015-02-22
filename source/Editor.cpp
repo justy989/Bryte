@@ -216,6 +216,10 @@ Void State::mouse_button_left_clicked ( )
      case Mode::ice_detector:
           place_or_clear_interactive ( Interactive::Type::ice_detector, mouse_tile_x, mouse_tile_y );
           break;
+     case Mode::secret:
+          map.set_secret_location ( Map::Location { static_cast<Uint8>( mouse_tile_x ),
+                                                    static_cast<Uint8>( mouse_tile_y ) } );
+          break;
      }
 }
 
@@ -229,8 +233,13 @@ Void State::mouse_button_right_clicked ( )
      default:
           break;
      case Mode::tile:
-          current_solid = !map.get_coordinate_solid ( mouse_tile_x, mouse_tile_y );
-          map.set_coordinate_solid ( mouse_tile_x, mouse_tile_y, current_solid );
+          if ( current_tile_flag & Map::TileFlags::solid ) {
+               current_solid = !map.get_coordinate_solid ( mouse_tile_x, mouse_tile_y );
+               map.set_coordinate_solid ( mouse_tile_x, mouse_tile_y, current_solid );
+          } else if ( current_tile_flag & Map::TileFlags::invisible ) {
+               current_invisible = !map.get_coordinate_invisible ( mouse_tile_x, mouse_tile_y );
+               map.set_coordinate_invisible ( mouse_tile_x, mouse_tile_y, current_invisible );
+          }
           break;
      case Mode::decor:
           break;
@@ -387,6 +396,10 @@ Void State::mouse_button_right_clicked ( )
                }
           }
      } break;
+     case Mode::secret:
+          map.set_secret_clear_tile ( Map::Location { static_cast<Uint8>( mouse_tile_x ),
+                                                      static_cast<Uint8>( mouse_tile_y ) } );
+          break;
      }
 }
 
@@ -529,6 +542,12 @@ Void State::mouse_scrolled ( Int32 scroll )
      switch ( mode )
      {
      default:
+          break;
+     case Mode::tile:
+          current_tile_flag <<= 1;
+          if ( current_tile_flag > Map::TileFlags::invisible ) {
+               current_tile_flag = Map::TileFlags::solid;
+          }
           break;
      case Mode::enemy:
           if ( mouse_on_map ( ) ) {
@@ -689,7 +708,9 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
      state->right_button_down = false;
 
      state->current_tile                 = 0;
+     state->current_tile_flag            = Map::TileFlags::solid;
      state->current_solid                = false;
+     state->current_invisible            = false;
      state->current_decor                = 0;
      state->current_lamp                 = 0;
      state->current_enemy                = 0;
@@ -876,6 +897,12 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      default:
           break;
      case Mode::tile:
+          if ( state->current_tile_flag & Map::TileFlags::solid ) {
+               sprintf ( state->message_buffer, "SOLIDS\n" );
+          } else if ( state->current_tile_flag & Map::TileFlags::invisible ) {
+               sprintf ( state->message_buffer, "INVIS\n" );
+          }
+
           if ( !state->mouse_on_map ( ) ) {
                break;
           }
@@ -884,8 +911,13 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                state->map.set_coordinate_value ( state->mouse_tile_x, state->mouse_tile_y,
                                                  state->current_tile );
           } else if ( state->right_button_down ) {
-               state->map.set_coordinate_solid ( state->mouse_tile_x, state->mouse_tile_y,
-                                                 state->current_solid );
+               if ( state->current_tile_flag & Map::TileFlags::solid ) {
+                    state->map.set_coordinate_solid ( state->mouse_tile_x, state->mouse_tile_y,
+                                                      state->current_solid );
+               } else if ( state->current_tile_flag & Map::TileFlags::invisible ) {
+                    state->map.set_coordinate_invisible ( state->mouse_tile_x, state->mouse_tile_y,
+                                                          state->current_invisible );
+               }
           }
           break;
      case Mode::decor:
@@ -1044,24 +1076,37 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 static Void render_map_solids ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y )
 {
      Uint32 red_color = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
+     Uint32 green_color = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
 
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
 
                bool is_solid = map.get_coordinate_solid ( x, y );
 
-               if ( !is_solid ) {
-                    continue;
+               if ( is_solid ) {
+                    SDL_Rect outline_rect { ( x * Map::c_tile_dimension_in_pixels ),
+                                            ( y * Map::c_tile_dimension_in_pixels ),
+                                            Map::c_tile_dimension_in_pixels,
+                                            Map::c_tile_dimension_in_pixels};
+
+                    world_to_sdl ( outline_rect, back_buffer, camera_x, camera_y );
+
+                    render_rect_outline ( back_buffer, outline_rect, red_color );
                }
 
-               SDL_Rect outline_rect { ( x * Map::c_tile_dimension_in_pixels ),
-                                       ( y * Map::c_tile_dimension_in_pixels ),
-                                       Map::c_tile_dimension_in_pixels,
-                                       Map::c_tile_dimension_in_pixels};
+               Bool is_invisible = map.get_coordinate_invisible ( x, y );
 
-               world_to_sdl ( outline_rect, back_buffer, camera_x, camera_y );
+               if ( is_invisible ) {
+                    const Int32 c_half_tile = Map::c_tile_dimension_in_pixels / 2;
+                    SDL_Rect outline_rect { ( x * Map::c_tile_dimension_in_pixels ) + c_half_tile,
+                                            ( y * Map::c_tile_dimension_in_pixels ) + c_half_tile,
+                                            1,
+                                            1 };
 
-               render_rect_outline ( back_buffer, outline_rect, red_color );
+                    world_to_sdl ( outline_rect, back_buffer, camera_x, camera_y );
+
+                    render_rect_outline ( back_buffer, outline_rect, green_color );
+               }
           }
      }
 }
@@ -1124,12 +1169,32 @@ static Void render_mode_icons ( SDL_Surface* back_buffer, SDL_Surface* icon_surf
      render_rect_outline ( back_buffer, outline_rect, red_color );
 }
 
+static Void render_secret ( SDL_Surface* back_buffer, const Map::Secret& secret,
+                            Real32 camera_x, Real32 camera_y )
+{
+     Uint32 red_color = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
+     Uint32 green_color = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
+
+     SDL_Rect location_rect { ( secret.location.x * Map::c_tile_dimension_in_pixels ),
+                              ( secret.location.y * Map::c_tile_dimension_in_pixels ),
+                              Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+     SDL_Rect secret_rect { ( secret.clear_tile.x * Map::c_tile_dimension_in_pixels ),
+                            ( secret.clear_tile.y * Map::c_tile_dimension_in_pixels ),
+                            Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     world_to_sdl ( location_rect, back_buffer, camera_x, camera_y );
+     world_to_sdl ( secret_rect, back_buffer, camera_x, camera_y );
+
+     render_rect_outline ( back_buffer, location_rect, red_color );
+     render_rect_outline ( back_buffer, secret_rect, green_color );
+}
+
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      State* state = get_state ( game_memory );
 
      // map
-     state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+     state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ), true );
 
      // interactives
      state->interactives_display.render ( back_buffer, state->interactives,
@@ -1147,6 +1212,11 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // solids
      if ( state->draw_solids ) {
           render_map_solids ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+     }
+
+     // render the secret in a specific mode
+     if ( state->mode == Mode::secret ) {
+          render_secret ( back_buffer, state->map.secret ( ), state->camera.x ( ), state->camera.y ( ) );
      }
 
      // ui

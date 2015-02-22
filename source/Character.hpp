@@ -117,6 +117,7 @@ namespace bryte
           Real32 walk_frame_rate;
 
           Bool constant_animation;
+          Bool draw_facing;
 
           Direction damage_pushed;
 

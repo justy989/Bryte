@@ -764,10 +764,10 @@ Void State::update_player ( float time_delta )
 
                character_adjacent_tile ( player, &player_activate_tile_x, &player_activate_tile_y );
 
-               if ( player_activate_tile_x >= 0 && player_activate_tile_x < interactives.width ( ) &&
-                    player_activate_tile_y >= 0 && player_activate_tile_y < interactives.height ( ) ) {
-
-                    Auto& interactive = interactives.get_from_tile ( player_activate_tile_x, player_activate_tile_y );
+               if ( map.coordinates_valid ( Map::Coordinates { player_activate_tile_x,
+                                                               player_activate_tile_y } ) ) {
+                    Auto& interactive = interactives.get_from_tile ( player_activate_tile_x,
+                                                                     player_activate_tile_y );
 
                     if ( interactive.type == Interactive::Type::exit ) {
                          if ( interactive.interactive_exit.state == Exit::State::locked &&
@@ -788,6 +788,15 @@ Void State::update_player ( float time_delta )
                          if ( success ) {
                               sound.play_effect ( Sound::Effect::activate_interactive );
                          }
+                    }
+
+                    Auto& secret_location = map.secret ( ).location;
+
+                    if ( player_activate_tile_x == secret_location.x &&
+                         player_activate_tile_y == secret_location.y ) {
+                         sound.play_effect ( Sound::Effect::activate_interactive );
+                         map.find_secret ( );
+                         LOG_DEBUG ( "Found secret!\n" );
                     }
                }
           }
@@ -1521,7 +1530,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                                        state->player.position.y ( ), state->player.height ( ) ) );
 
      // map
-     state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
+     state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ),
+                                 state->map.found_secret ( ) );
 
      // interactives
      state->interactives_display.tick ( );

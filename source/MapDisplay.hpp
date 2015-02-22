@@ -11,7 +11,8 @@ namespace bryte
 
           MapDisplay ( );
 
-          Void render ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y );
+          Void render ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y,
+                        Bool invisibles );
 
           SDL_Surface* tilesheet;
           SDL_Surface* decorsheet;

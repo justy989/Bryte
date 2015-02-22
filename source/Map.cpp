@@ -61,7 +61,7 @@ Void Map::initialize ( Uint8 width, Uint8 height )
                Auto index = y * width + x;
 
                m_tiles [ index ].value = 1;
-               m_tiles [ index ].solid = false;
+               m_tiles [ index ].flags = 0;
           }
      }
 
@@ -124,7 +124,12 @@ Uint8 Map::get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const
 
 Bool Map::get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const
 {
-     return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid;
+     return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].flags & TileFlags::solid;
+}
+
+Bool Map::get_coordinate_invisible ( Int32 tile_x, Int32 tile_y ) const
+{
+     return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].flags & TileFlags::invisible;
 }
 
 Uint8 Map::get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const
@@ -139,7 +144,24 @@ Void Map::set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value )
 
 Void Map::set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid )
 {
-     m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].solid = solid;
+     Auto& flags = m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].flags;
+
+     if ( solid ) {
+          flags |= TileFlags::solid;
+     } else {
+          flags &= ~TileFlags::solid;
+     }
+}
+
+Void Map::set_coordinate_invisible ( Int32 tile_x, Int32 tile_y, Bool invisible )
+{
+     Auto& flags = m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].flags;
+
+     if ( invisible ) {
+          flags |= TileFlags::invisible;
+     } else {
+          flags &= ~TileFlags::invisible;
+     }
 }
 
 Map::Fixture* Map::check_coordinates_for_decor ( Int32 x, Int32 y )
@@ -294,6 +316,8 @@ Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
      restore_exits ( interactives );
      restore_enemy_spawns ( );
 
+     m_secret.found = false;
+
      return success;
 }
 
@@ -351,6 +375,9 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
 
      file.write ( reinterpret_cast<const Char8*> ( &m_activate_on_all_enemies_killed ),
                   sizeof ( m_activate_on_all_enemies_killed ) );
+
+     file.write ( reinterpret_cast<const Char8*> ( &m_secret.location ), sizeof ( m_secret.location ) );
+     file.write ( reinterpret_cast<const Char8*> ( &m_secret.clear_tile ), sizeof ( m_secret.clear_tile ) );
 }
 
 Bool Map::load ( const Char8* filepath, Interactives& interactives )
@@ -417,6 +444,9 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
 
      file.read ( reinterpret_cast<Char8*> ( &m_activate_on_all_enemies_killed ),
                  sizeof ( m_activate_on_all_enemies_killed ) );
+
+     file.read ( reinterpret_cast<Char8*> ( &m_secret.location ), sizeof ( m_secret.location ) );
+     file.read ( reinterpret_cast<Char8*> ( &m_secret.clear_tile ), sizeof ( m_secret.clear_tile ) );
 
      return true;
 }
@@ -532,5 +562,17 @@ Void Map::restore_enemy_spawns ( )
      }
 
      m_enemy_spawn_count = new_enemy_spawn_count;
+}
+
+Void Map::find_secret ( )
+{
+     if ( m_secret.found ) {
+          return;
+     }
+
+     m_secret.found = true;
+
+     set_coordinate_value ( m_secret.clear_tile.x, m_secret.clear_tile.y, 1 );
+     set_coordinate_solid ( m_secret.clear_tile.x, m_secret.clear_tile.y, false );
 }
 

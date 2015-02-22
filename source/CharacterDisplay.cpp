@@ -71,6 +71,7 @@ static void render_blink ( SDL_Surface* back_buffer, SDL_Surface* character_shee
      SDL_BlitSurface ( blink_surface, &blink_dest_rect, back_buffer, dest_rect );
 }
 
+// NOTE: player only
 static Void render_character_attack ( SDL_Surface* back_buffer, SDL_Surface* horizontal_attack_sheet,
                                       SDL_Surface* vertical_attack_sheet, const Character& character,
                                       Real32 camera_x, Real32 camera_y )
@@ -145,7 +146,7 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
                                Real32 camera_x, Real32 camera_y,
                                Bool blink_on )
 {
-     // do not draw if dead
+     // do not draw
      if ( character.is_dead ( ) ) {
           return;
      }
@@ -155,9 +156,13 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
 
      SDL_Rect clip_rect = {
           character.walk_frame * Map::c_tile_dimension_in_pixels,
-          static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels,
+          0,
           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
      };
+
+     if ( character.draw_facing ) {
+          clip_rect.y = static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels;
+     }
 
      if ( character.state == Character::State::attacking ) {
           clip_rect.y += Direction::count * Map::c_tile_dimension_in_pixels;

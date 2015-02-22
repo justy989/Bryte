@@ -54,6 +54,7 @@ namespace editor
           ice,
           moving_walkway,
           ice_detector,
+          secret,
           count
      };
 
@@ -103,8 +104,10 @@ namespace editor
           Bool  left_button_down;
           Bool  right_button_down;
 
+          Uint8 current_tile_flag;
           Uint8 current_tile;
           Bool  current_solid;
+          Bool  current_invisible;
           Uint8 current_decor;
           Uint8 current_lamp;
           Uint8 current_enemy;

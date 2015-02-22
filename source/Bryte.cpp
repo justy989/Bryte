@@ -498,6 +498,8 @@ Void State::persist_map ( )
 
           map.persist_enemy ( enemy, c );
      }
+
+     map.persist_secret ( );
 }
 
 Void State::spawn_map_enemies ( )

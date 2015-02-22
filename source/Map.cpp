@@ -318,6 +318,10 @@ Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
 
      m_secret.found = false;
 
+     if ( m_persisted_secrets [ map_index ] ) {
+          find_secret ( );
+     }
+
      return success;
 }
 
@@ -471,6 +475,8 @@ void Map::clear_persistence ( )
                persisted_enemy.location.x = 0;
                persisted_enemy.location.y = 0;
           }
+
+          m_persisted_secrets [ i ] = false;
      }
 }
 
@@ -521,6 +527,11 @@ Void Map::persist_enemy ( const Enemy& enemy, Uint8 index )
      persisted_enemy.location.y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 }
 
+Void Map::persist_secret ( )
+{
+     m_persisted_secrets [ m_current_master_map ] = m_secret.found;
+}
+
 Void Map::restore_exits ( Interactives& interactives )
 {
      // try to find an exit that matches this map_index
@@ -544,31 +555,6 @@ Void Map::restore_exits ( Interactives& interactives )
                }
           }
      }
-
-#if 0
-     Auto& map_persisted_exits = m_persisted_exits [ m_current_master_map ];
-
-     for ( Uint8 i = 0; i < map_persisted_exits.exit_count; ++i ) {
-          Auto& persisted_exit = map_persisted_exits.exits [ i ];
-          Auto& interactive = interactives.get_from_tile ( persisted_exit.location.x,
-                                                           persisted_exit.location.y );
-
-          if ( interactive.type != Interactive::Type::exit ) {
-               LOG_ERROR ( "Unable to persist exit at %d %d, map has changed.\n",
-                           persisted_exit.location.x, persisted_exit.location.y );
-               continue;
-          }
-
-          LOG_DEBUG ( "Restoring exit %d %d to state %d\n",
-                      persisted_exit.location.x, persisted_exit.location.y,
-                      persisted_exit.id );
-
-          Auto& exit = interactive.interactive_exit;
-          exit.state = static_cast<Exit::State> ( persisted_exit.id );
-     }
-
-     map_persisted_exits.exit_count = 0;
-#endif
 }
 
 Void Map::restore_enemy_spawns ( )

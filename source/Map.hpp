@@ -74,6 +74,12 @@ namespace bryte
                Pickup::Type drop;
           };
 
+          struct Secret {
+               Bool found;
+               Location clear_tile;
+               Location location;
+          };
+
           struct PersistedExit {
                struct Map {
                     Uint8 index;
@@ -92,14 +98,6 @@ namespace bryte
           struct PersistedEnemies {
                PersistEnemy enemies [ c_max_enemy_spawns ];
           };
-
-          struct Secret {
-               Bool found;
-               Location clear_tile;
-               Location location;
-          };
-
-          // TODO: persisted secrets
 
      public:
 
@@ -148,6 +146,7 @@ namespace bryte
 
           Void persist_exit ( const Interactive& exit, Uint8 x, Uint8 y );
           Void persist_enemy ( const Enemy& enemy, Uint8 index );
+          Void persist_secret ( );
 
           Void clear_persistence ( );
 
@@ -205,11 +204,6 @@ namespace bryte
           Char8          m_master_list [ c_max_maps ][ c_max_map_name_size ];
           Uint8          m_master_count;
 
-          PersistedExit  m_persisted_exits [ c_max_exits ];
-          Uint8          m_persisted_exit_count;
-
-          PersistedEnemies m_persisted_enemies [ c_max_maps ];
-
           Int32          m_current_master_map;
 
           Tile           m_tiles [ c_max_tiles ];
@@ -232,6 +226,13 @@ namespace bryte
           Location       m_activate_on_all_enemies_killed;
 
           Secret         m_secret;
+
+          PersistedExit  m_persisted_exits [ c_max_exits ];
+          Uint8          m_persisted_exit_count;
+
+          PersistedEnemies m_persisted_enemies [ c_max_maps ];
+
+          Bool m_persisted_secrets [ c_max_maps ];
      };
 
      inline Int32 Map::width ( ) const

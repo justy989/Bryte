@@ -32,18 +32,37 @@ Void InteractivesDisplay::tick ( )
 }
 
 Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& interactives,
-                                   Real32 camera_x, Real32 camera_y )
+                                   const Map& map, Real32 camera_x, Real32 camera_y, Bool invisible )
 {
-     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
-          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               Int32 position_x = x * Map::c_tile_dimension_in_pixels;
-               Int32 position_y = y * Map::c_tile_dimension_in_pixels;
+     if ( invisible ) {
+          for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
+               for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
+                    Int32 position_x = x * Map::c_tile_dimension_in_pixels;
+                    Int32 position_y = y * Map::c_tile_dimension_in_pixels;
 
-               Auto& interactive = interactives.get_from_tile ( x, y );
+                    Auto& interactive = interactives.get_from_tile ( x, y );
 
-               render_underneath ( back_buffer, interactive.underneath, position_x, position_y,
-                                   camera_x, camera_y );
-               render_interactive ( back_buffer, interactive, position_x, position_y, camera_x, camera_y );
+                    render_underneath ( back_buffer, interactive.underneath, position_x, position_y,
+                                        camera_x, camera_y );
+                    render_interactive ( back_buffer, interactive, position_x, position_y, camera_x, camera_y );
+               }
+          }
+     } else {
+          for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
+               for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
+                    Int32 position_x = x * Map::c_tile_dimension_in_pixels;
+                    Int32 position_y = y * Map::c_tile_dimension_in_pixels;
+
+                    if ( map.get_coordinate_invisible ( x, y ) ) {
+                         continue;
+                    }
+
+                    Auto& interactive = interactives.get_from_tile ( x, y );
+
+                    render_underneath ( back_buffer, interactive.underneath, position_x, position_y,
+                                        camera_x, camera_y );
+                    render_interactive ( back_buffer, interactive, position_x, position_y, camera_x, camera_y );
+               }
           }
      }
 }
@@ -102,6 +121,9 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
                     clip_rect.x += Map::c_tile_dimension_in_pixels * detector_frame;
                }
           }
+          break;
+     case UnderneathInteractive::Type::ice_detector:
+          clip_rect.x = underneath.underneath_ice_detector.detected * Map::c_tile_dimension_in_pixels;
           break;
      }
 
@@ -173,9 +195,6 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::turret:
           clip_rect.x = interactive.interactive_turret.facing * Map::c_tile_dimension_in_pixels;
           break;
-     case Interactive::Type::ice_detector:
-          clip_rect.x = interactive.interactive_ice_detector.detected * Map::c_tile_dimension_in_pixels;
-          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -214,6 +233,5 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           }
           break;
      }
-
 }
 

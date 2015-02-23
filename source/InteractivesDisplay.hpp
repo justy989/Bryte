@@ -16,7 +16,7 @@ namespace bryte
           Void tick ( );
 
           Void render ( SDL_Surface* back_buffer, Interactives& interactives,
-                        Real32 camera_x, Real32 camera_y );
+                        const Map& map, Real32 camera_x, Real32 camera_y, Bool invisible );
 
           Void render_underneath ( SDL_Surface* back_buffer, UnderneathInteractive& underneath,
                                     Int32 position_x, Int32 position_y,

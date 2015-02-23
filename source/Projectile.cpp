@@ -59,16 +59,17 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
      Vector arrow_center = position + Projectile::collision_points [ facing ];
      Map::Coordinates tile = Map::vector_to_coordinates ( arrow_center );
 
+     if ( !map.coordinates_valid ( tile ) ) {
+          life_state = Entity::LifeState::dead;
+          return false;
+     }
+
      Int32 tile_index = map.coordinate_to_tile_index ( tile.x, tile.y );
 
      if ( tile_index == current_tile ) {
           return false;
      } else {
           current_tile = tile_index;
-     }
-
-     if ( !map.coordinates_valid ( tile ) ) {
-          return false;
      }
 
      if ( map.get_coordinate_solid ( tile.x, tile.y ) ) {
@@ -99,7 +100,8 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
                }
 
                return false;
-          } else if ( interactive.type != Interactive::Type::exit ) {
+          } else if ( interactive.type != Interactive::Type::exit &&
+                      interactive.underneath.type != UnderneathInteractive::Type::popup_block ) {
                interactive.activate ( interactives );
           }
 

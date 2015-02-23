@@ -37,8 +37,8 @@ Int32 main ( Int32 argc, Char8** argv )
 
      bryte_settings.map_master_list_filename = "map_list.txt";
      bryte_settings.map_index = 0;
-     bryte_settings.player_spawn_tile_x = 2;
-     bryte_settings.player_spawn_tile_y = 7;
+     bryte_settings.player_spawn_tile_x = 6;
+     bryte_settings.player_spawn_tile_y = 2;
 
      for ( int i = 1; i < argc; ++i ) {
           if ( strcmp ( argv [ i ], "-h" ) == 0 ) {

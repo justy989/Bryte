@@ -398,6 +398,8 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
      file.read ( reinterpret_cast<Char8*>( &m_width ), sizeof ( m_width ) );
      file.read ( reinterpret_cast<Char8*>( &m_height ), sizeof ( m_height ) );
 
+     LOG_INFO ( "Dimensions: %d, %d\n", m_width, m_height );
+
      if ( m_width <= 0 || m_height <= 0 ||
           m_width * m_height > c_max_tiles ) {
           LOG_ERROR ( "Invalid map dimensions: %d, %d\n", m_width, m_height );

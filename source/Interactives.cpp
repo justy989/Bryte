@@ -34,6 +34,9 @@ Void UnderneathInteractive::reset ( )
      case light_detector:
           underneath_light_detector.reset ( );
           break;
+     case ice_detector:
+          underneath_ice_detector.reset ( );
+          break;
      }
 }
 
@@ -165,6 +168,11 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           i.underneath.underneath_ice.force_dir = Direction::count;
      }
 
+     if ( i.underneath.type == UnderneathInteractive::Type::ice_detector &&
+          i.underneath.underneath_ice_detector.force_dir != Direction::count ) {
+          i.underneath.underneath_ice_detector.force_dir = Direction::count;
+     }
+
      return false;
 }
 
@@ -228,12 +236,11 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
 
                     if ( interactive.underneath.type == UnderneathInteractive::Type::ice ) {
                          interactive.underneath.type = UnderneathInteractive::Type::none;
-
-                         if ( interactive.type == Interactive::Type::ice_detector ) {
-                              interactive.interactive_ice_detector.detected =
-                                   !interactive.interactive_ice_detector.detected;
-                              activate ( interactive.interactive_ice_detector.activate_coordinate_x,
-                                         interactive.interactive_ice_detector.activate_coordinate_y );
+                    } else if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
+                         Auto& detector = interactive.underneath.underneath_ice_detector;
+                         if ( detector.detected ) {
+                              detector.detected = !detector.detected;
+                              activate ( detector.activate_coordinate_x, detector.activate_coordinate_y );
                          }
                     }
                }
@@ -250,12 +257,11 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
                     if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
                          interactive.underneath.type = UnderneathInteractive::Type::ice;
                          interactive.underneath.underneath_ice.force_dir = Direction::count;
-
-                         if ( interactive.type == Interactive::Type::ice_detector ) {
-                              interactive.interactive_ice_detector.detected =
-                                   !interactive.interactive_ice_detector.detected;
-                              activate ( interactive.interactive_ice_detector.activate_coordinate_x,
-                                         interactive.interactive_ice_detector.activate_coordinate_y );
+                    } else if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
+                         Auto& detector = interactive.underneath.underneath_ice_detector;
+                         if ( !detector.detected ) {
+                              detector.detected = !detector.detected;
+                              activate ( detector.activate_coordinate_x, detector.activate_coordinate_y );
                          }
                     }
                }
@@ -313,9 +319,6 @@ Void Interactive::reset ( )
           break;
      case Type::turret:
           interactive_turret.reset ( );
-          break;
-     case Type::ice_detector:
-          interactive_ice_detector.reset ( );
           break;
      }
 
@@ -447,6 +450,9 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
      } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
           Auto& ice = underneath.underneath_ice;
           ice.force_dir = from;
+     } else if ( underneath.type == UnderneathInteractive::Type::ice_detector ) {
+          Auto& detector = underneath.underneath_ice_detector;
+          detector.force_dir = from;
      } else if ( underneath.type == UnderneathInteractive::Type::light_detector ) {
           Auto& detector = underneath.underneath_light_detector;
           detector.light ( 0, interactives );
@@ -467,6 +473,9 @@ Void Interactive::interactive_leave ( Direction to, Interactives& interactives )
      } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
           Auto& ice = underneath.underneath_ice;
           ice.force_dir = Direction::count;
+     } else if ( underneath.type == UnderneathInteractive::Type::ice_detector ) {
+          Auto& detector = underneath.underneath_ice_detector;
+          detector.force_dir = Direction::count;
      }
 }
 
@@ -821,6 +830,7 @@ Void MovingWalkway::reset ( )
 Void IceDetector::reset ( )
 {
      detected = false;
+     force_dir = Direction::count;
      activate_coordinate_x = 0;
      activate_coordinate_y = 0;
 }

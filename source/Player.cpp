@@ -9,7 +9,7 @@ Void Player::clear ( )
 {
      state = State::idle;
 
-     facing = Direction::left;
+     facing = Direction::up;
      state_watch.reset ( 0.0f );
 
      health           = 6;

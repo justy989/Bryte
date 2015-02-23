@@ -137,6 +137,7 @@ Void State::mouse_button_left_clicked ( )
                interactive.underneath.type = UnderneathInteractive::Type::light_detector;
                Auto& detector = interactive.underneath.underneath_light_detector;
                detector.type = static_cast<LightDetector::Type>( current_light_detector_bryte );
+               detector.below_value = true;
           } else {
                interactive.underneath.type = UnderneathInteractive::Type::none;
           }
@@ -216,8 +217,15 @@ Void State::mouse_button_left_clicked ( )
           }
      } break;
      case Mode::ice_detector:
-          place_or_clear_interactive ( Interactive::Type::ice_detector, mouse_tile_x, mouse_tile_y );
-          break;
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
+               interactive.underneath.type = UnderneathInteractive::Type::ice_detector;
+          } else {
+               interactive.underneath.type = UnderneathInteractive::Type::none;
+          }
+     } break;
      case Mode::secret:
           map.set_secret_location ( Map::Location { static_cast<Uint8>( mouse_tile_x ),
                                                     static_cast<Uint8>( mouse_tile_y ) } );
@@ -384,17 +392,18 @@ Void State::mouse_button_right_clicked ( )
      {
           Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
-          if ( interactive.type == Interactive::Type::ice_detector ) {
+          if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
                current_interactive_x = mouse_tile_x;
                current_interactive_y = mouse_tile_y;
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    Auto& lever = interactives.get_from_tile ( current_interactive_x,
-                                                               current_interactive_y );
-                    ASSERT ( lever.type == Interactive::Type::ice_detector );
-                    lever.interactive_ice_detector.activate_coordinate_x = mouse_tile_x;
-                    lever.interactive_ice_detector.activate_coordinate_y = mouse_tile_y;
+                    Auto& interactive = interactives.get_from_tile ( current_interactive_x,
+                                                                     current_interactive_y );
+                    ASSERT ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector );
+                    Auto& detector = interactive.underneath.underneath_ice_detector;
+                    detector.activate_coordinate_x = mouse_tile_x;
+                    detector.activate_coordinate_y = mouse_tile_y;
                     track_current_interactive = false;
                }
           }
@@ -1070,8 +1079,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
-          if ( interactive.type == Interactive::Type::ice_detector ) {
-               Auto& ice_detector = interactive.interactive_ice_detector;
+          if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
+               Auto& ice_detector = interactive.underneath.underneath_ice_detector;
                sprintf ( state->message_buffer, "ACT %d %d",
                          ice_detector.activate_coordinate_x, ice_detector.activate_coordinate_y );
           }
@@ -1207,8 +1216,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ), true );
 
      // interactives
-     state->interactives_display.render ( back_buffer, state->interactives,
-                                          state->camera.x ( ), state->camera.y ( ) );
+     state->interactives_display.render ( back_buffer, state->interactives, state->map,
+                                          state->camera.x ( ), state->camera.y ( ), true );
 
      // enemy spawns
      render_enemy_spawns ( back_buffer, state->character_display.enemy_sheets,
@@ -1345,7 +1354,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->interactives_display.interactive_sheet,
                                 state->mouse_x, state->mouse_y,
                                 0,
-                                Interactive::Type::ice_detector - 1 );
+                                ( Interactive::Type::count - 2 ) + UnderneathInteractive::Type::ice_detector );
           break;
      }
 

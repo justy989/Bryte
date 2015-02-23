@@ -145,6 +145,7 @@ namespace bryte
           Void reset ( );
 
           Bool detected;
+          Direction force_dir;
           Uint8 activate_coordinate_x;
           Uint8 activate_coordinate_y;
      };
@@ -160,7 +161,6 @@ namespace bryte
      };
 
      struct Ice {
-
           Void reset ( );
 
           Direction force_dir;
@@ -180,6 +180,7 @@ namespace bryte
                ice,
                moving_walkway,
                light_detector,
+               ice_detector,
                count
           };
 
@@ -193,6 +194,7 @@ namespace bryte
                Ice           underneath_ice;
                MovingWalkway underneath_moving_walkway;
                LightDetector underneath_light_detector;
+               IceDetector   underneath_ice_detector;
           };
      };
 
@@ -206,7 +208,6 @@ namespace bryte
                exit,
                bombable_block,
                turret,
-               ice_detector,
                count
           };
 
@@ -234,7 +235,6 @@ namespace bryte
                Torch         interactive_torch;
                PushableTorch interactive_pushable_torch;
                Turret        interactive_turret;
-               IceDetector   interactive_ice_detector;
           };
 
           UnderneathInteractive underneath;

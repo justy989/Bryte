@@ -900,6 +900,15 @@ Void State::update_interactives ( float time_delta )
                interactives.push ( tile_x, tile_y, interactive.underneath.underneath_ice.force_dir, map );
           }
 
+          if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector &&
+               interactive.underneath.underneath_ice_detector.detected &&
+               interactive.underneath.underneath_ice_detector.force_dir != Direction::count ) {
+               Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+               Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+               interactives.push ( tile_x, tile_y,
+                                   interactive.underneath.underneath_ice_detector.force_dir, map );
+          }
+
           if ( interactive.underneath.type == UnderneathInteractive::Type::moving_walkway &&
                interactive.underneath.underneath_ice.force_dir != Direction::count ) {
                Int32 tile_x = map.tile_index_to_coordinate_x ( i );
@@ -920,7 +929,6 @@ Void State::update_interactives ( float time_delta )
                     interactives.spread_ice ( tile_x, tile_y, map,
                                               element == Element::ice ? false : true );
                }
-
                break;
           case Interactive::Type::lever:
                interactive.update ( time_delta, interactives );
@@ -1011,6 +1019,7 @@ Void State::update_projectiles ( float time_delta )
                                         player.collision_y ( ) + player.collision_height ( ) ) ) {
 
                     projectile.hit_character ( player );
+                    sound.play_effect ( Sound::Effect::player_damaged );
                }
                break;
          case Projectile::Alliance::neutral:
@@ -1041,6 +1050,7 @@ Void State::update_projectiles ( float time_delta )
                                         player.collision_y ( ) + player.collision_height ( ) ) ) {
 
                     projectile.hit_character ( player );
+                    sound.play_effect ( Sound::Effect::player_damaged );
                }
 
                break;
@@ -1534,8 +1544,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      // interactives
      state->interactives_display.tick ( );
-     state->interactives_display.render ( back_buffer, state->interactives,
-                                          state->camera.x ( ), state->camera.y ( ) );
+     state->interactives_display.render ( back_buffer, state->interactives, state->map,
+                                          state->camera.x ( ), state->camera.y ( ), state->map.found_secret ( ) );
 
      state->character_display.tick ( );
 

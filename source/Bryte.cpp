@@ -1708,7 +1708,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                     state->invincible ? "ON" : "OFF" );
 
           state->text.render ( back_buffer, buffer, 0, 230 );
-#endif
      }
+#endif
 }
 

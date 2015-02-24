@@ -415,6 +415,9 @@ Void Interactive::character_enter ( Direction from, Interactives& interactives, 
           character.on_ice = true;
      } else if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
           character.on_moving_walkway = underneath.underneath_moving_walkway.facing;
+     } else if ( underneath.type == UnderneathInteractive::Type::ice_detector &&
+                 underneath.underneath_ice_detector.detected ) {
+          character.on_ice = true;
      }
 }
 
@@ -433,6 +436,9 @@ Void Interactive::character_leave ( Direction to, Interactives& interactives, Ch
           character.on_ice = false;
      } else if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
           character.on_moving_walkway = Direction::count;
+     } else if ( underneath.type == UnderneathInteractive::Type::ice_detector &&
+                 underneath.underneath_ice_detector.detected ) {
+          character.on_ice = false;
      }
 }
 

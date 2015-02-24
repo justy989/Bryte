@@ -92,6 +92,8 @@ Void State::mouse_button_left_clicked ( )
 
           if ( interactive.type == Interactive::Type::pushable_block ) {
                interactive.interactive_pushable_block.one_time = true;
+               interactive.interactive_pushable_block.state = current_pushable_solid ?
+                    PushableBlock::State::solid : PushableBlock::State::idle;
           }
      } break;
      case Mode::enemy:
@@ -137,7 +139,11 @@ Void State::mouse_button_left_clicked ( )
                interactive.underneath.type = UnderneathInteractive::Type::light_detector;
                Auto& detector = interactive.underneath.underneath_light_detector;
                detector.type = static_cast<LightDetector::Type>( current_light_detector_bryte );
-               detector.below_value = true;
+               if ( detector.type == LightDetector::Type::bryte ) {
+                    detector.below_value = true;
+               } else {
+                    detector.below_value = false;
+               }
           } else {
                interactive.underneath.type = UnderneathInteractive::Type::none;
           }
@@ -305,6 +311,8 @@ Void State::mouse_button_right_clicked ( )
                     pushable_block.interactive_pushable_block.activate_coordinate_x = mouse_tile_x;
                     pushable_block.interactive_pushable_block.activate_coordinate_y = mouse_tile_y;
                     track_current_interactive = false;
+               } else {
+                    current_pushable_solid = !current_pushable_solid;
                }
           }
      } break;
@@ -736,6 +744,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
      state->current_enemy_drop           = 0;
      state->current_exit_direction       = 0;
      state->current_exit_state           = 0;
+     state->current_pushable_solid       = 0;
      state->current_torch                = 0;
      state->current_pushable_torch       = 0;
      state->current_light_detector_bryte = 0;
@@ -1005,9 +1014,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           if ( interactive.type == Interactive::Type::pushable_block ) {
                Auto& pushable_block = interactive.interactive_pushable_block;
-               sprintf ( state->message_buffer, "ACT %d %d",
+               sprintf ( state->message_buffer, "ACT %d %d SOLID %d",
                          pushable_block.activate_coordinate_y,
-                         pushable_block.activate_coordinate_x );
+                         pushable_block.activate_coordinate_x,
+                         pushable_block.state == PushableBlock::State::solid );
           }
      } break;
      case Mode::light_detector:

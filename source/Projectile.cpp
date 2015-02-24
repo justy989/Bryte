@@ -80,29 +80,31 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
 
      if ( interactive.is_solid ( ) ) {
           // do not activate exits!
-          if ( interactive.type == Interactive::Type::torch ) {
-               if ( effected_by_element ) {
-                    Auto& torch_element = interactive.interactive_torch.element;
-                    torch_element = transition_element ( torch_element, effected_by_element );
-               } else if ( interactive.interactive_torch.element ) {
-                    Auto& torch_element = interactive.interactive_torch.element;
-                    effected_by_element = transition_element ( effected_by_element, torch_element );
-               }
+          if ( type == Projectile::Type::arrow ) {
+               if ( interactive.type == Interactive::Type::torch ) {
+                    if ( effected_by_element ) {
+                         Auto& torch_element = interactive.interactive_torch.element;
+                         torch_element = transition_element ( torch_element, effected_by_element );
+                    } else if ( interactive.interactive_torch.element ) {
+                         Auto& torch_element = interactive.interactive_torch.element;
+                         effected_by_element = transition_element ( effected_by_element, torch_element );
+                    }
 
-               return false;
-          } else if ( interactive.type == Interactive::Type::pushable_torch ) {
-               if ( effected_by_element ) {
-                    Auto& torch_element = interactive.interactive_pushable_torch.torch.element;
-                    torch_element = transition_element ( torch_element, effected_by_element );
-               } else if ( interactive.interactive_pushable_torch.torch.element ) {
-                    Auto& torch_element = interactive.interactive_pushable_torch.torch.element;
-                    effected_by_element = transition_element ( effected_by_element, torch_element );
-               }
+                    return false;
+               } else if ( interactive.type == Interactive::Type::pushable_torch ) {
+                    if ( effected_by_element ) {
+                         Auto& torch_element = interactive.interactive_pushable_torch.torch.element;
+                         torch_element = transition_element ( torch_element, effected_by_element );
+                    } else if ( interactive.interactive_pushable_torch.torch.element ) {
+                         Auto& torch_element = interactive.interactive_pushable_torch.torch.element;
+                         effected_by_element = transition_element ( effected_by_element, torch_element );
+                    }
 
-               return false;
-          } else if ( interactive.type != Interactive::Type::exit &&
-                      interactive.underneath.type != UnderneathInteractive::Type::popup_block ) {
-               interactive.activate ( interactives );
+                    return false;
+               } else if ( interactive.type != Interactive::Type::exit &&
+                           interactive.underneath.type != UnderneathInteractive::Type::popup_block ) {
+                    interactive.activate ( interactives );
+               }
           }
 
           return true;

@@ -847,7 +847,7 @@ Void State::update_enemies ( float time_delta )
 
           // check collision between player and enemy
           if ( !player.is_blinking ( ) && player.is_alive ( ) &&
-               player.collides_with ( enemy ) ) {
+               !enemy.is_blinking ( ) && player.collides_with ( enemy ) ) {
                Direction damage_dir = direction_between ( enemy_center, player_center, random );
 
                // check if player blocked the attack

@@ -10,6 +10,15 @@ InteractivesDisplay::InteractivesDisplay ( ) :
 
 }
 
+Void InteractivesDisplay::clear ( )
+{
+     animation.clear ( );
+     ice_animation.clear ( );
+     moving_walkway_animation.clear ( );
+
+     ice_sleep_counter = 0;
+}
+
 Void InteractivesDisplay::tick ( )
 {
      animation.update_increment ( c_frames_per_update );

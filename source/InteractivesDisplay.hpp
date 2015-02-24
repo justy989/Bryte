@@ -13,6 +13,8 @@ namespace bryte
 
           InteractivesDisplay ( );
 
+          Void clear ( );
+
           Void tick ( );
 
           Void render ( SDL_Surface* back_buffer, Interactives& interactives,

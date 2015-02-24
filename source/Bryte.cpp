@@ -323,6 +323,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      interactives_display.animation.clear ( );
      pickup_display.animation.clear ( );
      projectile_display.animation.clear ( );
+     interactives_display.clear ( );
 
      for ( Int32 i = 0; i < c_pickup_queue_size; ++i ) {
           pickup_queue [ i ] = Pickup::Type::none;

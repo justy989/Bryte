@@ -505,9 +505,10 @@ Void State::burn_character ( Character& character )
           character.fire_watch.reset ( Character::c_fire_tick_rate );
      }
 
+     // push character in a random direction
      Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
 
-     damage_character ( character, 1, dir );
+     damage_character ( character, c_burn_damage, dir );
 }
 
 Void State::damage_character ( Character& character, Int32 amount, Direction direction )
@@ -761,11 +762,11 @@ Void State::update_enemies ( float time_delta )
                // check if player blocked the attack
                if ( player.is_blocking ( ) &&
                     damage_dir == opposite_direction ( player.facing ) ) {
-                    damage_character ( enemy, 0, opposite_direction ( damage_dir ) ) ;
+                    damage_character ( enemy, c_block_damage, opposite_direction ( damage_dir ) ) ;
                     spawn_pickup ( enemy.position, enemy.drop );
                     enemy.drop = Pickup::Type::none;
                } else {
-                    damage_character ( player, 1, damage_dir );
+                    damage_character ( player, c_enemy_damage, damage_dir );
                     sound.play_effect ( Sound::Effect::player_damaged );
                }
 
@@ -785,7 +786,7 @@ Void State::update_enemies ( float time_delta )
                player.attack_collides_with ( enemy ) ) {
                Direction damage_dir = direction_between ( player_center, enemy_center, random );
 
-               damage_character ( enemy, 1, damage_dir );
+               damage_character ( enemy, c_attack_damage, damage_dir );
 
                sound.play_effect ( Sound::Effect::player_damaged );
           }
@@ -983,11 +984,9 @@ Void State::update_bombs ( float time_delta )
                     Vector enemy_center = enemy.collision_center ( );
 
                     if ( enemy_center.distance_to ( bomb.position ) < Bomb::c_explode_radius ) {
-                         enemy.damage ( c_bomb_damage, direction_between ( bomb.position,
-                                                                           enemy_center,
-                                                                           random ) );
-
-                         spawn_damage_number ( enemy_center, c_bomb_damage );
+                         damage_character ( enemy, c_bomb_damage, direction_between ( bomb.position,
+                                                                                      enemy_center,
+                                                                                      random ) );
                     }
                }
 

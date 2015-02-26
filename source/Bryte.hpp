@@ -121,6 +121,11 @@ namespace bryte
      public:
 
           static const Int32 c_bomb_damage = 4;
+          static const Int32 c_attack_damage = 1;
+          static const Int32 c_block_damage = 0;
+          static const Int32 c_enemy_damage = 1;
+          static const Int32 c_burn_damage = 1;
+
           static const Int32 c_pickup_queue_size = 8;
           static const Real32 c_pickup_show_time;
 

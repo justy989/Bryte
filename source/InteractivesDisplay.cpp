@@ -121,8 +121,6 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
      case UnderneathInteractive::Type::popup_block:
           if ( underneath.underneath_popup_block.up ) {
                clip_rect.y = ( Interactive::Type::pushable_block - 1 ) * Map::c_tile_dimension_in_pixels;
-          } else {
-               return;
           }
           break;
      case UnderneathInteractive::Type::ice:

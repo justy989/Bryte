@@ -365,12 +365,6 @@ Void Interactive::explode ( Interactives& interactives )
      case Type::lever:
           interactive_lever.activate ( );
           break;
-     case Type::torch:
-          interactive_torch.activate ( );
-          break;
-     case Type::pushable_torch:
-          interactive_pushable_torch.activate ( );
-          break;
      case Type::bombable_block:
           type = Type::none;
           break;

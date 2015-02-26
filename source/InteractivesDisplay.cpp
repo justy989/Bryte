@@ -1,13 +1,33 @@
 #include "InteractivesDisplay.hpp"
 #include "Map.hpp"
+#include "GameMemory.hpp"
+#include "Bitmap.hpp"
 
 using namespace bryte;
 
-InteractivesDisplay::InteractivesDisplay ( ) :
-     interactive_sheet ( nullptr ),
-     ice_sleep_counter ( 0 )
+Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory )
 {
+     if ( !load_bitmap_with_game_memory ( interactive_sheet, game_memory, "castle_interactivesheet.bmp" ) ) {
+          return false;
+     }
 
+     if ( !load_bitmap_with_game_memory ( moving_walkway_sheet, game_memory, "test_moving_walkway.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( light_detector_sheet, game_memory, "test_light_detector.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( exit_sheet, game_memory, "castle_exitsheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( torch_element_sheet, game_memory, "torch_fire.bmp" ) ) {
+          return false;
+     }
+
+     return true;
 }
 
 Void InteractivesDisplay::clear ( )

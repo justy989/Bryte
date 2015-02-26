@@ -6,6 +6,8 @@
 
 #include <SDL2/SDL.h>
 
+class GameMemory;
+
 namespace bryte
 {
      class Map;
@@ -13,7 +15,7 @@ namespace bryte
      struct ProjectileDisplay {
      public:
 
-          ProjectileDisplay ( );
+          Bool load_surfaces ( GameMemory& game_memory );
 
           Void tick ( );
 

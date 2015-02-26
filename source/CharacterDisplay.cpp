@@ -1,8 +1,67 @@
 #include "CharacterDisplay.hpp"
 #include "Map.hpp"
 #include "Utils.hpp"
+#include "GameMemory.hpp"
+#include "Bitmap.hpp"
 
 using namespace bryte;
+
+Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
+{
+     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::rat ], game_memory,
+                                          "test_rat.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::bat ], game_memory,
+                                          "test_bat.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::goo ], game_memory,
+                                          "test_goo.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::skeleton ], game_memory,
+                                          "test_skeleton.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( player_sheet, game_memory, "test_hero.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( vertical_sword_sheet, game_memory, "test_vertical_sword.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( fire_surface, game_memory, "test_effect_fire.bmp" ) ) {
+          return false;
+     }
+
+     blink_surface = SDL_CreateRGBSurface ( 0, 32, 32, 32, 0, 0, 0, 0 );
+
+     if ( !blink_surface ) {
+          LOG_ERROR ( "Failed to create character display blink surface: SDL_CreateRGBSurface(): %s\n",
+                      SDL_GetError ( ) );
+          return false;
+     }
+
+     if ( SDL_SetColorKey ( blink_surface, SDL_TRUE,
+                            SDL_MapRGB ( blink_surface->format, 255, 0, 255 ) ) ) {
+          LOG_ERROR ( "Failed to set color key for character display blink surface SDL_SetColorKey() failed: %s\n",
+                      SDL_GetError ( ) );
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( horizontal_sword_sheet, game_memory,
+                                          "test_horizontal_sword.bmp" ) ) {
+          return false;
+     }
+
+     return true;
+}
 
 static void render_blink ( SDL_Surface* back_buffer, SDL_Surface* character_sheet, SDL_Surface* blink_surface,
                            SDL_Rect* dest_rect, SDL_Rect* clip_rect, Bool is_dying,

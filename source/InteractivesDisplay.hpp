@@ -4,6 +4,8 @@
 #include "Interactives.hpp"
 #include "Animation.hpp"
 
+class GameMemory;
+
 namespace bryte
 {
      class Map;
@@ -11,7 +13,7 @@ namespace bryte
      struct InteractivesDisplay {
      public:
 
-          InteractivesDisplay ( );
+          Bool load_surfaces ( GameMemory& game_memory );
 
           Void clear ( );
 

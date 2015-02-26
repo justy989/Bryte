@@ -25,7 +25,7 @@ namespace bryte
 
      public:
 
-          Void hit_character ( Character& character );
+          Int32 hit_character ( Character& character );
           Void update ( float dt, const Map& map, Interactives& interactives );
           Bool check_for_solids ( const Map& map, Interactives& interactives );
           Void clear ( );

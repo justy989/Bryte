@@ -31,9 +31,11 @@ static Vector vector_from_direction ( Direction dir )
      return Vector { 0.0f, 0.0f };
 }
 
-Void Projectile::hit_character ( Character& character )
+Int32 Projectile::hit_character ( Character& character )
 {
-     character.damage ( 1, facing );
+     Int32 damage_amount = 1;
+
+     character.damage ( damage_amount, facing );
 
      if ( effected_by_element == Element::fire ) {
           character.light_on_fire ( );
@@ -52,6 +54,8 @@ Void Projectile::hit_character ( Character& character )
           clear ( );
           break;
      }
+
+     return damage_amount;
 }
 
 Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )

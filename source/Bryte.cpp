@@ -16,16 +16,6 @@ using namespace bryte;
 
 const Real32 State::c_pickup_show_time    = 2.0f;
 
-static const Char8* c_test_tilesheet_path        = "castle_tilesheet.bmp";
-static const Char8* c_test_decorsheet_path       = "castle_decorsheet.bmp";
-static const Char8* c_test_lampsheet_path        = "castle_lampsheet.bmp";
-static const Char8* c_test_player_path           = "test_hero.bmp";
-static const Char8* c_test_rat_path              = "test_rat.bmp";
-static const Char8* c_test_bat_path              = "test_bat.bmp";
-static const Char8* c_test_goo_path              = "test_goo.bmp";
-static const Char8* c_test_skeleton_path         = "test_skeleton.bmp";
-static const Char8* c_test_pickups_path          = "test_pickups.bmp";
-
 static State* get_state ( GameMemory& game_memory )
 {
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
@@ -131,10 +121,6 @@ Void DamageNumber::clear ( )
 
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
-     if ( !sound.load_effects ( ) ) {
-          return false;
-     }
-
      random.seed ( 13371 );
 
      player_spawn_tile_x = settings->player_spawn_tile_x;
@@ -146,12 +132,55 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      player.life_state = Entity::LifeState::alive;
 
-     for ( int i = 0; i < Enemy::Type::count; ++i ) {
-          character_display.enemy_sheets [ i ] = nullptr;
+     // reset keys
+     for ( Int32 i = 0; i < 4; ++i ) {
+          direction_keys [ i ] = false;
      }
 
-     interactives_display.interactive_sheet = nullptr;
+     attack_key = false;
+     item_key = false;
+     switch_item_key = false;
 
+
+     // clear entity managers
+     pickups.clear ( );
+     projectiles.clear ( );
+     bombs.clear ( );
+     emitters.clear ( );
+     enemies.clear ( );
+     damage_numbers.clear ( );
+
+     // load map
+     map.load_master_list ( settings->map_master_list_filename );
+
+     if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
+          return false;
+     }
+
+     spawn_map_enemies ( );
+     setup_emitters_from_map_lamps ( );
+
+     // projectile collision for various directions
+     Projectile::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
+     Projectile::collision_points [ Direction::up ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 14 ) );
+     Projectile::collision_points [ Direction::right ].set ( pixels_to_meters ( 14 ), pixels_to_meters ( 7 ) );
+     Projectile::collision_points [ Direction::down ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 1 ) );
+
+     // clear animations
+     character_display.fire_animation.clear ( );
+     interactives_display.animation.clear ( );
+     pickup_display.animation.clear ( );
+     projectile_display.animation.clear ( );
+     interactives_display.clear ( );
+
+     // clear pickup queue
+     for ( Int32 i = 0; i < c_pickup_queue_size; ++i ) {
+          pickup_queue [ i ] = Pickup::Type::none;
+     }
+
+     pickup_stopwatch.reset ( c_pickup_show_time );
+
+     // load font surface
      FileContents text_contents = load_entire_file ( "text.bmp", &game_memory );
 
      text.fontsheet         = load_bitmap ( &text_contents );
@@ -163,120 +192,30 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     // load test graphics
-     if ( !load_bitmap_with_game_memory ( map_display.tilesheet, game_memory,
-                                          c_test_tilesheet_path ) ) {
+     back_buffer_format = *text.fontsheet->format;
+
+     // load diplay surfaces
+     if ( !map_display.load_surfaces ( game_memory ) ) {
           return false;
      }
 
-     back_buffer_format = *map_display.tilesheet->format;
-
-     if ( !load_bitmap_with_game_memory ( map_display.decorsheet, game_memory,
-                                          c_test_decorsheet_path ) ) {
+     if ( !character_display.load_surfaces ( game_memory ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( map_display.lampsheet, game_memory,
-                                          c_test_lampsheet_path ) ) {
+     if ( !interactives_display.load_surfaces  ( game_memory ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( character_display.enemy_sheets [ Enemy::Type::rat ], game_memory,
-                                          c_test_rat_path ) ) {
+     if ( !pickup_display.load_surfaces ( game_memory ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( character_display.enemy_sheets [ Enemy::Type::bat ], game_memory,
-                                          c_test_bat_path ) ) {
+     if ( !projectile_display.load_surfaces ( game_memory ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( character_display.enemy_sheets [ Enemy::Type::goo ], game_memory,
-                                          c_test_goo_path ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( character_display.enemy_sheets [ Enemy::Type::skeleton ], game_memory,
-                                          c_test_skeleton_path ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( character_display.player_sheet, game_memory,
-                                          c_test_player_path ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( character_display.vertical_sword_sheet, game_memory,
-                                          "test_vertical_sword.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( character_display.fire_surface, game_memory,
-                                          "test_effect_fire.bmp" ) ) {
-          return false;
-     }
-
-     character_display.blink_surface = SDL_CreateRGBSurface ( 0, 32, 32, 32, 0, 0, 0, 0 );
-     if ( !character_display.blink_surface ) {
-          LOG_ERROR ( "Failed to create character display blink surface: SDL_CreateRGBSurface(): %s\n",
-                      SDL_GetError ( ) );
-          return false;
-     }
-
-     if ( SDL_SetColorKey ( character_display.blink_surface, SDL_TRUE,
-                            SDL_MapRGB ( character_display.blink_surface->format, 255, 0, 255 ) ) ) {
-          LOG_ERROR ( "Failed to set color key for character display blink surface SDL_SetColorKey() failed: %s\n",
-                      SDL_GetError ( ) );
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( character_display.horizontal_sword_sheet, game_memory,
-                                          "test_horizontal_sword.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.interactive_sheet,
-                                          game_memory,
-                                          "castle_interactivesheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.moving_walkway_sheet,
-                                          game_memory,
-                                          "test_moving_walkway.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.light_detector_sheet,
-                                          game_memory,
-                                          "test_light_detector.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.exit_sheet,
-                                          game_memory,
-                                          "castle_exitsheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( interactives_display.torch_element_sheet,
-                                          game_memory,
-                                          "torch_fire.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( pickup_display.pickup_sheet, game_memory, c_test_pickups_path ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( projectile_display.arrow_sheet, game_memory, "test_arrow.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( projectile_display.goo_sheet, game_memory, "test_goo_proj.bmp" ) ) {
-          return false;
-     }
-
+     // load misc surfaces
      if ( !load_bitmap_with_game_memory ( bomb_sheet, game_memory, "test_bomb.bmp" ) ) {
           return false;
      }
@@ -289,47 +228,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     for ( Int32 i = 0; i < 4; ++i ) {
-          direction_keys [ i ] = false;
-     }
-
-     pickups.clear ( );
-     projectiles.clear ( );
-     bombs.clear ( );
-     emitters.clear ( );
-     enemies.clear ( );
-     damage_numbers.clear ( );
-
-     map.load_master_list ( settings->map_master_list_filename );
-
-     if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
+     // load sound effects
+     if ( !sound.load_effects ( ) ) {
           return false;
      }
 
-     spawn_map_enemies ( );
-
-     setup_emitters_from_map_lamps ( );
-
-     attack_key = false;
-     item_key = false;
-     switch_item_key = false;
-
-     Projectile::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
-     Projectile::collision_points [ Direction::up ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 14 ) );
-     Projectile::collision_points [ Direction::right ].set ( pixels_to_meters ( 14 ), pixels_to_meters ( 7 ) );
-     Projectile::collision_points [ Direction::down ].set ( pixels_to_meters ( 7 ), pixels_to_meters ( 1 ) );
-
-     character_display.fire_animation.clear ( );
-     interactives_display.animation.clear ( );
-     pickup_display.animation.clear ( );
-     projectile_display.animation.clear ( );
-     interactives_display.clear ( );
-
-     for ( Int32 i = 0; i < c_pickup_queue_size; ++i ) {
-          pickup_queue [ i ] = Pickup::Type::none;
-     }
-
-     pickup_stopwatch.reset ( c_pickup_show_time );
 
 #ifdef DEBUG
      enemy_think = true;
@@ -604,9 +507,13 @@ Void State::burn_character ( Character& character )
 
      Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
 
-     character.damage ( 1, dir );
+     damage_character ( character, 1, dir );
+}
 
-     spawn_damage_number ( character.collision_center ( ), 1 );
+Void State::damage_character ( Character& character, Int32 amount, Direction direction )
+{
+     character.damage ( amount, direction );
+     spawn_damage_number ( character.collision_center ( ), amount );
 }
 
 Void State::update_player ( float time_delta )
@@ -854,13 +761,11 @@ Void State::update_enemies ( float time_delta )
                // check if player blocked the attack
                if ( player.is_blocking ( ) &&
                     damage_dir == opposite_direction ( player.facing ) ) {
-                    enemy.damage ( 0, opposite_direction ( damage_dir ) );
-                    spawn_damage_number ( enemy_center, 0 );
+                    damage_character ( enemy, 0, opposite_direction ( damage_dir ) ) ;
                     spawn_pickup ( enemy.position, enemy.drop );
                     enemy.drop = Pickup::Type::none;
                } else {
-                    player.damage ( 1, damage_dir );
-                    spawn_damage_number ( player_center, 1 );
+                    damage_character ( player, 1, damage_dir );
                     sound.play_effect ( Sound::Effect::player_damaged );
                }
 
@@ -880,8 +785,8 @@ Void State::update_enemies ( float time_delta )
                player.attack_collides_with ( enemy ) ) {
                Direction damage_dir = direction_between ( player_center, enemy_center, random );
 
-               enemy.damage ( 1, damage_dir );
-               spawn_damage_number ( enemy_center, 1 );
+               damage_character ( enemy, 1, damage_dir );
+
                sound.play_effect ( Sound::Effect::player_damaged );
           }
      }
@@ -1004,10 +909,8 @@ Void State::update_projectiles ( float time_delta )
                                              enemy.collision_x ( ), enemy.collision_y ( ),
                                              enemy.collision_x ( ) + enemy.collision_width ( ),
                                              enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
-                         projectile.hit_character ( enemy );
-
-                         spawn_damage_number ( projectile_collision_point, 1 );
-
+                         Int32 damage = projectile.hit_character ( enemy );
+                         spawn_damage_number ( projectile_collision_point, damage );
                          break;
                     }
                }
@@ -1018,8 +921,8 @@ Void State::update_projectiles ( float time_delta )
                                         player.collision_x ( ), player.collision_y ( ),
                                         player.collision_x ( ) + player.collision_width ( ),
                                         player.collision_y ( ) + player.collision_height ( ) ) ) {
-
-                    projectile.hit_character ( player );
+                    Int32 damage = projectile.hit_character ( player );
+                    spawn_damage_number ( projectile_collision_point, damage );
                     sound.play_effect ( Sound::Effect::player_damaged );
                }
                break;
@@ -1036,10 +939,8 @@ Void State::update_projectiles ( float time_delta )
                                              enemy.collision_x ( ), enemy.collision_y ( ),
                                              enemy.collision_x ( ) + enemy.collision_width ( ),
                                              enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
-                         projectile.hit_character ( enemy );
-
-                         spawn_damage_number ( projectile_collision_point, 1 );
-
+                         Int32 damage = projectile.hit_character ( enemy );
+                         spawn_damage_number ( projectile_collision_point, damage );
                          break;
                     }
                }
@@ -1049,8 +950,8 @@ Void State::update_projectiles ( float time_delta )
                                         player.collision_x ( ), player.collision_y ( ),
                                         player.collision_x ( ) + player.collision_width ( ),
                                         player.collision_y ( ) + player.collision_height ( ) ) ) {
-
-                    projectile.hit_character ( player );
+                    Int32 damage = projectile.hit_character ( player );
+                    spawn_damage_number ( projectile_collision_point, damage );
                     sound.play_effect ( Sound::Effect::player_damaged );
                }
 

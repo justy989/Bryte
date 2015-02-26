@@ -1,14 +1,25 @@
 #include "MapDisplay.hpp"
 #include "Utils.hpp"
+#include "GameMemory.hpp"
+#include "Bitmap.hpp"
 
 using namespace bryte;
 
-MapDisplay::MapDisplay ( ) :
-     tilesheet ( nullptr ),
-     decorsheet ( nullptr ),
-     lampsheet ( nullptr )
+Bool MapDisplay::load_surfaces ( GameMemory& game_memory )
 {
+     if ( !load_bitmap_with_game_memory ( tilesheet, game_memory, "castle_tilesheet.bmp" ) ) {
+          return false;
+     }
 
+     if ( !load_bitmap_with_game_memory ( decorsheet, game_memory, "castle_decorsheet.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( lampsheet, game_memory, "castle_lampsheet.bmp" ) ) {
+          return false;
+     }
+
+     return true;
 }
 
 static Void render_map_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& map,

@@ -9,12 +9,15 @@ static Bool read_bitmap_headers ( const FileContents& bitmap_contents, BitmapFil
      Auto* bitmap_info_header  = reinterpret_cast<BitmapInfoHeader*>( bitmap_contents.bytes +
                                                                       sizeof ( BitmapFileHeader ) );
 
-     LOG_DEBUG ( "'File Header' Type: %c%c Size: %u Bitmap Offset: %u\n",
+#if 0
+     // Helpful only for real debugging, annoying on regular runs
+     LOG_DEBUG ( "'File' Type: %c%c Size: %u Bitmap Offset: %u\n",
                  bitmap_contents.bytes [ 0 ], bitmap_contents.bytes [ 1 ],
                  bitmap_file_header->file_size, bitmap_file_header->bitmap_offset );
-     LOG_DEBUG ( "'Info Header' Size: %u Width: %d Height: %d Bits Per Pixel: %d\n",
+     LOG_DEBUG ( "'Info' Size: %u Width: %d Height: %d Bits Per Pixel: %d\n",
                  bitmap_info_header->size, bitmap_info_header->width, bitmap_info_header->height,
                  bitmap_info_header->bits_per_pixel );
+#endif
 
      // do some validation
      if ( bitmap_contents.bytes [ 0 ] != 'B' || bitmap_contents.bytes [ 1 ] != 'M' ) {
@@ -120,6 +123,7 @@ extern "C" SDL_Surface* load_bitmap ( const FileContents* bitmap_contents )
 
 Bool load_bitmap_with_game_memory ( SDL_Surface*& surface, GameMemory& game_memory, const Char8* filepath )
 {
+     LOG_DEBUG ( "Loading bitmap: %s\n", filepath );
      FileContents bitmap_contents = load_entire_file ( filepath, &game_memory );
      surface = load_bitmap ( &bitmap_contents );
      if ( !surface ) {

@@ -1,7 +1,22 @@
 #include "ProjectileDisplay.hpp"
 #include "Map.hpp"
+#include "GameMemory.hpp"
+#include "Bitmap.hpp"
 
 using namespace bryte;
+
+Bool ProjectileDisplay::load_surfaces ( GameMemory& game_memory )
+{
+     if ( !load_bitmap_with_game_memory ( arrow_sheet, game_memory, "test_arrow.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( goo_sheet, game_memory, "test_goo_proj.bmp" ) ) {
+          return false;
+     }
+
+     return true;
+}
 
 Void ProjectileDisplay::tick ( )
 {

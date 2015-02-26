@@ -96,6 +96,7 @@ namespace bryte
           Void spawn_map_enemies ( );
 
           Void burn_character ( Character& character );
+          Void damage_character ( Character& character, Int32 amount, Direction direction );
 
           Void update_player ( float time_delta );
           Void player_death ( );

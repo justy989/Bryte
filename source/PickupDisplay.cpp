@@ -1,7 +1,18 @@
 #include "PickupDisplay.hpp"
 #include "Utils.hpp"
+#include "GameMemory.hpp"
+#include "Bitmap.hpp"
 
 using namespace bryte;
+
+Bool PickupDisplay::load_surfaces ( GameMemory& game_memory )
+{
+     if ( !load_bitmap_with_game_memory ( pickup_sheet, game_memory, "test_pickups.bmp" ) ) {
+          return false;
+     }
+
+     return true;
+}
 
 Void PickupDisplay::tick ( )
 {

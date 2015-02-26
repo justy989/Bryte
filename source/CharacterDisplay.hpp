@@ -6,9 +6,13 @@
 
 #include <SDL2/SDL.h>
 
+class GameMemory;
+
 namespace bryte {
      struct CharacterDisplay {
      public:
+
+          Bool load_surfaces ( GameMemory& game_memory );
 
           Void tick ( );
 

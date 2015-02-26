@@ -5,11 +5,13 @@
 
 #include <SDL2/SDL.h>
 
+class GameMemory;
+
 namespace bryte
 {
      struct MapDisplay {
 
-          MapDisplay ( );
+          Bool load_surfaces ( GameMemory& game_memory );
 
           Void render ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y,
                         Bool invisibles );

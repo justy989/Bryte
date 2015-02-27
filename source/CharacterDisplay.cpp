@@ -40,16 +40,16 @@ Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
-     blink_surface = SDL_CreateRGBSurface ( 0, 32, 32, 32, 0, 0, 0, 0 );
+     effect_surface = SDL_CreateRGBSurface ( 0, 32, 32, 32, 0, 0, 0, 0 );
 
-     if ( !blink_surface ) {
+     if ( !effect_surface ) {
           LOG_ERROR ( "Failed to create character display blink surface: SDL_CreateRGBSurface(): %s\n",
                       SDL_GetError ( ) );
           return false;
      }
 
-     if ( SDL_SetColorKey ( blink_surface, SDL_TRUE,
-                            SDL_MapRGB ( blink_surface->format, 255, 0, 255 ) ) ) {
+     if ( SDL_SetColorKey ( effect_surface, SDL_TRUE,
+                            SDL_MapRGB ( effect_surface->format, 255, 0, 255 ) ) ) {
           LOG_ERROR ( "Failed to set color key for character display blink surface SDL_SetColorKey() failed: %s\n",
                       SDL_GetError ( ) );
           return false;
@@ -72,75 +72,57 @@ Void CharacterDisplay::unload_surfaces ( )
      FREE_SURFACE ( player_sheet );
      FREE_SURFACE ( horizontal_sword_sheet );
      FREE_SURFACE ( vertical_sword_sheet );
-     FREE_SURFACE ( blink_surface );
+     FREE_SURFACE ( effect_surface );
      FREE_SURFACE ( fire_surface );
 }
 
-static void render_blink ( SDL_Surface* back_buffer, SDL_Surface* character_sheet, SDL_Surface* blink_surface,
-                           SDL_Rect* dest_rect, SDL_Rect* clip_rect, Bool is_dying,
-                           Real32 camera_x, Real32 camera_y )
+static Void set_surface_color ( SDL_Surface* surface, Uint8 red, Uint8 green, Uint8 blue )
 {
-     // clear the blink surface
-     SDL_Rect clear_rect { 0, 0, blink_surface->w, blink_surface->h };
-     Int32 clear_color = SDL_MapRGB ( blink_surface->format, 255, 0, 255 );
-
-     SDL_FillRect ( blink_surface, &clear_rect, clear_color );
-
-     // draw the character sheet onto the blink surface
-     SDL_Rect blink_dest_rect { 0, 0, clip_rect->w, clip_rect->h };
-     SDL_BlitSurface ( character_sheet, clip_rect, blink_surface, &blink_dest_rect );
-
-     // post process the blink surface
-     if ( SDL_LockSurface ( blink_surface ) ) {
+     if ( SDL_LockSurface ( surface ) ) {
           return;
      }
 
-     if ( is_dying ) {
-          for ( Int32 y = 0; y < blink_surface->h; ++y ) {
-               for ( Int32 x = 0; x < blink_surface->w; ++x ) {
-                    Uint32* p_pixel = reinterpret_cast< Uint32* >( blink_surface->pixels ) + x + ( y * blink_surface->w );
+     for ( Int32 y = 0; y < surface->h; ++y ) {
+          for ( Int32 x = 0; x < surface->w; ++x ) {
+               Uint32* p_pixel = reinterpret_cast< Uint32* >( surface->pixels ) + x + ( y * surface->w );
 
-                    Uint8* blue   = reinterpret_cast< Uint8* >( p_pixel );
-                    Uint8* green = blue + 1;
-                    Uint8* red  = blue + 2;
+               Uint8* surface_blue   = reinterpret_cast< Uint8* >( p_pixel );
+               Uint8* surface_green = surface_blue + 1;
+               Uint8* surface_red  = surface_blue + 2;
 
-                    // skip magenta
-                    if ( *red == 255 && *green == 0 && *blue == 255 ) {
-                         continue;
-                    }
-
-                    // make it white
-                    *red = 255;
-                    *blue = 255;
-                    *green = 255;
+               // skip magenta
+               if ( *surface_red == 255 && *surface_green == 0 && *surface_blue == 255 ) {
+                    continue;
                }
-          }
-     } else {
-          for ( Int32 y = 0; y < blink_surface->h; ++y ) {
-               for ( Int32 x = 0; x < blink_surface->w; ++x ) {
-                    Uint32* p_pixel = reinterpret_cast< Uint32* >( blink_surface->pixels ) + x + ( y * blink_surface->w );
 
-                    Uint8* blue   = reinterpret_cast< Uint8* >( p_pixel );
-                    Uint8* green = blue + 1;
-                    Uint8* red  = blue + 2;
-
-                    // skip magenta
-                    if ( *red == 255 && *green == 0 && *blue == 255 ) {
-                         continue;
-                    }
-
-                    // add lots of red!
-                    *red = 255;
-                    *green = 0;
-                    *blue = 0;
-               }
+               // make it white
+               *surface_red = red;
+               *surface_blue = blue;
+               *surface_green = green;
           }
      }
 
-     SDL_UnlockSurface ( blink_surface );
+     SDL_UnlockSurface ( surface );
+}
+
+static void render_effect ( SDL_Surface* back_buffer, SDL_Surface* character_sheet, SDL_Surface* effect_surface,
+                           SDL_Rect* dest_rect, SDL_Rect* clip_rect, Uint8 red, Uint8 green, Uint8 blue,
+                           Real32 camera_x, Real32 camera_y )
+{
+     // clear the blink surface
+     SDL_Rect clear_rect { 0, 0, effect_surface->w, effect_surface->h };
+     Int32 clear_color = SDL_MapRGB ( effect_surface->format, 255, 0, 255 );
+
+     SDL_FillRect ( effect_surface, &clear_rect, clear_color );
+
+     // draw the character sheet onto the blink surface
+     SDL_Rect blink_dest_rect { 0, 0, clip_rect->w, clip_rect->h };
+     SDL_BlitSurface ( character_sheet, clip_rect, effect_surface, &blink_dest_rect );
+
+     set_surface_color ( effect_surface, red, green, blue );
 
      // draw the blink surface to the back buffer
-     SDL_BlitSurface ( blink_surface, &blink_dest_rect, back_buffer, dest_rect );
+     SDL_BlitSurface ( effect_surface, &blink_dest_rect, back_buffer, dest_rect );
 }
 
 // NOTE: player only
@@ -213,7 +195,7 @@ static Void render_on_fire ( SDL_Surface* back_buffer, SDL_Surface* fire_surface
 }
 
 static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_sheet,
-                               SDL_Surface* blink_surface,
+                               SDL_Surface* effect_surface,
                                const Character& character,
                                Real32 camera_x, Real32 camera_y,
                                Bool blink_on )
@@ -247,8 +229,16 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      if ( blink_on && character.is_blinking ( ) ) {
-          render_blink ( back_buffer, character_sheet, blink_surface, &dest_rect, &clip_rect,
-                         character.is_dying ( ), camera_x, camera_y );
+          if ( character.is_dying ( ) ) {
+               render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
+                              255, 255, 255, camera_x, camera_y );
+          } else {
+               render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
+                               255, 0, 0, camera_x, camera_y );
+          }
+     } else if ( character.effected_by_element == Element::ice ) {
+          render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
+                          0, 0, 255, camera_x, camera_y );
      } else {
           SDL_BlitSurface ( character_sheet, &clip_rect, back_buffer, &dest_rect );
      }
@@ -276,7 +266,7 @@ Void CharacterDisplay::render_player ( SDL_Surface* back_buffer, const Character
                                     player, camera_x, camera_y );
      }
 
-     render_character ( back_buffer, player_sheet, blink_surface,
+     render_character ( back_buffer, player_sheet, effect_surface,
                         player, camera_x, camera_y, blink_on );
 
      if ( player.effected_by_element == Element::fire ) {
@@ -288,7 +278,7 @@ Void CharacterDisplay::render_player ( SDL_Surface* back_buffer, const Character
 Void CharacterDisplay::render_enemy ( SDL_Surface* back_buffer, const Enemy& enemy,
                                       Real32 camera_x, Real32 camera_y )
 {
-     render_character ( back_buffer, enemy_sheets [ enemy.type ], blink_surface,
+     render_character ( back_buffer, enemy_sheets [ enemy.type ], effect_surface,
                         enemy, camera_x, camera_y, blink_on );
 
      if ( enemy.effected_by_element == Element::fire ) {

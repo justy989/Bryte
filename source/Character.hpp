@@ -31,7 +31,7 @@ namespace bryte
           Bool attack ( );
           Void block ( );
           Void damage ( Int32 amount, Direction push );
-          Void light_on_fire ( );
+          Void effect_with_element ( Element element );
 
           Void update ( Real32 time_delta, const Map& map, Interactives& interactives );
 
@@ -65,6 +65,8 @@ namespace bryte
 
           Void set_collision_center ( Real32 x, Real32 y );
 
+          Void change_facing ( Direction dir );
+
      public:
 
           static const Real32 c_damage_accel;
@@ -81,6 +83,7 @@ namespace bryte
 
           static const Int32  c_fire_tick_max;
           static const Real32 c_fire_tick_rate;
+          static const Real32 c_ice_time;
 
           static const Real32 c_ice_decel;
 
@@ -120,7 +123,7 @@ namespace bryte
 
           Stopwatch damage_watch;
           Stopwatch cooldown_watch;
-          Stopwatch fire_watch;
+          Stopwatch element_watch;
 
           Uint8 fire_tick_count;
 

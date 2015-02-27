@@ -36,7 +36,7 @@ namespace bryte {
           SDL_Surface* horizontal_sword_sheet;
           SDL_Surface* vertical_sword_sheet;
 
-          SDL_Surface* blink_surface;
+          SDL_Surface* effect_surface;
 
           SDL_Surface* fire_surface;
 

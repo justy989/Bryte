@@ -17,6 +17,7 @@ const Real32 Character::c_cooldown_time           = 0.25f;
 const Real32 Character::c_dying_time              = 1.0f;
 const Int32  Character::c_fire_tick_max           = 3;
 const Real32 Character::c_fire_tick_rate          = 2.0f;
+const Real32 Character::c_ice_time                = 6.0f;
 const Real32 Character::c_ice_decel               = 0.5f;
 const Real32 Character::c_moving_walkway_accel    = 4.0f;
 
@@ -182,12 +183,20 @@ Void Character::block ( )
      }
 }
 
-Void Character::light_on_fire ( )
+Void Character::effect_with_element ( Element element )
 {
-     if ( !effected_by_element ) {
-          effected_by_element = Element::fire;
-          fire_watch.reset ( c_fire_tick_rate );
+     effected_by_element = transition_element ( effected_by_element, element );
+
+     switch ( element ) {
+     default:
+          break;
+     case Element::fire:
+          element_watch.reset ( c_fire_tick_rate );
           fire_tick_count = 0;
+          break;
+     case Element::ice:
+          element_watch.reset ( c_ice_time );
+          break;
      }
 }
 
@@ -297,8 +306,20 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           break;
      }
 
-     if ( effected_by_element == Element::fire ) {
-          fire_watch.tick ( time_delta );
+     switch ( effected_by_element ) {
+     default:
+          break;
+     case Element::fire:
+          element_watch.tick ( time_delta );
+          break;
+     case Element::ice:
+          element_watch.tick ( time_delta );
+          acceleration.zero ( );
+
+          if ( element_watch.expired ( ) ) {
+               effected_by_element = Element::none;
+          }
+          break;
      }
 
      switch ( on_moving_walkway ) {
@@ -330,28 +351,29 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      velocity = ( acceleration * time_delta ) + velocity;
 
-     if ( constant_animation ) {
-          walk_tracker += time_delta;
+     if ( effected_by_element != Element::ice ) {
+          if ( constant_animation ) {
+               walk_tracker += time_delta;
 
-          if ( walk_tracker > walk_frame_rate ) {
-               walk_frame += walk_frame_change;
-               if ( walk_frame <= 0 ||
-                    walk_frame >= ( walk_frame_count - 1 ) ) {
-                    walk_frame_change = -walk_frame_change;
+               if ( walk_tracker > walk_frame_rate ) {
+                    walk_frame += walk_frame_change;
+                    if ( walk_frame <= 0 ||
+                         walk_frame >= ( walk_frame_count - 1 ) ) {
+                         walk_frame_change = -walk_frame_change;
+                    }
+                    walk_tracker -= walk_frame_rate;
                }
-               walk_tracker -= walk_frame_rate;
-          }
+          } else {
+               walk_tracker += velocity.length ( );
 
-     } else {
-          walk_tracker += velocity.length ( );
-
-          if ( walk_tracker > walk_frame_rate ) {
-               walk_frame += walk_frame_change;
-               if ( walk_frame <= 0 ||
-                    walk_frame >= ( walk_frame_count - 1 ) ) {
-                    walk_frame_change = -walk_frame_change;
+               if ( walk_tracker > walk_frame_rate ) {
+                    walk_frame += walk_frame_change;
+                    if ( walk_frame <= 0 ||
+                         walk_frame >= ( walk_frame_count - 1 ) ) {
+                         walk_frame_change = -walk_frame_change;
+                    }
+                    walk_tracker -= walk_frame_rate;
                }
-               walk_tracker -= walk_frame_rate;
           }
      }
 
@@ -505,7 +527,7 @@ Void Character::walk ( Direction dir )
           break;
      }
 
-     facing = dir;
+     change_facing ( dir );
 }
 
 Void Character::set_collision_center ( Real32 x, Real32 y )
@@ -515,3 +537,11 @@ Void Character::set_collision_center ( Real32 x, Real32 y )
 
      position = Vector{ x - x_offset, y - y_offset };
 }
+
+Void Character::change_facing ( Direction dir )
+{
+     if ( effected_by_element != Element::ice ) {
+          facing = dir;
+     }
+}
+

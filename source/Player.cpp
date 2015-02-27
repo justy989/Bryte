@@ -38,7 +38,7 @@ Void Player::clear ( )
 
      damage_watch.reset ( 0.0f );
      cooldown_watch.reset ( 0.0f );
-     fire_watch.reset ( 0.0f );
+     element_watch.reset ( 0.0f );
 
      effected_by_element = Element::none;
      on_ice = false;

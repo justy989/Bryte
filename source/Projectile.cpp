@@ -36,10 +36,7 @@ Int32 Projectile::hit_character ( Character& character )
      Int32 damage_amount = 1;
 
      character.damage ( damage_amount, facing );
-
-     if ( effected_by_element == Element::fire ) {
-          character.light_on_fire ( );
-     }
+     character.effect_with_element ( effected_by_element );
 
      switch ( type ) {
      default:

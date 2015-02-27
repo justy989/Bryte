@@ -466,21 +466,27 @@ Void State::setup_emitters_from_map_lamps ( )
      }
 }
 
-Void State::burn_character ( Character& character )
+Void State::tick_character_element ( Character& character )
 {
-     character.fire_tick_count++;
+     switch ( character.effected_by_element ) {
+     default:
+          break;
+     case Element::fire:
+          character.fire_tick_count++;
 
-     if ( character.fire_tick_count >= Character::c_fire_tick_max ) {
-          // effect has expired
-          character.effected_by_element = Element::none;
-     } else {
-          character.fire_watch.reset ( Character::c_fire_tick_rate );
+          if ( character.fire_tick_count >= Character::c_fire_tick_max ) {
+               // effect has expired
+               character.effected_by_element = Element::none;
+          } else {
+               character.element_watch.reset ( Character::c_fire_tick_rate );
+          }
+
+          // push character in a random direction
+          Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+
+          damage_character ( character, c_burn_damage, dir );
+          break;
      }
-
-     // push character in a random direction
-     Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
-
-     damage_character ( character, c_burn_damage, dir );
 }
 
 Void State::damage_character ( Character& character, Int32 amount, Direction direction )
@@ -525,18 +531,10 @@ Void State::update_player ( float time_delta )
 
      player.update ( time_delta, map, interactives );
 
+     tick_character_element ( player );
+
      if ( player.is_dead ( ) ) {
           player_death ( );
-     }
-
-     if ( player.effected_by_element == Element::fire && player.fire_watch.expired ( ) ) {
-          burn_character ( player );
-
-#ifdef DEBUG
-          if ( invincible ) {
-               player.health = player.max_health;
-          }
-#endif
      }
 
      player.item_cooldown.tick ( time_delta );
@@ -684,6 +682,12 @@ Void State::update_player ( float time_delta )
                }
           }
      }
+
+#ifdef DEBUG
+     if ( invincible ) {
+          player.health = player.max_health;
+     }
+#endif
 }
 
 Void State::update_enemies ( float time_delta )
@@ -722,9 +726,7 @@ Void State::update_enemies ( float time_delta )
                                   Projectile::Alliance::evil );
           }
 
-          if ( enemy.effected_by_element == Element::fire && enemy.fire_watch.expired ( ) ) {
-               burn_character ( enemy );
-          }
+          tick_character_element ( enemy );
 
           // check collision between player and enemy
           if ( !player.is_blinking ( ) && player.is_alive ( ) &&
@@ -748,9 +750,7 @@ Void State::update_enemies ( float time_delta )
                }
 #endif
 
-               if ( enemy.effected_by_element == Element::fire ) {
-                    player.light_on_fire ( );
-               }
+               player.effect_with_element ( enemy.effected_by_element );
           }
 
           // check if player's attack hits enemy

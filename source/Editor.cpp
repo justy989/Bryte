@@ -236,6 +236,15 @@ Void State::mouse_button_left_clicked ( )
           map.set_secret_location ( Map::Location { static_cast<Uint8>( mouse_tile_x ),
                                                     static_cast<Uint8>( mouse_tile_y ) } );
           break;
+     case Mode::hole:
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
+               interactive.underneath.type = UnderneathInteractive::Type::hole;
+          } else {
+               interactive.underneath.type = UnderneathInteractive::Type::none;
+          }
+          break;
      }
 }
 

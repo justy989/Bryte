@@ -37,6 +37,9 @@ Void UnderneathInteractive::reset ( )
      case ice_detector:
           underneath_ice_detector.reset ( );
           break;
+     case hole:
+          underneath_hole.filled = false;
+          break;
      }
 }
 
@@ -274,6 +277,9 @@ Bool Interactive::is_solid ( ) const
      if ( underneath.type == UnderneathInteractive::Type::popup_block &&
           underneath.underneath_popup_block.up ) {
           return true;
+     } else if ( underneath.type == UnderneathInteractive::Type::hole &&
+                 !underneath.underneath_hole.filled ) {
+          return true;
      }
 
      switch ( type ) {
@@ -456,6 +462,13 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
      } else if ( underneath.type == UnderneathInteractive::Type::light_detector ) {
           Auto& detector = underneath.underneath_light_detector;
           detector.light ( 0, interactives );
+     } else if ( underneath.type == UnderneathInteractive::Type::hole ) {
+          // TODO: make sure this is really only a block?
+          // consume the interactive
+          type = Interactive::Type::none;
+          reset ( );
+
+          underneath.underneath_hole.filled = true;
      }
 }
 

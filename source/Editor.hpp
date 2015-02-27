@@ -55,6 +55,7 @@ namespace editor
           moving_walkway,
           ice_detector,
           secret,
+          hole,
           count
      };
 

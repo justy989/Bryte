@@ -172,6 +172,10 @@ namespace bryte
           Direction facing;
      };
 
+     struct Hole {
+          Bool filled;
+     };
+
      struct UnderneathInteractive {
           enum Type {
                none,
@@ -181,6 +185,7 @@ namespace bryte
                moving_walkway,
                light_detector,
                ice_detector,
+               hole,
                count
           };
 
@@ -195,6 +200,7 @@ namespace bryte
                MovingWalkway underneath_moving_walkway;
                LightDetector underneath_light_detector;
                IceDetector   underneath_ice_detector;
+               Hole          underneath_hole;
           };
      };
 

@@ -161,6 +161,9 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
      case UnderneathInteractive::Type::ice_detector:
           clip_rect.x = underneath.underneath_ice_detector.detected * Map::c_tile_dimension_in_pixels;
           break;
+     case UnderneathInteractive::Type::hole:
+          clip_rect.x = underneath.underneath_hole.filled * Map::c_tile_dimension_in_pixels;
+          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );

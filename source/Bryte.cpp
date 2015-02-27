@@ -141,7 +141,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      item_key = false;
      switch_item_key = false;
 
-
      // clear entity managers
      pickups.clear ( );
      projectiles.clear ( );
@@ -149,16 +148,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      emitters.clear ( );
      enemies.clear ( );
      damage_numbers.clear ( );
-
-     // load map
-     map.load_master_list ( settings->map_master_list_filename );
-
-     if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
-          return false;
-     }
-
-     spawn_map_enemies ( );
-     setup_emitters_from_map_lamps ( );
 
      // projectile collision for various directions
      Projectile::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
@@ -191,8 +180,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      if ( !text.fontsheet ) {
           return false;
      }
-
-     back_buffer_format = *text.fontsheet->format;
 
      // load diplay surfaces
      if ( !map_display.load_surfaces ( game_memory ) ) {
@@ -232,6 +219,18 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      if ( !sound.load_effects ( ) ) {
           return false;
      }
+
+     back_buffer_format = *map_display.tilesheet->format;
+
+     // load map
+     map.load_master_list ( settings->map_master_list_filename );
+
+     if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
+          return false;
+     }
+
+     spawn_map_enemies ( );
+     setup_emitters_from_map_lamps ( );
 
 
 #ifdef DEBUG

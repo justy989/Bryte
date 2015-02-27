@@ -618,14 +618,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
 
      memory_locations->state = state;
 
-     FileContents text_contents    = load_entire_file ( "text.bmp", &game_memory );
-
-     state->text.fontsheet         = load_bitmap ( &text_contents );
-     state->text.character_width   = 5;
-     state->text.character_height  = 8;
-     state->text.character_spacing = 1;
-
-     if ( !state->text.fontsheet ) {
+     if ( !state->text.load_surfaces ( game_memory ) ) {
           return false;
      }
 
@@ -634,72 +627,15 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->map_display.tilesheet,  game_memory,
-                                          state->settings->map_tilesheet_filename ) ) {
+     if ( !state->map_display.load_surfaces ( game_memory ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->map_display.decorsheet, game_memory,
-                                          state->settings->map_decorsheet_filename ) ) {
+     if ( !state->character_display.load_surfaces ( game_memory ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( state->map_display.lampsheet, game_memory,
-                                          state->settings->map_lampsheet_filename ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->character_display.enemy_sheets [ Enemy::Type::rat ],
-                                          game_memory,
-                                          "test_rat.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->character_display.enemy_sheets [ Enemy::Type::bat ],
-                                          game_memory,
-                                          "test_bat.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->character_display.enemy_sheets [ Enemy::Type::goo ],
-                                          game_memory,
-                                          "test_goo.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->character_display.enemy_sheets [ Enemy::Type::skeleton ],
-                                          game_memory,
-                                          "test_skeleton.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.interactive_sheet,
-                                          game_memory,
-                                          "castle_interactivesheet.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.moving_walkway_sheet,
-                                          game_memory,
-                                          "test_moving_walkway.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.torch_element_sheet,
-                                          game_memory,
-                                          "torch_fire.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.light_detector_sheet,
-                                          game_memory,
-                                          "test_light_detector.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( state->interactives_display.exit_sheet,
-                                          game_memory,
-                                          "castle_exitsheet.bmp" ) ) {
+     if ( !state->interactives_display.load_surfaces ( game_memory ) ) {
           return false;
      }
 

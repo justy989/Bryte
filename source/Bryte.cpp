@@ -169,15 +169,8 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      pickup_stopwatch.reset ( c_pickup_show_time );
 
-     // load font surface
-     FileContents text_contents = load_entire_file ( "text.bmp", &game_memory );
-
-     text.fontsheet         = load_bitmap ( &text_contents );
-     text.character_width   = 5;
-     text.character_height  = 8;
-     text.character_spacing = 1;
-
-     if ( !text.fontsheet ) {
+     // load font
+     if ( !text.load_surfaces ( game_memory ) ) {
           return false;
      }
 

@@ -1,7 +1,27 @@
 #include "Text.hpp"
 #include "Utils.hpp"
+#include "GameMemory.hpp"
+#include "Bitmap.hpp"
 
 #include <ctype.h>
+
+Bool Text::load_surfaces ( GameMemory& game_memory )
+{
+     if ( !load_bitmap_with_game_memory ( fontsheet, game_memory, "text.bmp" ) ) {
+          return false;
+     }
+
+     character_width   = 5;
+     character_height  = 8;
+     character_spacing = 1;
+
+     return true;
+}
+
+Void Text::unload ( )
+{
+     FREE_SURFACE ( fontsheet );
+}
 
 Void Text::render ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y )
 {

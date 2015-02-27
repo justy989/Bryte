@@ -30,6 +30,15 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory )
      return true;
 }
 
+Void InteractivesDisplay::unload_surfaces ( )
+{
+     FREE_SURFACE ( interactive_sheet );
+     FREE_SURFACE ( moving_walkway_sheet );
+     FREE_SURFACE ( light_detector_sheet );
+     FREE_SURFACE ( exit_sheet );
+     FREE_SURFACE ( torch_element_sheet );
+}
+
 Void InteractivesDisplay::clear ( )
 {
      animation.clear ( );

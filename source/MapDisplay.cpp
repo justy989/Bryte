@@ -22,6 +22,13 @@ Bool MapDisplay::load_surfaces ( GameMemory& game_memory )
      return true;
 }
 
+Void MapDisplay::unload_surfaces ( )
+{
+     FREE_SURFACE ( tilesheet );
+     FREE_SURFACE ( decorsheet );
+     FREE_SURFACE ( lampsheet );
+}
+
 static Void render_map_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& map,
                                          Real32 camera_x, Real32 camera_y )
 {

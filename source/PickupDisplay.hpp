@@ -14,6 +14,7 @@ namespace bryte
      public:
 
           Bool load_surfaces ( GameMemory& game_memory );
+          Void unload_surfaces ( );
 
           Void tick ( );
 

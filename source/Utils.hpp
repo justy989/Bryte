@@ -24,6 +24,8 @@
 
 #define CLAMP( value, min, max ) if ( value < min ) { value = min; } else if ( value > max ) { value = max; }
 
+#define FREE_SURFACE( surface ) if ( surface ) { SDL_FreeSurface ( surface ); surface = nullptr; }
+
 inline Real32 square ( Real32 value )
 {
      return value * value;

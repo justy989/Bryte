@@ -14,6 +14,11 @@ Bool PickupDisplay::load_surfaces ( GameMemory& game_memory )
      return true;
 }
 
+Void PickupDisplay::unload_surfaces ( )
+{
+     FREE_SURFACE ( pickup_sheet );
+}
+
 Void PickupDisplay::tick ( )
 {
      animation.update_increment ( c_pickup_animation_delay, c_pickup_animation_max_frame );

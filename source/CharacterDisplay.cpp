@@ -63,6 +63,19 @@ Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
      return true;
 }
 
+Void CharacterDisplay::unload_surfaces ( )
+{
+     for ( Int32 i = 0; i < Enemy::Type::count; ++i ) {
+          FREE_SURFACE ( enemy_sheets [ i ] );
+     }
+
+     FREE_SURFACE ( player_sheet );
+     FREE_SURFACE ( horizontal_sword_sheet );
+     FREE_SURFACE ( vertical_sword_sheet );
+     FREE_SURFACE ( blink_surface );
+     FREE_SURFACE ( fire_surface );
+}
+
 static void render_blink ( SDL_Surface* back_buffer, SDL_Surface* character_sheet, SDL_Surface* blink_surface,
                            SDL_Rect* dest_rect, SDL_Rect* clip_rect, Bool is_dying,
                            Real32 camera_x, Real32 camera_y )

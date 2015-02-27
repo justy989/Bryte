@@ -18,6 +18,12 @@ Bool ProjectileDisplay::load_surfaces ( GameMemory& game_memory )
      return true;
 }
 
+Void ProjectileDisplay::unload_surfaces ( )
+{
+     FREE_SURFACE ( arrow_sheet );
+     FREE_SURFACE ( goo_sheet );
+}
+
 Void ProjectileDisplay::tick ( )
 {
      animation.update_increment ( c_frame_delay, c_frame_count );

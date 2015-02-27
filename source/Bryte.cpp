@@ -246,33 +246,15 @@ Void State::destroy ( )
 {
      sound.unload_effects ( );
 
-     SDL_FreeSurface ( map_display.tilesheet );
-     SDL_FreeSurface ( map_display.decorsheet );
-     SDL_FreeSurface ( map_display.lampsheet );
-
-     SDL_FreeSurface ( character_display.player_sheet );
-
-     SDL_FreeSurface ( character_display.horizontal_sword_sheet );
-     SDL_FreeSurface ( character_display.vertical_sword_sheet );
-
-     SDL_FreeSurface ( character_display.blink_surface );
-
-     SDL_FreeSurface ( character_display.fire_surface );
-
-     for ( int i = 0; i < Enemy::Type::count; ++i ) {
-          SDL_FreeSurface ( character_display.enemy_sheets [ i ] );
-     }
-
-     SDL_FreeSurface ( interactives_display.interactive_sheet );
-
-     SDL_FreeSurface ( pickup_display.pickup_sheet );
-
-     SDL_FreeSurface ( projectile_display.arrow_sheet );
-     SDL_FreeSurface ( projectile_display.goo_sheet );
+     map_display.unload_surfaces ( );
+     character_display.unload_surfaces ( );
+     interactives_display.unload_surfaces ( );
+     pickup_display.unload_surfaces ( );
+     projectile_display.unload_surfaces ( );
 
      SDL_FreeSurface ( bomb_sheet );
-
      SDL_FreeSurface ( attack_icon_sheet );
+     SDL_FreeSurface ( player_heart_sheet );
 }
 
 Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop )

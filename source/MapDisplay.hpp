@@ -12,6 +12,7 @@ namespace bryte
      struct MapDisplay {
 
           Bool load_surfaces ( GameMemory& game_memory );
+          Void unload_surfaces ( );
 
           Void render ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y,
                         Bool invisibles );

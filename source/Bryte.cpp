@@ -265,13 +265,11 @@ Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pi
           return false;
      }
 
+     ASSERT ( id < Enemy::Type::count );
+
+     LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", Enemy::c_names [ id ], position.x ( ), position.y ( ) );
+
      enemy->init ( static_cast<Enemy::Type>( id ), position.x ( ), position.y ( ), facing, drop );
-
-#ifdef DEBUG
-     static const Char8* enemy_id_names [ ] = { "rat", "bat", "goo" };
-#endif
-
-     LOG_DEBUG ( "Spawning enemy %s at: %f, %f\n", enemy_id_names [ id ], position.x ( ), position.y ( ) );
 
      return true;
 }

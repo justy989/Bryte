@@ -74,6 +74,10 @@ namespace bryte
 
      public:
 
+          static const Char8* c_names [ Enemy::Type::count ];
+
+     public:
+
           Type type;
 
           union {

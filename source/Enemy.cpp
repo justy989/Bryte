@@ -7,6 +7,12 @@ using namespace bryte;
 
 const Real32 Enemy::GooState::c_shoot_time        = 2.0f;
 const Real32 Enemy::SkeletonState::c_attack_range = 4.0f;
+const Char8* Enemy::c_names [ Enemy::Type::count ] = {
+     "rat",
+     "bat",
+     "goo",
+     "skeleton",
+};
 
 Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
 {

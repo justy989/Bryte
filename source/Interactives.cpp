@@ -462,7 +462,8 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
      } else if ( underneath.type == UnderneathInteractive::Type::light_detector ) {
           Auto& detector = underneath.underneath_light_detector;
           detector.light ( 0, interactives );
-     } else if ( underneath.type == UnderneathInteractive::Type::hole ) {
+     } else if ( underneath.type == UnderneathInteractive::Type::hole &&
+                 !underneath.underneath_hole.filled ) {
           // TODO: make sure this is really only a block?
           // consume the interactive
           type = Interactive::Type::none;

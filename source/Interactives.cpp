@@ -326,6 +326,9 @@ Void Interactive::reset ( )
      case Type::turret:
           interactive_turret.reset ( );
           break;
+     case Type::portal:
+          interactive_portal.reset ( );
+          break;
      }
 
      underneath.reset ( );
@@ -402,22 +405,37 @@ Void Interactive::light ( Uint8 light, Interactives& interactives )
 
 Void Interactive::character_enter ( Direction from, Interactives& interactives, Character& character )
 {
-     if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+     if ( type == Interactive::Type::portal && interactive_portal.on ) {
+          Vector dst = Map::coordinates_to_vector ( interactive_portal.destination_x,
+                                                    interactive_portal.destination_y );
+          dst += Vector { Map::c_tile_dimension_in_meters * 0.5f,
+                          Map::c_tile_dimension_in_meters * 0.5f };
+          character.set_collision_center ( dst.x ( ), dst.y ( ) );
+          return;
+     }
+
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::pressure_plate:
+     {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
-
           pressure_plate.entered = true;
-
           Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
                                                            pressure_plate.activate_coordinate_y );
-
           interactive.activate ( interactives );
-     } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
+     } break;
+     case UnderneathInteractive::Type::ice:
           character.on_ice = true;
-     } else if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
+          break;
+     case UnderneathInteractive::Type::moving_walkway:
           character.on_moving_walkway = underneath.underneath_moving_walkway.facing;
-     } else if ( underneath.type == UnderneathInteractive::Type::ice_detector &&
-                 underneath.underneath_ice_detector.detected ) {
-          character.on_ice = true;
+          break;
+     case UnderneathInteractive::Type::ice_detector:
+          if ( underneath.underneath_ice_detector.detected ) {
+               character.on_ice = true;
+          }
+          break;
      }
 }
 
@@ -847,5 +865,12 @@ Void IceDetector::reset ( )
      force_dir = Direction::count;
      activate_coordinate_x = 0;
      activate_coordinate_y = 0;
+}
+
+Void Portal::reset ( )
+{
+     on = false;
+     destination_x = 0;
+     destination_y = 0;
 }
 

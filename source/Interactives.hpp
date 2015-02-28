@@ -150,6 +150,15 @@ namespace bryte
           Uint8 activate_coordinate_y;
      };
 
+     struct Portal {
+          Void reset ( );
+
+          Bool on;
+
+          Uint8 destination_x;
+          Uint8 destination_y;
+     };
+
      struct PressurePlate {
           Bool  entered;
           Uint8 activate_coordinate_x;
@@ -214,6 +223,7 @@ namespace bryte
                exit,
                bombable_block,
                turret,
+               portal,
                count
           };
 
@@ -241,6 +251,7 @@ namespace bryte
                Torch         interactive_torch;
                PushableTorch interactive_pushable_torch;
                Turret        interactive_turret;
+               Portal        interactive_portal;
           };
 
           UnderneathInteractive underneath;

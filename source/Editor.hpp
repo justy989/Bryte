@@ -56,6 +56,7 @@ namespace editor
           ice_detector,
           secret,
           hole,
+          portal,
           count
      };
 
@@ -125,6 +126,7 @@ namespace editor
           Uint8 current_turret_direction;
           Uint8 current_turret_automatic;
           Uint8 current_moving_walkway;
+          Uint8 current_portal;
 
           Bool   track_current_interactive;
           Uint32 current_interactive_x;

@@ -234,6 +234,10 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::turret:
           clip_rect.x = interactive.interactive_turret.facing * Map::c_tile_dimension_in_pixels;
           break;
+     case Interactive::Type::portal:
+          clip_rect.x = static_cast<Int32>( interactive.interactive_portal.on ) *
+                             Map::c_tile_dimension_in_pixels;
+          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );

@@ -237,6 +237,7 @@ Void State::mouse_button_left_clicked ( )
                                                     static_cast<Uint8>( mouse_tile_y ) } );
           break;
      case Mode::hole:
+     {
           Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
@@ -244,7 +245,18 @@ Void State::mouse_button_left_clicked ( )
           } else {
                interactive.underneath.type = UnderneathInteractive::Type::none;
           }
-          break;
+     } break;
+     case Mode::portal:
+     {
+          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::portal,
+                                                                  mouse_tile_x, mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::portal ) {
+               interactive.type = Interactive::Type::portal;
+               interactive.reset ( );
+               interactive.interactive_portal.on = static_cast<Bool>( current_portal );
+          }
+     } break;
      }
 }
 
@@ -429,6 +441,26 @@ Void State::mouse_button_right_clicked ( )
           map.set_secret_clear_tile ( Map::Location { static_cast<Uint8>( mouse_tile_x ),
                                                       static_cast<Uint8>( mouse_tile_y ) } );
           break;
+     case Mode::portal:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+          if ( !track_current_interactive &&
+               interactive.type == Interactive::Type::portal ) {
+               current_interactive_x = mouse_tile_x;
+               current_interactive_y = mouse_tile_y;
+               track_current_interactive = true;
+          } else {
+               Auto& portal = interactives.get_from_tile ( current_interactive_x,
+                                                           current_interactive_y );
+               ASSERT ( portal.type == Interactive::Type::portal );
+
+               portal.interactive_portal.destination_x = mouse_tile_x;
+               portal.interactive_portal.destination_y = mouse_tile_y;
+
+               track_current_interactive = false;
+          }
+     } break;
      }
 }
 
@@ -496,6 +528,9 @@ Void State::option_button_up_pressed ( )
           current_moving_walkway++;
           current_moving_walkway %= 4;
           break;
+     case Mode::portal:
+          current_portal = !current_portal;
+          break;
      }
 }
 
@@ -562,6 +597,9 @@ Void State::option_button_down_pressed ( )
      case Mode::moving_walkway:
           current_moving_walkway--;
           current_moving_walkway %= 4;
+          break;
+     case Mode::portal:
+          current_portal = !current_portal;
           break;
      }
 }
@@ -1038,6 +1076,26 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                Auto& ice_detector = interactive.underneath.underneath_ice_detector;
                sprintf ( state->message_buffer, "ACT %d %d",
                          ice_detector.activate_coordinate_x, ice_detector.activate_coordinate_y );
+          }
+     } break;
+     case Mode::portal:
+     {
+          if ( state->track_current_interactive ) {
+               sprintf ( state->message_buffer, "S DST %d %d",
+                         state->current_interactive_x, state->current_interactive_y );
+               break;
+          }
+
+          if ( !state->mouse_on_map ( ) ) {
+               break;
+          }
+
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::portal ) {
+               Auto& portal = interactive.interactive_portal;
+               sprintf ( state->message_buffer, "DST %d %d",
+                         portal.destination_x, portal.destination_y );
           }
      } break;
      }

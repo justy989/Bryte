@@ -100,6 +100,7 @@ namespace bryte
 
           Void update_player ( float time_delta );
           Void player_death ( );
+          Bool check_player_block_projectile ( Projectile& projectile );
 
           Void update_enemies ( float time_delta );
           Void enemy_death ( const Enemy& enemy );

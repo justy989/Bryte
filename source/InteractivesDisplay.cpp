@@ -27,6 +27,10 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( ice_detector_sheet, game_memory, "test_ice_detector.bmp" ) ) {
+          return false;
+     }
+
      return true;
 }
 
@@ -35,6 +39,7 @@ Void InteractivesDisplay::unload_surfaces ( )
      FREE_SURFACE ( interactive_sheet );
      FREE_SURFACE ( moving_walkway_sheet );
      FREE_SURFACE ( light_detector_sheet );
+     FREE_SURFACE ( ice_detector_sheet );
      FREE_SURFACE ( exit_sheet );
      FREE_SURFACE ( torch_element_sheet );
 }
@@ -159,7 +164,9 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           }
           break;
      case UnderneathInteractive::Type::ice_detector:
-          clip_rect.x = underneath.underneath_ice_detector.detected * Map::c_tile_dimension_in_pixels;
+          underneath_sheet = ice_detector_sheet;
+          clip_rect.x = ice_animation.frame * Map::c_tile_dimension_in_pixels;
+          clip_rect.y = underneath.underneath_ice_detector.detected * Map::c_tile_dimension_in_pixels;
           break;
      case UnderneathInteractive::Type::hole:
           clip_rect.x = underneath.underneath_hole.filled * Map::c_tile_dimension_in_pixels;

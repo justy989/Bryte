@@ -412,6 +412,30 @@ Void State::player_death ( )
      spawn_map_enemies ( );
 }
 
+Bool State::check_player_block_projectile ( Projectile& projectile )
+{
+     if ( player.is_blocking ( ) &&
+          player.facing == opposite_direction ( projectile.facing ) ) {
+          switch ( projectile.type ) {
+          default:
+               break;
+          case Projectile::goo:
+               projectile.facing = opposite_direction ( projectile.facing );
+               projectile.alliance = Projectile::Alliance::good;
+               break;
+          case Projectile::arrow:
+               projectile.track_entity.entity = &player;
+               projectile.track_entity.offset = projectile.position - player.position;
+               projectile.stuck_watch.reset ( Projectile::c_stuck_time );
+               break;
+          }
+
+          return true;
+     }
+
+     return false;
+}
+
 Void State::enemy_death ( const Enemy& enemy )
 {
      if ( enemy.drop ) {
@@ -896,9 +920,11 @@ Void State::update_projectiles ( float time_delta )
                                         player.collision_x ( ), player.collision_y ( ),
                                         player.collision_x ( ) + player.collision_width ( ),
                                         player.collision_y ( ) + player.collision_height ( ) ) ) {
-                    Int32 damage = projectile.hit_character ( player );
-                    spawn_damage_number ( projectile_collision_point, damage );
-                    sound.play_effect ( Sound::Effect::player_damaged );
+                    if ( !check_player_block_projectile ( projectile ) ) {
+                         Int32 damage = projectile.hit_character ( player );
+                         spawn_damage_number ( projectile_collision_point, damage );
+                         sound.play_effect ( Sound::Effect::player_damaged );
+                    }
                }
                break;
          case Projectile::Alliance::neutral:
@@ -925,9 +951,11 @@ Void State::update_projectiles ( float time_delta )
                                         player.collision_x ( ), player.collision_y ( ),
                                         player.collision_x ( ) + player.collision_width ( ),
                                         player.collision_y ( ) + player.collision_height ( ) ) ) {
-                    Int32 damage = projectile.hit_character ( player );
-                    spawn_damage_number ( projectile_collision_point, damage );
-                    sound.play_effect ( Sound::Effect::player_damaged );
+                    if ( !check_player_block_projectile ( projectile ) ) {
+                         Int32 damage = projectile.hit_character ( player );
+                         spawn_damage_number ( projectile_collision_point, damage );
+                         sound.play_effect ( Sound::Effect::player_damaged );
+                    }
                }
 
                break;

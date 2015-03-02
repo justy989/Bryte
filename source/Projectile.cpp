@@ -1,6 +1,7 @@
 #include "Projectile.hpp"
 #include "Map.hpp"
 #include "Interactives.hpp"
+#include "Utils.hpp"
 
 using namespace bryte;
 
@@ -9,27 +10,6 @@ const Real32 Projectile::c_goo_speed = 5.0f;
 const Real32 Projectile::c_stuck_time = 1.5f;
 
 Vector Projectile::collision_points [ Direction::count ];
-
-static Vector vector_from_direction ( Direction dir )
-{
-     switch ( dir )
-     {
-     default:
-          ASSERT ( 0 );
-          break;
-     case Direction::left:
-          return Vector { -1.0f, 0.0f };
-     case Direction::up:
-          return Vector { 0.0f, 1.0f };
-     case Direction::right:
-          return Vector { 1.0f, 0.0f };
-     case Direction::down:
-          return Vector { 0.0f, -1.0f };
-     }
-
-     // should not hit
-     return Vector { 0.0f, 0.0f };
-}
 
 Int32 Projectile::hit_character ( Character& character )
 {

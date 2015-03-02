@@ -160,3 +160,25 @@ Void render_rect_outline ( SDL_Surface* dest_surface, const SDL_Rect& rect, Uint
      SDL_FillRect ( dest_surface, &top_line, color );
 }
 
+Vector vector_from_direction ( bryte::Direction dir )
+{
+     switch ( dir )
+     {
+     default:
+          ASSERT ( 0 );
+          break;
+     case bryte::Direction::left:
+          return Vector { -1.0f, 0.0f };
+     case bryte::Direction::up:
+          return Vector { 0.0f, 1.0f };
+     case bryte::Direction::right:
+          return Vector { 1.0f, 0.0f };
+     case bryte::Direction::down:
+          return Vector { 0.0f, -1.0f };
+     }
+
+     // should not hit
+     return Vector { 0.0f, 0.0f };
+}
+
+

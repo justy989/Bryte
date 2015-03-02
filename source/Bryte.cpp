@@ -285,7 +285,9 @@ Bool State::spawn_pickup ( const Vector& position, Pickup::Type type )
 bool State::spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing,
                                Projectile::Alliance alliance )
 {
-     Auto* projectile = projectiles.spawn ( position );
+     static const Real32 c_projectile_offset_scale = Map::c_tile_dimension_in_meters * 0.5f;
+     Vector offset = vector_from_direction ( facing ) * c_projectile_offset_scale;
+     Auto* projectile = projectiles.spawn ( position + offset );
 
      if ( !projectile ) {
           return false;

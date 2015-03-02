@@ -52,6 +52,7 @@ namespace bryte
           SDL_Surface* torch_element_sheet;
           SDL_Surface* exit_sheet;
           SDL_Surface* light_detector_sheet;
+          SDL_Surface* ice_detector_sheet;
 
           Animation animation;
           Animation ice_animation;

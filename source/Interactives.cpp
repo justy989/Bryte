@@ -1,4 +1,5 @@
 #include "Interactives.hpp"
+#include "Projectile.hpp"
 #include "Enemy.hpp"
 #include "Log.hpp"
 
@@ -212,6 +213,13 @@ Void Interactives::character_leave ( Int32 tile_x, Int32 tile_y, Character& char
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
      i.character_leave ( character.facing, *this, character );
+}
+
+Void Interactives::projectile_enter ( Int32 tile_x, Int32 tile_y, Projectile& projectile )
+{
+     Interactive& i = get_from_tile ( tile_x, tile_y );
+
+     i.projectile_enter ( projectile.facing, *this, projectile );
 }
 
 Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear )
@@ -508,6 +516,47 @@ Void Interactive::interactive_leave ( Direction to, Interactives& interactives )
      } else if ( underneath.type == UnderneathInteractive::Type::ice_detector ) {
           Auto& detector = underneath.underneath_ice_detector;
           detector.force_dir = Direction::count;
+     }
+}
+
+Void Interactive::projectile_enter ( Direction from, Interactives& interactives, Projectile& projectile )
+{
+     switch ( type ) {
+     default:
+          break;
+     case Type::lever:
+          activate ( interactives );
+          break;
+     case Type::portal:
+     {
+          Vector dst = Map::coordinates_to_vector ( interactive_portal.destination_x,
+                                                    interactive_portal.destination_y );
+          projectile.position = dst;
+     } break;
+     case Type::torch:
+          if ( projectile.type == Projectile::Type::arrow ) {
+               if ( projectile.effected_by_element ) {
+                    Auto& torch_element = interactive_torch.element;
+                    torch_element = transition_element ( torch_element, projectile.effected_by_element );
+               } else {
+                    Auto& torch_element = interactive_torch.element;
+                    projectile.effected_by_element = transition_element ( projectile.effected_by_element,
+                                                                          torch_element );
+               }
+          }
+          break;
+     case Type::pushable_torch:
+          if ( projectile.type == Projectile::Type::arrow ) {
+               if ( projectile.effected_by_element ) {
+                    Auto& torch_element = interactive_pushable_torch.torch.element;
+                    torch_element = transition_element ( torch_element, projectile.effected_by_element );
+               } else {
+                    Auto& torch_element = interactive_pushable_torch.torch.element;
+                    projectile.effected_by_element = transition_element ( projectile.effected_by_element,
+                                                                          torch_element );
+               }
+          }
+          break;
      }
 }
 

@@ -11,6 +11,7 @@ namespace bryte
 {
      class Interactives;
      class Character;
+     struct Projectile;
 
      struct Exit {
           enum State {
@@ -239,6 +240,7 @@ namespace bryte
           Void      character_leave   ( Direction to, Interactives& interactives, Character& character );
           Void      interactive_enter ( Direction from, Interactives& interactives );
           Void      interactive_leave ( Direction to, Interactives& interactives );
+          Void      projectile_enter  ( Direction from, Interactives& interactives, Projectile& projectile );
 
           Bool is_solid ( ) const;
 
@@ -272,6 +274,7 @@ namespace bryte
           Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
           Void character_enter ( Int32 tile_x, Int32 tile_y, Character& character );
           Void character_leave ( Int32 tile_x, Int32 tile_y, Character& character );
+          Void projectile_enter ( Int32 tile_x, Int32 tile_y, Projectile& projectile );
 
           Void spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear = false );
 

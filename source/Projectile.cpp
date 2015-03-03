@@ -53,48 +53,25 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
           current_tile = tile_index;
      }
 
-     if ( map.get_coordinate_solid ( tile.x, tile.y ) ) {
+     Auto& interactive = interactives.get_from_tile ( tile.x, tile.y );
+     if ( interactive.type == Interactive::Type::exit ) {
+          // otherwise arrows can escape when doors are open
+          // TODO: is this ok?
           return true;
      }
 
-     Auto& interactive = interactives.get_from_tile ( tile.x, tile.y );
+     interactives.projectile_enter ( tile.x, tile.y, *this );
 
      if ( interactive.is_solid ( ) ) {
-          // do not activate exits!
-          if ( type == Projectile::Type::arrow ) {
-               if ( interactive.type == Interactive::Type::torch ) {
-                    if ( effected_by_element ) {
-                         Auto& torch_element = interactive.interactive_torch.element;
-                         torch_element = transition_element ( torch_element, effected_by_element );
-                    } else if ( interactive.interactive_torch.element ) {
-                         Auto& torch_element = interactive.interactive_torch.element;
-                         effected_by_element = transition_element ( effected_by_element, torch_element );
-                    }
-
-                    return false;
-               } else if ( interactive.type == Interactive::Type::pushable_torch ) {
-                    if ( effected_by_element ) {
-                         Auto& torch_element = interactive.interactive_pushable_torch.torch.element;
-                         torch_element = transition_element ( torch_element, effected_by_element );
-                    } else if ( interactive.interactive_pushable_torch.torch.element ) {
-                         Auto& torch_element = interactive.interactive_pushable_torch.torch.element;
-                         effected_by_element = transition_element ( effected_by_element, torch_element );
-                    }
-
-                    return false;
-               } else if ( interactive.type != Interactive::Type::exit &&
-                           interactive.underneath.type != UnderneathInteractive::Type::popup_block ) {
-                    interactive.activate ( interactives );
-               }
-          }
-
-          return true;
-     } else {
-          if ( interactive.type == Interactive::Type::exit ) {
-               // otherwise arrows can escape when doors are open
-               // TODO: is this ok?
+          // TODO: torches are exceptions, should this be data driven?
+          if ( interactive.type != Interactive::Type::torch &&
+               interactive.type != Interactive::Type::pushable_torch ) {
                return true;
           }
+     }
+
+     if ( map.get_coordinate_solid ( tile.x, tile.y ) ) {
+          return true;
      }
 
      return false;

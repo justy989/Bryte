@@ -2,7 +2,6 @@
 #define BRYTE_VECTOR_HPP
 
 #include "Types.hpp"
-#include "Direction.hpp"
 
 #include <cmath>
 #include <cfloat>

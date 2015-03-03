@@ -974,6 +974,19 @@ Void State::update_bombs ( float time_delta )
 
           bomb.update ( time_delta );
 
+          Vector bomb_center { bomb.position.x ( ) + Map::c_tile_dimension_in_meters * 0.5f,
+                               bomb.position.y ( ) + Map::c_tile_dimension_in_meters * 0.5f };
+          Int32 bomb_tile_x = meters_to_pixels ( bomb_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+          Int32 bomb_tile_y = meters_to_pixels ( bomb_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+
+          Auto& current_interactive = interactives.get_from_tile ( bomb_tile_x, bomb_tile_y );
+
+          if ( current_interactive.underneath.type == UnderneathInteractive::Type::moving_walkway ) {
+               static const Real32 c_bomb_moving_walkway_speed = 0.05f;
+               Direction moving = current_interactive.underneath.underneath_moving_walkway.facing;
+               bomb.position += vector_from_direction ( moving ) * c_bomb_moving_walkway_speed;
+          }
+
           if ( bomb.life_state == Entity::LifeState::dying ) {
                // damage nearby enemies
                for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
@@ -992,7 +1005,7 @@ Void State::update_bombs ( float time_delta )
                     }
                }
 
-               // activate nearby objects
+               // determine nearby objects
                Vector bomb_center { bomb.position.x ( ) + Map::c_tile_dimension_in_meters * 0.5f,
                                     bomb.position.y ( ) + Map::c_tile_dimension_in_meters * 0.5f };
                Int32 tile_radius = meters_to_pixels ( Bomb::c_explode_radius ) / Map::c_tile_dimension_in_pixels;
@@ -1010,12 +1023,10 @@ Void State::update_bombs ( float time_delta )
                CLAMP ( tile_max_x, 0, interactives.width ( ) - 1 );
                CLAMP ( tile_max_y, 0, interactives.height ( ) - 1 );
 
+               // loop over nearby objects
                for ( Int32 y = tile_min_y; y <= tile_max_y; ++y ) {
                     for ( Int32 x = tile_min_x; x <= tile_max_x; ++x ) {
-                         auto& interactive = interactives.get_from_tile ( x, y );
-                         if ( interactive.type != Interactive::Type::exit ) {
-                              interactives.explode ( x, y );
-                         }
+                         interactives.explode ( x, y );
                     }
                }
 

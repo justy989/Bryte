@@ -248,16 +248,22 @@ Void Enemy::bat_think ( const Character& player, Random& random, float time_delt
      timer.tick ( time_delta );
 
      if ( dashing ) {
-          Real32 distance_to_target = position.distance_to ( target );
-          Direction dir = direction_between ( position, target, random );
-          walk ( dir );
-          walk_acceleration = BatState::c_dash_speed;
-
-          if ( distance_to_target < Map::c_tile_dimension_in_meters ) {
+          if ( collided_last_frame ) {
+               // TODO: pathfinding so we can always have the bat find you?
                dashing = false;
                walk_acceleration = BatState::c_walk_speed;
+          } else {
+               Real32 distance_to_target = position.distance_to ( target );
+               Direction dir = direction_between ( position, target, random );
+               walk ( dir );
+               walk_acceleration = BatState::c_dash_speed;
+
+               if ( distance_to_target < Map::c_tile_dimension_in_meters ) {
+                    dashing = false;
+                    walk_acceleration = BatState::c_walk_speed;
+               }
+               return;
           }
-          return;
      }
 
      if ( timer.expired ( ) || collided_last_frame ) {

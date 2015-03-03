@@ -33,8 +33,13 @@ namespace bryte
                     count
                };
 
+               static const Real32 c_walk_speed;
+               static const Real32 c_dash_speed;
+
                Direction move_direction;
                Stopwatch timer;
+               Bool dashing;
+               Vector target;
           };
 
           struct GooState {
@@ -61,16 +66,16 @@ namespace bryte
 
           Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
 
-          Void think ( const Vector& player, Random& random, float time_delta );
+          Void think ( const Character& player, Random& random, float time_delta );
 
           Void clear ( );
 
      private:
 
-          Void rat_think ( const Vector& player, Random& random, float time_delta );
-          Void bat_think ( const Vector& player, Random& random, float time_delta );
-          Void goo_think ( const Vector& player, Random& random, float time_delta );
-          Void skeleton_think ( const Vector& player, Random& random, float time_delta );
+          Void rat_think ( const Character& player, Random& random, float time_delta );
+          Void bat_think ( const Character& player, Random& random, float time_delta );
+          Void goo_think ( const Character& player, Random& random, float time_delta );
+          Void skeleton_think ( const Character& player, Random& random, float time_delta );
 
      public:
 

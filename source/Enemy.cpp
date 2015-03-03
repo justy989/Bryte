@@ -1,5 +1,6 @@
 #include "Enemy.hpp"
 #include "Utils.hpp"
+#include "Map.hpp"
 
 #include <cmath>
 
@@ -7,6 +8,8 @@ using namespace bryte;
 
 const Real32 Enemy::GooState::c_shoot_time        = 2.0f;
 const Real32 Enemy::SkeletonState::c_attack_range = 4.0f;
+const Real32 Enemy::BatState::c_walk_speed        = 5.0f;
+const Real32 Enemy::BatState::c_dash_speed        = 10.0f;
 const Char8* Enemy::c_names [ Enemy::Type::count ] = {
      "rat",
      "bat",
@@ -79,7 +82,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collides_with_solids = true;
           collides_with_exits = true;
 
-          walk_acceleration = 5.0f;
+          walk_acceleration = BatState::c_walk_speed;
           deceleration_scale = 2.0f;
 
           walk_frame_change = 1;
@@ -90,6 +93,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           bat_state.move_direction = BatState::Direction::up_left;
           bat_state.timer.reset ( 0.0f );
+          bat_state.dashing = false;
+          bat_state.target.zero ( );
           break;
      case Enemy::Type::goo:
           health     = 2;
@@ -139,7 +144,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
      }
 }
 
-Void Enemy::think ( const Vector& player, Random& random, float time_delta )
+Void Enemy::think ( const Character& player, Random& random, float time_delta )
 {
      switch ( type )
      {
@@ -192,7 +197,7 @@ Void Enemy::clear ( )
      drop = Pickup::Type::none;
 }
 
-Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
+Void Enemy::rat_think ( const Character& player, Random& random, float time_delta )
 {
      Bool& moving             = rat_state.moving;
      Bool& reacting_to_attack = rat_state.reacting_to_attack;
@@ -233,12 +238,27 @@ Void Enemy::rat_think ( const Vector& player, Random& random, float time_delta )
      }
 }
 
-Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
+Void Enemy::bat_think ( const Character& player, Random& random, float time_delta )
 {
      Stopwatch& timer     = bat_state.timer;
      Auto& move_direction = bat_state.move_direction;
+     Bool& dashing        = bat_state.dashing;
+     Vector& target       = bat_state.target;
 
      timer.tick ( time_delta );
+
+     if ( dashing ) {
+          Real32 distance_to_target = position.distance_to ( target );
+          Direction dir = direction_between ( position, target, random );
+          walk ( dir );
+          walk_acceleration = BatState::c_dash_speed;
+
+          if ( distance_to_target < Map::c_tile_dimension_in_meters ) {
+               dashing = false;
+               walk_acceleration = BatState::c_walk_speed;
+          }
+          return;
+     }
 
      if ( timer.expired ( ) || collided_last_frame ) {
           move_direction = static_cast<BatState::Direction>( random.generate ( 0, BatState::Direction::count + 1 ) );
@@ -265,9 +285,14 @@ Void Enemy::bat_think ( const Vector& player, Random& random, float time_delta )
           walk ( Direction::right );
           break;
      }
+
+     if ( player.is_attacking ( ) && !dashing ) {
+          dashing = true;
+          target = player.collision_center ( );
+     }
 }
 
-Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
+Void Enemy::goo_think ( const Character& player, Random& random, float time_delta )
 {
      GooState::State& state = goo_state.state;
      Stopwatch& state_timer = goo_state.state_timer;
@@ -305,14 +330,13 @@ Void Enemy::goo_think ( const Vector& player, Random& random, float time_delta )
      }
 }
 
-Void Enemy::skeleton_think ( const Vector& player, Random& random, float time_delta )
+Void Enemy::skeleton_think ( const Character& player, Random& random, float time_delta )
 {
-
      Auto& wander_timer = skeleton_state.wander_timer;
-     Real32 distance_to_player = position.distance_to ( player );
+     Real32 distance_to_player = position.distance_to ( player.position );
 
      if ( distance_to_player < SkeletonState::c_attack_range ) {
-          walk ( direction_between ( position, player, random ) );
+          walk ( direction_between ( position, player.position, random ) );
      } else {
           wander_timer.tick ( time_delta );
 

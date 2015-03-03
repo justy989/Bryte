@@ -731,10 +731,10 @@ Void State::update_enemies ( float time_delta )
 
 #ifdef DEBUG
           if ( enemy_think ) {
-               enemy.think ( player_center, random, time_delta );
+               enemy.think ( player, random, time_delta );
           }
 #else
-          enemy.think ( player_center, random, time_delta );
+          enemy.think ( player, random, time_delta );
 #endif
 
           enemy.update ( time_delta, map, interactives );

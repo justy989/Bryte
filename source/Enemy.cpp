@@ -7,7 +7,10 @@
 using namespace bryte;
 
 const Real32 Enemy::GooState::c_shoot_time        = 2.0f;
-const Real32 Enemy::SkeletonState::c_attack_range = 4.0f;
+const Real32 Enemy::SkeletonState::c_attack_range = 7.0f;
+const Real32 Enemy::SkeletonState::c_walk_speed   = 3.0f;
+const Real32 Enemy::SkeletonState::c_attack_speed = 6.0f;
+const Real32 Enemy::SkeletonState::c_attack_delay = 0.5f;
 const Real32 Enemy::BatState::c_walk_speed        = 5.0f;
 const Real32 Enemy::BatState::c_dash_speed        = 10.0f;
 const Char8* Enemy::c_names [ Enemy::Type::count ] = {
@@ -163,6 +166,8 @@ Void Enemy::think ( const Character& player, Random& random, float time_delta )
           skeleton_think ( player, random, time_delta );
           break;
      }
+
+     hit_player = false;
 }
 
 Void Enemy::clear ( )
@@ -339,10 +344,23 @@ Void Enemy::goo_think ( const Character& player, Random& random, float time_delt
 Void Enemy::skeleton_think ( const Character& player, Random& random, float time_delta )
 {
      Auto& wander_timer = skeleton_state.wander_timer;
+     Auto& attack_timer = skeleton_state.attack_timer;
      Real32 distance_to_player = position.distance_to ( player.position );
+
+     if ( !attack_timer.expired ( ) ) {
+          attack_timer.tick ( time_delta );
+          return;
+     }
+
+     // if we have taken damage, pause until we have stopped blinking
+     if ( !damage_watch.expired ( ) || hit_player ) {
+          attack_timer.reset ( SkeletonState::c_attack_delay );
+          return;
+     }
 
      if ( distance_to_player < SkeletonState::c_attack_range ) {
           walk ( direction_between ( position, player.position, random ) );
+          walk_acceleration = SkeletonState::c_attack_speed;
      } else {
           wander_timer.tick ( time_delta );
 
@@ -352,6 +370,8 @@ Void Enemy::skeleton_think ( const Character& player, Random& random, float time
                change_facing ( static_cast<Direction>( random.generate ( 0, Direction::count ) ) );
                wander_timer.reset ( random.generate ( 0, 3 ) );
           }
+
+          walk_acceleration = SkeletonState::c_walk_speed;
      }
 }
 

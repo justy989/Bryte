@@ -1078,7 +1078,7 @@ Void State::update_pickups ( float time_delta )
                     player.key_count++;
                     break;
                case Pickup::Type::arrow:
-                    player.arrow_count++;
+                    player.arrow_count += 5;
                     break;
                case Pickup::Type::bomb:
                     player.bomb_count++;

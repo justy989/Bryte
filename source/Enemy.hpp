@@ -58,8 +58,12 @@ namespace bryte
 
           struct SkeletonState {
                static const Real32 c_attack_range;
+               static const Real32 c_walk_speed;
+               static const Real32 c_attack_speed;
+               static const Real32 c_attack_delay;
 
                Stopwatch wander_timer;
+               Stopwatch attack_timer;
           };
 
      public:
@@ -93,6 +97,8 @@ namespace bryte
           };
 
           Pickup::Type drop;
+
+          Bool hit_player;
      };
 }
 

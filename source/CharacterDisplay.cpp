@@ -28,6 +28,11 @@ Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::fairy ], game_memory,
+                                          "test_fairy.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( player_sheet, game_memory, "test_hero.bmp" ) ) {
           return false;
      }

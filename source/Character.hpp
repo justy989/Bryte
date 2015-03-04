@@ -31,6 +31,8 @@ namespace bryte
           Bool attack ( );
           Void block ( );
           Void damage ( Int32 amount, Direction push );
+          Void heal ( Int32 amount );
+          Void process_health ( );
           Void effect_with_element ( Element element );
 
           Void update ( Real32 time_delta, const Map& map, Interactives& interactives );
@@ -133,6 +135,7 @@ namespace bryte
 
           Bool collides_with_solids;
           Bool collides_with_exits;
+          Bool collides_with_interactives;
 
           Bool on_ice;
 

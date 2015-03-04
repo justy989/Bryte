@@ -19,6 +19,7 @@ public:
      inline Vector& operator+= ( const Vector& v );
      inline Vector& operator-= ( const Vector& v );
      inline Vector& operator*= ( Real32 scale );
+     inline Vector& operator/= ( Real32 scale );
 
      inline Real32 inner_product ( const Vector& v ) const;
      inline Real32 length ( ) const;
@@ -83,6 +84,14 @@ inline Vector& Vector::operator*= ( Real32 scale )
 {
      m_x *= scale;
      m_y *= scale;
+
+     return *this;
+}
+
+inline Vector& Vector::operator/= ( Real32 scale )
+{
+     m_x /= scale;
+     m_y /= scale;
 
      return *this;
 }

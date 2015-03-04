@@ -15,6 +15,7 @@ namespace bryte
                bat,
                goo,
                skeleton,
+               fairy,
                count
           };
 
@@ -66,11 +67,19 @@ namespace bryte
                Stopwatch attack_timer;
           };
 
+          struct FairyState {
+               static const Real32 c_heal_radius;
+               static const Real32 c_heal_delay;
+
+               Stopwatch heal_timer;
+          };
+
      public:
 
           Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
 
-          Void think ( const Character& player, Random& random, float time_delta );
+          Void think ( Enemy* enemies, Int32 max_enemies,
+                       const Character& player, Random& random, float time_delta );
 
           Void clear ( );
 
@@ -80,6 +89,8 @@ namespace bryte
           Void bat_think ( const Character& player, Random& random, float time_delta );
           Void goo_think ( const Character& player, Random& random, float time_delta );
           Void skeleton_think ( const Character& player, Random& random, float time_delta );
+          Void fairy_think ( Enemy* enemies, Int32 max_enemies,
+                             const Character& player, Random& random, float time_delta );
 
      public:
 
@@ -94,6 +105,7 @@ namespace bryte
                BatState bat_state;
                GooState goo_state;
                SkeletonState skeleton_state;
+               FairyState fairy_state;
           };
 
           Pickup::Type drop;

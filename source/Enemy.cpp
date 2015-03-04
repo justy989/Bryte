@@ -7,17 +7,20 @@
 using namespace bryte;
 
 const Real32 Enemy::GooState::c_shoot_time        = 2.0f;
-const Real32 Enemy::SkeletonState::c_attack_range = 7.0f;
-const Real32 Enemy::SkeletonState::c_walk_speed   = 3.0f;
+const Real32 Enemy::SkeletonState::c_attack_range = 6.0f;
+const Real32 Enemy::SkeletonState::c_walk_speed   = 4.0f;
 const Real32 Enemy::SkeletonState::c_attack_speed = 6.0f;
 const Real32 Enemy::SkeletonState::c_attack_delay = 0.5f;
 const Real32 Enemy::BatState::c_walk_speed        = 5.0f;
 const Real32 Enemy::BatState::c_dash_speed        = 10.0f;
+const Real32 Enemy::FairyState::c_heal_radius     = 4.0f;
+const Real32 Enemy::FairyState::c_heal_delay      = 1.0f;
 const Char8* Enemy::c_names [ Enemy::Type::count ] = {
      "rat",
      "bat",
      "goo",
      "skeleton",
+     "fairy"
 };
 
 Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
@@ -60,6 +63,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           collides_with_solids = true;
           collides_with_exits  = true;
+          collides_with_interactives = true;
 
           walk_acceleration = 9.0f;
           deceleration_scale = 5.0f;
@@ -84,6 +88,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           collides_with_solids = true;
           collides_with_exits = true;
+          collides_with_interactives = false;
 
           walk_acceleration = BatState::c_walk_speed;
           deceleration_scale = 2.0f;
@@ -109,6 +114,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           collides_with_solids = true;
           collides_with_exits = true;
+          collides_with_interactives = true;
 
           walk_acceleration = 3.5f;
           deceleration_scale = 2.0f;
@@ -132,6 +138,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           collides_with_solids = true;
           collides_with_exits = true;
+          collides_with_interactives = true;
 
           walk_acceleration = 3.0f;
           deceleration_scale = 2.0f;
@@ -144,10 +151,35 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           draw_facing = false;
 
           break;
+     case Enemy::Type::fairy:
+          health     = 2;
+          max_health = 2;
+
+          dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
+          collision_offset.set ( pixels_to_meters ( 4 ), pixels_to_meters ( 1 ) );
+          collision_dimension.set ( pixels_to_meters ( 6 ), pixels_to_meters ( 12 ) );
+
+          collides_with_solids = true;
+          collides_with_exits = true;
+          collides_with_interactives = false;
+
+          walk_acceleration = 4.0f;
+          deceleration_scale = 2.0f;
+
+          walk_frame_change = 1;
+          walk_frame_count = 3;
+          walk_frame_rate = 0.2f;
+          constant_animation = true;
+
+          draw_facing = false;
+
+          fairy_state.heal_timer.reset ( 0.0f );
+          break;
      }
 }
 
-Void Enemy::think ( const Character& player, Random& random, float time_delta )
+Void Enemy::think ( Enemy* enemies, Int32 max_enemies,
+                    const Character& player, Random& random, float time_delta )
 {
      switch ( type )
      {
@@ -164,6 +196,9 @@ Void Enemy::think ( const Character& player, Random& random, float time_delta )
           break;
      case Type::skeleton:
           skeleton_think ( player, random, time_delta );
+          break;
+     case Type::fairy:
+          fairy_think ( enemies, max_enemies, player, random, time_delta );
           break;
      }
 
@@ -373,5 +408,37 @@ Void Enemy::skeleton_think ( const Character& player, Random& random, float time
 
           walk_acceleration = SkeletonState::c_walk_speed;
      }
+}
+
+Void Enemy::fairy_think ( Enemy* enemies, Int32 max_enemies,
+                          const Character& player, Random& random, float time_delta )
+{
+     Vector average;
+     Real32 enemy_count = 0.0f;
+
+     for ( Int32 i = 0; i < max_enemies; ++i ) {
+          if ( enemies [ i ].is_dead ( ) ||
+               enemies [ i ].type == Enemy::Type::fairy ) {
+               continue;
+          }
+
+          Vector enemy_pos = enemies [ i ].position;
+
+          average += enemy_pos;
+          enemy_count += 1.0f;
+     }
+
+     average /= enemy_count;
+
+     if ( enemy_count > 0.0f ) {
+          Direction dir = direction_between ( position, average, random );
+          walk ( dir );
+     }
+
+     if ( fairy_state.heal_timer.expired ( ) ) {
+          fairy_state.heal_timer.reset ( FairyState::c_heal_delay );
+     }
+
+     fairy_state.heal_timer.tick ( time_delta );
 }
 

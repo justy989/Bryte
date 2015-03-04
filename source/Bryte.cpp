@@ -345,9 +345,27 @@ Bool State::spawn_damage_number ( const Vector& position, Int32 value )
           return false;
      }
 
+     damage_number->value = -value;
+     damage_number->starting_y = position.y ( );
+
+     // NOTE: seriously?
+     LOG_DEBUG ( "spawning damage number at %f, %f\n", position.x ( ), position.y ( ) );
+
+     return true;
+}
+
+Bool State::spawn_healing_number ( const Vector& position, Int32 value )
+{
+     Auto* damage_number = damage_numbers.spawn ( position );
+
+     if ( !damage_number ) {
+          return false;
+     }
+
      damage_number->value = value;
      damage_number->starting_y = position.y ( );
 
+     // NOTE: seriously?
      LOG_DEBUG ( "spawning damage number at %f, %f\n", position.x ( ), position.y ( ) );
 
      return true;
@@ -731,13 +749,18 @@ Void State::update_enemies ( float time_delta )
 
 #ifdef DEBUG
           if ( enemy_think ) {
-               enemy.think ( player, random, time_delta );
+               enemy.think ( enemies.entities, enemies.max ( ), player, random, time_delta );
           }
 #else
-          enemy.think ( player, random, time_delta );
+          enemy.think ( enemies.entities, enemies.max ( ), player, random, time_delta );
 #endif
 
           enemy.update ( time_delta, map, interactives );
+
+          if ( enemy.type == Enemy::Type::fairy &&
+               enemy.fairy_state.heal_timer.expired ( ) ) {
+               heal_enemies_in_range_of_fairy ( enemy.position );
+          }
 
           // check if the enemy has died after updating
           if ( enemy.is_dead ( ) ) {
@@ -1180,6 +1203,22 @@ Void State::dequeue_pickup ( )
      pickup_stopwatch.reset ( c_pickup_show_time );
 }
 
+Void State::heal_enemies_in_range_of_fairy ( const Vector& position )
+{
+     for ( Uint32 i = 0; i < enemies.max ( ); ++i ) {
+          Auto& enemy = enemies [ i ];
+
+          if ( enemy.is_dead ( ) || enemy.type == Enemy::Type::fairy ) {
+               continue;
+          }
+
+          if ( enemy.position.distance_to ( position ) < Enemy::FairyState::c_heal_radius ) {
+               enemy.heal ( 1 );
+               spawn_healing_number ( enemy.collision_center ( ), 1 );
+          }
+     }
+}
+
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
@@ -1359,13 +1398,17 @@ static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const D
                                    Real32 camera_x, Real32 camera_y )
 {
      char buffer [ 64 ];
+     Int32 value = abs ( damage_number.value );
+     const char* positive_format = "+%d";
+     const char* negative_format = "%d";
+     const char* format = damage_number.value > 0 ? positive_format : negative_format;
 
 #if LINUX
-     sprintf ( buffer, "%d", damage_number.value );
+     sprintf ( buffer, format, value );
 #endif
 
 #if WIN32
-     sprintf_s ( buffer, "%d", damage_number.value );
+     sprintf_s ( buffer, format, value );
 #endif
 
      SDL_Rect dest_rect = build_world_sdl_rect ( damage_number.position.x ( ), damage_number.position.y ( ),

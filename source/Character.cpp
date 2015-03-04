@@ -166,6 +166,22 @@ Void Character::damage ( Int32 amount, Direction push )
 
      state = State::blinking;
 
+     process_health ( );
+}
+
+Void Character::heal ( Int32 amount )
+{
+     health += amount;
+
+     process_health ( );
+}
+
+Void Character::process_health ( )
+{
+     if ( health > max_health ) {
+          health = max_health;
+     }
+
      if ( health <= 0 ) {
           life_state = LifeState::dying;
           cooldown_watch.reset ( Character::c_dying_time );
@@ -413,14 +429,19 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
                     Auto& interactive = interactives.get_from_tile ( x, y );
 
-                    if ( !map.get_coordinate_solid ( x, y ) &&
-                         !interactive.is_solid ( ) ) {
-                         if ( interactive.type == Interactive::Type::exit ) {
-                              if ( !collides_with_exits ) {
+                    if ( !map.get_coordinate_solid ( x, y ) ) {
+                         if ( !interactive.is_solid ( ) ) {
+                              if ( interactive.type == Interactive::Type::exit ) {
+                                   if ( !collides_with_exits ) {
+                                        continue;
+                                   }
+                              } else {
                                    continue;
                               }
                          } else {
-                              continue;
+                              if ( !collides_with_interactives ) {
+                                   continue;
+                              }
                          }
                     }
 
@@ -494,8 +515,9 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      Map::Coordinates new_coords = Map::vector_to_coordinates ( collision_center ( ) );
 
-     if ( old_coords.x != new_coords.x ||
-          old_coords.y != new_coords.y ) {
+     if ( ( old_coords.x != new_coords.x || old_coords.y != new_coords.y ) &&
+            collides_with_interactives ) {
+          // TODO: what about non-collides_with_interactives and portals?
           interactives.character_leave ( old_coords.x, old_coords.y, *this );
           interactives.character_enter ( new_coords.x, new_coords.y, *this );
      }

@@ -91,6 +91,7 @@ namespace bryte
                                   Projectile::Alliance alliance );
           Bool spawn_bomb ( const Vector& position );
           Bool spawn_damage_number ( const Vector& position, Int32 value );
+          Bool spawn_healing_number ( const Vector& position, Int32 value );
 
           Void persist_map ( );
           Void spawn_map_enemies ( );
@@ -118,6 +119,8 @@ namespace bryte
 
           Void enqueue_pickup ( Pickup::Type type );
           Void dequeue_pickup ( );
+
+          Void heal_enemies_in_range_of_fairy ( const Vector& position );
 
      public:
 

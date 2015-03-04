@@ -48,6 +48,7 @@ Void Player::clear ( )
 
      collides_with_solids = true;
      collides_with_exits = false;
+     collides_with_interactives = true;
 
      item_mode = ItemMode::arrow;
      item_cooldown.reset ( 0.0f );

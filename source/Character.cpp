@@ -518,8 +518,11 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      if ( ( old_coords.x != new_coords.x || old_coords.y != new_coords.y ) &&
             collides_with_interactives ) {
           // TODO: what about non-collides_with_interactives and portals?
-          interactives.character_leave ( old_coords.x, old_coords.y, *this );
-          interactives.character_enter ( new_coords.x, new_coords.y, *this );
+          if ( map.coordinate_x_valid ( old_coords.x ) && map.coordinate_y_valid ( old_coords.y ) &&
+               map.coordinate_x_valid ( new_coords.x ) && map.coordinate_y_valid ( new_coords.y )  ) {
+               interactives.character_leave ( old_coords.x, old_coords.y, *this );
+               interactives.character_enter ( new_coords.x, new_coords.y, *this );
+          }
      }
 
      acceleration.zero ( );

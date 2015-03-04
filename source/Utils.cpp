@@ -8,11 +8,11 @@
 extern "C" Bitscan bitscan_forward ( Uint32 mask )
 {
      static const Uint32 bit_count = sizeof ( mask ) * BITS_PER_BYTE;
-     Bitscan result;
+     Bitscan result { 0, sizeof ( Uint32 ) * BITS_PER_BYTE + 1 };
 
      for ( Uint32 i = 0; i < bit_count; ++i ) {
           if ( ( 1 << i ) & mask ) {
-               result.found = true;
+               result.found = 1;
                result.bit = i;
                break;
           }
@@ -36,7 +36,7 @@ extern "C" FileContents load_entire_file ( const Char8* filepath, GameMemory* ga
      LOG_DEBUG ( "Loading entire file '%s'\n", filepath );
      std::ifstream file ( filepath, std::ios::binary );
 
-     FileContents contents;
+     FileContents contents { nullptr, 0 };
 
      if ( !file.is_open ( ) ) {
           LOG_ERROR ( "Failed to open file '%s' to load entire file\n", filepath );

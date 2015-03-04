@@ -46,7 +46,7 @@ inline GameMemory::GameMemory ( Void* location, Uint32 size ) :
 
 inline Void* GameMemory::push ( Uint32 size )
 {
-     ASSERT ( m_used + size < m_size );
+     ASSERT ( ( m_used + size ) < m_size );
 
      Void* ptr = reinterpret_cast<Char8*>( m_memory ) + m_used;
 

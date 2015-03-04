@@ -5,7 +5,7 @@
 
 #define PRINT_DL_ERROR(dl_api) LOG_ERROR ( "%s() failed: %s\n", dl_api, dlerror ( ) );
 
-class GameInput;
+struct GameInput;
 
 // exported functions to be called by the application
 extern "C" Bool game_init_stub       ( GameMemory&, Void* settings );

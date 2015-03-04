@@ -15,3 +15,5 @@ ice_torch.brm
 second_kill_all.brm
 ice_block.brm
 hole.brm
+bomb.brm
+map.brm

@@ -8,7 +8,7 @@
 namespace bryte
 {
      class Map;
-     class Interactives;
+     struct Interactives;
 
      struct Character : public Entity {
      public:

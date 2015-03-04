@@ -9,8 +9,8 @@
 
 namespace bryte
 {
-     class Interactives;
-     class Character;
+     struct Interactives;
+     struct Character;
      struct Projectile;
 
      struct Exit {
@@ -259,7 +259,7 @@ namespace bryte
           UnderneathInteractive underneath;
      };
 
-     class Interactives {
+     struct Interactives {
      public:
 
           Void reset ( Int32 width, Int32 height );

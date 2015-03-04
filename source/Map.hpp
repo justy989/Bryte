@@ -10,8 +10,8 @@
 
 namespace bryte
 {
-     class Interactives;
-     class Interactive;
+     struct Interactives;
+     struct Interactive;
      struct Enemy;
 
      class Map {

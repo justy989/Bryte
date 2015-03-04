@@ -6,6 +6,7 @@
 #include "Direction.hpp"
 
 #include <SDL2/SDL.h>
+#include <cassert>
 
 #define BITS_PER_BYTE 8
 #define KILOBYTES( bytes ) bytes * 1024
@@ -16,7 +17,7 @@
      #define ASSERT( condition )\
      if ( !( condition ) ) {\
           LOG_ERROR ( "Assert failed %s:%d ( %s )\n", __FILE__, __LINE__, #condition );\
-          *reinterpret_cast<Char8*>(0) = 0;\
+          assert ( condition );\
      }
 #else
      #define ASSERT( condition )
@@ -35,15 +36,15 @@ inline Real32 square ( Real32 value )
 class GameMemory;
 
 struct Bitscan {
-     bool   found = false;
-     Uint32 bit   = sizeof ( Uint32 ) * BITS_PER_BYTE + 1;
+     Int32 found;
+     Uint32 bit;
 };
 
 extern "C" Bitscan bitscan_forward ( Uint32 mask );
 
 struct FileContents {
-     Char8* bytes = nullptr;
-     Uint32 size  = 0;
+     Char8* bytes;
+     Uint32 size;
 
      Void free ( GameMemory* game_memory );
 };

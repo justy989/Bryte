@@ -1349,6 +1349,27 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                     break;
           }
      }
+
+#ifdef DEBUG
+     for ( Uint32 i = 0; i < game_input.mouse_button_change_count; ++i ) {
+          Auto change = game_input.mouse_button_changes [ i ];
+
+          switch ( change.button ) {
+          default:
+               break;
+          case SDL_BUTTON_LEFT:
+          {
+               if ( change.down ) {
+                    Int32 mouse_screen_x = game_input.mouse_position_x - meters_to_pixels ( state->camera.x ( ) );
+                    Int32 mouse_screen_y = game_input.mouse_position_y - meters_to_pixels ( state->camera.y ( ) );
+
+                    state->player.set_collision_center ( pixels_to_meters ( mouse_screen_x ),
+                                                         pixels_to_meters ( mouse_screen_y ) );
+               }
+          } break;
+          }
+     }
+#endif
 }
 
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )

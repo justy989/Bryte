@@ -791,6 +791,7 @@ Void State::update_enemies ( float time_delta )
                } else {
                     damage_character ( player, c_enemy_damage, damage_dir );
                     sound.play_effect ( Sound::Effect::player_damaged );
+                    enemy.hit_player = true;
                }
 
 #ifdef DEBUG

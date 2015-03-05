@@ -4,8 +4,8 @@
 SOURCE_DIR = ../source
 
 # vars
-CC             = /home/justin/.vim/bundle/clang_complete/bin/cc_args.py clang++
-#CC             = g++
+#CC             = /home/justin/.vim/bundle/clang_complete/bin/cc_args.py clang++
+CC             = g++
 CFLAGS         = -Wall -Werror -fPIC -std=c++11 -DLINUX
 INCLUDE        = -I$(SOURCE_DIR)
 LINK           = -lSDL2 -lSDL2_mixer -ldl

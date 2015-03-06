@@ -174,8 +174,14 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     // load the region info
+     if ( !region.load_info( 0 ) ) {
+          return false;
+     }
+
      // load diplay surfaces
-     if ( !map_display.load_surfaces ( game_memory ) ) {
+     if ( !map_display.load_surfaces ( game_memory, region.tilesheet_filepath, region.decorsheet_filepath,
+                                       region.lampsheet_filepath ) ) {
           return false;
      }
 
@@ -216,7 +222,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      back_buffer_format = *map_display.tilesheet->format;
 
      // load map
-     map.load_master_list ( settings->map_master_list_filename );
+     map.load_master_list ( region.map_list_filepath );
 
      if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
           return false;

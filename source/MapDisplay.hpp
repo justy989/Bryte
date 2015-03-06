@@ -11,7 +11,8 @@ namespace bryte
 {
      struct MapDisplay {
 
-          Bool load_surfaces ( GameMemory& game_memory );
+          Bool load_surfaces ( GameMemory& game_memory, const Char8* tilesheet_filepath,
+                               const Char8* decorsheet_filepath, const Char8* lampsheet_filepath );
           Void unload_surfaces ( );
 
           Void render ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y,

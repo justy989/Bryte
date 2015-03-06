@@ -674,7 +674,8 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           return false;
      }
 
-     if ( !state->map_display.load_surfaces ( game_memory ) ) {
+     if ( !state->map_display.load_surfaces ( game_memory, "castle_tilesheet.bmp", "castle_decorsheet.bmp",
+                                              "castle_lampsheet.bmp" ) ) {
           return false;
      }
 

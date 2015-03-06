@@ -8,6 +8,7 @@
 
 #include "Sound.hpp"
 
+#include "Region.hpp"
 #include "Map.hpp"
 #include "Interactives.hpp"
 #include "Player.hpp"
@@ -141,13 +142,14 @@ namespace bryte
 
           Player player;
 
-          EntityManager<Enemy,       32> enemies;
-          EntityManager<Pickup,       8> pickups;
-          EntityManager<Projectile,  64> projectiles;
-          EntityManager<Bomb,         8> bombs;
-          EntityManager<Emitter,     32> emitters;
+          EntityManager<Enemy,        32> enemies;
+          EntityManager<Pickup,        8> pickups;
+          EntityManager<Projectile,   64> projectiles;
+          EntityManager<Bomb,          8> bombs;
+          EntityManager<Emitter,      32> emitters;
           EntityManager<DamageNumber, 16> damage_numbers;
 
+          Region       region;
           Map          map;
           Interactives interactives;
 

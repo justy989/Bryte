@@ -5,17 +5,18 @@
 
 using namespace bryte;
 
-Bool MapDisplay::load_surfaces ( GameMemory& game_memory )
+Bool MapDisplay::load_surfaces ( GameMemory& game_memory, const Char8* tilesheet_filepath,
+                                 const Char8* decorsheet_filepath, const Char8* lampsheet_filepath )
 {
-     if ( !load_bitmap_with_game_memory ( tilesheet, game_memory, "castle_tilesheet.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( tilesheet, game_memory, tilesheet_filepath ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( decorsheet, game_memory, "castle_decorsheet.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( decorsheet, game_memory, decorsheet_filepath ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( lampsheet, game_memory, "castle_lampsheet.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( lampsheet, game_memory, lampsheet_filepath ) ) {
           return false;
      }
 

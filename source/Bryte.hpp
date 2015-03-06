@@ -72,12 +72,12 @@ namespace bryte
      };
 
      struct Settings {
-          const Char8* map_master_list_filename;
+          Int32  region_index;
 
-          Uint32       map_index;
+          Uint32 map_index;
 
-          Int32        player_spawn_tile_x;
-          Int32        player_spawn_tile_y;
+          Int32  player_spawn_tile_x;
+          Int32  player_spawn_tile_y;
      };
 
      struct State {

@@ -175,7 +175,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      }
 
      // load the region info
-     if ( !region.load_info( 0 ) ) {
+     if ( !region.load_info( settings->region_index ) ) {
           return false;
      }
 

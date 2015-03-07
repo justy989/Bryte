@@ -703,7 +703,8 @@ Void State::update_player ( float time_delta )
                               sound.play_effect ( Sound::Effect::activate_interactive );
                          }
                     } else if ( interactive.type == Interactive::Type::torch ||
-                                interactive.type == Interactive::Type::pushable_torch ) {
+                                interactive.type == Interactive::Type::pushable_torch ||
+                                interactive.underneath.type == UnderneathInteractive::Type::popup_block ) {
                          // pass
                     } else {
                          LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );

@@ -559,9 +559,31 @@ Void State::update_player ( float time_delta )
 
      if ( switch_item_key ) {
           switch_item_key = false;
+          Bool done = false;
 
-          Int32 new_item_mode = ( static_cast<Int32>( player.item_mode ) + 1 ) %
-                                  Player::ItemMode::count;
+          Int32 new_item_mode = static_cast< Int32 >( player.item_mode );
+
+          while ( !done ) {
+               new_item_mode++;
+               new_item_mode %= Player::ItemMode::count;
+
+               switch ( new_item_mode ) {
+                    case Player::ItemMode::shield:
+                         done = true;
+                         break;
+                    case Player::ItemMode::arrow:
+                         if ( player.arrow_count ) {
+                              done = true;
+                         }
+                         break;
+                    case Player::ItemMode::bomb:
+                         if ( player.bomb_count ) {
+                              done = true;
+                         }
+                         break;
+               }
+          }
+
           player.item_mode = static_cast<Player::ItemMode>( new_item_mode );
      }
 

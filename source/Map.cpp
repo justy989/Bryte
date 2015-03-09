@@ -40,7 +40,7 @@ Bool Map::load_master_list ( const Char8* filepath )
           m_master_count++;
      }
 
-     m_current_master_map = c_first_master_map;
+     m_current_map = c_first_master_map;
 
      m_activate_on_all_enemies_killed.x = 0;
      m_activate_on_all_enemies_killed.y = 0;
@@ -334,7 +334,7 @@ Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
 
      Bool success = load ( m_master_list [ map_index ], interactives );
 
-     m_current_master_map = map_index;
+     m_current_map = map_index;
 
      restore_exits ( interactives );
      restore_enemy_spawns ( );
@@ -521,7 +521,7 @@ Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
                PersistedExit::Map& map_info = m_persisted_exits [ i ].map [ m ];
                Location& map_location = map_info.location;
 
-               if ( map_info.index == m_current_master_map &&
+               if ( map_info.index == m_current_map &&
                     map_location.x == x && map_location.y == y ) {
                     m_persisted_exits [ i ].state = exit.interactive_exit.state;
                     return;
@@ -532,7 +532,7 @@ Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
      // if we didn't find the exit, create one
      if ( m_persisted_exit_count >= c_max_exits ) {
           LOG_INFO ( "Error persisting exit at %d, %d, on map %d, hit max persisted exits %d\n",
-                      x, y, m_current_master_map, c_max_exits );
+                      x, y, m_current_map, c_max_exits );
           return;
      }
 
@@ -540,7 +540,7 @@ Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
 
      new_exit.state = exit.interactive_exit.state;
      new_exit.map [ 0 ].location = Location { x, y };
-     new_exit.map [ 0 ].index = m_current_master_map;
+     new_exit.map [ 0 ].index = m_current_map;
      new_exit.map [ 1 ].location = Location { exit.interactive_exit.exit_index_x,
                                               exit.interactive_exit.exit_index_y };
      new_exit.map [ 1 ].index = exit.interactive_exit.map_index;
@@ -552,7 +552,7 @@ Void Map::persist_enemy ( const Enemy& enemy, Uint8 index )
 {
      ASSERT ( index < Map::c_max_enemy_spawns );
 
-     Auto& persisted_enemy = m_persisted_enemies [ m_current_master_map ].enemies [ index ];
+     Auto& persisted_enemy = m_persisted_enemies [ m_current_map ].enemies [ index ];
      Auto center = enemy.collision_center ( );
 
      persisted_enemy.alive = enemy.is_alive ( );
@@ -562,7 +562,7 @@ Void Map::persist_enemy ( const Enemy& enemy, Uint8 index )
 
 Void Map::persist_secret ( )
 {
-     m_persisted_secrets [ m_current_master_map ] = m_secret.found;
+     m_persisted_secrets [ m_current_map ] = m_secret.found;
 }
 
 Void Map::restore_exits ( Interactives& interactives )
@@ -572,14 +572,14 @@ Void Map::restore_exits ( Interactives& interactives )
           for ( Uint32 m = 0; m < 2; ++m ) {
                PersistedExit::Map& map_info = m_persisted_exits [ i ].map [ m ];
 
-               if ( map_info.index == m_current_master_map ) {
+               if ( map_info.index == m_current_map ) {
                     Auto& exit = interactives.get_from_tile ( map_info.location.x,
                                                               map_info.location.y );
 
                     if ( exit.type != Interactive::Type::exit ) {
                          LOG_ERROR ( "Failed to restore persisted exit at %d, %d on map %d, map has changed?\n",
                                      map_info.location.x, map_info.location.y,
-                                     m_current_master_map );
+                                     m_current_map );
                          continue;
                     }
 
@@ -594,7 +594,7 @@ Void Map::restore_enemy_spawns ( )
 {
      Uint8 delete_enemy_spawns [ c_max_enemy_spawns ];
 
-     Auto& persisted_enemies = m_persisted_enemies [ m_current_master_map ].enemies;
+     Auto& persisted_enemies = m_persisted_enemies [ m_current_map ].enemies;
 
      // figure out which enemies should not be persisted
      for ( Uint8 i = 0; i < m_enemy_spawn_count; ++i ) {

@@ -23,6 +23,8 @@ namespace editor
      struct Settings {
           const Char8* map_load_filename;
 
+          Int32 region;
+
           Int32 map_width;
           Int32 map_height;
 

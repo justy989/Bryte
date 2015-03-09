@@ -126,6 +126,8 @@ namespace bryte
           Void change_map ( Int32 map_index );
           Direction player_on_border ( );
 
+          Void region_map ( Int32 region_index );
+
      public:
 
           static const Int32 c_bomb_damage = 4;

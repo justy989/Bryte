@@ -649,11 +649,16 @@ Void State::update_player ( float time_delta )
                interactive.interactive_exit.state == Exit::State::open &&
                interactive.interactive_exit.direction == opposite_direction ( player.facing ) ) {
                Int32 map_index = interactive.interactive_exit.map_index;
+               Int32 region_index = interactive.interactive_exit.map_index;
                Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
                                                                   interactive.interactive_exit.exit_index_y );
 
                new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
                                         Map::c_tile_dimension_in_meters * 0.5f );
+
+               if ( region_index != region.current_index ) {
+                    change_region ( region_index );
+               }
 
                change_map ( map_index );
 
@@ -1292,6 +1297,18 @@ Direction State::player_on_border ( )
      }
 
      return Direction::count;
+}
+
+Void State::change_region ( Int32 region_index )
+{
+     LOG_INFO ( "Chaing to region %d\n", region_index );
+
+     // load new region info
+     if ( !region.load_info ( region_index ) ) {
+          return;
+     }
+
+     // unload and re-load surfaces
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )

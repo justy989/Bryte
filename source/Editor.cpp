@@ -73,6 +73,7 @@ Void State::mouse_button_left_clicked ( )
           if ( interactive.type == Interactive::Type::exit ) {
                interactive.interactive_exit.direction    = static_cast<Direction>( current_exit_direction );
                interactive.interactive_exit.state        = static_cast<Exit::State>( current_exit_state * 2 );
+               interactive.interactive_exit.region_index = static_cast<Uint8>( settings->region );
           }
      } break;
      case Mode::lever:
@@ -1002,8 +1003,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           if ( interactive.type == Interactive::Type::exit ) {
                Auto& exit = interactive.interactive_exit;
-               sprintf ( state->message_buffer, "MAP %d EXIT %d %d", exit.map_index,
-                         exit.exit_index_x, exit.exit_index_y );
+               sprintf ( state->message_buffer, "MAP %d REGION %d EXIT %d %d", exit.map_index,
+                         exit.region_index, exit.exit_index_x, exit.exit_index_y );
           }
      } break;
      case Mode::lever:

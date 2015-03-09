@@ -214,7 +214,7 @@ namespace bryte
           Char8          m_master_list [ c_max_maps ][ c_max_map_name_size ];
           Uint8          m_master_count;
 
-          Int32          m_current_master_map;
+          Int32          m_current_map;
 
           Tile           m_tiles [ c_max_tiles ];
 
@@ -353,7 +353,7 @@ namespace bryte
 
      inline Int32 Map::current_master_map ( ) const
      {
-          return m_current_master_map;
+          return m_current_map;
      }
 
      inline Void Map::set_activate_location_on_all_enemies_killed ( Map::Location loc )

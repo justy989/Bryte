@@ -14,6 +14,7 @@ Void print_help ( )
      printf ( "  -i filename of map to load\n" );
      printf ( "  -o when saved, output filename\n" );
      printf ( "  -s tilesheet to load\n" );
+     printf ( "  -r region to default exits to using\n" );
      printf ( "  -w starting map tiles wide\n" );
      printf ( "  -t starting map tiles tall\n" );
      printf ( "  -h displays this helpful information\n\n" );
@@ -38,6 +39,8 @@ Int32 main ( Int32 argc, Char8** argv )
 
      editor::Settings editor_settings;
 
+     editor_settings.region = 0;
+
      editor_settings.map_width  = 8;
      editor_settings.map_height = 8;
 
@@ -52,6 +55,11 @@ Int32 main ( Int32 argc, Char8** argv )
           if ( strcmp ( argv [ i ], "-h" ) == 0 ) {
                print_help ( );
                return 0;
+          } else if ( strcmp ( argv [ i ], "-r" ) == 0 ) {
+               if ( argc >= i + 1 ) {
+                    editor_settings.region = atoi ( argv [ i + 1 ] );
+                    ++i;
+               }
           } else if ( strcmp ( argv [ i ], "-w" ) == 0 ) {
                if ( argc >= i + 1 ) {
                     editor_settings.map_width = atoi ( argv [ i + 1 ] );

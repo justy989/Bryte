@@ -45,6 +45,7 @@ Bool Region::load_info ( Int32 index )
 
      std::string tmp_string;
 
+     // TODO: load all into tmp vars and validate before setting them all
      ss >> tmp_string;
      strncpy ( map_list_filepath, tmp_string.c_str ( ), c_max_filepath_length );
 
@@ -91,6 +92,8 @@ Bool Region::load_info ( Int32 index )
      LOG_INFO ( " decorsheet: '%s'\n", decorsheet_filepath );
      LOG_INFO ( " lampsheet: '%s'\n", lampsheet_filepath );
      LOG_INFO ( " exitsheet: '%s'\n", exitsheet_filepath );
+
+     current_index = index;
 
      return true;
 }

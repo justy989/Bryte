@@ -549,7 +549,7 @@ Void State::option_button_up_pressed ( )
      {
           Auto& border_exit = map.get_border_exit ( static_cast<Direction>( current_border ) );
 
-          border_exit.map_index++;
+          border_exit.map_index--;
      } break;
      }
 }
@@ -625,7 +625,7 @@ Void State::option_button_down_pressed ( )
      {
           Auto& border_exit = map.get_border_exit ( static_cast<Direction>( current_border ) );
 
-          border_exit.map_index--;
+          border_exit.map_index++;
      } break;
      }
 }
@@ -664,6 +664,8 @@ Void State::mouse_scrolled ( Int32 scroll )
      case Mode::pushable_block:
           break;
      case Mode::border:
+          current_border += scroll;
+          current_border %= 4;
           break;
      }
 }

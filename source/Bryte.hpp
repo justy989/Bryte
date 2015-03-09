@@ -123,6 +123,9 @@ namespace bryte
 
           Void heal_enemies_in_range_of_fairy ( const Vector& position );
 
+          Void change_map ( Int32 map_index );
+          Direction player_on_border ( );
+
      public:
 
           static const Int32 c_bomb_damage = 4;

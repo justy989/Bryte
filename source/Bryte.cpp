@@ -642,35 +642,48 @@ Void State::update_player ( float time_delta )
 
      if ( map.coordinates_valid ( player_center_tile ) ) {
           Auto& interactive = interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
+          Direction border_side = player_on_border ( );
 
+          // check if player is trying to exit the map
           if ( interactive.type == Interactive::Type::exit &&
                interactive.interactive_exit.state == Exit::State::open &&
                interactive.interactive_exit.direction == opposite_direction ( player.facing ) ) {
+               Int32 map_index = interactive.interactive_exit.map_index;
                Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
                                                                   interactive.interactive_exit.exit_index_y );
 
                new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
                                         Map::c_tile_dimension_in_meters * 0.5f );
 
-               persist_map ( );
-               map.load_from_master_list ( interactive.interactive_exit.map_index, interactives );
-
-               pickups.clear ( );
-               projectiles.clear ( );
-               enemies.clear ( );
-               emitters.clear ( );
-
-               spawn_map_enemies ( );
-
-               setup_emitters_from_map_lamps ( );
+               change_map ( map_index );
 
                player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
 
-               LOG_DEBUG ( "Teleporting player to %f %f on new map\n",
+               LOG_DEBUG ( "Changing to map %d, setting player to %d, %d\n",
+                           map_index,
                            player.position.x ( ),
                            player.position.y ( ) );
 
                // no need to finish this update
+               return;
+          } else if ( border_side != Direction::count &&
+                      border_side == player.facing ) {
+               Auto& border_exit = map.get_border_exit ( border_side );
+               Int32 map_index = border_exit.map_index;
+
+               Auto player_offset = player.collision_center ( ) -
+                                    Map::location_to_vector ( border_exit.bottom_left );
+               Auto new_player_pos = Map::location_to_vector ( border_exit.map_bottom_left ) + player_offset;
+
+               change_map ( map_index );
+
+               player.set_collision_center ( new_player_pos.x ( ), new_player_pos.y ( ) );
+
+               LOG_DEBUG ( "Changing to map %d, setting player to %d, %d\n",
+                           map_index,
+                           player.position.x ( ),
+                           player.position.y ( ) );
+
                return;
           }
      }
@@ -1247,6 +1260,38 @@ Void State::heal_enemies_in_range_of_fairy ( const Vector& position )
                spawn_healing_number ( enemy.collision_center ( ), 1 );
           }
      }
+}
+
+Void State::change_map ( Int32 map_index )
+{
+     persist_map ( );
+     map.load_from_master_list ( map_index, interactives );
+
+     pickups.clear ( );
+     projectiles.clear ( );
+     enemies.clear ( );
+     emitters.clear ( );
+
+     spawn_map_enemies ( );
+
+     setup_emitters_from_map_lamps ( );
+}
+
+Direction State::player_on_border ( )
+{
+     Auto player_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
+
+     if ( player_tile.x == map.get_border_exit ( Direction::left ).bottom_left.x ) {
+          return Direction::left;
+     } else if ( player_tile.x == map.get_border_exit ( Direction::right ).bottom_left.x ) {
+          return Direction::right;
+     } else if ( player_tile.y == map.get_border_exit ( Direction::up ).bottom_left.y ) {
+          return Direction::up;
+     } else if ( player_tile.y == map.get_border_exit ( Direction::down ).bottom_left.y  ) {
+          return Direction::down;
+     }
+
+     return Direction::count;
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )

@@ -366,7 +366,7 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
           for ( Int32 x = 0; x < m_width; ++x ) {
                Auto& tile = m_tiles [ y * m_width + x ];
 
-               file.write ( reinterpret_cast<const Char8*> ( &tile ), sizeof ( tile ) );
+               file.write ( reinterpret_cast<const Char8*>( &tile ), sizeof ( tile ) );
           }
      }
 
@@ -381,23 +381,27 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
 
      for ( Int32 i = 0; i < m_lamp_count; ++i ) {
           Auto& lamp = m_lamps [ i ];
-          file.write ( reinterpret_cast<const Char8*> ( &lamp ), sizeof ( lamp ) );
+          file.write ( reinterpret_cast<const Char8*>( &lamp ), sizeof ( lamp ) );
      }
 
-     file.write ( reinterpret_cast<const Char8*> ( &m_base_light_value ), sizeof ( m_base_light_value ) );
+     file.write ( reinterpret_cast<const Char8*>( &m_base_light_value ), sizeof ( m_base_light_value ) );
 
      file.write ( reinterpret_cast<const Char8*>( &m_enemy_spawn_count ), sizeof ( m_enemy_spawn_count ) );
 
      for ( Int32 i = 0; i < m_enemy_spawn_count; ++i ) {
           Auto& enemy_spawn = m_enemy_spawns [ i ];
-          file.write ( reinterpret_cast<const Char8*> ( &enemy_spawn ), sizeof ( enemy_spawn ) );
+          file.write ( reinterpret_cast<const Char8*>( &enemy_spawn ), sizeof ( enemy_spawn ) );
      }
 
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
                Auto& interactive = interactives.get_from_tile ( x, y );
-               file.write ( reinterpret_cast<const Char8*> ( &interactive ), sizeof ( interactive ) );
+               file.write ( reinterpret_cast<const Char8*>( &interactive ), sizeof ( interactive ) );
           }
+     }
+
+     for ( Int32 i = 0; i < Direction::count; ++i ) {
+          file.write ( reinterpret_cast<const Char8*>( &m_border_exits [ i ] ), sizeof ( BorderExit ) );
      }
 
      file.write ( reinterpret_cast<const Char8*> ( &m_activate_on_all_enemies_killed ),
@@ -469,6 +473,10 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
                Auto& interactive = interactives.get_from_tile ( x, y );
                file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
           }
+     }
+
+     for ( Int32 i = 0; i < Direction::count; ++i ) {
+          file.read ( reinterpret_cast<Char8*>( &m_border_exits [ i ] ), sizeof ( BorderExit ) );
      }
 
      file.read ( reinterpret_cast<Char8*> ( &m_activate_on_all_enemies_killed ),

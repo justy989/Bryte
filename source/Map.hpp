@@ -99,6 +99,13 @@ namespace bryte
                PersistEnemy enemies [ c_max_enemy_spawns ];
           };
 
+          struct BorderExit {
+               Location bottom_left;
+
+               Uint8 map_index;
+               Location map_bottom_left;
+          };
+
      public:
 
           Map ( );
@@ -143,6 +150,9 @@ namespace bryte
           Void remove_decor       ( Fixture* decor );
           Void remove_lamp        ( Fixture* lamp );
           Void remove_enemy_spawn ( EnemySpawn* enemy_spawn );
+
+          Void set_border_exit ( Direction side, const BorderExit& border_exit );
+          BorderExit& get_border_exit ( Direction side );
 
           Void persist_exit ( const Interactive& exit, Uint8 x, Uint8 y );
           Void persist_enemy ( const Enemy& enemy, Uint8 index );
@@ -222,6 +232,8 @@ namespace bryte
 
           EnemySpawn     m_enemy_spawns [ c_max_enemy_spawns ];
           Uint8          m_enemy_spawn_count;
+
+          BorderExit     m_border_exits [ Direction::count ];
 
           Location       m_activate_on_all_enemies_killed;
 

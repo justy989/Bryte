@@ -10,7 +10,7 @@ const Real32 Enemy::GooState::c_shoot_time        = 2.0f;
 const Real32 Enemy::SkeletonState::c_attack_range = 6.0f;
 const Real32 Enemy::SkeletonState::c_walk_speed   = 4.0f;
 const Real32 Enemy::SkeletonState::c_attack_speed = 6.0f;
-const Real32 Enemy::SkeletonState::c_attack_delay = 0.5f;
+const Real32 Enemy::SkeletonState::c_attack_delay = 1.0f;
 const Real32 Enemy::BatState::c_walk_speed        = 5.0f;
 const Real32 Enemy::BatState::c_dash_speed        = 10.0f;
 const Real32 Enemy::FairyState::c_heal_radius     = 4.0f;
@@ -102,7 +102,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           bat_state.move_direction = BatState::Direction::up_left;
           bat_state.timer.reset ( 0.0f );
           bat_state.dashing = false;
-          bat_state.target.zero ( );
+          bat_state.target_x = 0.0f;
+          bat_state.target_y = 0.0f;
           break;
      case Enemy::Type::goo:
           health     = 2;
@@ -283,7 +284,6 @@ Void Enemy::bat_think ( const Character& player, Random& random, float time_delt
      Stopwatch& timer     = bat_state.timer;
      Auto& move_direction = bat_state.move_direction;
      Bool& dashing        = bat_state.dashing;
-     Vector& target       = bat_state.target;
 
      timer.tick ( time_delta );
 
@@ -293,6 +293,7 @@ Void Enemy::bat_think ( const Character& player, Random& random, float time_delt
                dashing = false;
                walk_acceleration = BatState::c_walk_speed;
           } else {
+               Vector target { bat_state.target_x, bat_state.target_y };
                Real32 distance_to_target = position.distance_to ( target );
                Direction dir = direction_between ( position, target, random );
                walk ( dir );
@@ -334,7 +335,9 @@ Void Enemy::bat_think ( const Character& player, Random& random, float time_delt
 
      if ( player.is_attacking ( ) && !dashing ) {
           dashing = true;
-          target = player.collision_center ( );
+          Vector player_center = player.collision_center ( );
+          bat_state.target_x = player_center.x ( );
+          bat_state.target_y = player_center.y ( );
      }
 }
 

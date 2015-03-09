@@ -40,7 +40,8 @@ namespace bryte
                Direction move_direction;
                Stopwatch timer;
                Bool dashing;
-               Vector target;
+               Real32 target_x; // NOTE(justin): Screw you msvc not letting me have things with constructors
+               Real32 target_y; //               in unions!
           };
 
           struct GooState {

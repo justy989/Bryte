@@ -50,7 +50,7 @@ Void Player::clear ( )
      collides_with_exits = false;
      collides_with_interactives = true;
 
-     item_mode = ItemMode::arrow;
+     item_mode = ItemMode::shield;
      item_cooldown.reset ( 0.0f );
      key_count   = 0;
      arrow_count = 0;

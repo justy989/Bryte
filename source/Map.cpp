@@ -65,6 +65,15 @@ Void Map::initialize ( Uint8 width, Uint8 height )
           }
      }
 
+     // clear border exits
+     for ( Int32 i = 0; i < Direction::count; ++i ) {
+          Auto& border_exit = m_border_exits [ i ];
+
+          border_exit.bottom_left = Location { 0, 0 };
+          border_exit.map_index = 0;
+          border_exit.map_bottom_left = Location { 0, 0 };
+     }
+
      m_base_light_value = 128;
      reset_light ( );
 }
@@ -300,6 +309,20 @@ Bool Map::add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id,
 Void Map::remove_enemy_spawn ( EnemySpawn* enemy_spawn )
 {
      remove_element<EnemySpawn> ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns, enemy_spawn );
+}
+
+Void Map::set_border_exit ( Direction side, const BorderExit& border_exit )
+{
+     ASSERT ( side <= Direction::count );
+
+     m_border_exits [ side ] = border_exit;
+}
+
+Map::BorderExit& Map::get_border_exit ( Direction side )
+{
+     ASSERT ( side <= Direction::count );
+
+     return m_border_exits [ side ];
 }
 
 Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )

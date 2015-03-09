@@ -565,9 +565,31 @@ Void State::update_player ( float time_delta )
 
      if ( switch_item_key ) {
           switch_item_key = false;
+          Bool done = false;
 
-          Int32 new_item_mode = ( static_cast<Int32>( player.item_mode ) + 1 ) %
-                                  Player::ItemMode::count;
+          Int32 new_item_mode = static_cast< Int32 >( player.item_mode );
+
+          while ( !done ) {
+               new_item_mode++;
+               new_item_mode %= Player::ItemMode::count;
+
+               switch ( new_item_mode ) {
+                    case Player::ItemMode::shield:
+                         done = true;
+                         break;
+                    case Player::ItemMode::arrow:
+                         if ( player.arrow_count ) {
+                              done = true;
+                         }
+                         break;
+                    case Player::ItemMode::bomb:
+                         if ( player.bomb_count ) {
+                              done = true;
+                         }
+                         break;
+               }
+          }
+
           player.item_mode = static_cast<Player::ItemMode>( new_item_mode );
      }
 
@@ -709,7 +731,8 @@ Void State::update_player ( float time_delta )
                               sound.play_effect ( Sound::Effect::activate_interactive );
                          }
                     } else if ( interactive.type == Interactive::Type::torch ||
-                                interactive.type == Interactive::Type::pushable_torch ) {
+                                interactive.type == Interactive::Type::pushable_torch ||
+                                interactive.underneath.type == UnderneathInteractive::Type::popup_block ) {
                          // pass
                     } else {
                          LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
@@ -797,6 +820,7 @@ Void State::update_enemies ( float time_delta )
                } else {
                     damage_character ( player, c_enemy_damage, damage_dir );
                     sound.play_effect ( Sound::Effect::player_damaged );
+                    enemy.hit_player = true;
                }
 
 #ifdef DEBUG

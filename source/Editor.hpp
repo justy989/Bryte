@@ -57,6 +57,7 @@ namespace editor
           secret,
           hole,
           portal,
+          border,
           count
      };
 
@@ -127,6 +128,7 @@ namespace editor
           Uint8 current_turret_automatic;
           Uint8 current_moving_walkway;
           Uint8 current_portal;
+          Uint8 current_border;
 
           Bool   track_current_interactive;
           Uint32 current_interactive_x;

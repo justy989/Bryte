@@ -257,6 +257,13 @@ Void State::mouse_button_left_clicked ( )
                interactive.interactive_portal.on = static_cast<Bool>( current_portal );
           }
      } break;
+     case Mode::border:
+     {
+          Auto& border_exit = map.get_border_exit ( static_cast<Direction>( current_border ) );
+
+          border_exit.bottom_left = Map::Location { static_cast<Uint8>( mouse_tile_x ),
+                                                    static_cast<Uint8>( mouse_tile_y ) };
+     } break;
      }
 }
 
@@ -461,6 +468,13 @@ Void State::mouse_button_right_clicked ( )
                track_current_interactive = false;
           }
      } break;
+     case Mode::border:
+     {
+          Auto& border_exit = map.get_border_exit ( static_cast<Direction>( current_border ) );
+
+          border_exit.map_bottom_left = Map::Location { static_cast<Uint8>( mouse_tile_x ),
+                                                        static_cast<Uint8>( mouse_tile_y ) };
+     } break;
      }
 }
 
@@ -531,6 +545,12 @@ Void State::option_button_up_pressed ( )
      case Mode::portal:
           current_portal = !current_portal;
           break;
+     case Mode::border:
+     {
+          Auto& border_exit = map.get_border_exit ( static_cast<Direction>( current_border ) );
+
+          border_exit.map_index++;
+     } break;
      }
 }
 
@@ -601,6 +621,12 @@ Void State::option_button_down_pressed ( )
      case Mode::portal:
           current_portal = !current_portal;
           break;
+     case Mode::border:
+     {
+          Auto& border_exit = map.get_border_exit ( static_cast<Direction>( current_border ) );
+
+          border_exit.map_index--;
+     } break;
      }
 }
 
@@ -636,6 +662,8 @@ Void State::mouse_scrolled ( Int32 scroll )
           current_enemy_drop %= Pickup::Type::count;
           break;
      case Mode::pushable_block:
+          break;
+     case Mode::border:
           break;
      }
 }
@@ -817,8 +845,20 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                break;
           case SDL_SCANCODE_M:
                if ( key_change.down ) {
-                    state->mode = static_cast<Mode>( static_cast<int>( state->mode ) + 1 );
-                    state->mode = static_cast<Mode>( static_cast<int>( state->mode ) % Mode::count );
+                    state->mode = static_cast<Mode>( static_cast<Int32>( state->mode ) + 1 );
+                    state->mode = static_cast<Mode>( static_cast<Int32>( state->mode ) % Mode::count );
+                    state->current_field = 0;
+                    state->track_current_interactive = false;
+               }
+               break;
+          case SDL_SCANCODE_N:
+               if ( key_change.down ) {
+                    Int32 new_mode = static_cast<Int32>( state->mode ) - 1;
+                    // wrap around if necessary
+                    if ( new_mode <= 0 ) {
+                         new_mode = static_cast<Mode>( static_cast<Int32>(Mode::count) - 1 );
+                    }
+                    state->mode = static_cast<Mode>( new_mode );
                     state->current_field = 0;
                     state->track_current_interactive = false;
                }
@@ -1054,6 +1094,10 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      } break;
      case Mode::turret:
      {
+          if ( !state->mouse_on_map ( ) ) {
+               break;
+          }
+
           Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
           if ( interactive.type == Interactive::Type::turret ) {
@@ -1100,6 +1144,24 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                sprintf ( state->message_buffer, "DST %d %d",
                          portal.destination_x, portal.destination_y );
           }
+     } break;
+     case Mode::border:
+     {
+          const Char8* c_direction_names [ Direction::count ] =
+          {
+               "LEFT",
+               "UP",
+               "RIGHT",
+               "DOWN"
+          };
+
+          Auto& border_exit = state->map.get_border_exit ( static_cast<Direction>( state->current_border ) );
+          sprintf ( state->message_buffer,
+                    "SIDE %s LOC %d %d MAP %d MLOC %d %d",
+                    c_direction_names [ state->current_border ],
+                    border_exit.bottom_left.x, border_exit.bottom_left.y,
+                    border_exit.map_index, border_exit.map_bottom_left.x,
+                    border_exit.map_bottom_left.y );
      } break;
      }
 
@@ -1181,13 +1243,21 @@ static Void render_current_icon ( SDL_Surface* back_buffer, SDL_Surface* sheet,
      SDL_BlitSurface ( sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
+static Int32 calc_icon_x ( Int32 index, Int32 icons_per_row, Int32 icon_starting_x, Int32 icon_dimension )
+{
+     return ( ( index % icons_per_row ) * icon_dimension ) + icon_starting_x + 1;
+}
+
 static Void render_mode_icons ( SDL_Surface* back_buffer, SDL_Surface* icon_surface, Mode mode )
 {
-     static const Int32 c_icon_dimension = 11;
-     static const Int32 c_icon_start_x   = c_icon_dimension + 2;
+     static const Int32 c_icon_dimension  = 11;
+     static const Int32 c_icon_starting_x = 2;
+     static const Int32 c_icons_per_row   = 17;
 
      for ( int i = 0; i < Mode::count; ++i ) {
-          SDL_Rect dest_rect { i * c_icon_start_x + 1, 3, c_icon_dimension, c_icon_dimension };
+          SDL_Rect dest_rect { calc_icon_x ( i, c_icons_per_row, c_icon_starting_x, c_icon_dimension ),
+                               3 + ( ( i / c_icons_per_row ) * ( c_icon_dimension + 2 ) ),
+                               c_icon_dimension, c_icon_dimension };
           SDL_Rect clip_rect { i * c_icon_dimension, 0, c_icon_dimension, c_icon_dimension };
 
           SDL_BlitSurface ( icon_surface, &clip_rect, back_buffer, &dest_rect );
@@ -1195,8 +1265,9 @@ static Void render_mode_icons ( SDL_Surface* back_buffer, SDL_Surface* icon_surf
 
      static const Int32 c_border_dimension = c_icon_dimension + 2;
 
-     Int32 x = ( static_cast<Int32>( mode ) * c_icon_start_x );
-     Int32 y = 2;
+     Int32 mode_value = static_cast<Int32>( mode );
+     Int32 x = calc_icon_x ( mode_value, c_icons_per_row, c_icon_starting_x, c_icon_dimension ) - 1;
+     Int32 y = 2 + ( ( mode_value / c_icons_per_row ) * ( c_icon_dimension + 2 ) );
      Uint32 red_color = SDL_MapRGB ( back_buffer->format, 255, 0, 0 );
 
      SDL_Rect outline_rect { x, y, c_border_dimension, c_border_dimension };
@@ -1255,7 +1326,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      }
 
      // ui
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, 34 };
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, 44 };
      SDL_FillRect ( back_buffer, &hud_rect, SDL_MapRGB ( back_buffer->format, 0, 0, 0 ) );
 
      render_mode_icons ( back_buffer, state->mode_icons_surface, state->mode );
@@ -1377,13 +1448,13 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // text ui
      Char8 buffer [ 64 ];
      sprintf ( buffer, "T %d %d", state->mouse_tile_x, state->mouse_tile_y );
-     state->text.render ( back_buffer, buffer, 210, 24 );
+     state->text.render ( back_buffer, buffer, 210, 4 );
 
      sprintf ( buffer, "FIELD %d", state->current_field );
-     state->text.render ( back_buffer, buffer, 210, 40 );
+     state->text.render ( back_buffer, buffer, 210, 20 );
 
      state->text.render ( back_buffer, state->message_buffer,
-                          1 * ( state->text.character_width + state->text.character_spacing ), 20 );
+                          1 * ( state->text.character_width + state->text.character_spacing ), 30 );
 }
 
 #endif

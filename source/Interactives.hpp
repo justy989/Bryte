@@ -197,6 +197,7 @@ namespace bryte
                light_detector,
                ice_detector,
                hole,
+               portal,
                count
           };
 
@@ -212,6 +213,7 @@ namespace bryte
                LightDetector underneath_light_detector;
                IceDetector   underneath_ice_detector;
                Hole          underneath_hole;
+               Portal        underneath_portal;
           };
      };
 
@@ -225,7 +227,6 @@ namespace bryte
                exit,
                bombable_block,
                turret,
-               portal,
                count
           };
 
@@ -255,7 +256,6 @@ namespace bryte
                Torch         interactive_torch;
                PushableTorch interactive_pushable_torch;
                Turret        interactive_turret;
-               Portal        interactive_portal;
           };
 
           UnderneathInteractive underneath;

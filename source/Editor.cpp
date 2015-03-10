@@ -249,13 +249,14 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::portal:
      {
-          Interactive& interactive = place_or_clear_interactive ( Interactive::Type::portal,
-                                                                  mouse_tile_x, mouse_tile_y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
-          if ( interactive.type == Interactive::Type::portal ) {
-               interactive.type = Interactive::Type::portal;
-               interactive.reset ( );
-               interactive.interactive_portal.on = static_cast<Bool>( current_portal );
+          if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
+               interactive.underneath.type = UnderneathInteractive::Type::portal;
+               interactive.underneath.reset ( );
+               interactive.underneath.underneath_portal.on = static_cast<Bool>( current_portal );
+          } else {
+               interactive.underneath.type = UnderneathInteractive::Type::none;
           }
      } break;
      case Mode::border:
@@ -317,10 +318,11 @@ Void State::mouse_button_right_clicked ( )
                if ( track_current_interactive ) {
                     Auto& lever = interactives.get_from_tile ( current_interactive_x,
                                                                current_interactive_y );
-                    ASSERT ( lever.type == Interactive::Type::lever );
-                    lever.interactive_lever.activate_coordinate_x = mouse_tile_x;
-                    lever.interactive_lever.activate_coordinate_y = mouse_tile_y;
-                    track_current_interactive = false;
+                    if ( lever.type == Interactive::Type::lever ) {
+                         lever.interactive_lever.activate_coordinate_x = mouse_tile_x;
+                         lever.interactive_lever.activate_coordinate_y = mouse_tile_y;
+                         track_current_interactive = false;
+                    }
                }
           }
      } break;
@@ -336,10 +338,11 @@ Void State::mouse_button_right_clicked ( )
                if ( track_current_interactive ) {
                     Auto& pushable_block = interactives.get_from_tile ( current_interactive_x,
                                                                current_interactive_y );
-                    ASSERT ( pushable_block.type == Interactive::Type::pushable_block );
-                    pushable_block.interactive_pushable_block.activate_coordinate_x = mouse_tile_x;
-                    pushable_block.interactive_pushable_block.activate_coordinate_y = mouse_tile_y;
-                    track_current_interactive = false;
+                    if ( pushable_block.type == Interactive::Type::pushable_block ) {
+                         pushable_block.interactive_pushable_block.activate_coordinate_x = mouse_tile_x;
+                         pushable_block.interactive_pushable_block.activate_coordinate_y = mouse_tile_y;
+                         track_current_interactive = false;
+                    }
                } else {
                     current_pushable_solid = !current_pushable_solid;
                }
@@ -369,11 +372,12 @@ Void State::mouse_button_right_clicked ( )
                if ( track_current_interactive ) {
                     Auto& interactive = interactives.get_from_tile ( current_interactive_x,
                                                                         current_interactive_y );
-                    ASSERT ( interactive.underneath.type == UnderneathInteractive::Type::light_detector );
-                    Auto& light_detector = interactive.underneath.underneath_light_detector;
-                    light_detector.activate_coordinate_x = mouse_tile_x;
-                    light_detector.activate_coordinate_y = mouse_tile_y;
-                    track_current_interactive = false;
+                    if ( interactive.underneath.type == UnderneathInteractive::Type::light_detector ) {
+                         Auto& light_detector = interactive.underneath.underneath_light_detector;
+                         light_detector.activate_coordinate_x = mouse_tile_x;
+                         light_detector.activate_coordinate_y = mouse_tile_y;
+                         track_current_interactive = false;
+                    }
                }
           }
      } break;
@@ -390,11 +394,12 @@ Void State::mouse_button_right_clicked ( )
                if ( track_current_interactive ) {
                     Auto& interactive = interactives.get_from_tile ( current_interactive_x,
                                                                         current_interactive_y );
-                    ASSERT ( interactive.underneath.type == UnderneathInteractive::Type::pressure_plate );
-                    Auto& pressure_plate = interactive.underneath.underneath_pressure_plate;
-                    pressure_plate.activate_coordinate_x = mouse_tile_x;
-                    pressure_plate.activate_coordinate_y = mouse_tile_y;
-                    track_current_interactive = false;
+                    if ( interactive.underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+                         Auto& pressure_plate = interactive.underneath.underneath_pressure_plate;
+                         pressure_plate.activate_coordinate_x = mouse_tile_x;
+                         pressure_plate.activate_coordinate_y = mouse_tile_y;
+                         track_current_interactive = false;
+                    }
                }
           }
      } break;
@@ -437,11 +442,12 @@ Void State::mouse_button_right_clicked ( )
                if ( track_current_interactive ) {
                     Auto& interactive = interactives.get_from_tile ( current_interactive_x,
                                                                      current_interactive_y );
-                    ASSERT ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector );
-                    Auto& detector = interactive.underneath.underneath_ice_detector;
-                    detector.activate_coordinate_x = mouse_tile_x;
-                    detector.activate_coordinate_y = mouse_tile_y;
-                    track_current_interactive = false;
+                    if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
+                         Auto& detector = interactive.underneath.underneath_ice_detector;
+                         detector.activate_coordinate_x = mouse_tile_x;
+                         detector.activate_coordinate_y = mouse_tile_y;
+                         track_current_interactive = false;
+                    }
                }
           }
      } break;
@@ -454,19 +460,19 @@ Void State::mouse_button_right_clicked ( )
           Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
           if ( !track_current_interactive &&
-               interactive.type == Interactive::Type::portal ) {
+               interactive.underneath.type == UnderneathInteractive::Type::portal ) {
                current_interactive_x = mouse_tile_x;
                current_interactive_y = mouse_tile_y;
                track_current_interactive = true;
           } else {
-               Auto& portal = interactives.get_from_tile ( current_interactive_x,
-                                                           current_interactive_y );
-               ASSERT ( portal.type == Interactive::Type::portal );
+               Auto& interactive = interactives.get_from_tile ( current_interactive_x,
+                                                                current_interactive_y );
+               if ( interactive.underneath.type == UnderneathInteractive::Type::portal ) {
+                    interactive.underneath.underneath_portal.destination_x = mouse_tile_x;
+                    interactive.underneath.underneath_portal.destination_y = mouse_tile_y;
 
-               portal.interactive_portal.destination_x = mouse_tile_x;
-               portal.interactive_portal.destination_y = mouse_tile_y;
-
-               track_current_interactive = false;
+                    track_current_interactive = false;
+               }
           }
      } break;
      case Mode::border:
@@ -1148,8 +1154,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
-          if ( interactive.type == Interactive::Type::portal ) {
-               Auto& portal = interactive.interactive_portal;
+          if ( interactive.underneath.type == UnderneathInteractive::Type::portal ) {
+               Auto& portal = interactive.underneath.underneath_portal;
                sprintf ( state->message_buffer, "DST %d %d",
                          portal.destination_x, portal.destination_y );
           }

@@ -41,6 +41,9 @@ Void UnderneathInteractive::reset ( )
      case hole:
           underneath_hole.filled = false;
           break;
+     case Type::portal:
+          underneath_portal.reset ( );
+          break;
      }
 }
 
@@ -354,9 +357,6 @@ Void Interactive::reset ( )
      case Type::turret:
           interactive_turret.reset ( );
           break;
-     case Type::portal:
-          interactive_portal.reset ( );
-          break;
      }
 
      underneath.reset ( );
@@ -424,7 +424,7 @@ Direction Interactive::push ( Direction direction, Interactives& interactives )
 
 Void Interactive::light ( Uint8 light, Interactives& interactives )
 {
-     // only light if not covered
+     // TODO: evaluate only light if not covered?
      if ( type == Interactive::Type::none &&
           underneath.type == UnderneathInteractive::Type::light_detector ) {
           underneath.underneath_light_detector.light ( light, interactives );
@@ -433,15 +433,6 @@ Void Interactive::light ( Uint8 light, Interactives& interactives )
 
 Void Interactive::character_enter ( Direction from, Interactives& interactives, Character& character )
 {
-     if ( type == Interactive::Type::portal && interactive_portal.on ) {
-          Vector dst = Map::coordinates_to_vector ( interactive_portal.destination_x,
-                                                    interactive_portal.destination_y );
-          dst += Vector { Map::c_tile_dimension_in_meters * 0.5f,
-                          Map::c_tile_dimension_in_meters * 0.5f };
-          character.set_collision_center ( dst.x ( ), dst.y ( ) );
-          return;
-     }
-
      switch ( underneath.type ) {
      default:
           break;
@@ -464,12 +455,25 @@ Void Interactive::character_enter ( Direction from, Interactives& interactives, 
                character.on_ice = true;
           }
           break;
+     case UnderneathInteractive::Type::portal:
+          if ( underneath.underneath_portal.on ) {
+               Vector dst = Map::coordinates_to_vector ( underneath.underneath_portal.destination_x,
+                                                         underneath.underneath_portal.destination_y );
+               dst += Vector { Map::c_tile_dimension_in_meters * 0.5f,
+                               Map::c_tile_dimension_in_meters * 0.5f };
+               character.set_collision_center ( dst.x ( ), dst.y ( ) );
+          }
+          break;
      }
 }
 
 Void Interactive::character_leave ( Direction to, Interactives& interactives, Character& character )
 {
-     if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::pressure_plate:
+     {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
 
           pressure_plate.entered = false;
@@ -478,19 +482,25 @@ Void Interactive::character_leave ( Direction to, Interactives& interactives, Ch
                                                            pressure_plate.activate_coordinate_y );
 
           interactive.activate ( interactives );
-     } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
+     } break;
+     case UnderneathInteractive::ice:
           character.on_ice = false;
-     } else if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
-          character.on_moving_walkway = Direction::count;
-     } else if ( underneath.type == UnderneathInteractive::Type::ice_detector &&
-                 underneath.underneath_ice_detector.detected ) {
+          break;
+     case UnderneathInteractive::moving_walkway:
+          break;
+     case UnderneathInteractive::ice_detector:
           character.on_ice = false;
+          break;
      }
 }
 
 Void Interactive::interactive_enter ( Direction from, Interactives& interactives )
 {
-     if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::pressure_plate:
+     {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
 
           pressure_plate.entered = true;
@@ -499,29 +509,35 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
                                                            pressure_plate.activate_coordinate_y );
 
           interactive.activate ( interactives );
-     } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
-          Auto& ice = underneath.underneath_ice;
-          ice.force_dir = from;
-     } else if ( underneath.type == UnderneathInteractive::Type::ice_detector ) {
-          Auto& detector = underneath.underneath_ice_detector;
-          detector.force_dir = from;
-     } else if ( underneath.type == UnderneathInteractive::Type::light_detector ) {
-          Auto& detector = underneath.underneath_light_detector;
-          detector.light ( 0, interactives );
-     } else if ( underneath.type == UnderneathInteractive::Type::hole &&
-                 !underneath.underneath_hole.filled ) {
-          // TODO: make sure this is really only a block?
-          // consume the interactive
-          type = Interactive::Type::none;
-          reset ( );
+     } break;
+     case UnderneathInteractive::ice:
+          break;
+     case UnderneathInteractive::ice_detector:
+          underneath.underneath_ice_detector.force_dir = from;
+          break;
+     case UnderneathInteractive::light_detector:
+          underneath.underneath_light_detector.light ( 0, interactives );
+          break;
+     case UnderneathInteractive::hole:
+          if ( !underneath.underneath_hole.filled ) {
+               // TODO: make sure this is really only a block?
+               // consume the interactive
+               type = Interactive::Type::none;
+               reset ( );
 
-          underneath.underneath_hole.filled = true;
+               underneath.underneath_hole.filled = true;
+          }
+          break;
      }
 }
 
 Void Interactive::interactive_leave ( Direction to, Interactives& interactives )
 {
-     if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::pressure_plate:
+     {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
 
           pressure_plate.entered = false;
@@ -530,12 +546,13 @@ Void Interactive::interactive_leave ( Direction to, Interactives& interactives )
                                                            pressure_plate.activate_coordinate_y );
 
           interactive.activate ( interactives );
-     } else if ( underneath.type == UnderneathInteractive::Type::ice ) {
-          Auto& ice = underneath.underneath_ice;
-          ice.force_dir = Direction::count;
-     } else if ( underneath.type == UnderneathInteractive::Type::ice_detector ) {
-          Auto& detector = underneath.underneath_ice_detector;
-          detector.force_dir = Direction::count;
+     } break;
+     case UnderneathInteractive::Type::ice:
+          underneath.underneath_ice.force_dir = Direction::count;
+          break;
+     case UnderneathInteractive::Type::ice_detector:
+          underneath.underneath_ice_detector.force_dir = Direction::count;
+          break;
      }
 }
 
@@ -547,12 +564,6 @@ Void Interactive::projectile_enter ( Direction from, Interactives& interactives,
      case Type::lever:
           activate ( interactives );
           break;
-     case Type::portal:
-     {
-          Vector dst = Map::coordinates_to_vector ( interactive_portal.destination_x,
-                                                    interactive_portal.destination_y );
-          projectile.position = dst;
-     } break;
      case Type::torch:
           if ( projectile.type == Projectile::Type::arrow ) {
                if ( projectile.effected_by_element ) {
@@ -577,6 +588,17 @@ Void Interactive::projectile_enter ( Direction from, Interactives& interactives,
                }
           }
           break;
+     }
+
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::portal:
+     {
+          Vector dst = Map::coordinates_to_vector ( underneath.underneath_portal.destination_x,
+                                                    underneath.underneath_portal.destination_y );
+          projectile.position = dst;
+     } break;
      }
 }
 

@@ -62,12 +62,8 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
 
      interactives.projectile_enter ( tile.x, tile.y, *this );
 
-     if ( interactive.is_solid ( ) ) {
-          // TODO: torches are exceptions, should this be data driven?
-          if ( interactive.type != Interactive::Type::torch &&
-               interactive.type != Interactive::Type::pushable_torch ) {
-               return true;
-          }
+     if ( !interactive.is_flyable ( ) ) {
+          return true;
      }
 
      if ( map.get_coordinate_solid ( tile.x, tile.y ) ) {

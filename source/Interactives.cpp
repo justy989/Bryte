@@ -280,30 +280,50 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
      }
 }
 
-Bool Interactive::is_solid ( ) const
+Bool Interactive::is_walkable ( ) const
 {
-     if ( underneath.type == UnderneathInteractive::Type::popup_block &&
-          underneath.underneath_popup_block.up ) {
-          return true;
-     } else if ( underneath.type == UnderneathInteractive::Type::hole &&
-                 !underneath.underneath_hole.filled ) {
-          return true;
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::popup_block:
+          if ( underneath.underneath_popup_block.up ) {
+               return false;
+          }
+          break;
+     case UnderneathInteractive::Type::hole:
+          if ( !underneath.underneath_hole.filled ) {
+               return false;
+          }
+          break;
      }
 
      switch ( type ) {
      default:
           break;
      case lever:
-     case torch:
      case pushable_block:
+     case torch:
      case pushable_torch:
      case bombable_block:
-          return true;
+          return false;
      case exit:
-          return interactive_exit.state != Exit::State::open;
+          return interactive_exit.state == Exit::State::open;
      }
 
-     return false;
+     return true;
+}
+
+Bool Interactive::is_flyable ( ) const
+{
+     switch ( type ) {
+     default:
+          break;
+     case lever:
+     case exit:
+          return false;
+     }
+
+     return true;
 }
 
 Void Interactive::reset ( )

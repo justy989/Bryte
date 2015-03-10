@@ -864,7 +864,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                if ( key_change.down ) {
                     Int32 new_mode = static_cast<Int32>( state->mode ) - 1;
                     // wrap around if necessary
-                    if ( new_mode <= 0 ) {
+                    if ( new_mode < 0 ) {
                          new_mode = static_cast<Mode>( static_cast<Int32>(Mode::count) - 1 );
                     }
                     state->mode = static_cast<Mode>( new_mode );
@@ -1009,8 +1009,8 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           if ( interactive.type == Interactive::Type::exit ) {
                Auto& exit = interactive.interactive_exit;
-               sprintf ( state->message_buffer, "MAP %d REGION %d EXIT %d %d", exit.map_index,
-                         exit.region_index, exit.exit_index_x, exit.exit_index_y );
+               sprintf ( state->message_buffer, "REGION %d MAP %d EXIT %d %d", exit.region_index,
+                         exit.map_index, exit.exit_index_x, exit.exit_index_y );
           }
      } break;
      case Mode::lever:

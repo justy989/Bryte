@@ -230,9 +230,17 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     // TODO: remove!
+     //Int32 map_index = 0;
+     //while ( true ) {
+     //     if ( !map.load_from_master_list ( map_index, interactives ) ) {
+     //          return false;
+     //     }
+     //     map_index++;
+     //}
+
      spawn_map_enemies ( );
      setup_emitters_from_map_lamps ( );
-
 
 #ifdef DEBUG
      enemy_think = true;
@@ -651,7 +659,7 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                interactive.interactive_exit.state == Exit::State::open &&
                interactive.interactive_exit.direction == opposite_direction ( player.facing ) ) {
                Int32 map_index = interactive.interactive_exit.map_index;
-               Int32 region_index = interactive.interactive_exit.map_index;
+               Int32 region_index = interactive.interactive_exit.region_index;
                Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
                                                                   interactive.interactive_exit.exit_index_y );
 
@@ -666,8 +674,7 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
 
                player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
 
-               LOG_DEBUG ( "Changing to map %d, setting player to %f, %f\n",
-                           map_index,
+               LOG_DEBUG ( "Setting player to %f, %f\n",
                            player.position.x ( ),
                            player.position.y ( ) );
 
@@ -1271,6 +1278,8 @@ Void State::heal_enemies_in_range_of_fairy ( const Vector& position )
 
 Void State::change_map ( Int32 map_index )
 {
+     LOG_DEBUG ( "Changing map to %d\n", map_index );
+
      persist_map ( );
      map.load_from_master_list ( map_index, interactives );
 
@@ -1288,14 +1297,36 @@ Direction State::player_on_border ( )
 {
      Auto player_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
 
-     if ( player_tile.x == map.get_border_exit ( Direction::left ).bottom_left.x ) {
-          return Direction::left;
-     } else if ( player_tile.x == map.get_border_exit ( Direction::right ).bottom_left.x ) {
-          return Direction::right;
-     } else if ( player_tile.y == map.get_border_exit ( Direction::up ).bottom_left.y ) {
-          return Direction::up;
-     } else if ( player_tile.y == map.get_border_exit ( Direction::down ).bottom_left.y  ) {
-          return Direction::down;
+     Auto border = map.get_border_exit ( Direction::left );
+     if ( border.bottom_left.x || border.bottom_left.y ) {
+          if ( player_tile.x == border.bottom_left.x ) {
+               LOG_DEBUG ( "Player on left border\n" );
+               return Direction::left;
+          }
+     }
+
+     border = map.get_border_exit ( Direction::right );
+     if ( border.bottom_left.x || border.bottom_left.y ) {
+          if ( player_tile.x == border.bottom_left.x ) {
+               LOG_DEBUG ( "Player on right border\n" );
+               return Direction::right;
+          }
+     }
+
+     border = map.get_border_exit ( Direction::up );
+     if ( border.bottom_left.x || border.bottom_left.y ) {
+          if ( player_tile.y == border.bottom_left.y ) {
+               LOG_DEBUG ( "Player on up border\n" );
+               return Direction::up;
+          }
+     }
+
+     border = map.get_border_exit ( Direction::down );
+     if ( border.bottom_left.x || border.bottom_left.y ) {
+          if ( player_tile.y == border.bottom_left.y ) {
+               LOG_DEBUG ( "Player on down border\n" );
+               return Direction::down;
+          }
      }
 
      return Direction::count;

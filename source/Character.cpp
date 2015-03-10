@@ -430,7 +430,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                     Auto& interactive = interactives.get_from_tile ( x, y );
 
                     if ( !map.get_coordinate_solid ( x, y ) ) {
-                         if ( !interactive.is_solid ( ) ) {
+                         if ( interactive.is_walkable ( ) ) {
                               if ( interactive.type == Interactive::Type::exit ) {
                                    if ( !collides_with_exits ) {
                                         continue;
@@ -460,7 +460,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       center.y ( ), change_in_position.y ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { -1.0f, 0.0f };
-                         if ( interactive.is_solid ( ) ) {
+                         if ( !interactive.is_walkable ( ) ) {
                               push_direction = Direction::right;
                          }
                     }
@@ -469,7 +469,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       center.y ( ), change_in_position.y ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { 1.0f, 0.0f };
-                         if ( interactive.is_solid ( ) ) {
+                         if ( !interactive.is_walkable ( ) ) {
                               push_direction = Direction::left;
                          }
                     }
@@ -478,7 +478,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       center.x ( ), change_in_position.x ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { 0.0f, -1.0f };
-                         if ( interactive.is_solid ( ) ) {
+                         if ( !interactive.is_walkable ( ) ) {
                               push_direction = Direction::up;
                          }
                     }
@@ -488,7 +488,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       &closest_time_intersection ) ) {
                          wall_normal = { 0.0f, 1.0f };
 
-                         if ( interactive.is_solid ( ) ) {
+                         if ( !interactive.is_walkable ( ) ) {
                               push_direction = Direction::down;
                          }
                     }

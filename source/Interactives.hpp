@@ -243,7 +243,8 @@ namespace bryte
           Void      interactive_leave ( Direction to, Interactives& interactives );
           Void      projectile_enter  ( Direction from, Interactives& interactives, Projectile& projectile );
 
-          Bool is_solid ( ) const;
+          Bool is_walkable ( ) const;
+          Bool is_flyable ( ) const;
 
           Type type;
 

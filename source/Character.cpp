@@ -277,7 +277,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
           damage_watch.tick ( time_delta );
 
-          if ( !damage_watch.expired ( ) ) {
+          if ( !damage_watch.expired ( ) && knockbackable ) {
                switch ( damage_pushed ) {
                default:
                     ASSERT ( 0 );
@@ -439,7 +439,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                    continue;
                               }
                          } else {
-                              if ( !collides_with_interactives ) {
+                              if ( flies ) {
                                    continue;
                               }
                          }
@@ -515,8 +515,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      Map::Coordinates new_coords = Map::vector_to_coordinates ( collision_center ( ) );
 
-     if ( ( old_coords.x != new_coords.x || old_coords.y != new_coords.y ) &&
-            collides_with_interactives ) {
+     if ( ( old_coords.x != new_coords.x || old_coords.y != new_coords.y ) && !flies ) {
           // TODO: what about non-collides_with_interactives and portals?
           if ( map.coordinate_x_valid ( old_coords.x ) && map.coordinate_y_valid ( old_coords.y ) &&
                map.coordinate_x_valid ( new_coords.x ) && map.coordinate_y_valid ( new_coords.y )  ) {

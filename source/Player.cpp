@@ -46,9 +46,8 @@ Void Player::clear ( )
 
      position.zero ( );
 
-     collides_with_solids = true;
-     collides_with_exits = false;
-     collides_with_interactives = true;
+     flies = false;
+     knockbackable = true;
 
      item_mode = ItemMode::shield;
      item_cooldown.reset ( 0.0f );

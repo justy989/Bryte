@@ -133,9 +133,9 @@ namespace bryte
           Bool constant_animation;
           Bool draw_facing;
 
-          Bool collides_with_solids;
           Bool collides_with_exits;
-          Bool collides_with_interactives;
+          Bool flies;
+          Bool knockbackable;
 
           Bool on_ice;
 

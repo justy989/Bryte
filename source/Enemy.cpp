@@ -50,6 +50,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
      walk_tracker = 0.0f;
      walk_frame = 0;
 
+     collides_with_exits  = true;
+
      switch ( type ) {
      default:
           break;
@@ -61,9 +63,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collision_offset.set ( pixels_to_meters ( 1 ), pixels_to_meters ( 4 ) );
           collision_dimension.set ( pixels_to_meters ( 12 ), pixels_to_meters ( 10 ) );
 
-          collides_with_solids = true;
-          collides_with_exits  = true;
-          collides_with_interactives = true;
+          flies = false;
+          knockbackable = true;
 
           walk_acceleration = 9.0f;
           deceleration_scale = 5.0f;
@@ -86,9 +87,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 4 ) );
           collision_dimension.set ( pixels_to_meters ( 10 ), pixels_to_meters ( 6 ) );
 
-          collides_with_solids = true;
-          collides_with_exits = true;
-          collides_with_interactives = false;
+          flies = true;
+          knockbackable = true;
 
           walk_acceleration = BatState::c_walk_speed;
           deceleration_scale = 2.0f;
@@ -113,9 +113,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 2 ) );
           collision_dimension.set ( pixels_to_meters ( 10 ), pixels_to_meters ( 10 ) );
 
-          collides_with_solids = true;
-          collides_with_exits = true;
-          collides_with_interactives = true;
+          flies = false;
+          knockbackable = true;
 
           walk_acceleration = 3.5f;
           deceleration_scale = 2.0f;
@@ -137,9 +136,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 1 ) );
           collision_dimension.set ( pixels_to_meters ( 14 ), pixels_to_meters ( 14 ) );
 
-          collides_with_solids = true;
-          collides_with_exits = true;
-          collides_with_interactives = true;
+          flies = false;
+          knockbackable = true;
 
           walk_acceleration = 3.0f;
           deceleration_scale = 2.0f;
@@ -160,9 +158,8 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           collision_offset.set ( pixels_to_meters ( 4 ), pixels_to_meters ( 1 ) );
           collision_dimension.set ( pixels_to_meters ( 6 ), pixels_to_meters ( 12 ) );
 
-          collides_with_solids = true;
-          collides_with_exits = true;
-          collides_with_interactives = false;
+          flies = true;
+          knockbackable = false;
 
           walk_acceleration = 4.0f;
           deceleration_scale = 2.0f;
@@ -231,8 +228,8 @@ Void Enemy::clear ( )
 
      position.zero ( );
 
-     collides_with_solids = false;
-     collides_with_exits = false;
+     flies = false;
+     knockbackable = true;
 
      type = Type::count;
      drop = Pickup::Type::none;

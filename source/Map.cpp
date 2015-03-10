@@ -345,29 +345,6 @@ Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
           find_secret ( );
      }
 
-     // TODO: remove
-     //for ( Int32 j = 0; j < height ( ); ++j ) {
-     //     for ( Int32 i = 0; i < width ( ); ++i ) {
-     //          Auto& interactive = interactives.get_from_tile ( i, j );
-
-      //         if ( interactive.type == Interactive::Type::exit ) {
-     //               interactive.interactive_exit.region_index = 0;
-     //          }
-     //     }
-     //}
-
-     //for ( Int32 i = 0; i < 4; ++i ) {
-     //     m_border_exits [ i ].bottom_left.x = 0;
-     //     m_border_exits [ i ].bottom_left.y = 0;
-
-     //     m_border_exits [ i ].map_index = 0;
-
-     //     m_border_exits [ i ].map_bottom_left.x = 0;
-     //     m_border_exits [ i ].map_bottom_left.y = 0;
-     //}
-
-     //save ( m_master_list [ map_index ], interactives );
-
      return success;
 }
 

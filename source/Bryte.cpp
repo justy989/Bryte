@@ -230,15 +230,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     // TODO: remove!
-     //Int32 map_index = 0;
-     //while ( true ) {
-     //     if ( !map.load_from_master_list ( map_index, interactives ) ) {
-     //          return false;
-     //     }
-     //     map_index++;
-     //}
-
      spawn_map_enemies ( );
      setup_emitters_from_map_lamps ( );
 

@@ -513,10 +513,10 @@ Void State::option_button_up_pressed ( )
           if ( interactive.type == Interactive::Type::exit ) {
                switch ( current_field ) {
                case 0:
-                    interactive.interactive_exit.map_index--;
+                    interactive.interactive_exit.region_index--;
                     break;
                case 1:
-                    interactive.interactive_exit.region_index--;
+                    interactive.interactive_exit.map_index--;
                     break;
                case 2:
                     interactive.interactive_exit.exit_index_x--;
@@ -592,10 +592,10 @@ Void State::option_button_down_pressed ( )
           if ( interactive.type == Interactive::Type::exit ) {
                switch ( current_field ) {
                case 0:
-                    interactive.interactive_exit.map_index++;
+                    interactive.interactive_exit.region_index++;
                     break;
                case 1:
-                    interactive.interactive_exit.region_index++;
+                    interactive.interactive_exit.map_index++;
                     break;
                case 2:
                     interactive.interactive_exit.exit_index_x++;

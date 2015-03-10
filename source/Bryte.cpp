@@ -180,7 +180,9 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      }
 
      // load diplay surfaces
-     if ( !map_display.load_surfaces ( game_memory, region.tilesheet_filepath, region.decorsheet_filepath,
+     if ( !map_display.load_surfaces ( game_memory,
+                                       region.tilesheet_filepath,
+                                       region.decorsheet_filepath,
                                        region.lampsheet_filepath ) ) {
           return false;
      }
@@ -545,7 +547,7 @@ Void State::damage_character ( Character& character, Int32 amount, Direction dir
      spawn_damage_number ( character.collision_center ( ), amount );
 }
 
-Void State::update_player ( float time_delta )
+Void State::update_player ( GameMemory& game_memory, float time_delta )
 {
      if ( direction_keys [ Direction::up ] ) {
           player.walk ( Direction::up );
@@ -657,14 +659,14 @@ Void State::update_player ( float time_delta )
                                         Map::c_tile_dimension_in_meters * 0.5f );
 
                if ( region_index != region.current_index ) {
-                    change_region ( region_index );
+                    change_region ( game_memory, region_index );
                }
 
                change_map ( map_index );
 
                player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
 
-               LOG_DEBUG ( "Changing to map %d, setting player to %d, %d\n",
+               LOG_DEBUG ( "Changing to map %d, setting player to %f, %f\n",
                            map_index,
                            player.position.x ( ),
                            player.position.y ( ) );
@@ -1299,16 +1301,30 @@ Direction State::player_on_border ( )
      return Direction::count;
 }
 
-Void State::change_region ( Int32 region_index )
+Bool State::change_region ( GameMemory& game_memory, Int32 region_index )
 {
-     LOG_INFO ( "Chaing to region %d\n", region_index );
+     LOG_INFO ( "Changing to region %d\n", region_index );
 
      // load new region info
      if ( !region.load_info ( region_index ) ) {
-          return;
+          return false;
      }
 
      // unload and re-load surfaces
+     map_display.unload_surfaces ( );
+
+     if ( !map_display.load_surfaces ( game_memory,
+                                       region.tilesheet_filepath,
+                                       region.decorsheet_filepath,
+                                       region.lampsheet_filepath ) ) {
+          return false;
+     }
+
+     // load a new map master list and clear persistence
+     map.load_master_list ( region.map_list_filepath );
+     map.clear_persistence ( );
+
+     return true;
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
@@ -1468,7 +1484,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
      Auto* state = get_state ( game_memory );
 
-     state->update_player ( time_delta );
+     state->update_player ( game_memory, time_delta );
      state->update_enemies ( time_delta );
      state->update_interactives ( time_delta );
      state->update_projectiles ( time_delta );

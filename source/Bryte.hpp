@@ -100,7 +100,7 @@ namespace bryte
           Void tick_character_element ( Character& character );
           Void damage_character ( Character& character, Int32 amount, Direction direction );
 
-          Void update_player ( float time_delta );
+          Void update_player ( GameMemory& game_memory, float time_delta );
           Void player_death ( );
           Bool check_player_block_projectile ( Projectile& projectile );
 
@@ -126,7 +126,7 @@ namespace bryte
           Void change_map ( Int32 map_index );
           Direction player_on_border ( );
 
-          Void region_map ( Int32 region_index );
+          Bool change_region ( GameMemory& game_memory, Int32 region_index );
 
      public:
 

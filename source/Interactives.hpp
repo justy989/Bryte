@@ -36,10 +36,10 @@ namespace bryte
           Direction direction;
           Stopwatch state_watch;
           State     state;
-          Uint8     region_index;
           Uint8     map_index;
           Uint8     exit_index_x;
           Uint8     exit_index_y;
+          Uint8     region_index;
      };
 
      struct Lever {

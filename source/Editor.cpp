@@ -516,9 +516,12 @@ Void State::option_button_up_pressed ( )
                     interactive.interactive_exit.map_index--;
                     break;
                case 1:
-                    interactive.interactive_exit.exit_index_x--;
+                    interactive.interactive_exit.region_index--;
                     break;
                case 2:
+                    interactive.interactive_exit.exit_index_x--;
+                    break;
+               case 3:
                     interactive.interactive_exit.exit_index_y--;
                     break;
                }
@@ -592,9 +595,12 @@ Void State::option_button_down_pressed ( )
                     interactive.interactive_exit.map_index++;
                     break;
                case 1:
-                    interactive.interactive_exit.exit_index_x++;
+                    interactive.interactive_exit.region_index++;
                     break;
                case 2:
+                    interactive.interactive_exit.exit_index_x++;
+                    break;
+               case 3:
                     interactive.interactive_exit.exit_index_y++;
                     break;
                }
@@ -885,7 +891,7 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
                          break;
                     case Mode::exit:
                          state->current_field++;
-                         state->current_field %= 3;
+                         state->current_field %= 4;
                          break;
                     case Mode::lever:
                          state->current_field++;

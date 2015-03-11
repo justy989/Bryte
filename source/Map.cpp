@@ -642,7 +642,12 @@ Void Map::restore_activate_on_kill_all ( Interactives& interactives )
      m_killed_all_enemies = m_persisted_activate_on_kill_all [ m_current_map ];
 
      if ( m_killed_all_enemies ) {
-          interactives.activate ( m_activate_on_kill_all.x, m_activate_on_kill_all.y );
+          Auto& interactive = interactives.get_from_tile (  m_activate_on_kill_all.x,
+                                                            m_activate_on_kill_all.y );
+          // NOTE: persist non-exit changes
+          if ( interactive.type != Interactive::Type::exit ) {
+               interactives.activate ( m_activate_on_kill_all.x, m_activate_on_kill_all.y );
+          }
      }
 }
 

@@ -1659,19 +1659,30 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      state->character_display.tick ( );
 
-     // enemies
+     // enemies in 2 passes, non-flying and flying
      for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
-          if ( state->enemies [ i ].is_dead ( ) ) {
+          Auto& enemy = state->enemies [ i ];
+          if ( enemy.is_dead ( ) || enemy.flies ) {
                continue;
           }
 
-          state->character_display.render_enemy ( back_buffer, state->enemies [ i ],
+          state->character_display.render_enemy ( back_buffer, enemy,
                                                   state->camera.x ( ), state->camera.y ( ) );
      }
 
      // player
      state->character_display.render_player ( back_buffer, state->player,
                                               state->camera.x ( ), state->camera.y ( ) );
+
+     for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
+          Auto& enemy = state->enemies [ i ];
+          if ( enemy.is_dead ( ) || !enemy.flies ) {
+               continue;
+          }
+
+          state->character_display.render_enemy ( back_buffer, enemy,
+                                                  state->camera.x ( ), state->camera.y ( ) );
+     }
 
      // pickups
      state->pickup_display.tick ( );

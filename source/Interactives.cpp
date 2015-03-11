@@ -456,6 +456,13 @@ Bool Interactive::activate ( Interactives& interactives )
           return interactive_turret.activate ( );
      }
 
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::portal:
+          return underneath.underneath_portal.activate ( );
+     }
+
      return false;
 }
 
@@ -702,9 +709,11 @@ Void Interactive::projectile_enter ( Direction from, Interactives& interactives,
           break;
      case UnderneathInteractive::Type::portal:
      {
-          Vector dst = Map::coordinates_to_vector ( underneath.underneath_portal.destination_x,
-                                                    underneath.underneath_portal.destination_y );
-          projectile.position = dst;
+          if ( underneath.underneath_portal.on ) {
+               Vector dst = Map::coordinates_to_vector ( underneath.underneath_portal.destination_x,
+                                                         underneath.underneath_portal.destination_y );
+               projectile.position = dst;
+          }
      } break;
      }
 }
@@ -1078,5 +1087,12 @@ Direction Portal::push ( Direction direction, Interactives& interactives )
      Auto& interactive = interactives.get_from_tile ( destination_x, destination_y );
 
      return interactive.push ( direction, interactives );
+}
+
+Bool Portal::activate ( )
+{
+     on = !on;
+
+     return true;
 }
 

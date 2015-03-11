@@ -154,6 +154,7 @@ namespace bryte
 
      struct Portal {
           Void reset ( );
+          Bool activate ( );
           Direction push ( Direction direction, Interactives& interactives );
 
           Bool on;

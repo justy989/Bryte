@@ -1133,8 +1133,14 @@ Void State::update_pickups ( float time_delta )
           if ( rect_collides_with_rect ( player.collision_x ( ), player.collision_y ( ),
                                          player.collision_width ( ), player.collision_height ( ),
                                          pickup.position.x ( ), pickup.position.y ( ),
-                                         Pickup::c_dimension_in_meters, Pickup::c_dimension_in_meters ) ) {
-
+                                         Pickup::c_dimension_in_meters,
+                                         Pickup::c_dimension_in_meters ) ||
+               ( player.is_attacking ( ) &&
+                 rect_collides_with_rect ( player.attack_x ( ), player.attack_y ( ),
+                                           player.attack_width ( ), player.attack_height ( ),
+                                           pickup.position.x ( ), pickup.position.y ( ),
+                                           Pickup::c_dimension_in_meters,
+                                           Pickup::c_dimension_in_meters ) ) ) {
                LOG_DEBUG ( "Player got pickup %s\n", Pickup::c_names [ pickup.type ] );
 
                switch ( pickup.type ) {

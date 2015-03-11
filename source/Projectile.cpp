@@ -62,7 +62,7 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
 
      interactives.projectile_enter ( tile.x, tile.y, *this );
 
-     if ( !interactive.is_flyable ( ) ) {
+     if ( !interactives.is_flyable ( tile.x, tile.y ) ) {
           return true;
      }
 

@@ -116,7 +116,7 @@ Void Interactives::contribute_light ( Map& map )
 
 Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
-     Interactive& i = get_from_tile ( tile_x, tile_y );
+     Interactive& i = get_destination_interactive ( tile_x, tile_y, &tile_x, &tile_y );
 
      Direction result_dir = i.push ( dir, *this );
 
@@ -144,7 +144,8 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
 
      Interactive& dest_i = get_from_tile ( dest_x, dest_y );
 
-     if ( dest_i.type != Interactive::Type::none ||
+     if ( ( !is_walkable ( dest_x, dest_y ) &&
+            dest_i.underneath.type != UnderneathInteractive::Type::hole ) ||
           map.get_coordinate_solid ( dest_x, dest_y ) ) {
           free_to_move = false;
      }
@@ -283,46 +284,114 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
      }
 }
 
-Bool Interactive::is_walkable ( ) const
+Bool Interactives::check_portal_walkability ( Int32 start_tile_x, Int32 start_tile_y,
+                                              Int32 dest_tile_x, Int32 dest_tile_y ) const
 {
-     switch ( underneath.type ) {
-     default:
-          break;
-     case UnderneathInteractive::Type::popup_block:
-          if ( underneath.underneath_popup_block.up ) {
-               return false;
-          }
-          break;
-     case UnderneathInteractive::Type::hole:
-          if ( !underneath.underneath_hole.filled ) {
-               return false;
-          }
-          break;
-     }
+     const Auto& interactive = cget_from_tile ( dest_tile_x, dest_tile_y );
 
-     switch ( type ) {
-     default:
-          break;
-     case lever:
-     case pushable_block:
-     case torch:
-     case pushable_torch:
-     case bombable_block:
-          return false;
-     case exit:
-          return interactive_exit.state == Exit::State::open;
+     if ( interactive.underneath.type == UnderneathInteractive::Type::portal ) {
+
+          // quit early if something is on top of the portal
+          if ( interactive.type ) {
+               return false;
+          }
+
+          Auto& portal = interactive.underneath.underneath_portal;
+
+          // If we loop back around to our starting point, then we are walkable
+          if ( portal.destination_x == start_tile_x && portal.destination_y == start_tile_y ) {
+               return true;
+          }
+
+          // NOTE: recursively search portals for a destination that is not a portal
+          return check_portal_walkability ( start_tile_x, start_tile_y,
+                                            portal.destination_x, portal.destination_y );
+     } else {
+          return is_walkable ( dest_tile_x, dest_tile_y );
      }
 
      return true;
 }
 
-Bool Interactive::is_flyable ( ) const
+Interactive& Interactives::get_destination_interactive ( Int32 start_tile_x, Int32 start_tile_y,
+                                                         Int32* dest_tile_x, Int32* dest_tile_y )
 {
-     switch ( type ) {
+     Auto& interactive = get_from_tile ( *dest_tile_x, *dest_tile_y );
+
+     // NOTE: This method is very similar to check_portal_walkability
+     if ( interactive.underneath.type == UnderneathInteractive::Type::portal ) {
+          if ( interactive.type ) {
+               return interactive;
+          }
+
+          Auto& portal = interactive.underneath.underneath_portal;
+          if ( portal.destination_x == start_tile_x && portal.destination_y == start_tile_y ) {
+               return interactive;
+          }
+
+          *dest_tile_x = portal.destination_x;
+          *dest_tile_y = portal.destination_y;
+
+          return get_destination_interactive ( start_tile_x, start_tile_y,
+                                               dest_tile_x, dest_tile_y );
+     }
+
+     return interactive;
+}
+
+Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y ) const
+{
+     const Auto& interactive = cget_from_tile ( tile_x, tile_y );
+
+     switch ( interactive.underneath.type ) {
      default:
           break;
-     case lever:
-     case exit:
+     case UnderneathInteractive::Type::popup_block:
+          if ( interactive.underneath.underneath_popup_block.up ) {
+               return false;
+          }
+          break;
+     case UnderneathInteractive::Type::hole:
+          if ( !interactive.underneath.underneath_hole.filled ) {
+               return false;
+          }
+          break;
+     case UnderneathInteractive::Type::portal:
+     {
+          Auto& portal = interactive.underneath.underneath_portal;
+
+          if ( !check_portal_walkability ( tile_x, tile_y,
+                                           portal.destination_x, portal.destination_y ) ) {
+               return false;
+          }
+     } break;
+     }
+
+     switch ( interactive.type ) {
+     default:
+          break;
+     case Interactive::Type::lever:
+     case Interactive::Type::pushable_block:
+     case Interactive::Type::torch:
+     case Interactive::Type::pushable_torch:
+     case Interactive::Type::bombable_block:
+          return false;
+     case Interactive::Type::exit:
+          return interactive.interactive_exit.state == Exit::State::open;
+     }
+
+     return true;
+}
+
+Bool Interactives::is_flyable ( Int32 tile_x, Int32 tile_y ) const
+{
+     const Auto& interactive = cget_from_tile ( tile_x, tile_y );
+
+     switch ( interactive.type ) {
+     default:
+          break;
+     case Interactive::Type::lever:
+     case Interactive::Type::exit:
           return false;
      }
 
@@ -419,6 +488,13 @@ Direction Interactive::push ( Direction direction, Interactives& interactives )
           return interactive_pushable_torch.push ( direction, interactives );
      }
 
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::portal:
+          return underneath.underneath_portal.push ( direction, interactives );
+     }
+
      return Direction::count;
 }
 
@@ -511,6 +587,7 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
           interactive.activate ( interactives );
      } break;
      case UnderneathInteractive::ice:
+          underneath.underneath_ice.force_dir = from;
           break;
      case UnderneathInteractive::ice_detector:
           underneath.underneath_ice_detector.force_dir = from;
@@ -520,7 +597,7 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
           break;
      case UnderneathInteractive::hole:
           if ( !underneath.underneath_hole.filled ) {
-               // TODO: make sure this is really only a block?
+               // TODO: make sure this is really only a pushable torch block?
                // consume the interactive
                type = Interactive::Type::none;
                reset ( );
@@ -528,6 +605,36 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
                underneath.underneath_hole.filled = true;
           }
           break;
+     case UnderneathInteractive::portal:
+     {
+          if ( underneath.underneath_portal.on ) {
+               Int32 dest_x = underneath.underneath_portal.destination_x;
+               Int32 dest_y = underneath.underneath_portal.destination_y;
+
+               Auto& dest_interactive = interactives.get_from_tile ( dest_x, dest_y );
+
+               // only move it if something isn't already there
+               if ( dest_interactive.type == Interactive::Type::none ) {
+                    // copy just the Interactive portion, not the underneath portion, and only
+                    // support types that can move
+                    switch ( type ) {
+                    default:
+                         return;
+                    case Type::pushable_block:
+                         dest_interactive.type = type;
+                         dest_interactive.interactive_pushable_block = interactive_pushable_block;
+                         break;
+                    case Type::pushable_torch:
+                         dest_interactive.type = type;
+                         dest_interactive.interactive_pushable_torch = interactive_pushable_torch;
+                         break;
+                    }
+
+                    // clear what is on us
+                    type = Interactive::Type::none;
+               }
+          }
+     } break;
      }
 }
 
@@ -963,5 +1070,13 @@ Void Portal::reset ( )
      on = false;
      destination_x = 0;
      destination_y = 0;
+}
+
+Direction Portal::push ( Direction direction, Interactives& interactives )
+{
+     // just pass along the push to the target
+     Auto& interactive = interactives.get_from_tile ( destination_x, destination_y );
+
+     return interactive.push ( direction, interactives );
 }
 

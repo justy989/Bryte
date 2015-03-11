@@ -154,6 +154,7 @@ namespace bryte
 
      struct Portal {
           Void reset ( );
+          Direction push ( Direction direction, Interactives& interactives );
 
           Bool on;
 
@@ -244,9 +245,6 @@ namespace bryte
           Void      interactive_leave ( Direction to, Interactives& interactives );
           Void      projectile_enter  ( Direction from, Interactives& interactives, Projectile& projectile );
 
-          Bool is_walkable ( ) const;
-          Bool is_flyable ( ) const;
-
           Type type;
 
           union {
@@ -278,6 +276,9 @@ namespace bryte
           Void character_leave ( Int32 tile_x, Int32 tile_y, Character& character );
           Void projectile_enter ( Int32 tile_x, Int32 tile_y, Projectile& projectile );
 
+          Bool is_walkable ( Int32 tile_x, Int32 tile_y ) const;
+          Bool is_flyable ( Int32 tile_x, Int32 tile_y ) const;
+
           Void spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear = false );
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
@@ -285,6 +286,14 @@ namespace bryte
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
+
+     private:
+
+          Bool check_portal_walkability ( Int32 start_tile_x, Int32 start_tile_y,
+                                          Int32 dest_tile_x, Int32 dest_tile_y ) const;
+
+          Interactive& get_destination_interactive ( Int32 start_tile_x, Int32 start_tile_y,
+                                                     Int32* dest_tile_x, Int32* dest_tile_y );
 
      public:
 

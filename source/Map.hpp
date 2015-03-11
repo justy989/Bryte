@@ -157,6 +157,7 @@ namespace bryte
           Void persist_exit ( const Interactive& exit, Uint8 x, Uint8 y );
           Void persist_enemy ( const Enemy& enemy, Uint8 index );
           Void persist_secret ( );
+          Void persist_killed_all_enemies ( );
 
           Void clear_persistence ( );
 
@@ -180,6 +181,7 @@ namespace bryte
           inline Int32 current_master_map ( ) const;
           inline Void set_activate_location_on_all_enemies_killed ( Location loc );
           inline Location activate_on_all_enemies_killed ( ) const;
+          inline Void killed_all_enemies ( );
 
           inline Bool found_secret ( ) const;
           inline Secret& secret ( );
@@ -208,6 +210,7 @@ namespace bryte
 
           Void restore_exits ( Interactives& interactives );
           Void restore_enemy_spawns ( );
+          Void restore_activate_on_kill_all ( Interactives& interactives );
 
      private:
 
@@ -235,9 +238,11 @@ namespace bryte
 
           BorderExit     m_border_exits [ Direction::count ];
 
-          Location       m_activate_on_all_enemies_killed;
+          Location       m_activate_on_kill_all;
 
           Secret         m_secret;
+
+          Bool           m_killed_all_enemies;
 
           PersistedExit  m_persisted_exits [ c_max_exits ];
           Uint8          m_persisted_exit_count;
@@ -245,6 +250,7 @@ namespace bryte
           PersistedEnemies m_persisted_enemies [ c_max_maps ];
 
           Bool m_persisted_secrets [ c_max_maps ];
+          Bool m_persisted_activate_on_kill_all [ c_max_maps ];
      };
 
      inline Int32 Map::width ( ) const
@@ -358,12 +364,12 @@ namespace bryte
 
      inline Void Map::set_activate_location_on_all_enemies_killed ( Map::Location loc )
      {
-          m_activate_on_all_enemies_killed = loc;
+          m_activate_on_kill_all = loc;
      }
 
      inline Map::Location Map::activate_on_all_enemies_killed ( ) const
      {
-          return m_activate_on_all_enemies_killed;
+          return m_activate_on_kill_all;
      }
 
      inline Bool Map::found_secret ( ) const
@@ -374,6 +380,11 @@ namespace bryte
      inline Map::Secret& Map::secret ( )
      {
           return m_secret;
+     }
+
+     inline Void Map::killed_all_enemies ( )
+     {
+          m_killed_all_enemies = true;
      }
 
      inline Void Map::set_secret_location ( Location loc )

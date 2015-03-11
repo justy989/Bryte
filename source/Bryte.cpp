@@ -403,6 +403,7 @@ Void State::persist_map ( )
      }
 
      map.persist_secret ( );
+     map.persist_killed_all_enemies ( );
 }
 
 Void State::spawn_map_enemies ( )
@@ -493,6 +494,7 @@ Void State::enemy_death ( const Enemy& enemy )
      if ( all_dead ) {
           Map::Location loc = map.activate_on_all_enemies_killed ( );
           interactives.activate ( loc.x, loc.y );
+          map.killed_all_enemies ( );
      }
 }
 

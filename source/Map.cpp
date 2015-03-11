@@ -42,8 +42,8 @@ Bool Map::load_master_list ( const Char8* filepath )
 
      m_current_map = c_first_master_map;
 
-     m_activate_on_all_enemies_killed.x = 0;
-     m_activate_on_all_enemies_killed.y = 0;
+     m_activate_on_kill_all.x = 0;
+     m_activate_on_kill_all.y = 0;
 
      clear_persistence ( );
 
@@ -338,8 +338,10 @@ Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
 
      restore_exits ( interactives );
      restore_enemy_spawns ( );
+     restore_activate_on_kill_all ( interactives );
 
      m_secret.found = false;
+     m_killed_all_enemies = false;
 
      if ( m_persisted_secrets [ map_index ] ) {
           find_secret ( );
@@ -404,8 +406,8 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
           file.write ( reinterpret_cast<const Char8*>( &m_border_exits [ i ] ), sizeof ( BorderExit ) );
      }
 
-     file.write ( reinterpret_cast<const Char8*> ( &m_activate_on_all_enemies_killed ),
-                  sizeof ( m_activate_on_all_enemies_killed ) );
+     file.write ( reinterpret_cast<const Char8*> ( &m_activate_on_kill_all ),
+                  sizeof ( m_activate_on_kill_all ) );
 
      file.write ( reinterpret_cast<const Char8*> ( &m_secret.location ), sizeof ( m_secret.location ) );
      file.write ( reinterpret_cast<const Char8*> ( &m_secret.clear_tile ), sizeof ( m_secret.clear_tile ) );
@@ -479,8 +481,8 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
           file.read ( reinterpret_cast<Char8*>( &m_border_exits [ i ] ), sizeof ( BorderExit ) );
      }
 
-     file.read ( reinterpret_cast<Char8*> ( &m_activate_on_all_enemies_killed ),
-                 sizeof ( m_activate_on_all_enemies_killed ) );
+     file.read ( reinterpret_cast<Char8*> ( &m_activate_on_kill_all ),
+                 sizeof ( m_activate_on_kill_all ) );
 
      file.read ( reinterpret_cast<Char8*> ( &m_secret.location ), sizeof ( m_secret.location ) );
      file.read ( reinterpret_cast<Char8*> ( &m_secret.clear_tile ), sizeof ( m_secret.clear_tile ) );
@@ -510,6 +512,7 @@ void Map::clear_persistence ( )
           }
 
           m_persisted_secrets [ i ] = false;
+          m_persisted_activate_on_kill_all [ i ] = false;
      }
 }
 
@@ -563,6 +566,11 @@ Void Map::persist_enemy ( const Enemy& enemy, Uint8 index )
 Void Map::persist_secret ( )
 {
      m_persisted_secrets [ m_current_map ] = m_secret.found;
+}
+
+Void Map::persist_killed_all_enemies ( )
+{
+     m_persisted_activate_on_kill_all [ m_current_map ] = m_killed_all_enemies;
 }
 
 Void Map::restore_exits ( Interactives& interactives )
@@ -627,6 +635,15 @@ Void Map::restore_enemy_spawns ( )
      }
 
      m_enemy_spawn_count = new_enemy_spawn_count;
+}
+
+Void Map::restore_activate_on_kill_all ( Interactives& interactives )
+{
+     m_killed_all_enemies = m_persisted_activate_on_kill_all [ m_current_map ];
+
+     if ( m_killed_all_enemies ) {
+          interactives.activate ( m_activate_on_kill_all.x, m_activate_on_kill_all.y );
+     }
 }
 
 Void Map::find_secret ( )

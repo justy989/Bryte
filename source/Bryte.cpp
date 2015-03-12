@@ -1651,7 +1651,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      // calculate camera
      state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
                                                        state->player.position.x ( ), state->player.width ( ) ) );
-     state->camera.set_y ( calculate_camera_position ( back_buffer->h - 18, state->map.height ( ),
+     state->camera.set_y ( calculate_camera_position ( back_buffer->h - Map::c_tile_dimension_in_pixels,
+                                                       state->map.height ( ),
                                                        state->player.position.y ( ), state->player.height ( ) ) );
 
      // map
@@ -1763,7 +1764,7 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      }
 
      // ui
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, 18 };
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, Map::c_tile_dimension_in_pixels };
      SDL_FillRect ( back_buffer, &hud_rect, black );
 
      render_hearts ( back_buffer, state->player_heart_sheet, state->player.health, state->player.max_health,

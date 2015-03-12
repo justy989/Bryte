@@ -8,6 +8,8 @@
 #include "Pickup.hpp"
 #include "Vector.hpp"
 
+// Note: Max map dimensions without scroll: 16 x 14
+
 namespace bryte
 {
      struct Interactives;

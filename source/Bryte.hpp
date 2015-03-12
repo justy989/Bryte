@@ -15,6 +15,8 @@
 #include "Enemy.hpp"
 #include "Pickup.hpp"
 #include "Projectile.hpp"
+#include "Bomb.hpp"
+#include "DamageNumber.hpp"
 
 #include "EntityManager.hpp"
 
@@ -37,40 +39,6 @@
 
 namespace bryte
 {
-     struct Bomb : public Entity {
-     public:
-
-          Void update ( float dt );
-          Void clear ( );
-
-     public:
-
-          static const Real32 c_explode_time;
-          static const Real32 c_explode_radius;
-
-     public:
-
-          Stopwatch explode_watch;
-     };
-
-     struct DamageNumber : public Entity {
-     public:
-
-          Void update ( float time_delta );
-          Void clear ( );
-
-     public:
-
-          static const Real32 c_rise_height;
-          static const Real32 c_rise_speed;
-
-     public:
-
-          Stopwatch life_watch;
-          Int32 value;
-          Real32 starting_y;
-     };
-
      struct Settings {
           Int32  region_index;
 

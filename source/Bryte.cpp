@@ -849,30 +849,26 @@ Void State::update_interactives ( float time_delta )
           case Interactive::Type::bombable_block:
                break;
           case Interactive::Type::torch:
-               if ( interactive.interactive_torch.element ) {
-                    Auto& element = interactive.interactive_pushable_torch.torch.element;
+               if ( interactive.interactive_torch.element == Element::ice ) {
                     Int32 tile_x = map.tile_index_to_coordinate_x ( i );
                     Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    interactives.spread_ice ( tile_x, tile_y, map,
-                                              element == Element::ice ? false : true );
+                    interactives.spread_ice ( tile_x, tile_y, map, false );
                }
+               break;
+          case Interactive::Type::pushable_torch:
+               if ( interactive.interactive_pushable_torch.torch.element == Element::ice ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+
+                    interactives.spread_ice ( tile_x, tile_y, map, false );
+               }
+
+               interactive.update ( time_delta, interactives );
                break;
           case Interactive::Type::lever:
                interactive.update ( time_delta, interactives );
                break;
           case Interactive::Type::pushable_block:
-               interactive.update ( time_delta, interactives );
-               break;
-          case Interactive::Type::pushable_torch:
-               if ( interactive.interactive_pushable_torch.torch.element ) {
-                    Auto& element = interactive.interactive_pushable_torch.torch.element;
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-
-                    interactives.spread_ice ( tile_x, tile_y, map,
-                                              element == Element::ice ? false : true );
-               }
-
                interactive.update ( time_delta, interactives );
                break;
           case Interactive::Type::exit:
@@ -892,6 +888,31 @@ Void State::update_interactives ( float time_delta )
                }
 
                interactive.update ( time_delta, interactives );
+               break;
+          }
+     }
+
+     // NOTE: doing a second pass to check for fire so it will take precedence
+     //       over any spread ice
+     for ( Int32 i = 0; i < count; ++i ) {
+          Auto& interactive = interactives.m_interactives [ i ];
+
+          switch ( interactive.type ) {
+          default:
+               break;
+          case Interactive::Type::torch:
+               if ( interactive.interactive_torch.element == Element::fire ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    interactives.spread_ice ( tile_x, tile_y, map, true );
+               }
+               break;
+          case Interactive::Type::pushable_torch:
+               if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    interactives.spread_ice ( tile_x, tile_y, map, true );
+               }
                break;
           }
      }

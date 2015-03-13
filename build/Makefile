@@ -11,8 +11,8 @@ INCLUDE        = -I$(SOURCE_DIR)
 LINK           = -lSDL2 -lSDL2_mixer -ldl
 GAME_SO        = bryte_game.so
 GAME_SO_OBJS   = Log.o Utils.o Bitmap.o Region.o Map.o Interactives.o Character.o Player.o Enemy.o \
-                 Pickup.o Projectile.o MapDisplay.o CharacterDisplay.o InteractivesDisplay.o \
-                 PickupDisplay.o ProjectileDisplay.o Emitter.o Camera.o Text.o Sound.o
+                 Pickup.o Projectile.o Bomb.o MapDisplay.o CharacterDisplay.o InteractivesDisplay.o \
+                 PickupDisplay.o ProjectileDisplay.o Emitter.o DamageNumber.o Camera.o Text.o Sound.o
 GAME           = bryte
 EDITOR_SO      = bryte_editor.so
 EDITOR_SO_OBJS = Log.o Utils.o Map.o Character.o Interactives.o Pickup.o Bitmap.o Text.o MapDisplay.o \

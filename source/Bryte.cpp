@@ -68,57 +68,6 @@ static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
      return coords;
 }
 
-// NOTE: Windows compiler does static initialization different from gcc
-//       so I cannot have the explode radius rely on map tile dimension
-const Real32 Bomb::c_explode_time = 3.0f;
-const Real32 Bomb::c_explode_radius = 3.2f;
-
-Void Bomb::update ( float dt )
-{
-     switch ( life_state ) {
-     default:
-          break;
-     case LifeState::spawning:
-          life_state = LifeState::alive;
-          break;
-     case Entity::LifeState::alive:
-          explode_watch.tick ( dt );
-
-          // allow 1 frame where the bomb has expired but isn't dead
-          if ( explode_watch.expired ( ) ) {
-               life_state = Entity::LifeState::dying;
-          }
-          break;
-     case Entity::LifeState::dying:
-          life_state = Entity::LifeState::dead;
-          break;
-     }
-}
-
-Void Bomb::clear ( )
-{
-     explode_watch.reset ( 0.0f );
-}
-
-const Real32 DamageNumber::c_rise_height = 1.0f;
-const Real32 DamageNumber::c_rise_speed = 1.0f;
-
-Void DamageNumber::update ( float time_delta )
-{
-     position += Vector ( 0.0f, c_rise_speed * time_delta );
-
-     if ( ( position.y ( ) - starting_y ) > c_rise_height ) {
-          life_state = Entity::LifeState::dead;
-     }
-}
-
-Void DamageNumber::clear ( )
-{
-     value = 0;
-     starting_y = 0.0f;
-     position.zero ( );
-}
-
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
      random.seed ( 13371 );

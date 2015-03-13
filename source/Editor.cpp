@@ -699,6 +699,98 @@ Interactive& State::place_or_clear_interactive ( Interactive::Type type,
      return interactive;
 }
 
+Void State::render_selected_interactive ( SDL_Surface* back_buffer )
+{
+     Int32 selected_tile_x = track_current_interactive ? current_interactive_x : mouse_tile_x;
+     Int32 selected_tile_y = track_current_interactive ? current_interactive_y : mouse_tile_y;
+
+     if ( !map.coordinate_x_valid ( selected_tile_x ) ||
+          !map.coordinate_y_valid ( selected_tile_y ) ) {
+          return;
+     }
+
+     Auto& interactive = interactives.get_from_tile ( selected_tile_x, selected_tile_y );
+
+     if ( interactive.type == Interactive::Type::none &&
+          interactive.underneath.type == UnderneathInteractive::Type::none ) {
+          return;
+     }
+
+     Uint32 blue  = SDL_MapRGB ( back_buffer->format, 0, 0, 255 );
+     Uint32 green = SDL_MapRGB ( back_buffer->format, 0, 255, 0 );
+
+     Uint8 activate_tile_x = 0;
+     Uint8 activate_tile_y = 0;
+
+     switch ( interactive.type ) {
+     default:
+          break;
+     case Interactive::Type::lever:
+          if ( mode == Mode::lever ) {
+               activate_tile_x = interactive.interactive_lever.activate_coordinate_x;
+               activate_tile_y = interactive.interactive_lever.activate_coordinate_y;
+          }
+          break;
+     case Interactive::Type::pushable_block:
+          if ( mode == Mode::pushable_block ) {
+               activate_tile_x = interactive.interactive_pushable_block.activate_coordinate_x;
+               activate_tile_y = interactive.interactive_pushable_block.activate_coordinate_y;
+          }
+          break;
+     case Interactive::Type::pushable_torch:
+          if ( mode == Mode::pushable_torch ) {
+               activate_tile_x = interactive.interactive_pushable_torch.pushable_block.activate_coordinate_x;
+               activate_tile_y = interactive.interactive_pushable_torch.pushable_block.activate_coordinate_y;
+          }
+          break;
+     }
+
+     switch ( interactive.underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::pressure_plate:
+          if ( mode == Mode::pressure_plate ) {
+               activate_tile_x = interactive.underneath.underneath_pressure_plate.activate_coordinate_x;
+               activate_tile_y = interactive.underneath.underneath_pressure_plate.activate_coordinate_y;
+          }
+          break;
+     case UnderneathInteractive::Type::light_detector:
+          if ( mode == Mode::light_detector ) {
+               activate_tile_x = interactive.underneath.underneath_light_detector.activate_coordinate_x;
+               activate_tile_y = interactive.underneath.underneath_light_detector.activate_coordinate_y;
+          }
+          break;
+     case UnderneathInteractive::Type::ice_detector:
+          if ( mode == Mode::ice_detector ) {
+               activate_tile_x = interactive.underneath.underneath_ice_detector.activate_coordinate_x;
+               activate_tile_y = interactive.underneath.underneath_ice_detector.activate_coordinate_y;
+          }
+          break;
+     }
+
+     if ( selected_tile_x || selected_tile_y ) {
+          SDL_Rect selected_rect { ( selected_tile_x * Map::c_tile_dimension_in_pixels ),
+                                   ( selected_tile_y * Map::c_tile_dimension_in_pixels ),
+                                   Map::c_tile_dimension_in_pixels,
+                                   Map::c_tile_dimension_in_pixels};
+
+          world_to_sdl ( selected_rect, back_buffer, camera.x ( ), camera.y ( ) );
+
+          render_rect_outline ( back_buffer, selected_rect, blue );
+     }
+
+     if ( activate_tile_x || activate_tile_y ) {
+          SDL_Rect activated_rect { ( activate_tile_x * Map::c_tile_dimension_in_pixels ),
+                                    ( activate_tile_y * Map::c_tile_dimension_in_pixels ),
+                                    Map::c_tile_dimension_in_pixels,
+                                    Map::c_tile_dimension_in_pixels};
+
+          world_to_sdl ( activated_rect, back_buffer, camera.x ( ), camera.y ( ) );
+
+          render_rect_outline ( back_buffer, activated_rect, green );
+     }
+}
+
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
@@ -1339,6 +1431,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
      if ( state->mode == Mode::secret ) {
           render_secret ( back_buffer, state->map.secret ( ), state->camera.x ( ), state->camera.y ( ) );
      }
+
+     state->render_selected_interactive ( back_buffer );
 
      // ui
      SDL_Rect hud_rect { 0, 0, back_buffer->w, 44 };

@@ -79,6 +79,8 @@ namespace editor
           bryte::Interactive& place_or_clear_interactive ( bryte::Interactive::Type type,
                                                            Int32 mouse_tile_x, Int32 mouse_tile_y );
 
+          Void render_selected_interactive ( SDL_Surface* back_buffer );
+
      public:
 
           Settings* settings;

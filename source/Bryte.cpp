@@ -942,7 +942,7 @@ Void State::update_projectiles ( float time_delta )
                for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
                     Auto& enemy = enemies [ c ];
 
-                    if ( enemy.is_dead ( ) ) {
+                    if ( enemy.is_dead ( ) || enemy.is_blinking ( ) ) {
                          continue;
                     }
 
@@ -958,7 +958,8 @@ Void State::update_projectiles ( float time_delta )
                }
                break;
          case Projectile::Alliance::evil:
-               if ( point_inside_rect ( projectile_collision_point.x ( ),
+               if ( !player.is_blinking ( ) &&
+                    point_inside_rect ( projectile_collision_point.x ( ),
                                         projectile_collision_point.y ( ),
                                         player.collision_x ( ), player.collision_y ( ),
                                         player.collision_x ( ) + player.collision_width ( ),
@@ -974,7 +975,7 @@ Void State::update_projectiles ( float time_delta )
                for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
                     Auto& enemy = enemies [ c ];
 
-                    if ( enemy.is_dead ( ) ) {
+                    if ( enemy.is_dead ( ) || enemy.is_blinking ( ) ) {
                          continue;
                     }
 
@@ -989,7 +990,8 @@ Void State::update_projectiles ( float time_delta )
                     }
                }
 
-               if ( point_inside_rect ( projectile_collision_point.x ( ),
+               if ( !player.is_blinking ( ) &&
+                    point_inside_rect ( projectile_collision_point.x ( ),
                                         projectile_collision_point.y ( ),
                                         player.collision_x ( ), player.collision_y ( ),
                                         player.collision_x ( ) + player.collision_width ( ),

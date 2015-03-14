@@ -35,7 +35,7 @@ Int32 main ( Int32 argc, Char8** argv )
 
      bryte::Settings bryte_settings;
 
-     bryte_settings.region_index = 0;
+     bryte_settings.region_index = 1;
      bryte_settings.map_index = 0;
      bryte_settings.player_spawn_tile_x = 6;
      bryte_settings.player_spawn_tile_y = 2;

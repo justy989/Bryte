@@ -51,6 +51,7 @@ Void Player::clear ( )
 
      flies = false;
      knockbackable = true;
+     collides_with_exits = false;
 
      item_mode = ItemMode::shield;
      item_cooldown.reset ( 0.0f );

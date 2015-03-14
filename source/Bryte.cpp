@@ -612,36 +612,36 @@ Void State::handle_pause_input ( GameMemory& game_memory, const GameInput& game_
           const GameInput::ButtonChange& btn_change = game_input.controller_button_changes [ i ];
 
           switch ( btn_change.button ) {
-               default:
-                    break;
-               case SDL_CONTROLLER_BUTTON_DPAD_UP:
-                    if ( btn_change.down ) {
-                         pause_menu.prev_option ( );
+          default:
+               break;
+          case SDL_CONTROLLER_BUTTON_DPAD_UP:
+               if ( btn_change.down ) {
+                    pause_menu.prev_option ( );
+               }
+               break;
+          case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+               if ( btn_change.down ) {
+                    pause_menu.next_option ( );
+               }
+               break;
+          case SDL_CONTROLLER_BUTTON_A:
+               if ( btn_change.down ) {
+                    switch ( pause_menu.selected ) {
+                         default:
+                              break;
+                         case 0:
+                              game_state = GameState::game;
+                              break;
+                         case 1:
+                              player_save ( );
+                              game_state = GameState::game;
+                              break;
+                         case 2:
+                              game_state = GameState::intro;
+                              break;
                     }
-                    break;
-               case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-                    if ( btn_change.down ) {
-                         pause_menu.next_option ( );
-                    }
-                    break;
-               case SDL_CONTROLLER_BUTTON_A:
-                    if ( btn_change.down ) {
-                         switch ( pause_menu.selected ) {
-                              default:
-                                   break;
-                              case 0:
-                                   game_state = GameState::game;
-                                   break;
-                              case 1:
-                                   player_save ( );
-                                   game_state = GameState::game;
-                                   break;
-                              case 2:
-                                   game_state = GameState::intro;
-                                   break;
-                         }
-                    }
-                    break;
+               }
+               break;
           }
      }
 }
@@ -976,6 +976,7 @@ Void State::start_game ( GameMemory& game_memory )
           return;
      }
 
+     player.clear ( );
      player.save_slot = static_cast<Uint8>( slot_menu.selected );
      player_load ( );
 

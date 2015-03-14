@@ -51,8 +51,27 @@ namespace bryte
      struct State {
      public:
 
+          enum GameState {
+               intro,
+               game
+          };
+
+     public:
+
           Bool initialize ( GameMemory& game_memory, Settings* settings );
           Void destroy    ( );
+          Void update ( GameMemory& game_memory, Real32 time_delta );
+          Void handle_input ( GameMemory& game_memory, const GameInput& game_input );
+          Void render ( GameMemory& game_memory, SDL_Surface* back_buffer );
+
+          Void update_intro ( GameMemory& game_memory, Real32 time_delta );
+          Void update_game ( GameMemory& game_memory, Real32 time_delta );
+
+          Void handle_intro_input ( GameMemory& game_memory, const GameInput& game_input );
+          Void handle_game_input ( GameMemory& game_memory, const GameInput& game_input );
+
+          Void render_intro ( GameMemory& game_memory, SDL_Surface* back_buffer );
+          Void render_game ( GameMemory& game_memory, SDL_Surface* back_buffer );
 
           Bool spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop );
           Bool spawn_pickup ( const Vector& position, Pickup::Type type );
@@ -109,7 +128,7 @@ namespace bryte
 
      public:
 
-          Sound sound;
+          GameState game_state;
 
           Random random;
 
@@ -128,15 +147,17 @@ namespace bryte
 
           Vector       camera;
 
-          Text text;
-
-          SDL_PixelFormat      back_buffer_format;
+          Sound sound;
 
           MapDisplay          map_display;
           CharacterDisplay    character_display;
           InteractivesDisplay interactives_display;
           PickupDisplay       pickup_display;
           ProjectileDisplay   projectile_display;
+
+          Text text;
+
+          SDL_PixelFormat back_buffer_format;
 
           SDL_Surface* bomb_sheet;
           SDL_Surface* attack_icon_sheet;

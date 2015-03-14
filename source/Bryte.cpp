@@ -14,7 +14,20 @@
 
 using namespace bryte;
 
-const Real32 State::c_pickup_show_time    = 2.0f;
+static Void render_bomb ( SDL_Surface* back_buffer, SDL_Surface* bomb_sheet, const Bomb& bomb,
+                           Real32 camera_x, Real32 camera_y );
+static Void render_particle ( SDL_Surface* back_buffer, const Particle& particle, Uint32 color,
+                              Real32 camera_x, Real32 camera_y );
+static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const DamageNumber& damage_number,
+                                   Real32 camera_x, Real32 camera_y );
+static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
+                                  Character& player, Pickup::Type pickup_type,
+                                  Real32 camera_x, Real32 camera_y );
+static Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 frame, Int32 x, Int32 y );
+static Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 health, Int32 max_health,
+                            Int32 x, Int32 y );
+
+const Real32 State::c_pickup_show_time = 2.0f;
 
 static State* get_state ( GameMemory& game_memory )
 {
@@ -70,6 +83,8 @@ static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
 
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
+     game_state = GameState::intro;
+
      random.seed ( 13371 );
 
      player_spawn_tile_x = settings->player_spawn_tile_x;
@@ -204,6 +219,418 @@ Void State::destroy ( )
      SDL_FreeSurface ( bomb_sheet );
      SDL_FreeSurface ( attack_icon_sheet );
      SDL_FreeSurface ( player_heart_sheet );
+}
+
+Void State::update ( GameMemory& game_memory, Real32 time_delta )
+{
+     switch ( game_state ) {
+     default:
+          break;
+     case GameState::intro:
+          update_intro ( game_memory, time_delta );
+          break;
+     case GameState::game:
+          update_game ( game_memory, time_delta );
+          break;
+     }
+}
+
+Void State::handle_input ( GameMemory& game_memory, const GameInput& game_input )
+{
+     switch ( game_state ) {
+     default:
+          break;
+     case GameState::intro:
+          handle_intro_input ( game_memory, game_input );
+          break;
+     case GameState::game:
+          handle_game_input ( game_memory, game_input );
+          break;
+     }
+}
+
+Void State::render ( GameMemory& game_memory, SDL_Surface* back_buffer )
+{
+     switch ( game_state ) {
+     default:
+          break;
+     case GameState::intro:
+          render_intro ( game_memory, back_buffer );
+          break;
+     case GameState::game:
+          render_game ( game_memory, back_buffer );
+          break;
+     }
+}
+
+Void State::update_intro ( GameMemory& game_memory, Real32 time_delta )
+{
+
+}
+
+Void State::update_game ( GameMemory& game_memory, Real32 time_delta )
+{
+     update_player ( game_memory, time_delta );
+     update_enemies ( time_delta );
+     update_interactives ( time_delta );
+     update_projectiles ( time_delta );
+     update_bombs ( time_delta );
+     update_pickups ( time_delta );
+     update_emitters ( time_delta );
+     update_damage_numbers ( time_delta );
+     update_light ( );
+}
+
+Void State::handle_intro_input ( GameMemory& game_memory, const GameInput& game_input )
+{
+     // handle keyboard
+     for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
+          const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
+
+          switch ( key_change.scan_code ) {
+          default:
+               break;
+          case SDL_SCANCODE_SPACE:
+               game_state = GameState::game;
+               break;
+          }
+     }
+}
+
+Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_input )
+{
+     // handle keyboard
+     for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
+          const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
+
+          switch ( key_change.scan_code ) {
+          default:
+               break;
+          case SDL_SCANCODE_W:
+               direction_keys [ Direction::up ]    = key_change.down;
+               break;
+          case SDL_SCANCODE_S:
+               direction_keys [ Direction::down ]  = key_change.down;
+               break;
+          case SDL_SCANCODE_A:
+               direction_keys [ Direction::left ]  = key_change.down;
+               break;
+          case SDL_SCANCODE_D:
+               direction_keys [ Direction::right ] = key_change.down;
+               break;
+          case SDL_SCANCODE_Q:
+               switch_item_key = key_change.down;
+               break;
+          case SDL_SCANCODE_SPACE:
+               attack_key = key_change.down;
+               break;
+          case SDL_SCANCODE_LCTRL:
+               item_key = key_change.down;
+               break;
+          case SDL_SCANCODE_E:
+               activate_key = key_change.down;
+               break;
+
+// NOTE: Debug only keys for cheating!
+#ifdef DEBUG
+          case SDL_SCANCODE_8:
+               if ( key_change.down ) {
+                    Vector spawn_pos = player.position - Vector ( Map::c_tile_dimension_in_meters, 0.0f );
+                    spawn_enemy ( spawn_pos, 0, player.facing, Pickup::Type::health );
+               }
+               break;
+          case SDL_SCANCODE_I:
+               if ( key_change.down ) {
+                    enemy_think = !enemy_think;
+               }
+               break;
+          case SDL_SCANCODE_P:
+               if ( key_change.down ) {
+                    invincible = !invincible;
+               }
+               break;
+          case SDL_SCANCODE_K:
+               if ( key_change.down ) {
+                    player.key_count++;
+               }
+               break;
+          case SDL_SCANCODE_O:
+               if ( key_change.down ) {
+                    player.arrow_count++;
+               }
+               break;
+          case SDL_SCANCODE_B:
+               if ( key_change.down ) {
+                    player.bomb_count++;
+               }
+               break;
+          case SDL_SCANCODE_T:
+               if ( key_change.down ) {
+                    debug_text = !debug_text;
+               }
+               break;
+#endif
+          }
+     }
+
+     // handle controller
+     for ( Uint32 i = 0; i < game_input.controller_button_change_count; ++i ) {
+          const GameInput::ButtonChange& btn_change = game_input.controller_button_changes [ i ];
+
+          switch ( btn_change.button ) {
+               default:
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                    direction_keys [ Direction::left ] = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    direction_keys [ Direction::up ] = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    direction_keys [ Direction::right ] = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    direction_keys [ Direction::down ] = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_A:
+                    attack_key = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_B:
+                    item_key = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_X:
+                    activate_key = btn_change.down;
+                    break;
+               case SDL_CONTROLLER_BUTTON_Y:
+                    switch_item_key = btn_change.down;
+                    break;
+          }
+     }
+
+// NOTE: Clicking in debug mode places the player
+#ifdef DEBUG
+     for ( Uint32 i = 0; i < game_input.mouse_button_change_count; ++i ) {
+          Auto change = game_input.mouse_button_changes [ i ];
+
+          switch ( change.button ) {
+          default:
+               break;
+          case SDL_BUTTON_LEFT:
+          {
+               if ( change.down ) {
+                    Int32 mouse_screen_x = game_input.mouse_position_x - meters_to_pixels ( camera.x ( ) );
+                    Int32 mouse_screen_y = game_input.mouse_position_y - meters_to_pixels ( camera.y ( ) );
+
+                    player.set_collision_center ( pixels_to_meters ( mouse_screen_x ),
+                                                  pixels_to_meters ( mouse_screen_y ) );
+               }
+          } break;
+          }
+     }
+#endif
+}
+
+Void State::render_intro ( GameMemory& game_memory, SDL_Surface* back_buffer )
+{
+
+}
+
+Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
+{
+     Uint32 black  = SDL_MapRGB ( back_buffer->format, 0, 0, 0 );
+
+     back_buffer_format = *back_buffer->format;
+
+     // calculate camera
+     camera.set_x ( calculate_camera_position ( back_buffer->w, map.width ( ),
+                                                       player.position.x ( ), player.width ( ) ) );
+     camera.set_y ( calculate_camera_position ( back_buffer->h - 18, map.height ( ),
+                                                       player.position.y ( ), player.height ( ) ) );
+
+     // map
+     map_display.render ( back_buffer, map, camera.x ( ), camera.y ( ),
+                                 map.found_secret ( ) );
+
+     // interactives
+     interactives_display.tick ( );
+     interactives_display.render ( back_buffer, interactives, map,
+                                          camera.x ( ), camera.y ( ), map.found_secret ( ) );
+
+     character_display.tick ( );
+
+     // enemies in 2 passes, non-flying and flying
+     for ( Uint32 i = 0; i < enemies.max ( ); ++i ) {
+          Auto& enemy = enemies [ i ];
+          if ( enemy.is_dead ( ) || enemy.flies ) {
+               continue;
+          }
+
+          character_display.render_enemy ( back_buffer, enemy,
+                                                  camera.x ( ), camera.y ( ) );
+     }
+
+     // player
+     character_display.render_player ( back_buffer, player,
+                                              camera.x ( ), camera.y ( ) );
+
+     for ( Uint32 i = 0; i < enemies.max ( ); ++i ) {
+          Auto& enemy = enemies [ i ];
+          if ( enemy.is_dead ( ) || !enemy.flies ) {
+               continue;
+          }
+
+          character_display.render_enemy ( back_buffer, enemy,
+                                                  camera.x ( ), camera.y ( ) );
+     }
+
+     // pickups
+     pickup_display.tick ( );
+     for ( Uint32 i = 0; i < pickups.max ( ); ++i ) {
+          Auto& pickup = pickups [ i ];
+
+          if ( pickup.is_dead ( ) ) {
+               continue;
+          }
+
+          pickup_display.render ( back_buffer, pickup, camera.x ( ), camera.y ( ) );
+     }
+
+     // projectiles
+     projectile_display.tick ( );
+
+     for ( Uint32 i = 0; i < projectiles.max ( ); ++i ) {
+          Auto& projectile = projectiles [ i ];
+
+          if ( projectile.is_dead ( ) ) {
+               continue;
+          }
+
+          projectile_display.render ( back_buffer, projectile,
+                                             camera.x ( ), camera.y ( ) );
+     }
+
+     // bombs
+     for ( Uint32 i = 0; i < bombs.max ( ); ++i ) {
+          Auto& bomb = bombs [ i ];
+
+          if ( bomb.is_dead ( ) ) {
+               continue;
+          }
+
+          render_bomb ( back_buffer, bomb_sheet, bomb, camera.x ( ), camera.y ( ) );
+     }
+
+     // emitters
+     for ( Uint32 i = 0; i < emitters.max ( ); ++i ) {
+          Auto& emitter = emitters [ i ];
+          if ( emitter.is_alive ( ) ) {
+               for ( Uint8 i = 0; i < Emitter::c_max_particles; ++i ) {
+                    Auto& particle_lifetime_watch = emitter.particle_lifetime_watches [ i ];
+                    if ( !particle_lifetime_watch.expired ( ) ) {
+                         render_particle ( back_buffer, emitter.particles [ i ], emitter.color,
+                                           camera.x ( ), camera.y ( ) );
+                    }
+               }
+          }
+     }
+
+     // pickup queue
+     if ( pickup_queue [ 0 ] ) {
+          render_shown_pickup ( back_buffer, pickup_display.pickup_sheet, player,
+                                pickup_queue [ 0 ], camera.x ( ), camera.y ( ) );
+     }
+
+     // light
+     render_light ( back_buffer, map, camera.x ( ), camera.y ( ) );
+
+     // damage numbers
+     for ( Uint32 i = 0; i < damage_numbers.max ( ); ++i ) {
+          Auto& damage_number = damage_numbers [ i ];
+
+          if ( damage_number.is_dead ( ) ) {
+               continue;
+          }
+
+          render_damage_number ( text, back_buffer, damage_number,
+                                 camera.x ( ), camera.y ( ) );
+     }
+
+     // ui
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, 18 };
+     SDL_FillRect ( back_buffer, &hud_rect, black );
+
+     render_hearts ( back_buffer, player_heart_sheet, player.health, player.max_health,
+                     2, 2 );
+
+     render_icon ( back_buffer, attack_icon_sheet, 0,
+                   ( back_buffer->w / 2 ) - Map::c_tile_dimension_in_pixels, 1 );
+
+     render_icon ( back_buffer, attack_icon_sheet, player.item_mode + 1,
+                   ( back_buffer->w / 2 ) + 3, 1 );
+
+     char buffer [ 64 ];
+
+#ifdef WIN32
+     sprintf_s ( buffer, "%d", player.key_count );
+#else
+     sprintf ( buffer, "%d", player.key_count );
+#endif
+
+     text.render ( back_buffer, buffer, 235, 4 );
+
+#ifdef WIN32
+     sprintf_s ( buffer, "%d", player.bomb_count );
+#else
+     sprintf ( buffer, "%d", player.bomb_count );
+#endif
+
+     text.render ( back_buffer, buffer, 210, 4 );
+
+#ifdef WIN32
+     sprintf_s ( buffer, "%d", player.arrow_count );
+#else
+     sprintf ( buffer, "%d", player.arrow_count );
+#endif
+
+     text.render ( back_buffer, buffer, 185, 4 );
+
+     SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect pickup_clip_rect { 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     SDL_BlitSurface ( pickup_display.pickup_sheet, &pickup_clip_rect, back_buffer, &pickup_dest_rect );
+
+     SDL_Rect bomb_dest_rect { 200, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect bomb_clip_rect { 0, Pickup::c_dimension_in_pixels * 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     SDL_BlitSurface ( pickup_display.pickup_sheet, &bomb_clip_rect, back_buffer, &bomb_dest_rect );
+
+     SDL_Rect arrow_dest_rect { 175, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+     SDL_Rect arrow_clip_rect { 0, Pickup::c_dimension_in_pixels * 2, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
+
+     SDL_BlitSurface ( pickup_display.pickup_sheet, &arrow_clip_rect, back_buffer, &arrow_dest_rect );
+
+#ifdef DEBUG
+
+     if ( debug_text ) {
+          Auto player_coord = Map::vector_to_coordinates ( player.position );
+
+          // TODO: I wish I could just use snprintf so it is 'safe' on all platforms, but it doesn't seem to exist on windows?
+#ifdef WIN32
+          sprintf_s (
+#else
+          sprintf (
+#endif
+                    buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
+                    player.position.x ( ), player.position.y ( ),
+                    player_coord.x, player_coord.y,
+                    map.current_master_map ( ),
+                    enemy_think ? "ON" : "OFF",
+                    invincible ? "ON" : "OFF" );
+
+          text.render ( back_buffer, buffer, 0, 230 );
+     }
+#endif
+
 }
 
 Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop )
@@ -1331,147 +1758,14 @@ extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game
 {
      Auto* state = get_state ( game_memory );
 
-     // handle keyboard
-     for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
-          const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
-
-          switch ( key_change.scan_code ) {
-          default:
-               break;
-          case SDL_SCANCODE_W:
-               state->direction_keys [ Direction::up ]    = key_change.down;
-               break;
-          case SDL_SCANCODE_S:
-               state->direction_keys [ Direction::down ]  = key_change.down;
-               break;
-          case SDL_SCANCODE_A:
-               state->direction_keys [ Direction::left ]  = key_change.down;
-               break;
-          case SDL_SCANCODE_D:
-               state->direction_keys [ Direction::right ] = key_change.down;
-               break;
-          case SDL_SCANCODE_Q:
-               state->switch_item_key = key_change.down;
-               break;
-          case SDL_SCANCODE_SPACE:
-               state->attack_key = key_change.down;
-               break;
-          case SDL_SCANCODE_LCTRL:
-               state->item_key = key_change.down;
-               break;
-          case SDL_SCANCODE_E:
-               state->activate_key = key_change.down;
-               break;
-          case SDL_SCANCODE_8:
-               if ( key_change.down ) {
-                    Vector spawn_pos = state->player.position - Vector ( Map::c_tile_dimension_in_meters, 0.0f );
-                    state->spawn_enemy ( spawn_pos, 0, state->player.facing, Pickup::Type::health );
-               }
-               break;
-#ifdef DEBUG
-          case SDL_SCANCODE_I:
-               if ( key_change.down ) {
-                    state->enemy_think = !state->enemy_think;
-               }
-               break;
-          case SDL_SCANCODE_P:
-               if ( key_change.down ) {
-                    state->invincible = !state->invincible;
-               }
-               break;
-          case SDL_SCANCODE_K:
-               if ( key_change.down ) {
-                    state->player.key_count++;
-               }
-               break;
-          case SDL_SCANCODE_O:
-               if ( key_change.down ) {
-                    state->player.arrow_count++;
-               }
-               break;
-          case SDL_SCANCODE_B:
-               if ( key_change.down ) {
-                    state->player.bomb_count++;
-               }
-               break;
-          case SDL_SCANCODE_T:
-               if ( key_change.down ) {
-                    state->debug_text = !state->debug_text;
-               }
-               break;
-#endif
-          }
-     }
-
-     // handle controller
-     for ( Uint32 i = 0; i < game_input.controller_button_change_count; ++i ) {
-          const GameInput::ButtonChange& btn_change = game_input.controller_button_changes [ i ];
-
-          switch ( btn_change.button ) {
-               default:
-                    break;
-               case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-                    state->direction_keys [ Direction::left ] = btn_change.down;
-                    break;
-               case SDL_CONTROLLER_BUTTON_DPAD_UP:
-                    state->direction_keys [ Direction::up ] = btn_change.down;
-                    break;
-               case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-                    state->direction_keys [ Direction::right ] = btn_change.down;
-                    break;
-               case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-                    state->direction_keys [ Direction::down ] = btn_change.down;
-                    break;
-               case SDL_CONTROLLER_BUTTON_A:
-                    state->attack_key = btn_change.down;
-                    break;
-               case SDL_CONTROLLER_BUTTON_B:
-                    state->item_key = btn_change.down;
-                    break;
-               case SDL_CONTROLLER_BUTTON_X:
-                    state->activate_key = btn_change.down;
-                    break;
-               case SDL_CONTROLLER_BUTTON_Y:
-                    state->switch_item_key = btn_change.down;
-                    break;
-          }
-     }
-
-#ifdef DEBUG
-     for ( Uint32 i = 0; i < game_input.mouse_button_change_count; ++i ) {
-          Auto change = game_input.mouse_button_changes [ i ];
-
-          switch ( change.button ) {
-          default:
-               break;
-          case SDL_BUTTON_LEFT:
-          {
-               if ( change.down ) {
-                    Int32 mouse_screen_x = game_input.mouse_position_x - meters_to_pixels ( state->camera.x ( ) );
-                    Int32 mouse_screen_y = game_input.mouse_position_y - meters_to_pixels ( state->camera.y ( ) );
-
-                    state->player.set_collision_center ( pixels_to_meters ( mouse_screen_x ),
-                                                         pixels_to_meters ( mouse_screen_y ) );
-               }
-          } break;
-          }
-     }
-#endif
+     state->handle_input ( game_memory, game_input );
 }
 
 extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 {
      Auto* state = get_state ( game_memory );
 
-     state->update_player ( game_memory, time_delta );
-     state->update_enemies ( time_delta );
-     state->update_interactives ( time_delta );
-     state->update_projectiles ( time_delta );
-     state->update_bombs ( time_delta );
-     state->update_pickups ( time_delta );
-     state->update_emitters ( time_delta );
-     state->update_damage_numbers ( time_delta );
-     state->update_light ( );
+     state->update ( game_memory, time_delta );
 }
 
 static Void render_bomb ( SDL_Surface* back_buffer, SDL_Surface* bomb_sheet, const Bomb& bomb,
@@ -1531,9 +1825,9 @@ static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const D
      text.render ( back_buffer, buffer, dest_rect.x, dest_rect.y);
 }
 
-Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
-                           Character& player, Pickup::Type pickup_type,
-                           Real32 camera_x, Real32 camera_y )
+static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
+                                  Character& player, Pickup::Type pickup_type,
+                                  Real32 camera_x, Real32 camera_y )
 {
      SDL_Rect dest_rect = build_world_sdl_rect ( player.position.x ( ) + Pickup::c_dimension_in_meters * 0.4f,
                                                  player.position.y ( ) + player.height ( ) + pixels_to_meters ( 1 ),
@@ -1548,7 +1842,7 @@ Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
      SDL_BlitSurface ( pickup_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
-Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 frame, Int32 x, Int32 y )
+static Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 frame, Int32 x, Int32 y )
 {
      Uint32 white  = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
 
@@ -1565,8 +1859,8 @@ Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 fram
      render_rect_outline ( back_buffer, attack_outline, white );
 }
 
-Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 health, Int32 max_health,
-                     Int32 x, Int32 y )
+static Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 health, Int32 max_health,
+                            Int32 x, Int32 y )
 {
      Int32 heart_count = max_health / 2;
      Int32 heart_state = 0;
@@ -1593,198 +1887,7 @@ Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 h
 extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
      Auto* state = get_state ( game_memory );
-     Uint32 black  = SDL_MapRGB ( back_buffer->format, 0, 0, 0 );
 
-     state->back_buffer_format = *back_buffer->format;
-
-     // calculate camera
-     state->camera.set_x ( calculate_camera_position ( back_buffer->w, state->map.width ( ),
-                                                       state->player.position.x ( ), state->player.width ( ) ) );
-     state->camera.set_y ( calculate_camera_position ( back_buffer->h - 18, state->map.height ( ),
-                                                       state->player.position.y ( ), state->player.height ( ) ) );
-
-     // map
-     state->map_display.render ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ),
-                                 state->map.found_secret ( ) );
-
-     // interactives
-     state->interactives_display.tick ( );
-     state->interactives_display.render ( back_buffer, state->interactives, state->map,
-                                          state->camera.x ( ), state->camera.y ( ), state->map.found_secret ( ) );
-
-     state->character_display.tick ( );
-
-     // enemies in 2 passes, non-flying and flying
-     for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
-          Auto& enemy = state->enemies [ i ];
-          if ( enemy.is_dead ( ) || enemy.flies ) {
-               continue;
-          }
-
-          state->character_display.render_enemy ( back_buffer, enemy,
-                                                  state->camera.x ( ), state->camera.y ( ) );
-     }
-
-     // player
-     state->character_display.render_player ( back_buffer, state->player,
-                                              state->camera.x ( ), state->camera.y ( ) );
-
-     for ( Uint32 i = 0; i < state->enemies.max ( ); ++i ) {
-          Auto& enemy = state->enemies [ i ];
-          if ( enemy.is_dead ( ) || !enemy.flies ) {
-               continue;
-          }
-
-          state->character_display.render_enemy ( back_buffer, enemy,
-                                                  state->camera.x ( ), state->camera.y ( ) );
-     }
-
-     // pickups
-     state->pickup_display.tick ( );
-     for ( Uint32 i = 0; i < state->pickups.max ( ); ++i ) {
-          Auto& pickup = state->pickups [ i ];
-
-          if ( pickup.is_dead ( ) ) {
-               continue;
-          }
-
-          state->pickup_display.render ( back_buffer, pickup, state->camera.x ( ), state->camera.y ( ) );
-     }
-
-     // projectiles
-     state->projectile_display.tick ( );
-
-     for ( Uint32 i = 0; i < state->projectiles.max ( ); ++i ) {
-          Auto& projectile = state->projectiles [ i ];
-
-          if ( projectile.is_dead ( ) ) {
-               continue;
-          }
-
-          state->projectile_display.render ( back_buffer, projectile,
-                                             state->camera.x ( ), state->camera.y ( ) );
-     }
-
-     // bombs
-     for ( Uint32 i = 0; i < state->bombs.max ( ); ++i ) {
-          Auto& bomb = state->bombs [ i ];
-
-          if ( bomb.is_dead ( ) ) {
-               continue;
-          }
-
-          render_bomb ( back_buffer, state->bomb_sheet, bomb, state->camera.x ( ), state->camera.y ( ) );
-     }
-
-     // emitters
-     for ( Uint32 i = 0; i < state->emitters.max ( ); ++i ) {
-          Auto& emitter = state->emitters [ i ];
-          if ( emitter.is_alive ( ) ) {
-               for ( Uint8 i = 0; i < Emitter::c_max_particles; ++i ) {
-                    Auto& particle_lifetime_watch = emitter.particle_lifetime_watches [ i ];
-                    if ( !particle_lifetime_watch.expired ( ) ) {
-                         render_particle ( back_buffer, emitter.particles [ i ], emitter.color,
-                                           state->camera.x ( ), state->camera.y ( ) );
-                    }
-               }
-          }
-     }
-
-     // pickup queue
-     if ( state->pickup_queue [ 0 ] ) {
-          render_shown_pickup ( back_buffer, state->pickup_display.pickup_sheet, state->player,
-                                state->pickup_queue [ 0 ], state->camera.x ( ), state->camera.y ( ) );
-     }
-
-     // light
-     render_light ( back_buffer, state->map, state->camera.x ( ), state->camera.y ( ) );
-
-     // damage numbers
-     for ( Uint32 i = 0; i < state->damage_numbers.max ( ); ++i ) {
-          Auto& damage_number = state->damage_numbers [ i ];
-
-          if ( damage_number.is_dead ( ) ) {
-               continue;
-          }
-
-          render_damage_number ( state->text, back_buffer, damage_number,
-                                 state->camera.x ( ), state->camera.y ( ) );
-     }
-
-     // ui
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, 18 };
-     SDL_FillRect ( back_buffer, &hud_rect, black );
-
-     render_hearts ( back_buffer, state->player_heart_sheet, state->player.health, state->player.max_health,
-                     2, 2 );
-
-     render_icon ( back_buffer, state->attack_icon_sheet, 0,
-                   ( back_buffer->w / 2 ) - Map::c_tile_dimension_in_pixels, 1 );
-
-     render_icon ( back_buffer, state->attack_icon_sheet, state->player.item_mode + 1,
-                   ( back_buffer->w / 2 ) + 3, 1 );
-
-     char buffer [ 64 ];
-
-#ifdef WIN32
-     sprintf_s ( buffer, "%d", state->player.key_count );
-#else
-     sprintf ( buffer, "%d", state->player.key_count );
-#endif
-
-     state->text.render ( back_buffer, buffer, 235, 4 );
-
-#ifdef WIN32
-     sprintf_s ( buffer, "%d", state->player.bomb_count );
-#else
-     sprintf ( buffer, "%d", state->player.bomb_count );
-#endif
-
-     state->text.render ( back_buffer, buffer, 210, 4 );
-
-#ifdef WIN32
-     sprintf_s ( buffer, "%d", state->player.arrow_count );
-#else
-     sprintf ( buffer, "%d", state->player.arrow_count );
-#endif
-
-     state->text.render ( back_buffer, buffer, 185, 4 );
-
-     SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-     SDL_Rect pickup_clip_rect { 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-
-     SDL_BlitSurface ( state->pickup_display.pickup_sheet, &pickup_clip_rect, back_buffer, &pickup_dest_rect );
-
-     SDL_Rect bomb_dest_rect { 200, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-     SDL_Rect bomb_clip_rect { 0, Pickup::c_dimension_in_pixels * 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-
-     SDL_BlitSurface ( state->pickup_display.pickup_sheet, &bomb_clip_rect, back_buffer, &bomb_dest_rect );
-
-     SDL_Rect arrow_dest_rect { 175, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-     SDL_Rect arrow_clip_rect { 0, Pickup::c_dimension_in_pixels * 2, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-
-     SDL_BlitSurface ( state->pickup_display.pickup_sheet, &arrow_clip_rect, back_buffer, &arrow_dest_rect );
-
-#ifdef DEBUG
-
-     if ( state->debug_text ) {
-          Auto player_coord = Map::vector_to_coordinates ( state->player.position );
-
-          // TODO: I wish I could just use snprintf so it is 'safe' on all platforms, but it doesn't seem to exist on windows?
-#ifdef WIN32
-          sprintf_s (
-#else
-          sprintf (
-#endif
-                    buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
-                    state->player.position.x ( ), state->player.position.y ( ),
-                    player_coord.x, player_coord.y,
-                    state->map.current_master_map ( ),
-                    state->enemy_think ? "ON" : "OFF",
-                    state->invincible ? "ON" : "OFF" );
-
-          state->text.render ( back_buffer, buffer, 0, 230 );
-     }
-#endif
+     state->render ( game_memory, back_buffer );
 }
 

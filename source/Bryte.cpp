@@ -4,13 +4,10 @@
 #include "Camera.hpp"
 #include "MapDisplay.hpp"
 
-#ifdef WIN32
-    #define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include <cstdio>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 
 using namespace bryte;
 
@@ -79,6 +76,15 @@ static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
      }
 
      return coords;
+}
+
+Void UITextMenu::init ( Int32 x, Int32 y )
+{
+     top_left_x = x;
+     top_left_y = y;
+
+     option_count = 0;
+     selected = 0;
 }
 
 Bool UITextMenu::add_option ( const Char8* text )
@@ -196,6 +202,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     // NOTE: init map display textures to null so we don't clean them up
+     // if they aren't loaded
+     map_display.clear ( );
+
+     // Load our necessary surfaces
      if ( !character_display.load_surfaces ( game_memory ) ) {
           return false;
      }
@@ -232,15 +243,13 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      back_buffer_format = *bomb_sheet->format;
 
-     slot_menu.top_left_x = 154;
-     slot_menu.top_left_y = 122;
+     slot_menu.init ( 154, 122 );
      slot_menu.add_option ( "SLOT 0" );
      slot_menu.add_option ( "SLOT 1" );
      slot_menu.add_option ( "SLOT 2" );
      slot_menu.add_option ( "QUIT" );
 
-     pause_menu.top_left_x = 154;
-     pause_menu.top_left_y = 122;
+     pause_menu.init ( 154, 122 );
      pause_menu.add_option ( "RESUME" );
      pause_menu.add_option ( "SAVE" );
      pause_menu.add_option ( "MENU" );
@@ -375,28 +384,34 @@ Void State::handle_intro_input ( GameMemory& game_memory, const GameInput& game_
                break;
           case SDL_SCANCODE_RETURN:
                if ( key_change.down ) {
-                    if ( slot_menu.selected == 3 ) {
-                         quit_game ( );
-                         return;
-                    }
-
-                    game_state = GameState::game;
-
-                    if ( !load_region ( game_memory ) ) {
-                         quit_game ( );
-                         return;
-                    }
-
-                    player.save_slot = static_cast<Uint8>( slot_menu.selected );
-                    player_load ( );
-
-                    player.position = Map::coordinates_to_vector ( player_spawn_tile_x,
-                                                                   player_spawn_tile_y );
-                    player.life_state = Entity::LifeState::alive;
-
-                    change_map ( settings->map_index, false );
+                    start_game ( game_memory );
                }
                break;
+          }
+     }
+
+     // handle controller
+     for ( Uint32 i = 0; i < game_input.controller_button_change_count; ++i ) {
+          const GameInput::ButtonChange& btn_change = game_input.controller_button_changes [ i ];
+
+          switch ( btn_change.button ) {
+               default:
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    if ( btn_change.down ) {
+                         slot_menu.prev_option ( );
+                    }
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    if ( btn_change.down ) {
+                         slot_menu.next_option ( );
+                    }
+                    break;
+               case SDL_CONTROLLER_BUTTON_A:
+                    if ( btn_change.down ) {
+                         start_game ( game_memory );
+                    }
+                    break;
           }
      }
 }
@@ -591,6 +606,44 @@ Void State::handle_pause_input ( GameMemory& game_memory, const GameInput& game_
                break;
           }
      }
+
+     // handle controller
+     for ( Uint32 i = 0; i < game_input.controller_button_change_count; ++i ) {
+          const GameInput::ButtonChange& btn_change = game_input.controller_button_changes [ i ];
+
+          switch ( btn_change.button ) {
+               default:
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    if ( btn_change.down ) {
+                         pause_menu.prev_option ( );
+                    }
+                    break;
+               case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    if ( btn_change.down ) {
+                         pause_menu.next_option ( );
+                    }
+                    break;
+               case SDL_CONTROLLER_BUTTON_A:
+                    if ( btn_change.down ) {
+                         switch ( pause_menu.selected ) {
+                              default:
+                                   break;
+                              case 0:
+                                   game_state = GameState::game;
+                                   break;
+                              case 1:
+                                   player_save ( );
+                                   game_state = GameState::game;
+                                   break;
+                              case 2:
+                                   game_state = GameState::intro;
+                                   break;
+                         }
+                    }
+                    break;
+          }
+     }
 }
 
 Void State::render_intro ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -738,28 +791,13 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
 
      char buffer [ 64 ];
 
-#ifdef WIN32
-     sprintf_s ( buffer, "%d", player.key_count );
-#else
      sprintf ( buffer, "%d", player.key_count );
-#endif
-
      text.render ( back_buffer, buffer, 235, 4 );
 
-#ifdef WIN32
-     sprintf_s ( buffer, "%d", player.bomb_count );
-#else
      sprintf ( buffer, "%d", player.bomb_count );
-#endif
-
      text.render ( back_buffer, buffer, 210, 4 );
 
-#ifdef WIN32
-     sprintf_s ( buffer, "%d", player.arrow_count );
-#else
      sprintf ( buffer, "%d", player.arrow_count );
-#endif
-
      text.render ( back_buffer, buffer, 185, 4 );
 
      SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
@@ -778,17 +816,10 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
      SDL_BlitSurface ( pickup_display.pickup_sheet, &arrow_clip_rect, back_buffer, &arrow_dest_rect );
 
 #ifdef DEBUG
-
      if ( debug_text ) {
           Auto player_coord = Map::vector_to_coordinates ( player.position );
 
-          // TODO: I wish I could just use snprintf so it is 'safe' on all platforms, but it doesn't seem to exist on windows?
-#ifdef WIN32
-          sprintf_s (
-#else
-          sprintf (
-#endif
-                    buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
+          sprintf ( buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
                     player.position.x ( ), player.position.y ( ),
                     player_coord.x, player_coord.y,
                     map.current_master_map ( ),
@@ -798,7 +829,6 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
           text.render ( back_buffer, buffer, 0, 230 );
      }
 #endif
-
 }
 
 Void State::render_pause ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -930,6 +960,30 @@ Bool State::spawn_healing_number ( const Vector& position, Int32 value )
      LOG_DEBUG ( "spawning damage number at %f, %f\n", position.x ( ), position.y ( ) );
 
      return true;
+}
+
+Void State::start_game ( GameMemory& game_memory )
+{
+     if ( slot_menu.selected == 3 ) {
+          quit_game ( );
+          return;
+     }
+
+     game_state = GameState::game;
+
+     if ( !load_region ( game_memory ) ) {
+          quit_game ( );
+          return;
+     }
+
+     player.save_slot = static_cast<Uint8>( slot_menu.selected );
+     player_load ( );
+
+     player.position = Map::coordinates_to_vector ( player_spawn_tile_x,
+                                                    player_spawn_tile_y );
+     player.life_state = Entity::LifeState::alive;
+
+     change_map ( settings->map_index, false );
 }
 
 Bool State::load_region ( GameMemory& game_memory )
@@ -2048,13 +2102,7 @@ static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const D
      const char* negative_format = "%d";
      const char* format = damage_number.value > 0 ? positive_format : negative_format;
 
-#if LINUX
      sprintf ( buffer, format, value );
-#endif
-
-#if WIN32
-     sprintf_s ( buffer, format, value );
-#endif
 
      SDL_Rect dest_rect = build_world_sdl_rect ( damage_number.position.x ( ), damage_number.position.y ( ),
                                                  pixels_to_meters ( text.character_width ),

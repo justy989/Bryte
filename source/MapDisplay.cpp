@@ -5,6 +5,13 @@
 
 using namespace bryte;
 
+Void MapDisplay::clear ( )
+{
+     tilesheet = nullptr;
+     decorsheet = nullptr;
+     lampsheet = nullptr;
+}
+
 Bool MapDisplay::load_surfaces ( GameMemory& game_memory, const Char8* tilesheet_filepath,
                                  const Char8* decorsheet_filepath, const Char8* lampsheet_filepath )
 {

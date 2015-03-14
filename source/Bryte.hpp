@@ -42,6 +42,8 @@ namespace bryte
      struct UITextMenu {
      public:
 
+          Void init ( Int32 x, Int32 y );
+
           Bool add_option ( const Char8* text );
 
           Void render ( SDL_Surface* back_buffer, Text* text );
@@ -111,6 +113,7 @@ namespace bryte
           Bool spawn_damage_number ( const Vector& position, Int32 value );
           Bool spawn_healing_number ( const Vector& position, Int32 value );
 
+          Void start_game ( GameMemory& game_memory );
           Bool load_region ( GameMemory& game_memory );
 
           Void persist_map ( );

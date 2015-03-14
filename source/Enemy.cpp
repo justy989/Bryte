@@ -244,7 +244,7 @@ Void Enemy::rat_think ( const Character& player, Random& random, float time_delt
      // if attacked move in a
      if ( state == Character::State::blinking && !reacting_to_attack ) {
           change_facing ( static_cast<Direction>( random.generate ( 0, Direction::count ) ) );
-          timer.reset ( random.generate ( 1, 3 ) );
+          timer.reset ( static_cast<Real32>( random.generate ( 1, 3 ) ) );
           moving             = true;
           reacting_to_attack = true;
      }
@@ -255,7 +255,7 @@ Void Enemy::rat_think ( const Character& player, Random& random, float time_delt
           if ( timer.expired ( ) ) {
                // choose a new direction, and start moving
                change_facing ( static_cast<Direction>( random.generate ( 0, Direction::count ) ) );
-               timer.reset ( random.generate ( 0, 4 ) );
+               timer.reset ( static_cast<Real32>( random.generate ( 0, 4 ) ) );
                moving = true;
           }
      } else {
@@ -268,7 +268,7 @@ Void Enemy::rat_think ( const Character& player, Random& random, float time_delt
                timer.tick ( time_delta );
 
                if ( timer.expired ( ) ) {
-                    timer.reset ( random.generate ( 0, 3 ) );
+                    timer.reset ( static_cast<Real32>( random.generate ( 0, 3 ) ) );
                     moving             = false;
                     reacting_to_attack = false;
                }
@@ -306,7 +306,7 @@ Void Enemy::bat_think ( const Character& player, Random& random, float time_delt
 
      if ( timer.expired ( ) || collided_last_frame ) {
           move_direction = static_cast<BatState::Direction>( random.generate ( 0, BatState::Direction::count + 1 ) );
-          timer.reset ( random.generate ( 1, 2 ) );
+          timer.reset ( static_cast<Real32>( random.generate ( 1, 2 ) ) );
      }
 
      switch ( move_direction ) {
@@ -370,7 +370,7 @@ Void Enemy::goo_think ( const Character& player, Random& random, float time_delt
           }
           break;
      case GooState::State::shooting:
-          state_timer.reset ( random.generate ( 0, 3 ) );
+          state_timer.reset ( static_cast<Real32>( random.generate ( 0, 3 ) ) );
           state = GooState::State::walking;
           break;
      }
@@ -403,7 +403,7 @@ Void Enemy::skeleton_think ( const Character& player, Random& random, float time
 
           if ( wander_timer.expired ( ) || collided_last_frame ) {
                change_facing ( static_cast<Direction>( random.generate ( 0, Direction::count ) ) );
-               wander_timer.reset ( random.generate ( 0, 3 ) );
+               wander_timer.reset ( static_cast<Real32>( random.generate ( 0, 3 ) ) );
           }
 
           walk_acceleration = SkeletonState::c_walk_speed;

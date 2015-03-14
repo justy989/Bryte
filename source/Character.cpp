@@ -123,7 +123,7 @@ Int32 Character::attack_width_in_pixels ( ) const
           return c_attack_height_in_pixels;
      }
 
-     return 0.0f;
+     return 0;
 }
 
 Int32 Character::attack_height_in_pixels ( ) const
@@ -139,7 +139,7 @@ Int32 Character::attack_height_in_pixels ( ) const
           return c_attack_width_in_pixels;
      }
 
-     return 0.0f;
+     return 0;
 }
 
 Bool Character::attack_collides_with ( const Character& character )

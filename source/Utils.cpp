@@ -44,7 +44,7 @@ extern "C" FileContents load_entire_file ( const Char8* filepath, GameMemory* ga
      }
 
      file.seekg ( 0, file.end );
-     contents.size = file.tellg ( );
+     contents.size = static_cast<Uint32>( file.tellg ( ) );
      file.seekg ( 0, file.beg );
 
      contents.bytes = GAME_PUSH_MEMORY_ARRAY ( (*game_memory), Char8, contents.size );

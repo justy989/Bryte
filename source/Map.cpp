@@ -494,7 +494,7 @@ Bool Map::save_persistence ( const Char8* region_name, Uint8 save_slot )
 {
      char filepath [ 128 ];
 
-     sprintf ( filepath, "save/%s_%d.brp", region_name, save_slot );
+     sprintf ( filepath, "save/slot_%d_%s.brp", save_slot, region_name );
 
      LOG_INFO ( "Saving region persistence: %s\n", filepath );
 
@@ -522,7 +522,7 @@ Bool Map::load_persistence ( const Char8* region_name, Uint8 save_slot )
 {
      char filepath [ 128 ];
 
-     sprintf ( filepath, "save/%s_%d.brp", region_name, save_slot );
+     sprintf ( filepath, "save/slot_%d_%s.brp", save_slot, region_name );
 
      LOG_INFO ( "Loading region persistence: %s\n", filepath );
 

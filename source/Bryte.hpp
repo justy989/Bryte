@@ -39,6 +39,30 @@
 
 namespace bryte
 {
+     struct UITextMenu {
+     public:
+
+          Bool add_option ( const Char8* text );
+
+          Void render ( SDL_Surface* back_buffer, Text* text );
+
+          Void next_option ( );
+          Void prev_option ( );
+
+     public:
+
+          Int32 top_left_x;
+          Int32 top_left_y;
+
+          static const Int32 c_max_option_count = 8;
+          static const Int32 c_max_option_length = 16;
+
+          Char8 options [ c_max_option_count ] [ c_max_option_length ];
+          Int32 option_count;
+
+          Int32 selected;
+     };
+
      struct Settings {
           Int32  region_index;
 
@@ -112,7 +136,7 @@ namespace bryte
 
           Void heal_enemies_in_range_of_fairy ( const Vector& position );
 
-          Void change_map ( Int32 map_index );
+          Void change_map ( Int32 map_index, Bool persist = true );
           Direction player_on_border ( );
 
           Bool change_region ( GameMemory& game_memory, Int32 region_index );
@@ -169,6 +193,8 @@ namespace bryte
           SDL_Surface* bomb_sheet;
           SDL_Surface* attack_icon_sheet;
           SDL_Surface* player_heart_sheet;
+
+          UITextMenu slot_menu;
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;

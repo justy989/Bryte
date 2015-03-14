@@ -24,7 +24,7 @@ namespace bryte
 
           static const Uint32 c_max_exits = 128;
 
-          static const Int32  c_first_master_map = -1;
+          static const Int32  c_first_master_map = 0;
 
           static const Int32  c_tile_dimension_in_pixels = 16;
           static const Real32 c_tile_dimension_in_meters;

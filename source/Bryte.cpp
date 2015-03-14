@@ -81,6 +81,55 @@ static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
      return coords;
 }
 
+Bool UITextMenu::add_option ( const Char8* text )
+{
+     if ( option_count >= c_max_option_count ) {
+          LOG_ERROR ( "Failed to add option to text menu: '%s', too many options.\n", text );
+          return false;
+     }
+
+     strncpy ( options [ option_count ], text, c_max_option_length );
+
+     option_count++;
+
+     return true;
+}
+
+Void UITextMenu::next_option ( )
+{
+     selected++;
+     selected %= option_count;
+}
+
+Void UITextMenu::prev_option ( )
+{
+     selected--;
+     if ( selected < 0 ) {
+          selected = option_count - 1;
+     }
+}
+
+Void UITextMenu::render ( SDL_Surface* back_buffer, Text* text )
+{
+     Int32 y = top_left_y;
+     Int32 option_height = text->character_height + 4;
+     Uint32 white = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
+
+     for ( Int32 i = 0; i < option_count; ++i ) {
+          text->render ( back_buffer, options [ i ], top_left_x, y );
+
+          if ( i == selected ) {
+               Int32 outline_width = ( static_cast<Int32>( strlen ( options [ i ] ) + 1 ) * text->character_width ) + 4;
+               SDL_Rect outline_rect { top_left_x - 2, y - 2,
+                                       outline_width,
+                                       option_height };
+               render_rect_outline ( back_buffer, outline_rect, white );
+          }
+
+          y += option_height;
+     }
+}
+
 Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
      game_state = GameState::intro;
@@ -141,6 +190,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      if ( !text.load_surfaces ( game_memory ) ) {
           return false;
      }
+
+     slot_menu.top_left_x = 80;
+     slot_menu.top_left_y = 40;
+     slot_menu.add_option ( "SLOT 0" );
+     slot_menu.add_option ( "SLOT 1" );
+     slot_menu.add_option ( "SLOT 2" );
 
 #ifdef DEBUG
      enemy_think = true;
@@ -235,12 +290,36 @@ Void State::handle_intro_input ( GameMemory& game_memory, const GameInput& game_
           switch ( key_change.scan_code ) {
           default:
                break;
-          case SDL_SCANCODE_SPACE:
-               game_state = GameState::game;
-               if ( !load_region ( game_memory ) ) {
-                    SDL_Event sdl_event;
-                    sdl_event.type = SDL_QUIT;
-                    SDL_PushEvent ( &sdl_event );
+          case SDL_SCANCODE_W:
+          case SDL_SCANCODE_UP:
+               if ( key_change.down ) {
+                    slot_menu.prev_option ( );
+               }
+               break;
+          case SDL_SCANCODE_S:
+          case SDL_SCANCODE_DOWN:
+               if ( key_change.down ) {
+                    slot_menu.next_option ( );
+               }
+               break;
+          case SDL_SCANCODE_RETURN:
+               if ( key_change.down ) {
+                    game_state = GameState::game;
+
+                    player.save_slot = static_cast<Uint8>( slot_menu.selected );
+                    player_load ( );
+
+                    if ( !load_region ( game_memory ) ) {
+                         SDL_Event sdl_event;
+                         sdl_event.type = SDL_QUIT;
+                         SDL_PushEvent ( &sdl_event );
+                         break;
+                    }
+
+                    player.save_slot = static_cast<Uint8>( slot_menu.selected );
+                    player_load ( );
+
+                    change_map ( settings->region_index, false );
                }
                break;
           }
@@ -320,10 +399,14 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
                }
                break;
           case SDL_SCANCODE_8:
-               player_save ( );
+               if ( key_change.down ) {
+                    player_save ( );
+               }
                break;
           case SDL_SCANCODE_9:
-               player_load ( );
+               if ( key_change.down ) {
+                    player_load ( );
+               }
                break;
 #endif
           }
@@ -388,7 +471,7 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
 
 Void State::render_intro ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
-
+     slot_menu.render ( back_buffer, &text );
 }
 
 Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
@@ -763,13 +846,6 @@ Bool State::load_region ( GameMemory& game_memory )
 
      // load map
      map.load_master_list ( region.map_list_filepath );
-
-     if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
-          return false;
-     }
-
-     spawn_map_enemies ( );
-     setup_emitters_from_map_lamps ( );
 
      return true;
 }
@@ -1694,11 +1770,14 @@ Void State::heal_enemies_in_range_of_fairy ( const Vector& position )
      }
 }
 
-Void State::change_map ( Int32 map_index )
+Void State::change_map ( Int32 map_index, Bool persist )
 {
      LOG_DEBUG ( "Changing map to %d\n", map_index );
 
-     persist_map ( );
+     if ( persist ) {
+          persist_map ( );
+     }
+
      map.load_from_master_list ( map_index, interactives );
 
      pickups.clear ( );
@@ -1771,7 +1850,6 @@ Bool State::change_region ( GameMemory& game_memory, Int32 region_index )
 
      // load a new map master list and clear persistence
      map.load_master_list ( region.map_list_filepath );
-     map.clear_persistence ( );
 
      return true;
 }

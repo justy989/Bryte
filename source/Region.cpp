@@ -95,7 +95,7 @@ Bool Region::load_info ( Int32 index )
           return false;
      }
 
-     LOG_INFO ( " name: '%s'\n", map_list_filepath );
+     LOG_INFO ( " name: '%s'\n", name );
      LOG_INFO ( " map list: '%s'\n", map_list_filepath );
      LOG_INFO ( " tilesheet: '%s'\n", tilesheet_filepath );
      LOG_INFO ( " decorsheet: '%s'\n", decorsheet_filepath );

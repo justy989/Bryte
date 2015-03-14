@@ -77,7 +77,8 @@ namespace bryte
 
           enum GameState {
                intro,
-               game
+               game,
+               pause
           };
 
      public:
@@ -88,14 +89,19 @@ namespace bryte
           Void handle_input ( GameMemory& game_memory, const GameInput& game_input );
           Void render ( GameMemory& game_memory, SDL_Surface* back_buffer );
 
+          Void quit_game ( );
+
           Void update_intro ( GameMemory& game_memory, Real32 time_delta );
           Void update_game ( GameMemory& game_memory, Real32 time_delta );
+          Void update_pause ( GameMemory& game_memory, Real32 time_delta );
 
           Void handle_intro_input ( GameMemory& game_memory, const GameInput& game_input );
           Void handle_game_input ( GameMemory& game_memory, const GameInput& game_input );
+          Void handle_pause_input ( GameMemory& game_memory, const GameInput& game_input );
 
           Void render_intro ( GameMemory& game_memory, SDL_Surface* back_buffer );
           Void render_game ( GameMemory& game_memory, SDL_Surface* back_buffer );
+          Void render_pause ( GameMemory& game_memory, SDL_Surface* back_buffer );
 
           Bool spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop );
           Bool spawn_pickup ( const Vector& position, Pickup::Type type );
@@ -190,11 +196,14 @@ namespace bryte
 
           SDL_PixelFormat back_buffer_format;
 
+          SDL_Surface* title_surface;
+
           SDL_Surface* bomb_sheet;
           SDL_Surface* attack_icon_sheet;
           SDL_Surface* player_heart_sheet;
 
           UITextMenu slot_menu;
+          UITextMenu pause_menu;
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;

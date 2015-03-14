@@ -186,16 +186,28 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      pickup_stopwatch.reset ( c_pickup_show_time );
 
+     // load title sheet
+     if ( !load_bitmap_with_game_memory ( title_surface, game_memory, "title_screen.bmp" ) ) {
+          return false;
+     }
+
      // load font
      if ( !text.load_surfaces ( game_memory ) ) {
           return false;
      }
 
-     slot_menu.top_left_x = 80;
-     slot_menu.top_left_y = 40;
+     slot_menu.top_left_x = 154;
+     slot_menu.top_left_y = 122;
      slot_menu.add_option ( "SLOT 0" );
      slot_menu.add_option ( "SLOT 1" );
      slot_menu.add_option ( "SLOT 2" );
+     slot_menu.add_option ( "QUIT" );
+
+     pause_menu.top_left_x = 154;
+     pause_menu.top_left_y = 122;
+     pause_menu.add_option ( "RESUME" );
+     pause_menu.add_option ( "SAVE" );
+     pause_menu.add_option ( "MENU" );
 
 #ifdef DEBUG
      enemy_think = true;
@@ -232,6 +244,9 @@ Void State::update ( GameMemory& game_memory, Real32 time_delta )
      case GameState::game:
           update_game ( game_memory, time_delta );
           break;
+     case GameState::pause:
+          update_pause ( game_memory, time_delta );
+          break;
      }
 }
 
@@ -245,6 +260,9 @@ Void State::handle_input ( GameMemory& game_memory, const GameInput& game_input 
           break;
      case GameState::game:
           handle_game_input ( game_memory, game_input );
+          break;
+     case GameState::pause:
+          handle_pause_input ( game_memory, game_input );
           break;
      }
 }
@@ -260,7 +278,19 @@ Void State::render ( GameMemory& game_memory, SDL_Surface* back_buffer )
      case GameState::game:
           render_game ( game_memory, back_buffer );
           break;
+     case GameState::pause:
+          render_pause ( game_memory, back_buffer );
+          break;
      }
+}
+
+Void State::quit_game ( )
+{
+     LOG_INFO ( "Quitting\n" );
+
+     SDL_Event sdl_event;
+     sdl_event.type = SDL_QUIT;
+     SDL_PushEvent ( &sdl_event );
 }
 
 Void State::update_intro ( GameMemory& game_memory, Real32 time_delta )
@@ -279,6 +309,11 @@ Void State::update_game ( GameMemory& game_memory, Real32 time_delta )
      update_emitters ( time_delta );
      update_damage_numbers ( time_delta );
      update_light ( );
+}
+
+Void State::update_pause ( GameMemory& game_memory, Real32 time_delta )
+{
+
 }
 
 Void State::handle_intro_input ( GameMemory& game_memory, const GameInput& game_input )
@@ -304,20 +339,27 @@ Void State::handle_intro_input ( GameMemory& game_memory, const GameInput& game_
                break;
           case SDL_SCANCODE_RETURN:
                if ( key_change.down ) {
+                    if ( slot_menu.selected == 3 ) {
+                         quit_game ( );
+                         return;
+                    }
+
                     game_state = GameState::game;
 
                     player.save_slot = static_cast<Uint8>( slot_menu.selected );
                     player_load ( );
 
                     if ( !load_region ( game_memory ) ) {
-                         SDL_Event sdl_event;
-                         sdl_event.type = SDL_QUIT;
-                         SDL_PushEvent ( &sdl_event );
+                         quit_game ( );
                          break;
                     }
 
                     player.save_slot = static_cast<Uint8>( slot_menu.selected );
                     player_load ( );
+
+                    player.position = Map::coordinates_to_vector ( player_spawn_tile_x,
+                                                                   player_spawn_tile_y );
+                    player.life_state = Entity::LifeState::alive;
 
                     change_map ( settings->region_index, false );
                }
@@ -359,6 +401,9 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
           case SDL_SCANCODE_E:
                activate_key = key_change.down;
                break;
+          case SDL_SCANCODE_P:
+               game_state = GameState::pause;
+               return;
 
 // NOTE: Debug only keys for cheating!
 #ifdef DEBUG
@@ -368,22 +413,22 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
                     spawn_enemy ( spawn_pos, 0, player.facing, Pickup::Type::health );
                }
                break;
-          case SDL_SCANCODE_I:
+          case SDL_SCANCODE_X:
                if ( key_change.down ) {
                     enemy_think = !enemy_think;
                }
                break;
-          case SDL_SCANCODE_P:
+          case SDL_SCANCODE_Z:
                if ( key_change.down ) {
                     invincible = !invincible;
                }
                break;
-          case SDL_SCANCODE_K:
+          case SDL_SCANCODE_C:
                if ( key_change.down ) {
                     player.key_count++;
                }
                break;
-          case SDL_SCANCODE_O:
+          case SDL_SCANCODE_V:
                if ( key_change.down ) {
                     player.arrow_count++;
                }
@@ -443,6 +488,9 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
                case SDL_CONTROLLER_BUTTON_Y:
                     switch_item_key = btn_change.down;
                     break;
+               case SDL_CONTROLLER_BUTTON_START:
+                    game_state = GameState::pause;
+                    return;
           }
      }
 
@@ -469,8 +517,56 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
 #endif
 }
 
+Void State::handle_pause_input ( GameMemory& game_memory, const GameInput& game_input )
+{
+     // handle keyboard
+     for ( Uint32 i = 0; i < game_input.key_change_count; ++i ) {
+          const GameInput::KeyChange& key_change = game_input.key_changes [ i ];
+
+          switch ( key_change.scan_code ) {
+          default:
+               break;
+          case SDL_SCANCODE_W:
+          case SDL_SCANCODE_UP:
+               if ( key_change.down ) {
+                    pause_menu.prev_option ( );
+               }
+               break;
+          case SDL_SCANCODE_S:
+          case SDL_SCANCODE_DOWN:
+               if ( key_change.down ) {
+                    pause_menu.next_option ( );
+               }
+               break;
+          case SDL_SCANCODE_RETURN:
+               if ( key_change.down ) {
+                    switch ( pause_menu.selected ) {
+                    default:
+                         break;
+                    case 0:
+                         game_state = GameState::game;
+                         break;
+                    case 1:
+                         player_save ( );
+                         game_state = GameState::game;
+                         break;
+                    case 2:
+                         game_state = GameState::intro;
+                         break;
+                    }
+               }
+               break;
+          }
+     }
+}
+
 Void State::render_intro ( GameMemory& game_memory, SDL_Surface* back_buffer )
 {
+     SDL_Rect title_src { 0, 0, 128, 120 };
+     SDL_Rect title_dst { 0, 0, back_buffer->w, back_buffer->h };
+
+     SDL_BlitScaled ( title_surface, &title_src, back_buffer, &title_dst );
+
      slot_menu.render ( back_buffer, &text );
 }
 
@@ -670,6 +766,16 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
      }
 #endif
 
+}
+
+Void State::render_pause ( GameMemory& game_memory, SDL_Surface* back_buffer )
+{
+     SDL_Rect title_src { 0, 0, 128, 120 };
+     SDL_Rect title_dst { 0, 0, back_buffer->w, back_buffer->h };
+
+     SDL_BlitScaled ( title_surface, &title_src, back_buffer, &title_dst );
+
+     pause_menu.render ( back_buffer, &text );
 }
 
 Bool State::spawn_enemy ( const Vector& position, Uint8 id, Direction facing, Pickup::Type drop )

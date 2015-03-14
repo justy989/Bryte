@@ -86,7 +86,7 @@ Bool GameFunctions::load ( const Char8* shared_library_path )
     game_render_func = reinterpret_cast<GameRenderFunc>( game_funcs [ 4 ] );
 #else
 
-    (Void*)shared_library_path; // unused
+    (Void*)shared_library_path; // unused on windows
 
     game_init_func = game_init;
     game_destroy_func = game_destroy;

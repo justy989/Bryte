@@ -15,6 +15,11 @@ namespace bryte
                count
           };
 
+          enum Unlocks {
+               heart,
+               bow,
+          };
+
           Void clear ( );
 
           Bool save ( );

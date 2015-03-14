@@ -501,7 +501,7 @@ Bool Map::save_persistence ( const Char8* region_name, Uint8 save_slot )
      std::ofstream file ( filepath, std::ios::binary );
 
      if ( !file.is_open ( ) ) {
-          LOG_ERROR ( "Unable to open file\n" );
+          LOG_ERROR ( "Unable to open file to save persistence.\n" );
           return false;
      }
 
@@ -529,7 +529,8 @@ Bool Map::load_persistence ( const Char8* region_name, Uint8 save_slot )
      std::ifstream file ( filepath, std::ios::binary );
 
      if ( !file.is_open ( ) ) {
-          LOG_ERROR ( "Unable to open file\n" );
+          // This is OK if the player has never been to this region.
+          LOG_INFO ( "No region persistence found.\n" );
           return false;
      }
 

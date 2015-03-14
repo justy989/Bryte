@@ -196,6 +196,42 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !character_display.load_surfaces ( game_memory ) ) {
+          return false;
+     }
+
+     if ( !interactives_display.load_surfaces  ( game_memory ) ) {
+          return false;
+     }
+
+     if ( !pickup_display.load_surfaces ( game_memory ) ) {
+          return false;
+     }
+
+     if ( !projectile_display.load_surfaces ( game_memory ) ) {
+          return false;
+     }
+
+     // load misc surfaces
+     if ( !load_bitmap_with_game_memory ( bomb_sheet, game_memory, "test_bomb.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory, "test_attack_icon.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( player_heart_sheet, game_memory, "player_heart.bmp" ) ) {
+          return false;
+     }
+
+     // load sound effects
+     if ( !sound.load_effects ( ) ) {
+          return false;
+     }
+
+     back_buffer_format = *bomb_sheet->format;
+
      slot_menu.top_left_x = 154;
      slot_menu.top_left_y = 122;
      slot_menu.add_option ( "SLOT 0" );
@@ -346,12 +382,9 @@ Void State::handle_intro_input ( GameMemory& game_memory, const GameInput& game_
 
                     game_state = GameState::game;
 
-                    player.save_slot = static_cast<Uint8>( slot_menu.selected );
-                    player_load ( );
-
                     if ( !load_region ( game_memory ) ) {
                          quit_game ( );
-                         break;
+                         return;
                     }
 
                     player.save_slot = static_cast<Uint8>( slot_menu.selected );
@@ -361,7 +394,7 @@ Void State::handle_intro_input ( GameMemory& game_memory, const GameInput& game_
                                                                    player_spawn_tile_y );
                     player.life_state = Entity::LifeState::alive;
 
-                    change_map ( settings->region_index, false );
+                    change_map ( settings->map_index, false );
                }
                break;
           }
@@ -901,6 +934,8 @@ Bool State::spawn_healing_number ( const Vector& position, Int32 value )
 
 Bool State::load_region ( GameMemory& game_memory )
 {
+     LOG_INFO ( "Loading region %d\n", current_region );
+
      // load the region info
      if ( !region.load_info( current_region ) ) {
           return false;
@@ -913,42 +948,6 @@ Bool State::load_region ( GameMemory& game_memory )
                                        region.lampsheet_filepath ) ) {
           return false;
      }
-
-     if ( !character_display.load_surfaces ( game_memory ) ) {
-          return false;
-     }
-
-     if ( !interactives_display.load_surfaces  ( game_memory ) ) {
-          return false;
-     }
-
-     if ( !pickup_display.load_surfaces ( game_memory ) ) {
-          return false;
-     }
-
-     if ( !projectile_display.load_surfaces ( game_memory ) ) {
-          return false;
-     }
-
-     // load misc surfaces
-     if ( !load_bitmap_with_game_memory ( bomb_sheet, game_memory, "test_bomb.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory, "test_attack_icon.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( player_heart_sheet, game_memory, "player_heart.bmp" ) ) {
-          return false;
-     }
-
-     // load sound effects
-     if ( !sound.load_effects ( ) ) {
-          return false;
-     }
-
-     back_buffer_format = *map_display.tilesheet->format;
 
      // load map
      map.load_master_list ( region.map_list_filepath );
@@ -999,8 +998,8 @@ Void State::player_death ( )
 {
      player.clear ( );
 
+     player.health = 6;
      player.life_state = Entity::LifeState::alive;
-
      player.position = Map::coordinates_to_vector ( player_spawn_tile_x, player_spawn_tile_y );
 
      pickups.clear ( );
@@ -1009,10 +1008,9 @@ Void State::player_death ( )
      enemies.clear ( );
      damage_numbers.clear ( );
 
-     // clear persisted exits and load the first map
-     map.clear_persistence ( );
      map.load_from_master_list ( 0, interactives );
 
+     setup_emitters_from_map_lamps ( );
      spawn_map_enemies ( );
 }
 
@@ -1239,9 +1237,10 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
 
                if ( region_index != region.current_index ) {
                     change_region ( game_memory, region_index );
+                    change_map ( map_index, false );
+               } else {
+                    change_map ( map_index );
                }
-
-               change_map ( map_index );
 
                player.set_collision_center ( new_position.x ( ), new_position.y ( ) );
 
@@ -1939,23 +1938,27 @@ Bool State::change_region ( GameMemory& game_memory, Int32 region_index )
 {
      LOG_INFO ( "Changing to region %d\n", region_index );
 
+     // persist the current map then save it
+     persist_map ( );
+     map.save_persistence ( region.name, player.save_slot );
+
      // load new region info
      if ( !region.load_info ( region_index ) ) {
           return false;
      }
 
+     // load the new master list and it's corresponding persistence if it exists
+     map.load_master_list ( region.map_list_filepath );
+     map.load_persistence ( region.name, player.save_slot );
+
      // unload and re-load surfaces
      map_display.unload_surfaces ( );
-
      if ( !map_display.load_surfaces ( game_memory,
                                        region.tilesheet_filepath,
                                        region.decorsheet_filepath,
                                        region.lampsheet_filepath ) ) {
           return false;
      }
-
-     // load a new map master list and clear persistence
-     map.load_master_list ( region.map_list_filepath );
 
      return true;
 }

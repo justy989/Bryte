@@ -444,7 +444,7 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
      // calculate camera
      camera.set_x ( calculate_camera_position ( back_buffer->w, map.width ( ),
                                                        player.position.x ( ), player.width ( ) ) );
-     camera.set_y ( calculate_camera_position ( back_buffer->h - 18, map.height ( ),
+     camera.set_y ( calculate_camera_position ( back_buffer->h - Map::c_tile_dimension_in_pixels, map.height ( ),
                                                        player.position.y ( ), player.height ( ) ) );
 
      // map
@@ -556,7 +556,7 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
      }
 
      // ui
-     SDL_Rect hud_rect { 0, 0, back_buffer->w, 18 };
+     SDL_Rect hud_rect { 0, 0, back_buffer->w, Map::c_tile_dimension_in_pixels };
      SDL_FillRect ( back_buffer, &hud_rect, black );
 
      render_hearts ( back_buffer, player_heart_sheet, player.health, player.max_health,
@@ -1276,30 +1276,26 @@ Void State::update_interactives ( float time_delta )
           case Interactive::Type::bombable_block:
                break;
           case Interactive::Type::torch:
-               if ( interactive.interactive_torch.element ) {
-                    Auto& element = interactive.interactive_pushable_torch.torch.element;
+               if ( interactive.interactive_torch.element == Element::ice ) {
                     Int32 tile_x = map.tile_index_to_coordinate_x ( i );
                     Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    interactives.spread_ice ( tile_x, tile_y, map,
-                                              element == Element::ice ? false : true );
+                    interactives.spread_ice ( tile_x, tile_y, map, false );
                }
+               break;
+          case Interactive::Type::pushable_torch:
+               if ( interactive.interactive_pushable_torch.torch.element == Element::ice ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+
+                    interactives.spread_ice ( tile_x, tile_y, map, false );
+               }
+
+               interactive.update ( time_delta, interactives );
                break;
           case Interactive::Type::lever:
                interactive.update ( time_delta, interactives );
                break;
           case Interactive::Type::pushable_block:
-               interactive.update ( time_delta, interactives );
-               break;
-          case Interactive::Type::pushable_torch:
-               if ( interactive.interactive_pushable_torch.torch.element ) {
-                    Auto& element = interactive.interactive_pushable_torch.torch.element;
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-
-                    interactives.spread_ice ( tile_x, tile_y, map,
-                                              element == Element::ice ? false : true );
-               }
-
                interactive.update ( time_delta, interactives );
                break;
           case Interactive::Type::exit:
@@ -1319,6 +1315,31 @@ Void State::update_interactives ( float time_delta )
                }
 
                interactive.update ( time_delta, interactives );
+               break;
+          }
+     }
+
+     // NOTE: doing a second pass to check for fire so it will take precedence
+     //       over any spread ice
+     for ( Int32 i = 0; i < count; ++i ) {
+          Auto& interactive = interactives.m_interactives [ i ];
+
+          switch ( interactive.type ) {
+          default:
+               break;
+          case Interactive::Type::torch:
+               if ( interactive.interactive_torch.element == Element::fire ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    interactives.spread_ice ( tile_x, tile_y, map, true );
+               }
+               break;
+          case Interactive::Type::pushable_torch:
+               if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    interactives.spread_ice ( tile_x, tile_y, map, true );
+               }
                break;
           }
      }
@@ -1348,7 +1369,7 @@ Void State::update_projectiles ( float time_delta )
                for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
                     Auto& enemy = enemies [ c ];
 
-                    if ( enemy.is_dead ( ) ) {
+                    if ( enemy.is_dead ( ) || enemy.is_blinking ( ) ) {
                          continue;
                     }
 
@@ -1364,7 +1385,8 @@ Void State::update_projectiles ( float time_delta )
                }
                break;
          case Projectile::Alliance::evil:
-               if ( point_inside_rect ( projectile_collision_point.x ( ),
+               if ( !player.is_blinking ( ) &&
+                    point_inside_rect ( projectile_collision_point.x ( ),
                                         projectile_collision_point.y ( ),
                                         player.collision_x ( ), player.collision_y ( ),
                                         player.collision_x ( ) + player.collision_width ( ),
@@ -1380,7 +1402,7 @@ Void State::update_projectiles ( float time_delta )
                for ( Uint32 c = 0; c < enemies.max ( ); ++c ) {
                     Auto& enemy = enemies [ c ];
 
-                    if ( enemy.is_dead ( ) ) {
+                    if ( enemy.is_dead ( ) || enemy.is_blinking ( ) ) {
                          continue;
                     }
 
@@ -1395,7 +1417,8 @@ Void State::update_projectiles ( float time_delta )
                     }
                }
 
-               if ( point_inside_rect ( projectile_collision_point.x ( ),
+               if ( !player.is_blinking ( ) &&
+                    point_inside_rect ( projectile_collision_point.x ( ),
                                         projectile_collision_point.y ( ),
                                         player.collision_x ( ), player.collision_y ( ),
                                         player.collision_x ( ) + player.collision_width ( ),

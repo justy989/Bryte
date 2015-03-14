@@ -85,7 +85,11 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 {
      game_state = GameState::intro;
 
+     this->settings = settings;
+
      random.seed ( 13371 );
+
+     current_region = settings->region_index;
 
      player_spawn_tile_x = settings->player_spawn_tile_x;
      player_spawn_tile_y = settings->player_spawn_tile_y;
@@ -137,65 +141,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      if ( !text.load_surfaces ( game_memory ) ) {
           return false;
      }
-
-     // load the region info
-     if ( !region.load_info( settings->region_index ) ) {
-          return false;
-     }
-
-     // load diplay surfaces
-     if ( !map_display.load_surfaces ( game_memory,
-                                       region.tilesheet_filepath,
-                                       region.decorsheet_filepath,
-                                       region.lampsheet_filepath ) ) {
-          return false;
-     }
-
-     if ( !character_display.load_surfaces ( game_memory ) ) {
-          return false;
-     }
-
-     if ( !interactives_display.load_surfaces  ( game_memory ) ) {
-          return false;
-     }
-
-     if ( !pickup_display.load_surfaces ( game_memory ) ) {
-          return false;
-     }
-
-     if ( !projectile_display.load_surfaces ( game_memory ) ) {
-          return false;
-     }
-
-     // load misc surfaces
-     if ( !load_bitmap_with_game_memory ( bomb_sheet, game_memory, "test_bomb.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory, "test_attack_icon.bmp" ) ) {
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( player_heart_sheet, game_memory, "player_heart.bmp" ) ) {
-          return false;
-     }
-
-     // load sound effects
-     if ( !sound.load_effects ( ) ) {
-          return false;
-     }
-
-     back_buffer_format = *map_display.tilesheet->format;
-
-     // load map
-     map.load_master_list ( region.map_list_filepath );
-
-     if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
-          return false;
-     }
-
-     spawn_map_enemies ( );
-     setup_emitters_from_map_lamps ( );
 
 #ifdef DEBUG
      enemy_think = true;
@@ -292,6 +237,11 @@ Void State::handle_intro_input ( GameMemory& game_memory, const GameInput& game_
                break;
           case SDL_SCANCODE_SPACE:
                game_state = GameState::game;
+               if ( !load_region ( game_memory ) ) {
+                    SDL_Event sdl_event;
+                    sdl_event.type = SDL_QUIT;
+                    SDL_PushEvent ( &sdl_event );
+               }
                break;
           }
      }
@@ -333,7 +283,7 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
 
 // NOTE: Debug only keys for cheating!
 #ifdef DEBUG
-          case SDL_SCANCODE_8:
+          case SDL_SCANCODE_7:
                if ( key_change.down ) {
                     Vector spawn_pos = player.position - Vector ( Map::c_tile_dimension_in_meters, 0.0f );
                     spawn_enemy ( spawn_pos, 0, player.facing, Pickup::Type::health );
@@ -368,6 +318,12 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
                if ( key_change.down ) {
                     debug_text = !debug_text;
                }
+               break;
+          case SDL_SCANCODE_8:
+               player_save ( );
+               break;
+          case SDL_SCANCODE_9:
+               player_load ( );
                break;
 #endif
           }
@@ -750,6 +706,70 @@ Bool State::spawn_healing_number ( const Vector& position, Int32 value )
 
      // NOTE: seriously?
      LOG_DEBUG ( "spawning damage number at %f, %f\n", position.x ( ), position.y ( ) );
+
+     return true;
+}
+
+Bool State::load_region ( GameMemory& game_memory )
+{
+     // load the region info
+     if ( !region.load_info( current_region ) ) {
+          return false;
+     }
+
+     // load diplay surfaces
+     if ( !map_display.load_surfaces ( game_memory,
+                                       region.tilesheet_filepath,
+                                       region.decorsheet_filepath,
+                                       region.lampsheet_filepath ) ) {
+          return false;
+     }
+
+     if ( !character_display.load_surfaces ( game_memory ) ) {
+          return false;
+     }
+
+     if ( !interactives_display.load_surfaces  ( game_memory ) ) {
+          return false;
+     }
+
+     if ( !pickup_display.load_surfaces ( game_memory ) ) {
+          return false;
+     }
+
+     if ( !projectile_display.load_surfaces ( game_memory ) ) {
+          return false;
+     }
+
+     // load misc surfaces
+     if ( !load_bitmap_with_game_memory ( bomb_sheet, game_memory, "test_bomb.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory, "test_attack_icon.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( player_heart_sheet, game_memory, "player_heart.bmp" ) ) {
+          return false;
+     }
+
+     // load sound effects
+     if ( !sound.load_effects ( ) ) {
+          return false;
+     }
+
+     back_buffer_format = *map_display.tilesheet->format;
+
+     // load map
+     map.load_master_list ( region.map_list_filepath );
+
+     if ( !map.load_from_master_list ( settings->map_index, interactives ) ) {
+          return false;
+     }
+
+     spawn_map_enemies ( );
+     setup_emitters_from_map_lamps ( );
 
      return true;
 }
@@ -1754,6 +1774,19 @@ Bool State::change_region ( GameMemory& game_memory, Int32 region_index )
      map.clear_persistence ( );
 
      return true;
+}
+
+Void State::player_save ( )
+{
+     persist_map ( );
+     player.save ( );
+     map.save_persistence ( region.name, player.save_slot );
+}
+
+Void State::player_load ( )
+{
+     player.load ( );
+     map.load_persistence ( region.name, player.save_slot );
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )

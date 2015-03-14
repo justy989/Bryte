@@ -17,6 +17,9 @@ namespace bryte
 
           Void clear ( );
 
+          Bool save ( );
+          Bool load ( );
+
      public:
 
           static const Real32 c_item_cooldown;
@@ -26,9 +29,11 @@ namespace bryte
           ItemMode item_mode;
           Stopwatch item_cooldown;
 
-          Uint8    key_count;
-          Uint8    arrow_count;
-          Uint8    bomb_count;
+          Uint8 key_count;
+          Uint8 arrow_count;
+          Uint8 bomb_count;
+
+          Uint8 save_slot;
      };
 }
 

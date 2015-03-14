@@ -120,6 +120,9 @@ namespace bryte
           Bool load ( const Char8* filepath, Interactives& interactives );
           Void save ( const Char8* filepath, Interactives& interactives );
 
+          Bool save_persistence ( const Char8* region_name, Uint8 save_slot );
+          Bool load_persistence ( const Char8* region_name, Uint8 save_slot );
+
           Int32 coordinate_to_tile_index   ( Int32 tile_x, Int32 tile_y ) const;
           Int32 tile_index_to_coordinate_x ( Int32 tile_index ) const;
           Int32 tile_index_to_coordinate_y ( Int32 tile_index ) const;

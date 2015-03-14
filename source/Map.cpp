@@ -490,6 +490,62 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
      return true;
 }
 
+Bool Map::save_persistence ( const Char8* region_name, Uint8 save_slot )
+{
+     char filepath [ 128 ];
+
+     sprintf ( filepath, "save/%s_%d.brp", region_name, save_slot );
+
+     LOG_INFO ( "Saving region persistence: %s\n", filepath );
+
+     std::ofstream file ( filepath, std::ios::binary );
+
+     if ( !file.is_open ( ) ) {
+          LOG_ERROR ( "Unable to open file\n" );
+          return false;
+     }
+
+     file.write ( reinterpret_cast<const Char8*>( m_persisted_exits ), sizeof ( PersistedExit ) * c_max_exits );
+     file.write ( reinterpret_cast<const Char8*>( &m_persisted_exit_count ), sizeof ( m_persisted_exit_count ) );
+
+     file.write ( reinterpret_cast<const Char8*>( m_persisted_enemies ), sizeof ( PersistedEnemies ) * c_max_maps );
+     file.write ( reinterpret_cast<const Char8*>( m_persisted_secrets ), sizeof ( Bool ) * c_max_maps );
+     file.write ( reinterpret_cast<const Char8*>( m_persisted_activate_on_kill_all ),
+                  sizeof ( Bool ) * c_max_maps );
+
+     file.close ( );
+
+     return true;
+}
+
+Bool Map::load_persistence ( const Char8* region_name, Uint8 save_slot )
+{
+     char filepath [ 128 ];
+
+     sprintf ( filepath, "save/%s_%d.brp", region_name, save_slot );
+
+     LOG_INFO ( "Loading region persistence: %s\n", filepath );
+
+     std::ifstream file ( filepath, std::ios::binary );
+
+     if ( !file.is_open ( ) ) {
+          LOG_ERROR ( "Unable to open file\n" );
+          return false;
+     }
+
+     file.read ( reinterpret_cast<Char8*>( m_persisted_exits ), sizeof ( PersistedExit ) * c_max_exits );
+     file.read ( reinterpret_cast<Char8*>( &m_persisted_exit_count ), sizeof ( m_persisted_exit_count ) );
+
+     file.read ( reinterpret_cast<Char8*>( m_persisted_enemies ), sizeof ( PersistedEnemies ) * c_max_maps );
+     file.read ( reinterpret_cast<Char8*>( m_persisted_secrets ), sizeof ( Bool ) * c_max_maps );
+     file.read ( reinterpret_cast<Char8*>( m_persisted_activate_on_kill_all ),
+                 sizeof ( Bool ) * c_max_maps );
+
+     file.close ( );
+
+     return true;
+}
+
 void Map::clear_persistence ( )
 {
      m_persisted_exit_count = 0;

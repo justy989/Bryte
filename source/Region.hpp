@@ -20,6 +20,7 @@ namespace bryte {
 
           Int32 current_index;
 
+          Char8 name [ c_max_filepath_length ];
           Char8 map_list_filepath [ c_max_filepath_length ];
           Char8 tilesheet_filepath [ c_max_filepath_length ];
           Char8 decorsheet_filepath [ c_max_filepath_length ];

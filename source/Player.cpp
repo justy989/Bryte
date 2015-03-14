@@ -1,5 +1,8 @@
 #include "Player.hpp"
 #include "Utils.hpp"
+#include "Log.hpp"
+
+#include <fstream>
 
 using namespace bryte;
 
@@ -51,8 +54,65 @@ Void Player::clear ( )
 
      item_mode = ItemMode::shield;
      item_cooldown.reset ( 0.0f );
+
      key_count   = 0;
      arrow_count = 0;
      bomb_count  = 0;
+
+     save_slot = 0;
+}
+
+Bool Player::save ( )
+{
+     char filepath [ 128 ];
+
+     sprintf ( filepath, "save/slot_%d.brs", save_slot );
+
+     std::ofstream file ( filepath, std::ios::binary );
+
+     LOG_INFO ( "Saving player info: %s\n", filepath );
+
+     if ( !file.is_open ( ) ) {
+          LOG_ERROR ( "Failed to open file.\n" );
+          return false;
+     }
+
+     file.write ( reinterpret_cast<const Char8*>( &health ), sizeof ( health ) );
+     file.write ( reinterpret_cast<const Char8*>( &max_health ), sizeof ( max_health ) );
+
+     file.write ( reinterpret_cast<const Char8*>( &key_count ), sizeof ( key_count ) );
+     file.write ( reinterpret_cast<const Char8*>( &arrow_count ), sizeof ( arrow_count ) );
+     file.write ( reinterpret_cast<const Char8*>( &bomb_count ), sizeof ( bomb_count ) );
+
+     file.close ( );
+
+     return true;
+}
+
+Bool Player::load ( )
+{
+     char filepath [ 128 ];
+
+     sprintf ( filepath, "save/slot_%d.brs", save_slot );
+
+     LOG_INFO ( "Loading player info: %s\n", filepath );
+
+     std::ifstream file ( filepath, std::ios::binary );
+
+     if ( !file.is_open ( ) ) {
+          LOG_ERROR ( "Failed to open file.\n" );
+          return false;
+     }
+
+     file.read ( reinterpret_cast<Char8*>( &health ), sizeof ( health ) );
+     file.read ( reinterpret_cast<Char8*>( &max_health ), sizeof ( max_health ) );
+
+     file.read ( reinterpret_cast<Char8*>( &key_count ), sizeof ( key_count ) );
+     file.read ( reinterpret_cast<Char8*>( &arrow_count ), sizeof ( arrow_count ) );
+     file.read ( reinterpret_cast<Char8*>( &bomb_count ), sizeof ( bomb_count ) );
+
+     file.close ( );
+
+     return true;
 }
 

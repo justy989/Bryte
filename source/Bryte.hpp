@@ -81,6 +81,8 @@ namespace bryte
           Bool spawn_damage_number ( const Vector& position, Int32 value );
           Bool spawn_healing_number ( const Vector& position, Int32 value );
 
+          Bool load_region ( GameMemory& game_memory );
+
           Void persist_map ( );
           Void spawn_map_enemies ( );
 
@@ -115,6 +117,9 @@ namespace bryte
 
           Bool change_region ( GameMemory& game_memory, Int32 region_index );
 
+          Void player_save ( );
+          Void player_load ( );
+
      public:
 
           static const Int32 c_bomb_damage = 4;
@@ -127,6 +132,8 @@ namespace bryte
           static const Real32 c_pickup_show_time;
 
      public:
+
+          Settings* settings;
 
           GameState game_state;
 
@@ -168,6 +175,8 @@ namespace bryte
           Bool  item_key;
           Bool  switch_item_key;
           Bool  activate_key;
+
+          Int32 current_region;
 
           Int32 player_spawn_tile_x;
           Int32 player_spawn_tile_y;

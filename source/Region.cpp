@@ -7,7 +7,7 @@
 
 using namespace bryte;
 
-const Char8* Region::c_region_list_filepath = "regions/region_list.txt";
+const Char8* Region::c_region_list_filepath = "region_list.txt";
 
 Bool Region::load_info ( Int32 index )
 {
@@ -47,6 +47,9 @@ Bool Region::load_info ( Int32 index )
 
      // TODO: load all into tmp vars and validate before setting them all
      ss >> tmp_string;
+     strncpy ( name, tmp_string.c_str ( ), c_max_filepath_length );
+
+     ss >> tmp_string;
      strncpy ( map_list_filepath, tmp_string.c_str ( ), c_max_filepath_length );
 
      ss >> tmp_string;
@@ -62,6 +65,11 @@ Bool Region::load_info ( Int32 index )
      strncpy ( exitsheet_filepath, tmp_string.c_str ( ), c_max_filepath_length );
 
      // do a bit of error checking
+     if ( !strlen ( name ) ) {
+          LOG_ERROR ( "Empty name\n" );
+          return false;
+     }
+
      if ( !strlen ( map_list_filepath ) ) {
           LOG_ERROR ( "Empty map list\n" );
           return false;
@@ -87,6 +95,7 @@ Bool Region::load_info ( Int32 index )
           return false;
      }
 
+     LOG_INFO ( " name: '%s'\n", map_list_filepath );
      LOG_INFO ( " map list: '%s'\n", map_list_filepath );
      LOG_INFO ( " tilesheet: '%s'\n", tilesheet_filepath );
      LOG_INFO ( " decorsheet: '%s'\n", decorsheet_filepath );

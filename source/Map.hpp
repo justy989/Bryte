@@ -191,6 +191,8 @@ namespace bryte
           inline Bool found_secret ( ) const;
           inline Secret& secret ( );
 
+          inline Fixture& upgrade ( );
+
           inline Void set_secret_location ( Location loc );
           inline Void set_secret_clear_tile ( Location loc );
 
@@ -246,6 +248,8 @@ namespace bryte
           Location       m_activate_on_kill_all;
 
           Secret         m_secret;
+
+          Fixture        m_upgrade;
 
           Bool           m_killed_all_enemies;
 
@@ -385,6 +389,11 @@ namespace bryte
      inline Map::Secret& Map::secret ( )
      {
           return m_secret;
+     }
+
+     inline Map::Fixture& Map::upgrade ( )
+     {
+          return m_upgrade;
      }
 
      inline Void Map::killed_all_enemies ( )

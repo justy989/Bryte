@@ -65,6 +65,11 @@ namespace bryte
           Int32 selected;
      };
 
+     struct Upgrade {
+          Player::Upgrade type;
+          Vector position;
+     };
+
      struct Settings {
           Int32  region_index;
 
@@ -153,6 +158,8 @@ namespace bryte
           Void player_save ( );
           Void player_load ( );
 
+          Void render_upgrade ( SDL_Surface* back_buffer );
+
      public:
 
           static const Int32 c_bomb_damage = 4;
@@ -184,6 +191,7 @@ namespace bryte
           Region       region;
           Map          map;
           Interactives interactives;
+          Upgrade      upgrade;
 
           Vector       camera;
 
@@ -204,6 +212,7 @@ namespace bryte
           SDL_Surface* bomb_sheet;
           SDL_Surface* attack_icon_sheet;
           SDL_Surface* player_heart_sheet;
+          SDL_Surface* upgrade_sheet;
 
           UITextMenu slot_menu;
           UITextMenu pause_menu;

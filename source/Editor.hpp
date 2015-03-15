@@ -60,6 +60,7 @@ namespace editor
           hole,
           portal,
           border,
+          upgrade,
           count
      };
 
@@ -79,6 +80,8 @@ namespace editor
           bryte::Interactive& place_or_clear_interactive ( bryte::Interactive::Type type,
                                                            Int32 mouse_tile_x, Int32 mouse_tile_y );
 
+          Void render_upgrade ( SDL_Surface* back_buffer );
+
           Void render_selected_interactive ( SDL_Surface* back_buffer );
 
      public:
@@ -89,6 +92,8 @@ namespace editor
 
           bryte::Map map;
           bryte::Interactives interactives;
+
+          SDL_Surface* upgrade_surface;
 
           SDL_Surface* mode_icons_surface;
 
@@ -133,6 +138,7 @@ namespace editor
           Uint8 current_moving_walkway;
           Uint8 current_portal;
           Uint8 current_border;
+          Uint8 current_upgrade;
 
           Bool   track_current_interactive;
           Uint32 current_interactive_x;

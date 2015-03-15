@@ -17,6 +17,8 @@ Void Map::Fixture::set ( Uint8 x, Uint8 y, Uint8 id )
 const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimension_in_pixels /
                                                                     pixels_per_meter );
 
+// NOTE: Hmmm, this may want to be explained, its 10:47 pm and I just looked at this and I 
+//       don't know what it means
 const Uint8 Map::c_unique_lamps_light [ Map::c_unique_lamp_count ] = {
      255, 255 - ( 2 * c_light_decay ), 255 - c_light_decay, 0
 };
@@ -76,6 +78,10 @@ Void Map::initialize ( Uint8 width, Uint8 height )
 
      m_base_light_value = 128;
      reset_light ( );
+
+     m_upgrade.location.x = 0;
+     m_upgrade.location.y = 0;
+     m_upgrade.id = 0;
 }
 
 Map::Coordinates Map::position_to_coordinates ( Real32 x, Real32 y )
@@ -411,6 +417,8 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
 
      file.write ( reinterpret_cast<const Char8*> ( &m_secret.location ), sizeof ( m_secret.location ) );
      file.write ( reinterpret_cast<const Char8*> ( &m_secret.clear_tile ), sizeof ( m_secret.clear_tile ) );
+
+     file.write ( reinterpret_cast<const Char8*> ( &m_upgrade ), sizeof ( m_upgrade ) );
 }
 
 Bool Map::load ( const Char8* filepath, Interactives& interactives )
@@ -486,6 +494,8 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
 
      file.read ( reinterpret_cast<Char8*> ( &m_secret.location ), sizeof ( m_secret.location ) );
      file.read ( reinterpret_cast<Char8*> ( &m_secret.clear_tile ), sizeof ( m_secret.clear_tile ) );
+
+     file.read ( reinterpret_cast<Char8*> ( &m_upgrade ), sizeof ( m_upgrade ) );
 
      return true;
 }

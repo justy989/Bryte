@@ -236,6 +236,10 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( upgrade_sheet, game_memory, "player_upgrade.bmp" ) ) {
+          return false;
+     }
+
      // load sound effects
      if ( !sound.load_effects ( ) ) {
           return false;
@@ -754,6 +758,8 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
                }
           }
      }
+
+     render_upgrade ( back_buffer );
 
      // pickup queue
      if ( pickup_queue [ 0 ] ) {
@@ -1405,6 +1411,22 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
           }
      }
 
+     Auto& upgrade = map.upgrade ( );
+
+     if ( upgrade.id ) {
+          Real32 upgrade_x = pixels_to_meters ( upgrade.location.x * Map::c_tile_dimension_in_pixels );
+          Real32 upgrade_y = pixels_to_meters ( upgrade.location.y * Map::c_tile_dimension_in_pixels );
+
+          if ( rect_collides_with_rect ( player.collision_x ( ), player.collision_y ( ),
+                                         player.collision_width ( ), player.collision_width ( ),
+                                         upgrade_x, upgrade_y,
+                                         Map::c_tile_dimension_in_meters, Map::c_tile_dimension_in_meters ) ) {
+               player.give_upgrade ( static_cast<Player::Upgrade>( upgrade.id ) );
+               upgrade.id = 0;
+               sound.play_effect ( Sound::Effect::player_pickup );
+          }
+     }
+
 #ifdef DEBUG
      if ( invincible ) {
           player.health = player.max_health;
@@ -2026,6 +2048,25 @@ Void State::player_load ( )
 {
      player.load ( );
      map.load_persistence ( region.name, player.save_slot );
+}
+
+Void State::render_upgrade ( SDL_Surface* back_buffer )
+{
+     Auto& upgrade = map.upgrade ( );
+
+     if ( !upgrade.id ) {
+          return;
+     }
+
+     SDL_Rect src { ( upgrade.id - 1 ) * Map::c_tile_dimension_in_pixels, 0,
+                    Map::c_tile_dimension_in_pixels, 14 };
+     SDL_Rect dst { upgrade.location.x * Map::c_tile_dimension_in_pixels,
+                    upgrade.location.y * Map::c_tile_dimension_in_pixels,
+                    Map::c_tile_dimension_in_pixels, 14 };
+
+     world_to_sdl ( dst, back_buffer, camera.x ( ), camera.y ( ) );
+
+     SDL_BlitSurface ( upgrade_sheet, &src, back_buffer, &dst );
 }
 
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )

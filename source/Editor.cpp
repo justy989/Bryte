@@ -5,6 +5,7 @@
 #include "Utils.hpp"
 #include "Bitmap.hpp"
 #include "MapDisplay.hpp"
+#include "Player.hpp"
 
 #include <cstdio>
 
@@ -266,6 +267,10 @@ Void State::mouse_button_left_clicked ( )
           border_exit.bottom_left = Map::Location { static_cast<Uint8>( mouse_tile_x ),
                                                     static_cast<Uint8>( mouse_tile_y ) };
      } break;
+     case Mode::upgrade:
+          map.upgrade ( ).set ( static_cast<Uint8> ( mouse_tile_x ), static_cast<Uint8> ( mouse_tile_y ),
+                                current_upgrade );
+          break;
      }
 }
 
@@ -561,6 +566,13 @@ Void State::option_button_up_pressed ( )
 
           border_exit.map_index--;
      } break;
+     case Mode::upgrade:
+          if ( current_upgrade == 0 ) {
+               current_upgrade = static_cast<Uint8>( Player::Upgrade::bow );
+          } else {
+               current_upgrade--;
+          }
+          break;
      }
 }
 
@@ -640,6 +652,10 @@ Void State::option_button_down_pressed ( )
 
           border_exit.map_index++;
      } break;
+     case Mode::upgrade:
+          current_upgrade++;
+          current_upgrade %= 5;
+          break;
      }
 }
 
@@ -791,6 +807,25 @@ Void State::render_selected_interactive ( SDL_Surface* back_buffer )
      }
 }
 
+Void State::render_upgrade ( SDL_Surface* back_buffer )
+{
+     Auto& upgrade = map.upgrade ( );
+
+     if ( !upgrade.id ) {
+          return;
+     }
+
+     SDL_Rect src { ( upgrade.id - 1 ) * Map::c_tile_dimension_in_pixels, 0,
+                    Map::c_tile_dimension_in_pixels, 14 };
+     SDL_Rect dst { upgrade.location.x * Map::c_tile_dimension_in_pixels,
+                    upgrade.location.y * Map::c_tile_dimension_in_pixels,
+                    Map::c_tile_dimension_in_pixels, 14 };
+
+     world_to_sdl ( dst, back_buffer, camera.x ( ), camera.y ( ) );
+
+     SDL_BlitSurface ( upgrade_surface, &src, back_buffer, &dst );
+}
+
 extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
 {
      MemoryLocations* memory_locations = GAME_PUSH_MEMORY ( game_memory, MemoryLocations );
@@ -806,6 +841,11 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
 
      if ( !load_bitmap_with_game_memory ( state->mode_icons_surface, game_memory,
                                           "editor_mode_icons.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( state->upgrade_surface, game_memory,
+                                          "player_upgrade.bmp" ) ) {
           return false;
      }
 
@@ -1111,89 +1151,6 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          exit.map_index, exit.exit_index_x, exit.exit_index_y );
           }
      } break;
-     case Mode::lever:
-     {
-          if ( state->track_current_interactive ) {
-               sprintf ( state->message_buffer, "C ACT %d %d",
-                         state->current_interactive_x, state->current_interactive_y );
-               break;
-          }
-
-          if ( !state->mouse_on_map ( ) ) {
-               break;
-          }
-
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
-
-          if ( interactive.type == Interactive::Type::lever ) {
-               Auto& lever = interactive.interactive_lever;
-               sprintf ( state->message_buffer, "ACT %d %d",
-                         lever.activate_coordinate_x, lever.activate_coordinate_y );
-          }
-     } break;
-     case Mode::pushable_block:
-     {
-          if ( state->track_current_interactive ) {
-               sprintf ( state->message_buffer, "C ACT %d %d",
-                         state->current_interactive_x, state->current_interactive_y );
-               break;
-          }
-
-          if ( !state->mouse_on_map ( ) ) {
-               break;
-          }
-
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
-
-          if ( interactive.type == Interactive::Type::pushable_block ) {
-               Auto& pushable_block = interactive.interactive_pushable_block;
-               sprintf ( state->message_buffer, "ACT %d %d SOLID %d",
-                         pushable_block.activate_coordinate_y,
-                         pushable_block.activate_coordinate_x,
-                         pushable_block.state == PushableBlock::State::solid );
-          }
-     } break;
-     case Mode::light_detector:
-     {
-          if ( state->track_current_interactive ) {
-               sprintf ( state->message_buffer, "C ACT %d %d",
-                         state->current_interactive_x, state->current_interactive_y );
-               break;
-          }
-
-          if ( !state->mouse_on_map ( ) ) {
-               break;
-          }
-
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
-
-          if ( interactive.underneath.type == UnderneathInteractive::Type::light_detector ) {
-               Auto& detector = interactive.underneath.underneath_light_detector;
-               sprintf ( state->message_buffer, "ACT %d %d",
-                         detector.activate_coordinate_x, detector.activate_coordinate_y );
-          }
-     } break;
-     case Mode::pressure_plate:
-     {
-          if ( state->track_current_interactive ) {
-               sprintf ( state->message_buffer, "C ACT %d %d",
-                         state->current_interactive_x, state->current_interactive_y );
-               break;
-          }
-
-          if ( !state->mouse_on_map ( ) ) {
-               break;
-          }
-
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
-
-          if ( interactive.underneath.type == UnderneathInteractive::Type::pressure_plate ) {
-               Auto& pressure_plate = interactive.underneath.underneath_pressure_plate;
-               sprintf ( state->message_buffer, "ACT %d %d",
-                         pressure_plate.activate_coordinate_x,
-                         pressure_plate.activate_coordinate_y );
-          }
-     } break;
      case Mode::all_killed:
      {
           Map::Location loc = state->map.activate_on_all_enemies_killed ( );
@@ -1209,27 +1166,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           if ( interactive.type == Interactive::Type::turret ) {
                Auto& turret = interactive.interactive_turret;
-               sprintf ( state->message_buffer, "DIR %d AUTO %d", turret.facing, turret.automatic );
-          }
-     } break;
-     case Mode::ice_detector:
-     {
-          if ( state->track_current_interactive ) {
-               sprintf ( state->message_buffer, "C ACT %d %d",
-                         state->current_interactive_x, state->current_interactive_y );
-               break;
-          }
-
-          if ( !state->mouse_on_map ( ) ) {
-               break;
-          }
-
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
-
-          if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
-               Auto& ice_detector = interactive.underneath.underneath_ice_detector;
-               sprintf ( state->message_buffer, "ACT %d %d",
-                         ice_detector.activate_coordinate_x, ice_detector.activate_coordinate_y );
+               sprintf ( state->message_buffer, "AUTO %d", turret.automatic );
           }
      } break;
      case Mode::portal:
@@ -1432,6 +1369,8 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           render_secret ( back_buffer, state->map.secret ( ), state->camera.x ( ), state->camera.y ( ) );
      }
 
+     state->render_upgrade ( back_buffer );
+
      state->render_selected_interactive ( back_buffer );
 
      // ui
@@ -1551,6 +1490,14 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
                                 state->mouse_x, state->mouse_y,
                                 0,
                                 ( Interactive::Type::count - 2 ) + UnderneathInteractive::Type::ice_detector );
+          break;
+     case Mode::upgrade:
+          if ( state->current_upgrade ) {
+               render_current_icon ( back_buffer,
+                                     state->upgrade_surface,
+                                     state->mouse_x, state->mouse_y,
+                                     state->current_upgrade - 1, 0 );
+          }
           break;
      }
 

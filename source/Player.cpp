@@ -8,6 +8,14 @@ using namespace bryte;
 
 const Real32 Player::c_item_cooldown = 1.0f;
 
+const Char8* Player::c_upgrade_names [ Player::Upgrade::bow + 1 ] = {
+     "NONE",
+     "HEART",
+     "QUIVER",
+     "BOMBBAG",
+     "BOW",
+};
+
 Void Player::clear ( )
 {
      state = State::idle;
@@ -136,6 +144,8 @@ Bool Player::load ( )
 
 Void Player::give_arrow ( )
 {
+     LOG_INFO ( "Giving player %d arrows.\n", c_arrow_increment );
+
      arrow_count += c_arrow_increment;
 
      if ( arrow_count >= max_arrows ) {
@@ -145,6 +155,8 @@ Void Player::give_arrow ( )
 
 Void Player::give_bomb ( )
 {
+     LOG_INFO ( "Giving player %d bombs.\n", c_bomb_increment );
+
      bomb_count += c_bomb_increment;
 
      if ( bomb_count >= max_bombs ) {
@@ -154,6 +166,8 @@ Void Player::give_bomb ( )
 
 Void Player::give_upgrade ( Upgrade upgrade )
 {
+     LOG_INFO ( "Giving player %s upgrade.\n", c_upgrade_names [ upgrade ] );
+
      switch ( upgrade ) {
      default:
           break;
@@ -163,9 +177,11 @@ Void Player::give_upgrade ( Upgrade upgrade )
           break;
      case Upgrade::quiver:
           max_arrows += c_max_arrow_increment;
+          arrow_count = max_arrows;
           break;
      case Upgrade::bomb_bag:
           max_bombs += c_max_bomb_increment;
+          bomb_count = max_bombs;
           break;
      case Upgrade::bow:
           has_bow = true;

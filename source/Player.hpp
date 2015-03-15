@@ -16,6 +16,7 @@ namespace bryte
           };
 
           enum Upgrade {
+               none,
                heart,
                quiver,
                bomb_bag,
@@ -44,6 +45,8 @@ namespace bryte
           static const Int32 c_max_health_increment = 2;
           static const Int32 c_max_arrow_increment = 5;
           static const Int32 c_max_bomb_increment = 2;
+
+          static const Char8* c_upgrade_names [ Upgrade::bow + 1 ];
 
      public:
 

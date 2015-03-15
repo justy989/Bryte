@@ -478,12 +478,12 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
                break;
           case SDL_SCANCODE_V:
                if ( key_change.down ) {
-                    player.arrow_count++;
+                    player.give_arrow ( );
                }
                break;
           case SDL_SCANCODE_B:
                if ( key_change.down ) {
-                    player.bomb_count++;
+                    player.give_bomb ( );
                }
                break;
           case SDL_SCANCODE_T:
@@ -1212,7 +1212,7 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                          done = true;
                          break;
                     case Player::ItemMode::arrow:
-                         if ( player.arrow_count ) {
+                         if ( player.has_bow && player.arrow_count ) {
                               done = true;
                          }
                          break;
@@ -1254,17 +1254,14 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                player.block ( );
                break;
           case Player::ItemMode::arrow:
-               if ( player.item_cooldown.expired ( ) && player.arrow_count > 0 ) {
+               if ( player.use_bow ( ) ) {
                     spawn_projectile ( Projectile::Type::arrow, player.position, player.facing,
                                        Projectile::Alliance::good );
-                    player.arrow_count--;
-                    player.item_cooldown.reset ( Player::c_item_cooldown );
                }
                break;
           case Player::ItemMode::bomb:
-               if ( player.item_cooldown.expired ( ) && player.bomb_count > 0 ) {
+               if ( player.use_bomb ( ) ) {
                     spawn_bomb ( player.position );
-                    player.bomb_count--;
                     sound.play_effect ( Sound::Effect::place_bomb );
                     player.item_cooldown.reset ( Player::c_item_cooldown );
                }
@@ -1812,10 +1809,10 @@ Void State::update_pickups ( float time_delta )
                     player.key_count++;
                     break;
                case Pickup::Type::arrow:
-                    player.arrow_count += 5;
+                    player.give_arrow ( );
                     break;
                case Pickup::Type::bomb:
-                    player.bomb_count++;
+                    player.give_bomb ( );
                     break;
                }
 

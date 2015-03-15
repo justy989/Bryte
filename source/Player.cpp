@@ -57,8 +57,15 @@ Void Player::clear ( )
      item_cooldown.reset ( 0.0f );
 
      key_count   = 0;
+
      arrow_count = 0;
-     bomb_count  = 0;
+     max_arrows = 10;
+
+     bomb_count = 0;
+     max_bombs = 4;
+
+     // TODO: init to false
+     has_bow = true;
 
      save_slot = 0;
 }
@@ -82,8 +89,14 @@ Bool Player::save ( )
      file.write ( reinterpret_cast<const Char8*>( &max_health ), sizeof ( max_health ) );
 
      file.write ( reinterpret_cast<const Char8*>( &key_count ), sizeof ( key_count ) );
+
      file.write ( reinterpret_cast<const Char8*>( &arrow_count ), sizeof ( arrow_count ) );
+     file.write ( reinterpret_cast<const Char8*>( &max_arrows ), sizeof ( max_arrows ) );
+
      file.write ( reinterpret_cast<const Char8*>( &bomb_count ), sizeof ( bomb_count ) );
+     file.write ( reinterpret_cast<const Char8*>( &max_bombs ), sizeof ( max_bombs ) );
+
+     file.write ( reinterpret_cast<const Char8*>( &has_bow ), sizeof ( has_bow ) );
 
      file.close ( );
 
@@ -108,12 +121,76 @@ Bool Player::load ( )
      file.read ( reinterpret_cast<Char8*>( &health ), sizeof ( health ) );
      file.read ( reinterpret_cast<Char8*>( &max_health ), sizeof ( max_health ) );
 
-     file.read ( reinterpret_cast<Char8*>( &key_count ), sizeof ( key_count ) );
      file.read ( reinterpret_cast<Char8*>( &arrow_count ), sizeof ( arrow_count ) );
+     file.read ( reinterpret_cast<Char8*>( &max_arrows ), sizeof ( max_arrows ) );
+
      file.read ( reinterpret_cast<Char8*>( &bomb_count ), sizeof ( bomb_count ) );
+     file.read ( reinterpret_cast<Char8*>( &max_bombs ), sizeof ( max_bombs ) );
+
+     file.read ( reinterpret_cast<Char8*>( &has_bow ), sizeof ( has_bow ) );
 
      file.close ( );
 
      return true;
+}
+
+Void Player::give_arrow ( )
+{
+     arrow_count += c_arrow_increment;
+
+     if ( arrow_count >= max_arrows ) {
+          arrow_count = max_arrows;
+     }
+}
+
+Void Player::give_bomb ( )
+{
+     bomb_count += c_bomb_increment;
+
+     if ( bomb_count >= max_bombs ) {
+          bomb_count = max_bombs;
+     }
+}
+
+Void Player::give_upgrade ( Upgrade upgrade )
+{
+     switch ( upgrade ) {
+     default:
+          break;
+     case Upgrade::heart:
+          max_health += c_max_health_increment;
+          health = max_health; // NOTE: do we want to do this?
+          break;
+     case Upgrade::quiver:
+          max_arrows += c_max_arrow_increment;
+          break;
+     case Upgrade::bomb_bag:
+          max_bombs += c_max_bomb_increment;
+          break;
+     case Upgrade::bow:
+          has_bow = true;
+          break;
+     }
+}
+
+Bool Player::use_bow ( )
+{
+     if ( item_cooldown.expired ( ) && arrow_count > 0 ) {
+          arrow_count--;
+          item_cooldown.reset ( Player::c_item_cooldown );
+          return true;
+     }
+
+     return false;
+}
+
+Bool Player::use_bomb ( )
+{
+     if ( item_cooldown.expired ( ) && bomb_count > 0 ) {
+          bomb_count--;
+          return true;
+     }
+
+     return false;
 }
 

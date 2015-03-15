@@ -338,7 +338,11 @@ Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
           return false;
      }
 
-     Bool success = load ( m_master_list [ map_index ], interactives );
+     char filepath [ c_max_map_name_size ];
+
+     sprintf ( filepath, "map/%s", m_master_list [ map_index ] );
+
+     Bool success = load ( filepath, interactives );
 
      m_current_map = map_index;
 

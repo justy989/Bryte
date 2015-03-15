@@ -1151,6 +1151,21 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                          exit.map_index, exit.exit_index_x, exit.exit_index_y );
           }
      } break;
+     case Mode::pushable_block:
+     {
+          if ( !state->mouse_on_map ( ) ) {
+               break;
+          }
+
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
+
+          if ( interactive.type == Interactive::Type::pushable_block ) {
+               Auto& pushable_block = interactive.interactive_pushable_block;
+               sprintf ( state->message_buffer, "SOLID %d",
+                         pushable_block.state == PushableBlock::State::solid );
+          }
+          break;
+     }
      case Mode::all_killed:
      {
           Map::Location loc = state->map.activate_on_all_enemies_killed ( );

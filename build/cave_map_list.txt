@@ -1,3 +1,0 @@
-cave_entrance.brm
-cave_bottom.brm
-cave_top.brm

@@ -696,6 +696,16 @@ Void State::mouse_scrolled ( Int32 scroll )
           current_border += scroll;
           current_border %= 4;
           break;
+     case Mode::ice_detector:
+          if ( mouse_on_map ( ) ) {
+               Auto& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
+
+               if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
+                    interactive.underneath.underneath_ice_detector.detected =
+                         !interactive.underneath.underneath_ice_detector.detected;
+               }
+          }
+          break;
      }
 }
 

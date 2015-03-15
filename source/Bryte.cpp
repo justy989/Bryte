@@ -1900,7 +1900,7 @@ Void State::update_light ( )
           if ( arrow.effected_by_element == Element::fire ) {
                map.illuminate ( meters_to_pixels ( arrow.position.x ( ) ),
                                 meters_to_pixels ( arrow.position.y ( ) ),
-                                192 );
+                                LightDetector::c_bryte_value - 1 );
           }
      }
 

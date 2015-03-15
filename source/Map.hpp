@@ -19,8 +19,8 @@ namespace bryte
      class Map {
      public:
 
-          static const Uint32 c_max_map_name_size = 32;
-          static const Uint32 c_max_maps = 32;
+          static const Uint32 c_max_map_name_size = 64;
+          static const Uint32 c_max_maps = 64;
 
           static const Uint32 c_max_exits = 128;
 

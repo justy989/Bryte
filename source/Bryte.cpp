@@ -62,8 +62,8 @@ static Bool character_touching_tile ( const Character& character, const Map::Coo
 
      Real32 left = character.position.x ( );
      Real32 bottom = character.position.y ( );
-     Real32 right = left + character.collision_width ( );
-     Real32 top = bottom + character.collision_height ( );
+     Real32 right = left + Map::c_tile_dimension_in_meters;
+     Real32 top = bottom + Map::c_tile_dimension_in_meters;
 
      Vector corners [ corner_count ] = {
           Vector { left, top },
@@ -1537,6 +1537,16 @@ Void State::push_interactive ( Int32 tile_x, Int32 tile_y, Direction dir, const 
      if ( !enemy_on_tile ) {
           // make sure the player isn't on that tile either
           if ( character_touching_tile ( player, dest ) ) {
+
+               // if the player is pushing the tile, stop it!
+               Auto& interactive = interactives.get_from_tile ( tile_x, tile_y );
+
+               if ( interactive.type == Interactive::Type::pushable_block ) {
+                    interactive.interactive_pushable_block.pushed_last_update = false;
+               } else if ( interactive.type == Interactive::Type::pushable_torch ) {
+                    interactive.interactive_pushable_torch.pushable_block.pushed_last_update = false;
+               }
+
                return;
           }
 

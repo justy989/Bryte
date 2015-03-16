@@ -1332,36 +1332,8 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
 
      if ( player.is_pushing ( ) ) {
           Map::Coordinates push_location { 0, 0 };
-
           character_adjacent_tile ( player, &push_location.x, &push_location.y );
-
-          if ( push_location.x >= 0 && push_location.x < interactives.width ( ) &&
-               push_location.y >= 0 && push_location.y < interactives.height ( ) ) {
-
-               Bool enemy_on_tile = false;
-               Auto dest = adjacent_tile ( push_location, player.facing );
-
-               for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
-                    if ( enemies [ i ].is_dead ( ) ) {
-                         continue;
-                    }
-
-                    Auto coords = Map::vector_to_coordinates ( enemies [ i ].collision_center ( ) );
-
-                    if ( coords.x == dest.x && coords.y == dest.y ) {
-                         enemy_on_tile = true;
-                         break;
-                    }
-               }
-
-               if ( !enemy_on_tile ) {
-                    Bool pushed = interactives.push ( push_location.x, push_location.y, player.facing, map );
-
-                    if ( pushed ) {
-                         sound.play_effect ( Sound::Effect::activate_interactive );
-                    }
-               }
-          }
+          push_interactive ( push_location.x, push_location.y, player.facing, map );
      } else {
           // check if player wants to activate any interactives
           if ( activate_key ) {
@@ -1515,6 +1487,37 @@ Void State::update_enemies ( float time_delta )
      }
 }
 
+Void State::push_interactive ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
+{
+     if ( !map.coordinate_x_valid ( tile_x ) || !map.coordinate_y_valid ( tile_y ) ) {
+          return;
+     }
+
+     Bool enemy_on_tile = false;
+     Auto dest = adjacent_tile ( Map::Coordinates { tile_x, tile_y }, player.facing );
+
+     for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
+          if ( enemies [ i ].is_dead ( ) ) {
+               continue;
+          }
+
+          Auto coords = Map::vector_to_coordinates ( enemies [ i ].collision_center ( ) );
+
+          if ( coords.x == dest.x && coords.y == dest.y ) {
+               enemy_on_tile = true;
+               break;
+          }
+     }
+
+     if ( !enemy_on_tile ) {
+          Bool pushed = interactives.push ( tile_x, tile_y, player.facing, map );
+
+          if ( pushed ) {
+               sound.play_effect ( Sound::Effect::activate_interactive );
+          }
+     }
+}
+
 Void State::update_interactives ( float time_delta )
 {
      Int32 count = map.width ( ) * map.height ( );
@@ -1526,7 +1529,8 @@ Void State::update_interactives ( float time_delta )
                interactive.underneath.underneath_ice.force_dir != Direction::count ) {
                Int32 tile_x = map.tile_index_to_coordinate_x ( i );
                Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-               interactives.push ( tile_x, tile_y, interactive.underneath.underneath_ice.force_dir, map );
+               push_interactive ( tile_x, tile_y, interactive.underneath.underneath_ice.force_dir,
+                                  map );
           }
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector &&
@@ -1534,15 +1538,17 @@ Void State::update_interactives ( float time_delta )
                interactive.underneath.underneath_ice_detector.force_dir != Direction::count ) {
                Int32 tile_x = map.tile_index_to_coordinate_x ( i );
                Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-               interactives.push ( tile_x, tile_y,
-                                   interactive.underneath.underneath_ice_detector.force_dir, map );
+               push_interactive ( tile_x, tile_y,
+                                  interactive.underneath.underneath_ice_detector.force_dir, map );
           }
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::moving_walkway &&
                interactive.underneath.underneath_ice.force_dir != Direction::count ) {
                Int32 tile_x = map.tile_index_to_coordinate_x ( i );
                Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-               interactives.push ( tile_x, tile_y, interactive.underneath.underneath_moving_walkway.facing, map );
+               push_interactive ( tile_x, tile_y,
+                                  interactive.underneath.underneath_moving_walkway.facing,
+                                  map );
           }
 
           switch ( interactive.type ) {

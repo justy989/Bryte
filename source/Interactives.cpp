@@ -570,6 +570,7 @@ Void Interactive::character_leave ( Direction to, Interactives& interactives, Ch
           character.on_ice = false;
           break;
      case UnderneathInteractive::moving_walkway:
+          character.on_moving_walkway = Direction::count;
           break;
      case UnderneathInteractive::ice_detector:
           character.on_ice = false;

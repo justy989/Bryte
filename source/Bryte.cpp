@@ -56,6 +56,33 @@ Void character_adjacent_tile ( const Character& character, Int32* adjacent_tile_
      *adjacent_tile_y = character_center_tile.y;
 }
 
+static Bool character_touching_tile ( const Character& character, const Map::Coordinates& tile )
+{
+     static const Int32 corner_count = 4;
+
+     Real32 left = character.position.x ( );
+     Real32 bottom = character.position.y ( );
+     Real32 right = left + character.collision_width ( );
+     Real32 top = bottom + character.collision_height ( );
+
+     Vector corners [ corner_count ] = {
+          Vector { left, top },
+          Vector { right, top },
+          Vector { left, bottom },
+          Vector { right, bottom },
+     };
+
+     for ( Int32 i = 0; i < corner_count; ++i ) {
+          Auto coords = Map::vector_to_coordinates ( corners [ i ] );
+
+          if ( coords.x == tile.x && coords.y == tile.y ) {
+               return true;
+          }
+     }
+
+     return false;
+}
+
 static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
 {
      switch ( dir ) {
@@ -1494,23 +1521,26 @@ Void State::push_interactive ( Int32 tile_x, Int32 tile_y, Direction dir, const 
      }
 
      Bool enemy_on_tile = false;
-     Auto dest = adjacent_tile ( Map::Coordinates { tile_x, tile_y }, player.facing );
+     Auto dest = adjacent_tile ( Map::Coordinates { tile_x, tile_y }, dir );
 
      for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
           if ( enemies [ i ].is_dead ( ) ) {
                continue;
           }
 
-          Auto coords = Map::vector_to_coordinates ( enemies [ i ].collision_center ( ) );
-
-          if ( coords.x == dest.x && coords.y == dest.y ) {
+          if ( character_touching_tile ( enemies [ i ], dest ) ) {
                enemy_on_tile = true;
                break;
           }
      }
 
      if ( !enemy_on_tile ) {
-          Bool pushed = interactives.push ( tile_x, tile_y, player.facing, map );
+          // make sure the player isn't on that tile either
+          if ( character_touching_tile ( player, dest ) ) {
+               return;
+          }
+
+          Bool pushed = interactives.push ( tile_x, tile_y, dir, map );
 
           if ( pushed ) {
                sound.play_effect ( Sound::Effect::activate_interactive );
@@ -1525,30 +1555,32 @@ Void State::update_interactives ( float time_delta )
      for ( Int32 i = 0; i < count; ++i ) {
           Auto& interactive = interactives.m_interactives [ i ];
 
-          if ( interactive.underneath.type == UnderneathInteractive::Type::ice &&
-               interactive.underneath.underneath_ice.force_dir != Direction::count ) {
-               Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-               Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-               push_interactive ( tile_x, tile_y, interactive.underneath.underneath_ice.force_dir,
-                                  map );
-          }
+          if ( interactive.type ) {
+               if ( interactive.underneath.type == UnderneathInteractive::Type::ice &&
+                    interactive.underneath.underneath_ice.force_dir != Direction::count ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    push_interactive ( tile_x, tile_y, interactive.underneath.underneath_ice.force_dir,
+                                       map );
+               }
 
-          if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector &&
-               interactive.underneath.underneath_ice_detector.detected &&
-               interactive.underneath.underneath_ice_detector.force_dir != Direction::count ) {
-               Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-               Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-               push_interactive ( tile_x, tile_y,
-                                  interactive.underneath.underneath_ice_detector.force_dir, map );
-          }
+               if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector &&
+                    interactive.underneath.underneath_ice_detector.detected &&
+                    interactive.underneath.underneath_ice_detector.force_dir != Direction::count ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    push_interactive ( tile_x, tile_y,
+                                       interactive.underneath.underneath_ice_detector.force_dir, map );
+               }
 
-          if ( interactive.underneath.type == UnderneathInteractive::Type::moving_walkway &&
-               interactive.underneath.underneath_ice.force_dir != Direction::count ) {
-               Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-               Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-               push_interactive ( tile_x, tile_y,
-                                  interactive.underneath.underneath_moving_walkway.facing,
-                                  map );
+               if ( interactive.underneath.type == UnderneathInteractive::Type::moving_walkway &&
+                    interactive.underneath.underneath_moving_walkway.facing != Direction::count ) {
+                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
+                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    push_interactive ( tile_x, tile_y,
+                                       interactive.underneath.underneath_moving_walkway.facing,
+                                       map );
+               }
           }
 
           switch ( interactive.type ) {

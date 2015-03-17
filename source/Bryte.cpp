@@ -1189,19 +1189,22 @@ Void State::tick_character_element ( Character& character )
      default:
           break;
      case Element::fire:
-          character.fire_tick_count++;
 
-          if ( character.fire_tick_count >= Character::c_fire_tick_max ) {
-               // effect has expired
-               character.effected_by_element = Element::none;
-          } else {
-               character.element_watch.reset ( Character::c_fire_tick_rate );
+          if ( character.element_watch.expired ( ) ) {
+               character.fire_tick_count++;
+
+               if ( character.fire_tick_count >= Character::c_fire_tick_max ) {
+                    // effect has expired
+                    character.effected_by_element = Element::none;
+               } else {
+                    character.element_watch.reset ( Character::c_fire_tick_rate );
+               }
+
+               // push character in a random direction
+               Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+
+               damage_character ( character, c_burn_damage, dir );
           }
-
-          // push character in a random direction
-          Direction dir = static_cast<Direction>( random.generate ( 0, Direction::count ) );
-
-          damage_character ( character, c_burn_damage, dir );
           break;
      }
 }

@@ -97,15 +97,15 @@ Void Interactives::contribute_light ( Map& map )
                     break;
                case Interactive::Type::torch:
                     if ( interactive.interactive_torch.element == Element::fire ) {
-                         map.illuminate ( x * Map::c_tile_dimension_in_pixels,
-                                          y * Map::c_tile_dimension_in_pixels,
+                         map.illuminate ( x * Map::c_tile_dimension_in_pixels + Map::c_tile_dimension_in_pixels / 2,
+                                          y * Map::c_tile_dimension_in_pixels + Map::c_tile_dimension_in_pixels / 2,
                                           interactive.interactive_torch.value );
                     }
                     break;
                case Interactive::Type::pushable_torch:
                     if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
-                         map.illuminate ( x * Map::c_tile_dimension_in_pixels,
-                                          y * Map::c_tile_dimension_in_pixels,
+                         map.illuminate ( x * Map::c_tile_dimension_in_pixels + Map::c_tile_dimension_in_pixels / 2,
+                                          y * Map::c_tile_dimension_in_pixels + Map::c_tile_dimension_in_pixels / 2,
                                           interactive.interactive_pushable_torch.torch.value );
                     }
                     break;

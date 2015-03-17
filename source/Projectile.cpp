@@ -37,7 +37,10 @@ Int32 Projectile::hit_character ( Character& character )
 
 Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
 {
-     Vector arrow_center = position + Projectile::collision_points [ facing ];
+     // Note: Use the center of the arrow to check for tile collision, this
+     //       makes lighting arrows on fire against a torch more user friendly
+     Vector arrow_center = position + Vector { Map::c_tile_dimension_in_meters * 0.5f,
+                                               Map::c_tile_dimension_in_meters * 0.5f };
      Map::Coordinates tile = Map::vector_to_coordinates ( arrow_center );
 
      if ( !map.coordinates_valid ( tile ) ) {
@@ -53,14 +56,14 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
           current_tile = tile_index;
      }
 
+     interactives.projectile_enter ( tile.x, tile.y, *this );
+
      Auto& interactive = interactives.get_from_tile ( tile.x, tile.y );
      if ( interactive.type == Interactive::Type::exit ) {
           // otherwise arrows can escape when doors are open
           // TODO: is this ok?
           return true;
      }
-
-     interactives.projectile_enter ( tile.x, tile.y, *this );
 
      if ( !interactives.is_flyable ( tile.x, tile.y ) ) {
           return true;
@@ -155,5 +158,6 @@ Void Projectile::clear ( )
      track_entity.entity = nullptr;
      track_entity.offset.zero ( );
      position.zero ( );
+     current_tile = 0;
 }
 

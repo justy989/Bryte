@@ -1942,15 +1942,17 @@ Void State::update_light ( )
 
      // projectiles on fire contribute light
      for ( Uint32 i = 0; i < projectiles.max ( ); ++i ) {
-          Auto& arrow = projectiles [ i ];
+          Auto& projectile = projectiles [ i ];
 
-          if ( arrow.is_dead ( ) ) {
+          if ( projectile.is_dead ( ) ) {
                continue;
           }
 
-          if ( arrow.effected_by_element == Element::fire ) {
-               map.illuminate ( meters_to_pixels ( arrow.position.x ( ) ),
-                                meters_to_pixels ( arrow.position.y ( ) ),
+          if ( projectile.effected_by_element == Element::fire ) {
+               map.illuminate ( meters_to_pixels ( projectile.position.x ( ) ) +
+                                                   meters_to_pixels ( Projectile::collision_points [ projectile.facing ].x ( ) ),
+                                meters_to_pixels ( projectile.position.y ( ) ) +
+                                                   meters_to_pixels ( Projectile::collision_points [ projectile.facing ].y ( ) ),
                                 LightDetector::c_bryte_value - 1 );
           }
      }

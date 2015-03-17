@@ -368,6 +368,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      velocity = ( acceleration * time_delta ) + velocity;
 
      if ( effected_by_element != Element::ice ) {
+          // Note: move along the current animation type as long as
+          //       the character is not frozen
           if ( constant_animation ) {
                walk_tracker += time_delta;
 
@@ -404,6 +406,27 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      Int32 center_tile_x = meters_to_pixels ( center.x ( ) ) / Map::c_tile_dimension_in_pixels;
      Int32 center_tile_y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 
+     // Note: These ignore tiles try to solve the problem of a player being on top of a pop up block
+     Int32 ignore_tile_x = center_tile_x;
+     Int32 ignore_tile_y = center_tile_y;
+
+     switch ( facing ) {
+     default:
+          break;
+     case Direction::left:
+          ignore_tile_x++;
+          break;
+     case Direction::up:
+          ignore_tile_y--;
+          break;
+     case Direction::right:
+          ignore_tile_x--;
+          break;
+     case Direction::down:
+          ignore_tile_y++;
+          break;
+     }
+
      // TODO: move tiles based on width
      Int32 min_check_tile_x = center_tile_x - 1;
      Int32 min_check_tile_y = center_tile_y - 1;
@@ -427,6 +450,11 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           // loop over tile area
           for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
                for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
+
+                    if ( x == ignore_tile_x && y == ignore_tile_y ) {
+                         continue;
+                    }
+
                     Auto& interactive = interactives.get_from_tile ( x, y );
 
                     if ( !map.get_coordinate_solid ( x, y ) ) {

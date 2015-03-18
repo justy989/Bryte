@@ -33,6 +33,11 @@ Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::knight ], game_memory,
+                                          "test_knight.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( player_sheet, game_memory, "test_hero.bmp" ) ) {
           return false;
      }

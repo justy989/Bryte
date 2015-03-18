@@ -1508,11 +1508,16 @@ Void State::update_enemies ( float time_delta )
           // check if player's attack hits enemy
           if ( player.is_attacking ( ) && !enemy.is_blinking ( ) &&
                player.attack_collides_with ( enemy ) ) {
-               Direction damage_dir = direction_between ( player_center, enemy_center, random );
 
-               damage_character ( enemy, c_attack_damage, damage_dir );
-
-               sound.play_effect ( Sound::Effect::player_damaged );
+               if ( enemy.type == Enemy::Type::knight &&
+                    player.facing == opposite_direction ( enemy.facing ) ) {
+                    Direction damage_dir = direction_between ( player_center, enemy_center, random );
+                    damage_character ( enemy, 0, damage_dir );
+               } else {
+                    Direction damage_dir = direction_between ( player_center, enemy_center, random );
+                    damage_character ( enemy, c_attack_damage, damage_dir );
+                    sound.play_effect ( Sound::Effect::player_damaged );
+               }
           }
      }
 }

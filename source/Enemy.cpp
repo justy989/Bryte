@@ -173,6 +173,30 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           fairy_state.heal_timer.reset ( 0.0f );
           break;
+     case Enemy::Type::knight:
+          health     = 5;
+          max_health = 5;
+
+          dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
+          collision_offset.set ( pixels_to_meters ( 1 ), pixels_to_meters ( 1 ) );
+          collision_dimension.set ( pixels_to_meters ( 15 ), pixels_to_meters ( 15 ) );
+
+          flies = false;
+          knockbackable = false;
+
+          walk_acceleration = 6.0f;
+          deceleration_scale = 3.0f;
+
+          walk_frame_change = 1;
+          walk_frame_count = 3;
+          walk_frame_rate = 15.0f;
+          constant_animation = false;
+
+          draw_facing = true;
+
+          knight_state.decision_timer.reset ( 0.0f );
+          knight_state.reacted_to_player_attack = false;
+          break;
      }
 }
 
@@ -197,6 +221,9 @@ Void Enemy::think ( Enemy* enemies, Int32 max_enemies,
           break;
      case Type::fairy:
           fairy_think ( enemies, max_enemies, player, random, time_delta );
+          break;
+     case Type::knight:
+          knight_think ( player, random, time_delta );
           break;
      }
 
@@ -440,5 +467,46 @@ Void Enemy::fairy_think ( Enemy* enemies, Int32 max_enemies,
      }
 
      fairy_state.heal_timer.tick ( time_delta );
+}
+
+Void Enemy::knight_think ( const Character& player, Random& random, float time_delta )
+{
+     Auto& decision_timer = knight_state.decision_timer;
+     Auto& reacted_to_player_attack = knight_state.reacted_to_player_attack;
+
+     decision_timer.tick ( time_delta );
+
+     if ( collided_last_frame || decision_timer.expired ( ) ) {
+          decision_timer.reset ( static_cast<Real32>( random.generate ( 0, 3 ) ) );
+
+          // Turn or keep moving forward?
+          Auto decision = random.generate ( 0, 2 );
+
+          if ( decision == 1 ) {
+               decision = random.generate ( 0, 2 );
+
+               if ( decision == 0 ) {
+                    walk ( left_turn ( facing ) );
+               } else if ( decision == 1 ) {
+                    walk ( right_turn ( facing ) );
+               }
+          }
+
+          // reset ability to react to the player attacking
+          reacted_to_player_attack = false;
+          return;
+     } else if ( player.is_attacking ( ) && !reacted_to_player_attack ) {
+          // randomly hear player and change movement towards them
+          Auto decision = random.generate ( 0, 2 );
+
+          if ( decision == 1 ) {
+               walk ( direction_between ( position, player.position, random ) );
+          }
+
+          decision_timer.reset ( static_cast<Real32>( random.generate ( 0, 3 ) ) );
+          reacted_to_player_attack = true;
+     }
+
+     walk ( facing );
 }
 

@@ -28,6 +28,40 @@ namespace bryte {
 
           return Direction::count;
      }
+
+     inline Direction left_turn ( Direction dir ) {
+          switch ( dir ) {
+          default:
+               break;
+          case Direction::left:
+               return Direction::down;
+          case Direction::right:
+               return Direction::up;
+          case Direction::up:
+               return Direction::left;
+          case Direction::down:
+               return Direction::right;
+          }
+
+          return Direction::count;
+     }
+
+     inline Direction right_turn ( Direction dir ) {
+          switch ( dir ) {
+          default:
+               break;
+          case Direction::left:
+               return Direction::up;
+          case Direction::right:
+               return Direction::down;
+          case Direction::up:
+               return Direction::right;
+          case Direction::down:
+               return Direction::left;
+          }
+
+          return Direction::count;
+     }
 }
 
 #endif

@@ -160,10 +160,9 @@ Void Character::damage ( Int32 amount, Direction push )
 
      damage_pushed = push;
 
+     cooldown_watch.reset ( 0.0f );
      damage_watch.reset ( Character::c_damage_time );
      state_watch.reset ( Character::c_blink_time );
-     cooldown_watch.reset ( 0.0f );
-
      state = State::blinking;
 
      process_health ( );

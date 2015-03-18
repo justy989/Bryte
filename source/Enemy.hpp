@@ -16,6 +16,7 @@ namespace bryte
                goo,
                skeleton,
                fairy,
+               knight,
                count
           };
 
@@ -75,6 +76,11 @@ namespace bryte
                Stopwatch heal_timer;
           };
 
+          struct KnightState {
+               Stopwatch decision_timer;
+               Bool reacted_to_player_attack;
+          };
+
      public:
 
           Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
@@ -92,6 +98,7 @@ namespace bryte
           Void skeleton_think ( const Character& player, Random& random, float time_delta );
           Void fairy_think ( Enemy* enemies, Int32 max_enemies,
                              const Character& player, Random& random, float time_delta );
+          Void knight_think ( const Character& player, Random& random, float time_delta );
 
      public:
 
@@ -107,6 +114,7 @@ namespace bryte
                GooState goo_state;
                SkeletonState skeleton_state;
                FairyState fairy_state;
+               KnightState knight_state;
           };
 
           Pickup::Type drop;

@@ -197,6 +197,29 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
           knight_state.decision_timer.reset ( 0.0f );
           knight_state.reacted_to_player_attack = false;
           break;
+     case Enemy::Type::spike:
+          health     = 2;
+          max_health = 2;
+
+          dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
+          collision_offset.set ( pixels_to_meters ( 1 ), pixels_to_meters ( 1 ) );
+          collision_dimension.set ( pixels_to_meters ( 15 ), pixels_to_meters ( 15 ) );
+
+          flies = false;
+          knockbackable = false;
+
+          walk_acceleration = 6.0f;
+          deceleration_scale = 3.0f;
+
+          walk_frame_change = 1;
+          walk_frame_count = 3;
+          walk_frame_rate = 15.0f;
+          constant_animation = true;
+
+          draw_facing = true;
+
+          spike_state.move_direction = SpikeState::Direction::count;
+          break;
      }
 }
 
@@ -508,5 +531,32 @@ Void Enemy::knight_think ( const Character& player, Random& random, float time_d
      }
 
      walk ( facing );
+}
+
+Void Enemy::spike_think ( const Character& player, Random& random, float time_delta )
+{
+     Auto& move_direction = spike_state.move_direction;
+
+     switch ( move_direction ) {
+     default:
+          break;
+     case SpikeState::Direction::up_left:
+          walk ( Direction::up );
+          walk ( Direction::left );
+          break;
+     case SpikeState::Direction::up_right:
+          walk ( Direction::up );
+          walk ( Direction::right );
+          break;
+     case SpikeState::Direction::down_left:
+          walk ( Direction::down );
+          walk ( Direction::left );
+          break;
+     case SpikeState::Direction::down_right:
+          walk ( Direction::down );
+          walk ( Direction::right );
+          break;
+     }
+
 }
 

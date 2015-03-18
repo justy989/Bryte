@@ -17,6 +17,7 @@ namespace bryte
                skeleton,
                fairy,
                knight,
+               spike,
                count
           };
 
@@ -81,6 +82,18 @@ namespace bryte
                Bool reacted_to_player_attack;
           };
 
+          struct SpikeState {
+               enum Direction {
+                    up_left,
+                    up_right,
+                    down_left,
+                    down_right,
+                    count
+               };
+
+               Direction move_direction;
+          };
+
      public:
 
           Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
@@ -99,6 +112,7 @@ namespace bryte
           Void fairy_think ( Enemy* enemies, Int32 max_enemies,
                              const Character& player, Random& random, float time_delta );
           Void knight_think ( const Character& player, Random& random, float time_delta );
+          Void spike_think ( const Character& player, Random& random, float time_delta );
 
      public:
 
@@ -115,6 +129,7 @@ namespace bryte
                SkeletonState skeleton_state;
                FairyState fairy_state;
                KnightState knight_state;
+               SpikeState spike_state;
           };
 
           Pickup::Type drop;

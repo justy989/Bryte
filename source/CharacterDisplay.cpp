@@ -38,7 +38,7 @@ Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::knight ], game_memory,
+     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::spike ], game_memory,
                                           "test_spike.bmp" ) ) {
           return false;
      }

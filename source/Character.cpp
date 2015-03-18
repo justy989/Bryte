@@ -439,7 +439,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      Real32 time_remaining = 1.0f;
 
-     collided_last_frame = false;
+     collided_last_frame = Direction::count;
 
      for ( int i = 0; i < 4 && time_remaining > 0.0f; ++i ) {
           Vector wall_normal;
@@ -487,6 +487,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       center.y ( ), change_in_position.y ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { -1.0f, 0.0f };
+                         collided_last_frame = Direction::right;
+
                          if ( !interactives.is_walkable ( x, y ) ) {
                               push_direction = Direction::right;
                          }
@@ -496,6 +498,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       center.y ( ), change_in_position.y ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { 1.0f, 0.0f };
+                         collided_last_frame = Direction::left;
+
                          if ( !interactives.is_walkable ( x, y ) ) {
                               push_direction = Direction::left;
                          }
@@ -505,6 +509,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       center.x ( ), change_in_position.x ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { 0.0f, -1.0f };
+                         collided_last_frame = Direction::up;
+
                          if ( !interactives.is_walkable ( x, y ) ) {
                               push_direction = Direction::up;
                          }
@@ -514,6 +520,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                                       center.x ( ), change_in_position.x ( ),
                                       &closest_time_intersection ) ) {
                          wall_normal = { 0.0f, 1.0f };
+                         collided_last_frame = Direction::down;
 
                          if ( !interactives.is_walkable ( x, y ) ) {
                               push_direction = Direction::down;
@@ -525,11 +532,6 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           // push any interactives we are colliding with
           if ( push_direction != Direction::count && state == Character::State::idle ) {
                state = pushing;
-          }
-
-          // save that we have collided this frame, can be used for ai
-          if ( wall_normal.length_squared ( ) > 0.0f ) {
-               collided_last_frame = true;
           }
 
           position += ( change_in_position * ( closest_time_intersection - 0.01f ) );

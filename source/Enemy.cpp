@@ -213,7 +213,7 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           walk_frame_change = 1;
           walk_frame_count = 3;
-          walk_frame_rate = 15.0f;
+          walk_frame_rate = 0.3f;
           constant_animation = true;
 
           draw_facing = true;
@@ -247,6 +247,9 @@ Void Enemy::think ( Enemy* enemies, Int32 max_enemies,
           break;
      case Type::knight:
           knight_think ( player, random, time_delta );
+          break;
+     case Type::spike:
+          spike_think ( player, random, time_delta );
           break;
      }
 
@@ -309,7 +312,7 @@ Void Enemy::rat_think ( const Character& player, Random& random, float time_delt
                moving = true;
           }
      } else {
-          if ( collided_last_frame ) {
+          if ( collided_last_frame != Direction::count ) {
                moving = false;
                timer.reset ( 0.0f );
           } else {
@@ -335,7 +338,7 @@ Void Enemy::bat_think ( const Character& player, Random& random, float time_delt
      timer.tick ( time_delta );
 
      if ( dashing ) {
-          if ( collided_last_frame ) {
+          if ( collided_last_frame != Direction::count ) {
                // TODO: pathfinding so we can always have the bat find you?
                dashing = false;
                walk_acceleration = BatState::c_walk_speed;
@@ -354,7 +357,7 @@ Void Enemy::bat_think ( const Character& player, Random& random, float time_delt
           }
      }
 
-     if ( timer.expired ( ) || collided_last_frame ) {
+     if ( timer.expired ( ) || collided_last_frame != Direction::count ) {
           move_direction = static_cast<BatState::Direction>( random.generate ( 0, BatState::Direction::count + 1 ) );
           timer.reset ( static_cast<Real32>( random.generate ( 1, 2 ) ) );
      }
@@ -399,7 +402,7 @@ Void Enemy::goo_think ( const Character& player, Random& random, float time_delt
      default:
           break;
      case GooState::State::walking:
-          if ( collided_last_frame ) {
+          if ( collided_last_frame != Direction::count ) {
                state = GooState::State::picking_direction;
           } else {
                walk ( facing );
@@ -451,7 +454,7 @@ Void Enemy::skeleton_think ( const Character& player, Random& random, float time
 
           walk ( facing );
 
-          if ( wander_timer.expired ( ) || collided_last_frame ) {
+          if ( wander_timer.expired ( ) || collided_last_frame != Direction::count ) {
                change_facing ( static_cast<Direction>( random.generate ( 0, Direction::count ) ) );
                wander_timer.reset ( static_cast<Real32>( random.generate ( 0, 3 ) ) );
           }
@@ -499,7 +502,7 @@ Void Enemy::knight_think ( const Character& player, Random& random, float time_d
 
      decision_timer.tick ( time_delta );
 
-     if ( collided_last_frame || decision_timer.expired ( ) ) {
+     if ( collided_last_frame != Direction::count || decision_timer.expired ( ) ) {
           decision_timer.reset ( static_cast<Real32>( random.generate ( 0, 3 ) ) );
 
           // Turn or keep moving forward?
@@ -537,6 +540,45 @@ Void Enemy::spike_think ( const Character& player, Random& random, float time_de
 {
      Auto& move_direction = spike_state.move_direction;
 
+     if ( move_direction == SpikeState::Direction::count ) {
+          move_direction = static_cast<SpikeState::Direction>( random.generate ( 0, 5 ) );
+     }
+
+     // handle collisions with environment
+     switch ( move_direction ) {
+     default:
+          break;
+     case SpikeState::Direction::up_left:
+          if ( collided_last_frame == Direction::left ) {
+               move_direction = SpikeState::Direction::up_right;
+          } else if ( collided_last_frame == Direction::up ) {
+               move_direction = SpikeState::Direction::down_left;
+          }
+          break;
+     case SpikeState::Direction::up_right:
+          if ( collided_last_frame == Direction::right ) {
+               move_direction = SpikeState::Direction::up_left;
+          } else if ( collided_last_frame == Direction::up ) {
+               move_direction = SpikeState::Direction::down_left;
+          }
+          break;
+     case SpikeState::Direction::down_left:
+          if ( collided_last_frame == Direction::left ) {
+               move_direction = SpikeState::Direction::down_right;
+          } else if ( collided_last_frame == Direction::down ) {
+               move_direction = SpikeState::Direction::up_left;
+          }
+          break;
+     case SpikeState::Direction::down_right:
+          if ( collided_last_frame == Direction::right ) {
+               move_direction = SpikeState::Direction::down_left;
+          } else if ( collided_last_frame == Direction::down ) {
+               move_direction = SpikeState::Direction::up_right;
+          }
+          break;
+     }
+
+     // move in the resulting direction
      switch ( move_direction ) {
      default:
           break;
@@ -557,6 +599,5 @@ Void Enemy::spike_think ( const Character& player, Random& random, float time_de
           walk ( Direction::right );
           break;
      }
-
 }
 

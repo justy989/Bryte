@@ -112,7 +112,7 @@ namespace bryte
 
           Real32 walk_acceleration;
 
-          Bool collided_last_frame;
+          Direction collided_last_frame;
 
           Int8 walk_frame;
           Int8 walk_frame_change;

@@ -310,6 +310,7 @@ Bool Interactives::check_portal_walkability ( Int32 start_tile_x, Int32 start_ti
           return is_walkable ( dest_tile_x, dest_tile_y );
      }
 
+     // unreachable
      return true;
 }
 
@@ -1087,7 +1088,11 @@ Direction Portal::push ( Direction direction, Interactives& interactives )
      // just pass along the push to the target
      Auto& interactive = interactives.get_from_tile ( destination_x, destination_y );
 
-     return interactive.push ( direction, interactives );
+     if ( interactive.type ) {
+          return interactive.push ( direction, interactives );
+     }
+
+     return Direction::count;
 }
 
 Bool Portal::activate ( )

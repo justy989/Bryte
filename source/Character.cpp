@@ -432,16 +432,20 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      Int32 max_check_tile_x = center_tile_x + 1;
      Int32 max_check_tile_y = center_tile_y + 1;
 
-     CLAMP ( min_check_tile_x, 0, map.width  ( ) - 1 );
-     CLAMP ( min_check_tile_y, 0, map.height ( ) - 1 );
-     CLAMP ( max_check_tile_x, 0, map.width  ( ) - 1 );
-     CLAMP ( max_check_tile_y, 0, map.height ( ) - 1 );
+     // Note: Bounds are outsize the map, we treat the outsides of the map as solid so that enemies
+     //       collided against the edges if they are open
+     CLAMP ( min_check_tile_x, -1, map.width  ( ) );
+     CLAMP ( min_check_tile_y, -1, map.height ( ) );
+     CLAMP ( max_check_tile_x, -1, map.width  ( ) );
+     CLAMP ( max_check_tile_y, -1, map.height ( ) );
 
      Real32 time_remaining = 1.0f;
 
      collided_last_frame = Direction::count;
 
      for ( int i = 0; i < 4 && time_remaining > 0.0f; ++i ) {
+          // Note: When I added code to exit early when we collided against a wall,
+          //       the player could clip through walls at a certain point on each tile
           Vector wall_normal;
           Real32 closest_time_intersection = time_remaining;
           Direction push_direction = Direction::count;
@@ -454,10 +458,11 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          continue;
                     }
 
-                    Auto& interactive = interactives.get_from_tile ( x, y );
-
-                    if ( !map.get_coordinate_solid ( x, y ) ) {
+                    if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                         !map.get_coordinate_solid ( x, y ) ) {
                          if ( interactives.is_walkable ( x, y ) ) {
+                              Auto& interactive = interactives.get_from_tile ( x, y );
+
                               if ( interactive.type == Interactive::Type::exit ) {
                                    if ( !collides_with_exits ) {
                                         continue;
@@ -489,7 +494,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { -1.0f, 0.0f };
                          collided_last_frame = Direction::right;
 
-                         if ( !interactives.is_walkable ( x, y ) ) {
+                         if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                              !interactives.is_walkable ( x, y ) ) {
                               push_direction = Direction::right;
                          }
                     }
@@ -500,7 +506,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { 1.0f, 0.0f };
                          collided_last_frame = Direction::left;
 
-                         if ( !interactives.is_walkable ( x, y ) ) {
+                         if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                              !interactives.is_walkable ( x, y ) ) {
                               push_direction = Direction::left;
                          }
                     }
@@ -511,7 +518,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { 0.0f, -1.0f };
                          collided_last_frame = Direction::up;
 
-                         if ( !interactives.is_walkable ( x, y ) ) {
+                         if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                              !interactives.is_walkable ( x, y ) ) {
                               push_direction = Direction::up;
                          }
                     }
@@ -522,11 +530,12 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { 0.0f, 1.0f };
                          collided_last_frame = Direction::down;
 
-                         if ( !interactives.is_walkable ( x, y ) ) {
+                         if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                              !interactives.is_walkable ( x, y ) ) {
                               push_direction = Direction::down;
                          }
                     }
-              }
+               }
           }
 
           // push any interactives we are colliding with

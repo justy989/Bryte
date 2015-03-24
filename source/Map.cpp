@@ -17,12 +17,6 @@ Void Map::Fixture::set ( Uint8 x, Uint8 y, Uint8 id )
 const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimension_in_pixels /
                                                                     pixels_per_meter );
 
-// NOTE: Hmmm, this may want to be explained, its 10:47 pm and I just looked at this and I 
-//       don't know what it means
-const Uint8 Map::c_unique_lamps_light [ Map::c_unique_lamp_count ] = {
-     255, 255 - ( 2 * c_light_decay ), 255 - c_light_decay, 0
-};
-
 Bool Map::load_master_list ( const Char8* filepath )
 {
      std::ifstream file ( filepath );
@@ -56,6 +50,10 @@ Void Map::initialize ( Uint8 width, Uint8 height )
 {
      m_width  = width;
      m_height = height;
+
+     m_light_width = m_width * c_tile_dimension_in_pixels;
+     m_light_height = m_height * c_tile_dimension_in_pixels;
+     m_light_pixels = m_light_width * m_light_height;
 
      // clear all tiles
      for ( Uint32 y = 0; y < height; ++y ) {
@@ -149,7 +147,21 @@ Bool Map::get_coordinate_invisible ( Int32 tile_x, Int32 tile_y ) const
 
 Uint8 Map::get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const
 {
-     return m_light [ coordinate_to_tile_index ( tile_x, tile_y ) ];
+     ASSERT ( tile_x >= 0 && tile_x < m_width );
+     ASSERT ( tile_y >= 0 && tile_y < m_height );
+
+     Int32 pixel_x = tile_x * c_tile_dimension_in_pixels;
+     Int32 pixel_y = tile_y * c_tile_dimension_in_pixels;
+
+     return m_light [ pixel_y * m_light_width + pixel_x ];
+}
+
+Uint8 Map::get_pixel_light ( Int32 x, Int32 y ) const
+{
+     ASSERT ( x >= 0 && x < m_light_width );
+     ASSERT ( y >= 0 && y < m_light_height );
+
+     return m_light [ y * m_light_width + x ];
 }
 
 Void Map::set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value )
@@ -211,35 +223,34 @@ Void Map::subtract_from_base_light ( Uint8 delta )
 
 Void Map::illuminate ( Int32 x, Int32 y, Uint8 value )
 {
-     Int32 tile_radius = ( static_cast<Int32>( value ) - static_cast<Int32>( m_base_light_value ) ) /
-                           c_light_decay;
+     Real32 radius = ( static_cast<Real32>( value ) - static_cast<Real32>( m_base_light_value ) ) / 2;
 
-     if ( tile_radius <= 0 ) {
+     if ( radius <= 0.0f ) {
           return;
      }
 
-     Int32 tile_x      = x / c_tile_dimension_in_pixels;
-     Int32 tile_y      = y / c_tile_dimension_in_pixels;
-     Int32 min_tile_x  = tile_x - tile_radius;
-     Int32 max_tile_x  = tile_x + tile_radius;
-     Int32 min_tile_y  = tile_y - tile_radius;
-     Int32 max_tile_y  = tile_y + tile_radius;
+     Int32 min_x  = x - static_cast<Int32>( radius );
+     Int32 max_x  = x + static_cast<Int32>( radius );
+     Int32 min_y  = y - static_cast<Int32>( radius );
+     Int32 max_y  = y + static_cast<Int32>( radius );
 
-     CLAMP ( min_tile_x, 0, m_width - 1 );
-     CLAMP ( max_tile_x, 0, m_width - 1 );
-     CLAMP ( min_tile_y, 0, m_height - 1 );
-     CLAMP ( max_tile_y, 0, m_height - 1 );
+     CLAMP ( min_x, 0, m_light_width - 1 );
+     CLAMP ( max_x, 0, m_light_width - 1 );
+     CLAMP ( min_y, 0, m_light_height - 1 );
+     CLAMP ( max_y, 0, m_light_height - 1 );
 
-     for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
-          for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
-               Int32 manhattan_distance = abs ( tile_x - x ) + abs ( tile_y - y );
+     for ( Int32 j = min_y; j <= max_y; ++j ) {
+          for ( Int32 i = min_x; i <= max_x; ++i ) {
+               Real32 diff_x = static_cast<Real32>( x - i );
+               Real32 diff_y = static_cast<Real32>( y - j );
+               Real32 distance = sqrt ( diff_x * diff_x + diff_y * diff_y );
 
-               if ( manhattan_distance > tile_radius ) {
+               if ( distance > radius ) {
                     continue;
                }
 
-               Uint8& light_value     = m_light [ coordinate_to_tile_index ( x, y ) ];
-               Uint8  new_light_value = value - ( manhattan_distance * c_light_decay );
+               Uint8& light_value     = m_light [ j * m_light_width + i ];
+               Uint8  new_light_value = value - static_cast<Uint8>( distance * 2.0f );
 
                if ( light_value < new_light_value ) {
                     light_value = new_light_value;
@@ -250,17 +261,15 @@ Void Map::illuminate ( Int32 x, Int32 y, Uint8 value )
 
 Void Map::reset_light ( )
 {
-     for ( Int32 y = 0; y < m_height; ++y ) {
-          for ( Int32 x = 0; x < m_width; ++x ) {
-               m_light [ coordinate_to_tile_index ( x, y ) ] = m_base_light_value;
-          }
+     for ( Int32 i = 0; i < m_light_pixels; ++i ) {
+          m_light [ i ] = m_base_light_value;
      }
 
      for ( Uint8 i = 0; i < m_lamp_count; ++i ) {
           Auto& lamp = m_lamps [ i ];
-          illuminate ( lamp.location.x * c_tile_dimension_in_pixels,
-                       lamp.location.y * c_tile_dimension_in_pixels,
-                       c_unique_lamps_light [ lamp.id ] );
+          illuminate ( lamp.location.x * c_tile_dimension_in_pixels + c_tile_dimension_in_pixels / 2,
+                       lamp.location.y * c_tile_dimension_in_pixels + c_tile_dimension_in_pixels / 2,
+                       c_lamp_light );
      }
 }
 
@@ -446,6 +455,10 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
           LOG_ERROR ( "Invalid map dimensions: %d, %d\n", m_width, m_height );
           return false;
      }
+
+     m_light_width = m_width * c_tile_dimension_in_pixels;
+     m_light_height = m_height * c_tile_dimension_in_pixels;
+     m_light_pixels = m_light_width * m_light_height;
 
      for ( Int32 y = 0; y < m_height; ++y ) {
           for ( Int32 x = 0; x < m_width; ++x ) {

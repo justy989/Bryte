@@ -31,14 +31,14 @@ namespace bryte
 
           static const Uint32 c_max_tiles = 1024;
 
-          static const Uint32 c_max_light = c_max_tiles;
-          static const Int32  c_light_decay = 32;
+          static const Uint32 c_max_light = c_max_tiles * c_tile_dimension_in_pixels * c_tile_dimension_in_pixels;
 
           static const Uint32 c_max_decors = 64;
 
           static const Uint32 c_max_lamps = 32;
           static const Uint32 c_unique_lamp_count = 4;
           static const Uint8  c_unique_lamps_light [ c_unique_lamp_count ];
+          static const Uint8  c_lamp_light = 255;
 
           static const Uint32 c_max_enemy_spawns = 32;
 
@@ -131,6 +131,7 @@ namespace bryte
           Bool  get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const;
           Bool  get_coordinate_invisible ( Int32 tile_x, Int32 tile_y ) const;
           Uint8 get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const;
+          Uint8 get_pixel_light ( Int32 tile_x, Int32 tile_y ) const;
 
           Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
           Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
@@ -170,6 +171,9 @@ namespace bryte
 
           inline Int32 width  ( ) const;
           inline Int32 height ( ) const;
+
+          inline Int32 light_width  ( ) const;
+          inline Int32 light_height ( ) const;
 
           inline Uint8 decor_count       ( ) const;
           inline Uint8 lamp_count        ( ) const;
@@ -233,6 +237,9 @@ namespace bryte
 
           Uint8          m_base_light_value;
           Uint8          m_light [ c_max_light ];
+          Uint8          m_light_width;
+          Uint8          m_light_height;
+          Int32          m_light_pixels;
 
           Fixture        m_decors [ c_max_decors ];
           Uint8          m_decor_count;
@@ -270,6 +277,16 @@ namespace bryte
      inline Int32 Map::height ( ) const
      {
           return m_height;
+     }
+
+     inline Int32 Map::light_width ( ) const
+     {
+          return m_light_width;
+     }
+
+     inline Int32 Map::light_height ( ) const
+     {
+          return m_light_height;
      }
 
      inline Uint8 Map::lamp_count ( ) const

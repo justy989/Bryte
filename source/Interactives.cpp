@@ -546,6 +546,21 @@ Void Interactive::character_enter ( Direction from, Interactives& interactives, 
                character.on_ice = true;
           }
           break;
+     case UnderneathInteractive::Type::portal:
+          if ( underneath.underneath_portal.on &&
+               from == opposite_direction ( underneath.underneath_portal.side ) ) {
+               Int32 dest_tile_x = underneath.underneath_portal.destination_x;
+               Int32 dest_tile_y = underneath.underneath_portal.destination_y;
+               if ( !interactives.get_portal_destination ( &dest_tile_x, &dest_tile_y,
+                                                           &character.facing, false ) ) {
+                    break;
+               }
+               Vector dst = Map::coordinates_to_vector ( dest_tile_x, dest_tile_y );
+               dst += Vector { Map::c_tile_dimension_in_meters * 0.5f,
+                               Map::c_tile_dimension_in_meters * 0.5f };
+               character.set_collision_center ( dst.x ( ), dst.y ( ) );
+          }
+          break;
      }
 }
 
@@ -575,13 +590,15 @@ Void Interactive::character_leave ( Direction to, Interactives& interactives, Ch
           character.on_ice = false;
           break;
      case UnderneathInteractive::Type::portal:
-          printf ( "character left portal, to: %d, facing: %d\n",
-                   to, underneath.underneath_portal.side );
           if ( underneath.underneath_portal.on &&
                to == underneath.underneath_portal.side ) {
-               printf ( "We made it to the thing?!\n" );
-               Vector dst = Map::coordinates_to_vector ( underneath.underneath_portal.destination_x,
-                                                         underneath.underneath_portal.destination_y );
+               Int32 dest_tile_x = underneath.underneath_portal.destination_x;
+               Int32 dest_tile_y = underneath.underneath_portal.destination_y;
+               if ( !interactives.get_portal_destination ( &dest_tile_x, &dest_tile_y,
+                                                           &character.facing, true ) ) {
+                    break;
+               }
+               Vector dst = Map::coordinates_to_vector ( dest_tile_x, dest_tile_y );
                dst += Vector { Map::c_tile_dimension_in_meters * 0.5f,
                                Map::c_tile_dimension_in_meters * 0.5f };
                character.set_collision_center ( dst.x ( ), dst.y ( ) );
@@ -625,6 +642,43 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
                underneath.underneath_hole.filled = true;
           }
           break;
+     case UnderneathInteractive::portal:
+     {
+          if ( underneath.underneath_portal.on &&
+               underneath.underneath_portal.side == opposite_direction ( from ) ) {
+               Int32 dest_tile_x = underneath.underneath_portal.destination_x;
+               Int32 dest_tile_y = underneath.underneath_portal.destination_y;
+               Direction new_dir;
+
+               if ( !interactives.get_portal_destination ( &dest_tile_x, &dest_tile_y,
+                                                           &new_dir, false ) ) {
+                    break;
+               }
+
+               Auto& dest_interactive = interactives.get_from_tile ( dest_tile_x, dest_tile_y );
+
+               // only move it if something isn't already there
+               if ( dest_interactive.type == Interactive::Type::none ) {
+                    // copy just the Interactive portion, not the underneath portion, and only
+                    // support types that can move
+                    switch ( type ) {
+                    default:
+                         return;
+                    case Type::pushable_block:
+                         dest_interactive.type = type;
+                         dest_interactive.interactive_pushable_block = interactive_pushable_block;
+                         break;
+                    case Type::pushable_torch:
+                         dest_interactive.type = type;
+                         dest_interactive.interactive_pushable_torch = interactive_pushable_torch;
+                         break;
+                    }
+
+                    // clear what is on us
+                    type = Interactive::Type::none;
+               }
+          }
+     } break;
      }
 }
 
@@ -718,6 +772,19 @@ Void Interactive::projectile_enter ( Direction from, Interactives& interactives,
           break;
      }
 
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::portal:
+     {
+          if ( underneath.underneath_portal.on &&
+               underneath.underneath_portal.side == opposite_direction ( from ) ) {
+               Vector dst = Map::coordinates_to_vector ( underneath.underneath_portal.destination_x,
+                                                         underneath.underneath_portal.destination_y );
+               projectile.position = dst;
+          }
+     } break;
+     }
 }
 
 Void Interactive::projectile_leave ( Direction to, Interactives& interactives, Projectile& projectile )
@@ -1115,6 +1182,44 @@ Direction Portal::push ( Direction direction, Interactives& interactives )
 Bool Portal::activate ( )
 {
      on = !on;
+
+     return true;
+}
+
+Vector Interactives::get_portal_destination ( Uint8 tile_x, Uint8 tile_y, Direction* result_dir )
+{
+     Auto& interactive = get_from_tile ( tile_x, tile_y );
+
+     Int32 dest_tile_x = interactive.underneath.underneath_portal.destination_x;
+     Int32 dest_tile_y = interactive.underneath.underneath_portal.destination_y;
+
+     if ( !interactives.get_portal_destination ( &dest_tile_x, &dest_tile_y,
+                                                 &result_dir, true ) ) {
+          break;
+     }
+
+     Vector dst = Map::coordinates_to_vector ( dest_tile_x, dest_tile_y );
+
+     return dst;
+}
+
+Bool Interactives::get_portal_destination_info ( Int32* tile_x, Int32* tile_y,
+                                                 Direction* result_dir, Bool inside_tile )
+{
+     Auto& interactive = get_from_tile ( *tile_x, *tile_y );
+
+     if ( interactive.underneath.type != UnderneathInteractive::Type::portal ) {
+          return false;
+     }
+
+     Auto& portal = interactive.underneath.underneath_portal;
+
+     if ( inside_tile ) {
+          move_location ( *tile_x, *tile_y, portal.side );
+          *result_dir = portal.side;
+     } else {
+          *result_dir = portal.side;
+     }
 
      return true;
 }

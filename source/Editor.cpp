@@ -709,7 +709,7 @@ Void State::mouse_scrolled ( Int32 scroll )
           break;
      case Mode::portal:
           current_portal_side += scroll;
-          current_border %= 4;
+          current_portal_side %= 4;
           break;
      }
 }

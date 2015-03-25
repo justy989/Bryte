@@ -285,6 +285,10 @@ namespace bryte
 
           Void spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear = false );
 
+          Vector get_portal_destination ( Uint8 tile_x, Uint8 tile_y, Direction* result_dir );
+          Bool get_portal_destination_info ( Int32* tile_x, Int32* tile_y,
+                                             Direction* result_dir, Bool inside_tile );
+
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
           const Interactive& cget_from_tile ( Int32 tile_x, Int32 tile_y ) const;
 

@@ -181,4 +181,24 @@ Vector vector_from_direction ( bryte::Direction dir )
      return Vector { 0.0f, 0.0f };
 }
 
+Void move_location ( Int32& tile_x, Int32& tile_y, bryte::Direction move_dir )
+{
+     switch ( move_dir ) {
+     default:
+          break;
+     case bryte::Direction::left:
+          tile_x--;
+          break;
+     case bryte::Direction::up:
+          tile_y++;
+          break;
+     case bryte::Direction::right:
+          tile_x++;
+          break;
+     case bryte::Direction::down:
+          tile_y--;
+          break;
+     }
+}
+
 

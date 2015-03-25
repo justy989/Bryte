@@ -108,5 +108,7 @@ Void render_rect_outline ( SDL_Surface* dest_surface, const SDL_Rect& rect, Uint
 
 Vector vector_from_direction ( bryte::Direction dir );
 
+Void move_location ( Int32& tile_x, Int32& tile_y, bryte::Direction move_dir );
+
 #endif
 

@@ -158,6 +158,7 @@ namespace bryte
           Direction push ( Direction direction, Interactives& interactives );
 
           Bool on;
+          Direction side;
 
           Uint8 destination_x;
           Uint8 destination_y;
@@ -245,6 +246,7 @@ namespace bryte
           Void      interactive_enter ( Direction from, Interactives& interactives );
           Void      interactive_leave ( Direction to, Interactives& interactives );
           Void      projectile_enter  ( Direction from, Interactives& interactives, Projectile& projectile );
+          Void      projectile_leave   ( Direction to, Interactives& interactives, Projectile& projectile );
 
           Type type;
 
@@ -276,6 +278,7 @@ namespace bryte
           Void character_enter ( Int32 tile_x, Int32 tile_y, Character& character );
           Void character_leave ( Int32 tile_x, Int32 tile_y, Character& character );
           Void projectile_enter ( Int32 tile_x, Int32 tile_y, Projectile& projectile );
+          Void projectile_leave ( Int32 tile_x, Int32 tile_y, Projectile& projectile );
 
           Bool is_walkable ( Int32 tile_x, Int32 tile_y ) const;
           Bool is_flyable ( Int32 tile_x, Int32 tile_y ) const;

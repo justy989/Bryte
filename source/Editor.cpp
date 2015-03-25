@@ -256,6 +256,7 @@ Void State::mouse_button_left_clicked ( )
                interactive.underneath.type = UnderneathInteractive::Type::portal;
                interactive.underneath.reset ( );
                interactive.underneath.underneath_portal.on = static_cast<Bool>( current_portal );
+               interactive.underneath.underneath_portal.side = static_cast<Direction>( current_portal_side );
           } else {
                interactive.underneath.type = UnderneathInteractive::Type::none;
           }
@@ -705,6 +706,10 @@ Void State::mouse_scrolled ( Int32 scroll )
                          !interactive.underneath.underneath_ice_detector.detected;
                }
           }
+          break;
+     case Mode::portal:
+          current_portal_side += scroll;
+          current_border %= 4;
           break;
      }
 }

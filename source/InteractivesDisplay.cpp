@@ -31,6 +31,10 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( portal_sheet, game_memory, "test_portal.bmp" ) ) {
+          return false;
+     }
+
      return true;
 }
 
@@ -42,6 +46,7 @@ Void InteractivesDisplay::unload_surfaces ( )
      FREE_SURFACE ( ice_detector_sheet );
      FREE_SURFACE ( exit_sheet );
      FREE_SURFACE ( torch_element_sheet );
+     FREE_SURFACE ( portal_sheet );
 }
 
 Void InteractivesDisplay::clear ( )
@@ -172,7 +177,10 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           clip_rect.x = underneath.underneath_hole.filled * Map::c_tile_dimension_in_pixels;
           break;
      case UnderneathInteractive::Type::portal:
-          clip_rect.x = static_cast<Int32>( underneath.underneath_portal.on ) *
+          underneath_sheet = portal_sheet;
+          clip_rect.y = static_cast<Int32>( !underneath.underneath_portal.on ) *
+                             Map::c_tile_dimension_in_pixels;
+          clip_rect.x = static_cast<Int32>( underneath.underneath_portal.side ) *
                              Map::c_tile_dimension_in_pixels;
           break;
      }

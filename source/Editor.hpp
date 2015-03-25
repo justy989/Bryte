@@ -137,6 +137,7 @@ namespace editor
           Uint8 current_turret_automatic;
           Uint8 current_moving_walkway;
           Uint8 current_portal;
+          Uint8 current_portal_side;
           Uint8 current_border;
           Uint8 current_upgrade;
 

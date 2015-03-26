@@ -287,8 +287,6 @@ namespace bryte
 
           Bool get_portal_destination ( const Portal& portal, Bool inside_tile,
                                         Direction* result_dir, Vector* result_pos );
-          Bool get_portal_destination_info ( Int32* tile_x, Int32* tile_y,
-                                             Direction* result_dir, Bool inside_tile );
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
           const Interactive& cget_from_tile ( Int32 tile_x, Int32 tile_y ) const;

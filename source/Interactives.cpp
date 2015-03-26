@@ -116,7 +116,8 @@ Void Interactives::contribute_light ( Map& map )
 
 Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
-     Interactive& i = get_destination_interactive ( tile_x, tile_y, &tile_x, &tile_y );
+     Interactive& i = get_destination_interactive ( tile_x, tile_y, &tile_x, &tile_y,
+                                                    dir );
 
      Direction result_dir = i.push ( dir, *this );
 
@@ -144,7 +145,7 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
 
      Interactive& dest_i = get_from_tile ( dest_x, dest_y );
 
-     if ( ( !is_walkable ( dest_x, dest_y ) &&
+     if ( ( !is_walkable ( dest_x, dest_y, dir ) &&
             dest_i.underneath.type != UnderneathInteractive::Type::hole ) ||
           map.get_coordinate_solid ( dest_x, dest_y ) ) {
           free_to_move = false;
@@ -296,62 +297,40 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
 }
 
 Bool Interactives::check_portal_walkability ( Int32 start_tile_x, Int32 start_tile_y,
-                                              Int32 dest_tile_x, Int32 dest_tile_y ) const
+                                              Int32 dest_tile_x, Int32 dest_tile_y,
+                                              Direction dir ) const
 {
      const Auto& interactive = cget_from_tile ( dest_tile_x, dest_tile_y );
 
-     if ( interactive.underneath.type == UnderneathInteractive::Type::portal ) {
+     if ( interactive.underneath.type == UnderneathInteractive::Type::portal &&
+          dir == opposite_direction ( interactive.underneath.underneath_portal.side ) ) {
 
-          // quit early if something is on top of the portal
           if ( interactive.type ) {
                return false;
           }
 
-          Auto& portal = interactive.underneath.underneath_portal;
-
-          // If we loop back around to our starting point, then we are walkable
-          if ( portal.destination_x == start_tile_x && portal.destination_y == start_tile_y ) {
-               return true;
-          }
-
-          // NOTE: recursively search portals for a destination that is not a portal
-          return check_portal_walkability ( start_tile_x, start_tile_y,
-                                            portal.destination_x, portal.destination_y );
-     } else {
-          return is_walkable ( dest_tile_x, dest_tile_y );
+          return true;
      }
 
-     // unreachable
-     return true;
+     return is_walkable ( dest_tile_x, dest_tile_y, dir );
 }
 
 Interactive& Interactives::get_destination_interactive ( Int32 start_tile_x, Int32 start_tile_y,
-                                                         Int32* dest_tile_x, Int32* dest_tile_y )
+                                                         Int32* dest_tile_x, Int32* dest_tile_y,
+                                                         Direction dir )
 {
      Auto& interactive = get_from_tile ( *dest_tile_x, *dest_tile_y );
 
-     // NOTE: This method is very similar to check_portal_walkability
-     if ( interactive.underneath.type == UnderneathInteractive::Type::portal ) {
-          if ( interactive.type ) {
-               return interactive;
-          }
-
-          Auto& portal = interactive.underneath.underneath_portal;
-          if ( portal.destination_x == start_tile_x && portal.destination_y == start_tile_y ) {
-               return interactive;
-          }
-
-          *dest_tile_x = portal.destination_x;
-          *dest_tile_y = portal.destination_y;
-
-          return get_destination_interactive ( start_tile_x, start_tile_y,
-                                               dest_tile_x, dest_tile_y );
+     if ( interactive.underneath.type == UnderneathInteractive::Type::portal &&
+          dir == opposite_direction ( interactive.underneath.underneath_portal.side ) ) {
+          return interactive;
      }
 
      return interactive;
 }
 
-Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y ) const
+Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y,
+                                 Direction dir ) const
 {
      const Auto& interactive = cget_from_tile ( tile_x, tile_y );
 
@@ -372,8 +351,10 @@ Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y ) const
      {
           Auto& portal = interactive.underneath.underneath_portal;
 
-          if ( !check_portal_walkability ( tile_x, tile_y,
-                                           portal.destination_x, portal.destination_y ) ) {
+          if ( portal.side == opposite_direction ( dir ) &&
+               !check_portal_walkability ( tile_x, tile_y,
+                                           portal.destination_x, portal.destination_y,
+                                           dir ) ) {
                return false;
           }
      } break;

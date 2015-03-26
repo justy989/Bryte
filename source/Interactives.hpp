@@ -280,7 +280,7 @@ namespace bryte
           Void projectile_enter ( Int32 tile_x, Int32 tile_y, Projectile& projectile );
           Void projectile_leave ( Int32 tile_x, Int32 tile_y, Projectile& projectile );
 
-          Bool is_walkable ( Int32 tile_x, Int32 tile_y ) const;
+          Bool is_walkable ( Int32 tile_x, Int32 tile_y, Direction dir ) const;
           Bool is_flyable ( Int32 tile_x, Int32 tile_y ) const;
 
           Void spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear = false );
@@ -297,10 +297,12 @@ namespace bryte
      private:
 
           Bool check_portal_walkability ( Int32 start_tile_x, Int32 start_tile_y,
-                                          Int32 dest_tile_x, Int32 dest_tile_y ) const;
+                                          Int32 dest_tile_x, Int32 dest_tile_y,
+                                          Direction dir ) const;
 
           Interactive& get_destination_interactive ( Int32 start_tile_x, Int32 start_tile_y,
-                                                     Int32* dest_tile_x, Int32* dest_tile_y );
+                                                     Int32* dest_tile_x, Int32* dest_tile_y,
+                                                     Direction dir );
 
      public:
 

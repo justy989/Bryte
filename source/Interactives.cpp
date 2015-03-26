@@ -150,7 +150,11 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           free_to_move = false;
      }
 
-     if ( free_to_move ) {
+     if ( i.underneath.type == UnderneathInteractive::Type::portal &&
+          i.underneath.underneath_portal.on &&
+          i.underneath.underneath_portal.side == dir ) {
+          i.interactive_leave ( result_dir, *this );
+     } else if ( free_to_move ) {
           // save underneath the dest
           UnderneathInteractive save_underneath = dest_i.underneath;
 
@@ -640,16 +644,16 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
      {
           if ( underneath.underneath_portal.on &&
                underneath.underneath_portal.side == opposite_direction ( from ) ) {
-               Int32 dest_tile_x = underneath.underneath_portal.destination_x;
-               Int32 dest_tile_y = underneath.underneath_portal.destination_y;
-               //Direction new_dir;
+               Vector new_pos;
+               Direction new_dir;
 
-               //if ( !interactives.get_portal_destination_info ( &dest_tile_x, &dest_tile_y,
-               //                                                 &new_dir, false ) ) {
-               //     break;
-               //}
+               if ( !interactives.get_portal_destination ( underneath.underneath_portal, false,
+                                                           &new_dir, &new_pos ) ) {
+                    break;
+               }
 
-               Auto& dest_interactive = interactives.get_from_tile ( dest_tile_x, dest_tile_y );
+               Map::Coordinates dest_tile = Map::vector_to_coordinates ( new_pos );
+               Auto& dest_interactive = interactives.get_from_tile ( dest_tile.x, dest_tile.y );
 
                // only move it if something isn't already there
                if ( dest_interactive.type == Interactive::Type::none ) {
@@ -702,10 +706,16 @@ Void Interactive::interactive_leave ( Direction to, Interactives& interactives )
      {
           if ( underneath.underneath_portal.on &&
                underneath.underneath_portal.side == to ) {
-               Int32 dest_x = underneath.underneath_portal.destination_x;
-               Int32 dest_y = underneath.underneath_portal.destination_y;
+               Vector new_pos;
+               Direction new_dir;
 
-               Auto& dest_interactive = interactives.get_from_tile ( dest_x, dest_y );
+               if ( !interactives.get_portal_destination ( underneath.underneath_portal, true,
+                                                           &new_dir, &new_pos ) ) {
+                    break;
+               }
+
+               Map::Coordinates dest_tile = Map::vector_to_coordinates ( new_pos );
+               Auto& dest_interactive = interactives.get_from_tile ( dest_tile.x, dest_tile.y );
 
                // only move it if something isn't already there
                if ( dest_interactive.type == Interactive::Type::none ) {

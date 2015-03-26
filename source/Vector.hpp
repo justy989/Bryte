@@ -27,6 +27,9 @@ public:
      inline Real32 distance_to ( const Vector& v ) const;
      inline Void normalize ( );
 
+     inline Bool operator== ( const Vector& v ) const;
+     inline Bool operator!= ( const Vector& v ) const;
+
      inline Void zero ( );
 
      inline Void set ( Real32 x, Real32 y );
@@ -130,6 +133,40 @@ inline Void Vector::normalize ( )
           m_x /= len;
           m_y /= len;
      }
+}
+
+inline Bool Vector::operator== ( const Vector& v ) const
+{
+     Real32 x_diff = m_x - v.m_x;
+
+     if ( fabs ( x_diff ) > 0.001f ) {
+          return false;
+     }
+
+     Real32 y_diff = m_y - v.m_y;
+
+     if ( fabs ( y_diff ) > 0.001f ) {
+          return false;
+     }
+
+     return true;
+}
+
+inline Bool Vector::operator!= ( const Vector& v ) const
+{
+     Real32 x_diff = m_x - v.m_x;
+
+     if ( fabs ( x_diff ) > 0.001f ) {
+          return true;
+     }
+
+     Real32 y_diff = m_y - v.m_y;
+
+     if ( fabs ( y_diff ) > 0.001f ) {
+          return true;
+     }
+
+     return false;
 }
 
 inline Void Vector::zero ( )

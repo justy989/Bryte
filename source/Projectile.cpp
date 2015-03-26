@@ -58,16 +58,20 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
           current_tile = tile_index;
      }
 
+     Auto save_position = position;
+
      interactives.projectile_leave ( prev_tile_x, prev_tile_y, *this );
      interactives.projectile_enter ( tile.x, tile.y, *this );
 
-     // recalculate tile
-     arrow_center = position + Vector { Map::c_tile_dimension_in_meters * 0.5f,
-                                        Map::c_tile_dimension_in_meters * 0.5f };
-     tile = Map::vector_to_coordinates ( arrow_center );
-     tile_index = map.coordinate_to_tile_index ( tile.x, tile.y );
+     // recalculate tile index in case we have teleported
+     if ( save_position != position ) {
+          arrow_center = position + Vector { Map::c_tile_dimension_in_meters * 0.5f,
+                                             Map::c_tile_dimension_in_meters * 0.5f };
+          tile = Map::vector_to_coordinates ( arrow_center );
+          tile_index = map.coordinate_to_tile_index ( tile.x, tile.y );
 
-     current_tile = tile_index;
+          current_tile = tile_index;
+     }
 
      Auto& interactive = interactives.get_from_tile ( tile.x, tile.y );
      if ( interactive.type == Interactive::Type::exit ) {

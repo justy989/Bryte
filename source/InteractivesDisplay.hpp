@@ -24,12 +24,10 @@ namespace bryte
                         const Map& map, Real32 camera_x, Real32 camera_y, Bool invisible );
 
           Void render_underneath ( SDL_Surface* back_buffer, UnderneathInteractive& underneath,
-                                    Int32 position_x, Int32 position_y,
-                                    Real32 camera_x, Real32 camera_y );
+                                   SDL_Rect* dest_rect );
 
           Void render_interactive ( SDL_Surface* back_buffer, Interactive& interactive,
-                                    Int32 position_x, Int32 position_y,
-                                    Real32 camera_x, Real32 camera_y );
+                                    SDL_Rect* dest_rect );
 
      public:
 

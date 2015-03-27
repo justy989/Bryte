@@ -90,9 +90,24 @@ Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& inter
 
                     Auto& interactive = interactives.get_from_tile ( x, y );
 
-                    render_underneath ( back_buffer, interactive.underneath, position_x, position_y,
-                                        camera_x, camera_y );
-                    render_interactive ( back_buffer, interactive, position_x, position_y, camera_x, camera_y );
+                    SDL_Rect dest_rect { position_x, position_y,
+                                         Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+                    world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+                    render_underneath ( back_buffer, interactive.underneath, &dest_rect );
+                    render_interactive ( back_buffer, interactive, &dest_rect );
+
+                    if ( interactive.portal.side != Direction::count ) {
+                         SDL_Rect clip_rect { 0, 0,
+                                              Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+                         clip_rect.y = 0;
+                         clip_rect.x = static_cast<Int32>( interactive.portal.side ) *
+                                            Map::c_tile_dimension_in_pixels;
+
+                         SDL_BlitSurface ( portal_sheet, &clip_rect, back_buffer, &dest_rect );
+                    }
                }
           }
      } else {
@@ -107,20 +122,21 @@ Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& inter
 
                     Auto& interactive = interactives.get_from_tile ( x, y );
 
-                    render_underneath ( back_buffer, interactive.underneath, position_x, position_y,
-                                        camera_x, camera_y );
-                    render_interactive ( back_buffer, interactive, position_x, position_y, camera_x, camera_y );
+                    SDL_Rect dest_rect { position_x, position_y,
+                                         Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+                    world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+                    render_underneath ( back_buffer, interactive.underneath, &dest_rect );
+                    render_interactive ( back_buffer, interactive, &dest_rect );
                }
           }
      }
 }
 
 Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, UnderneathInteractive& underneath,
-                                              Int32 position_x, Int32 position_y,
-                                              Real32 camera_x, Real32 camera_y )
+                                              SDL_Rect* dest_rect )
 {
-     SDL_Rect dest_rect { position_x, position_y,
-                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
      SDL_Rect clip_rect { 0, ( ( Interactive::Type::count - 2 ) + underneath.type ) * Map::c_tile_dimension_in_pixels,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
@@ -178,17 +194,12 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           break;
      }
 
-     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
-
-     SDL_BlitSurface ( underneath_sheet, &clip_rect, back_buffer, &dest_rect );
+     SDL_BlitSurface ( underneath_sheet, &clip_rect, back_buffer, dest_rect );
 }
 
 Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interactive& interactive,
-                                               Int32 position_x, Int32 position_y,
-                                               Real32 camera_x, Real32 camera_y )
+                                               SDL_Rect* dest_rect )
 {
-     SDL_Rect dest_rect { position_x, position_y,
-                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
      SDL_Rect clip_rect { 0, ( interactive.type - 1 ) * Map::c_tile_dimension_in_pixels,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
@@ -248,9 +259,7 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           break;
      }
 
-     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
-
-     SDL_BlitSurface ( sheet, &clip_rect, back_buffer, &dest_rect );
+     SDL_BlitSurface ( sheet, &clip_rect, back_buffer, dest_rect );
 
      switch ( interactive.type ) {
      default:
@@ -266,7 +275,7 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
                clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
                clip_rect.y = torch_row;
 
-               SDL_BlitSurface ( torch_element_sheet, &clip_rect, back_buffer, &dest_rect );
+               SDL_BlitSurface ( torch_element_sheet, &clip_rect, back_buffer, dest_rect );
           }
           break;
      case Interactive::Type::pushable_torch:
@@ -280,17 +289,10 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
 
                clip_rect.x = Map::c_tile_dimension_in_pixels * torch_frame;
                clip_rect.y = torch_row;
-               SDL_BlitSurface ( torch_element_sheet, &clip_rect, back_buffer, &dest_rect );
+               SDL_BlitSurface ( torch_element_sheet, &clip_rect, back_buffer, dest_rect );
           }
           break;
      }
 
-     if ( interactive.portal.side != Direction::count ) {
-          clip_rect.y = 0;
-          clip_rect.x = static_cast<Int32>( interactive.portal.side ) *
-                             Map::c_tile_dimension_in_pixels;
-
-          SDL_BlitSurface ( portal_sheet, &clip_rect, back_buffer, &dest_rect );
-     }
 }
 

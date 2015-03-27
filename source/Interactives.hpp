@@ -157,7 +157,6 @@ namespace bryte
           Bool activate ( );
           Direction push ( Direction direction, Interactives& interactives );
 
-          Bool on;
           Direction side;
 
           Uint8 destination_x;
@@ -200,7 +199,6 @@ namespace bryte
                light_detector,
                ice_detector,
                hole,
-               portal,
                count
           };
 
@@ -216,7 +214,6 @@ namespace bryte
                LightDetector underneath_light_detector;
                IceDetector   underneath_ice_detector;
                Hole          underneath_hole;
-               Portal        underneath_portal;
           };
      };
 
@@ -248,7 +245,7 @@ namespace bryte
           Void      projectile_enter  ( Direction from, Interactives& interactives, Projectile& projectile );
           Void      projectile_leave   ( Direction to, Interactives& interactives, Projectile& projectile );
 
-          Type type;
+          Interactive::Type type;
 
           union {
                Lever         interactive_lever;
@@ -260,6 +257,8 @@ namespace bryte
           };
 
           UnderneathInteractive underneath;
+
+          Portal portal;
      };
 
      struct Interactives {

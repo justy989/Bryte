@@ -252,11 +252,9 @@ Void State::mouse_button_left_clicked ( )
      {
           Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
-          if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
-               interactive.underneath.type = UnderneathInteractive::Type::portal;
-               interactive.underneath.reset ( );
-               interactive.underneath.underneath_portal.on = static_cast<Bool>( current_portal );
-               interactive.underneath.underneath_portal.side = static_cast<Direction>( current_portal_side );
+          if ( interactive.portal.side == Direction::count ) {
+               interactive.portal.reset ( );
+               interactive.portal.side = static_cast<Direction>( current_portal_side );
           } else {
                interactive.underneath.type = UnderneathInteractive::Type::none;
           }
@@ -466,16 +464,16 @@ Void State::mouse_button_right_clicked ( )
           Interactive& interactive = interactives.get_from_tile ( mouse_tile_x, mouse_tile_y );
 
           if ( !track_current_interactive &&
-               interactive.underneath.type == UnderneathInteractive::Type::portal ) {
+               interactive.portal.side != Direction::count ) {
                current_interactive_x = mouse_tile_x;
                current_interactive_y = mouse_tile_y;
                track_current_interactive = true;
           } else {
                Auto& interactive = interactives.get_from_tile ( current_interactive_x,
                                                                 current_interactive_y );
-               if ( interactive.underneath.type == UnderneathInteractive::Type::portal ) {
-                    interactive.underneath.underneath_portal.destination_x = mouse_tile_x;
-                    interactive.underneath.underneath_portal.destination_y = mouse_tile_y;
+               if ( interactive.portal.side != Direction::count ) {
+                    interactive.portal.destination_x = mouse_tile_x;
+                    interactive.portal.destination_y = mouse_tile_y;
 
                     track_current_interactive = false;
                }
@@ -557,9 +555,6 @@ Void State::option_button_up_pressed ( )
      case Mode::moving_walkway:
           current_moving_walkway++;
           current_moving_walkway %= 4;
-          break;
-     case Mode::portal:
-          current_portal = !current_portal;
           break;
      case Mode::border:
      {
@@ -643,9 +638,6 @@ Void State::option_button_down_pressed ( )
      case Mode::moving_walkway:
           current_moving_walkway--;
           current_moving_walkway %= 4;
-          break;
-     case Mode::portal:
-          current_portal = !current_portal;
           break;
      case Mode::border:
      {
@@ -1213,10 +1205,9 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
 
           Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile_x, state->mouse_tile_y );
 
-          if ( interactive.underneath.type == UnderneathInteractive::Type::portal ) {
-               Auto& portal = interactive.underneath.underneath_portal;
+          if ( interactive.portal.side != Direction::count ) {
                sprintf ( state->message_buffer, "DST %d %d",
-                         portal.destination_x, portal.destination_y );
+                         interactive.portal.destination_x, interactive.portal.destination_y );
           }
      } break;
      case Mode::border:

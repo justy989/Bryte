@@ -176,13 +176,6 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
      case UnderneathInteractive::Type::hole:
           clip_rect.x = underneath.underneath_hole.filled * Map::c_tile_dimension_in_pixels;
           break;
-     case UnderneathInteractive::Type::portal:
-          underneath_sheet = portal_sheet;
-          clip_rect.y = static_cast<Int32>( !underneath.underneath_portal.on ) *
-                             Map::c_tile_dimension_in_pixels;
-          clip_rect.x = static_cast<Int32>( underneath.underneath_portal.side ) *
-                             Map::c_tile_dimension_in_pixels;
-          break;
      }
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -290,6 +283,14 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
                SDL_BlitSurface ( torch_element_sheet, &clip_rect, back_buffer, &dest_rect );
           }
           break;
+     }
+
+     if ( interactive.portal.side != Direction::count ) {
+          clip_rect.y = 0;
+          clip_rect.x = static_cast<Int32>( interactive.portal.side ) *
+                             Map::c_tile_dimension_in_pixels;
+
+          SDL_BlitSurface ( portal_sheet, &clip_rect, back_buffer, &dest_rect );
      }
 }
 

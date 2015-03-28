@@ -129,6 +129,17 @@ Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& inter
 
                     render_underneath ( back_buffer, interactive.underneath, &dest_rect );
                     render_interactive ( back_buffer, interactive, &dest_rect );
+
+                    if ( interactive.portal.side != Direction::count ) {
+                         SDL_Rect clip_rect { 0, 0,
+                                              Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+                         clip_rect.y = 0;
+                         clip_rect.x = static_cast<Int32>( interactive.portal.side ) *
+                                            Map::c_tile_dimension_in_pixels;
+
+                         SDL_BlitSurface ( portal_sheet, &clip_rect, back_buffer, &dest_rect );
+                    }
                }
           }
      }

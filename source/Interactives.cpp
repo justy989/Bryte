@@ -70,6 +70,7 @@ Void Interactives::reset ( Int32 width, Int32 height )
      for ( int i = 0; i < count; ++i ) {
           m_interactives [ i ].type = Interactive::Type::none;
           m_interactives [ i ].underneath.type = UnderneathInteractive::Type::none;
+          m_interactives [ i ].portal.side = Direction::count;
      }
 }
 

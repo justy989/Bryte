@@ -256,7 +256,7 @@ Void State::mouse_button_left_clicked ( )
                interactive.portal.reset ( );
                interactive.portal.side = static_cast<Direction>( current_portal_side );
           } else {
-               interactive.underneath.type = UnderneathInteractive::Type::none;
+               interactive.portal.side = Direction::count;
           }
      } break;
      case Mode::border:

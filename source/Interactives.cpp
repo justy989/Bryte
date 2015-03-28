@@ -114,8 +114,7 @@ Void Interactives::contribute_light ( Map& map )
 
 Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
-     Interactive& i = get_destination_interactive ( tile_x, tile_y, &tile_x, &tile_y,
-                                                    dir );
+     Interactive& i = get_destination_interactive ( &tile_x, &tile_y );
 
      Direction result_dir = i.push ( dir, *this );
 
@@ -143,7 +142,7 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
 
      Interactive& dest_i = get_from_tile ( dest_x, dest_y );
 
-     if ( ( !is_walkable ( dest_x, dest_y, dir ) &&
+     if ( ( is_occupied ( dest_x, dest_y, dir ) &&
             dest_i.underneath.type != UnderneathInteractive::Type::hole ) ||
           map.get_coordinate_solid ( dest_x, dest_y ) ) {
           free_to_move = false;
@@ -292,38 +291,72 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
      }
 }
 
-Bool Interactives::check_portal_walkability ( Int32 start_tile_x, Int32 start_tile_y,
-                                              Int32 dest_tile_x, Int32 dest_tile_y,
-                                              Direction dir ) const
+Interactive& Interactives::get_destination_interactive ( Int32* tile_x, Int32*tile_y )
 {
-     const Auto& interactive = cget_from_tile ( dest_tile_x, dest_tile_y );
+     Auto& interactive = get_from_tile ( *tile_x, *tile_y );
 
-     if ( dir == opposite_direction ( interactive.portal.side ) ) {
-          if ( interactive.type ) {
-               return false;
-          }
+     if ( interactive.portal.side != Direction::count ) {
+          *tile_x = interactive.portal.destination_x;
+          *tile_y = interactive.portal.destination_y;
 
-          return true;
-     }
+          Auto& dest_interactive = get_from_tile ( *tile_x, *tile_y );
 
-     return is_walkable ( dest_tile_x, dest_tile_y, dir );
-}
-
-Interactive& Interactives::get_destination_interactive ( Int32 start_tile_x, Int32 start_tile_y,
-                                                         Int32* dest_tile_x, Int32* dest_tile_y,
-                                                         Direction dir )
-{
-     Auto& interactive = get_from_tile ( *dest_tile_x, *dest_tile_y );
-
-     if ( dir == opposite_direction ( interactive.portal.side ) ) {
-          return interactive;
+          return dest_interactive;
      }
 
      return interactive;
 }
 
-Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y,
-                                 Direction dir ) const
+Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y, const Vector& pos_vec,
+                                 const Vector& walk_vec, Direction dir ) const
+{
+     const Auto& interactive = cget_from_tile ( tile_x, tile_y );
+
+     if ( interactive.portal.side == Direction::count ) {
+          switch ( interactive.portal.side ) {
+          default:
+               break;
+          case Direction::left:
+          {
+               Real32 x = tile_x * Map::c_tile_dimension_in_pixels;
+               if ( pos_vec.x ( ) < x &&
+                    vector_has_direction ( walk_vec, opposite_direction ( interactive.portal.side ) ) ) {
+                    return false;
+               }
+          } break;
+          case Direction::up:
+          {
+               Real32 y = ( tile_y + 1 ) * Map::c_tile_dimension_in_pixels;
+               if ( pos_vec.y ( ) > y &&
+                    vector_has_direction ( walk_vec, opposite_direction ( interactive.portal.side ) ) ) {
+                    return false;
+               }
+          } break;
+          case Direction::right:
+          {
+               Real32 x = ( tile_x + 1 ) * Map::c_tile_dimension_in_pixels;
+               if ( pos_vec.x ( ) > x &&
+                    vector_has_direction ( walk_vec, opposite_direction ( interactive.portal.side ) ) ) {
+                    return false;
+               }
+          } break;
+          case Direction::down:
+          {
+               Real32 y = tile_y * Map::c_tile_dimension_in_pixels;
+               if ( pos_vec.y ( ) < y &&
+                    vector_has_direction ( walk_vec, opposite_direction ( interactive.portal.side ) ) ) {
+                    return false;
+               }
+          } break;
+          }
+
+          return true;
+     }
+
+     return !is_occupied ( tile_x, tile_y, dir );
+}
+
+Bool Interactives::is_occupied ( Int32 tile_x, Int32 tile_y, Direction dir ) const
 {
      const Auto& interactive = cget_from_tile ( tile_x, tile_y );
 
@@ -332,21 +365,18 @@ Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y,
           break;
      case UnderneathInteractive::Type::popup_block:
           if ( interactive.underneath.underneath_popup_block.up ) {
-               return false;
+               return true;
           }
           break;
      case UnderneathInteractive::Type::hole:
           if ( !interactive.underneath.underneath_hole.filled ) {
-               return false;
+               return true;
           }
           break;
      }
 
-     if ( interactive.portal.side == opposite_direction ( dir ) &&
-          !check_portal_walkability ( tile_x, tile_y,
-                                      interactive.portal.destination_x, interactive.portal.destination_y,
-                                      dir ) ) {
-          return false;
+     if ( interactive.portal.side == opposite_direction ( dir ) ) {
+          return true;
      }
 
      switch ( interactive.type ) {
@@ -357,12 +387,12 @@ Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y,
      case Interactive::Type::torch:
      case Interactive::Type::pushable_torch:
      case Interactive::Type::bombable_block:
-          return false;
+          return true;
      case Interactive::Type::exit:
           return interactive.interactive_exit.state == Exit::State::open;
      }
 
-     return true;
+     return false;
 }
 
 Bool Interactives::is_flyable ( Int32 tile_x, Int32 tile_y ) const
@@ -543,10 +573,9 @@ Void Interactive::character_leave ( Direction to, Interactives& interactives, Ch
           break;
      }
 
-     if ( to == portal.side ) {
+     if ( vector_has_direction ( character.velocity, portal.side ) ) {
           Vector dst;
-          if ( interactives.get_portal_destination ( portal, true,
-                                                     &character.facing, &dst ) ) {
+          if ( interactives.get_portal_destination ( portal, &character.facing, &dst ) ) {
                dst += Vector { Map::c_tile_dimension_in_meters * 0.5f,
                                Map::c_tile_dimension_in_meters * 0.5f };
                character.set_collision_center ( dst.x ( ), dst.y ( ) );
@@ -620,8 +649,7 @@ Void Interactive::interactive_leave ( Direction to, Interactives& interactives )
           Vector new_pos;
           Direction new_dir;
 
-          if ( interactives.get_portal_destination ( portal, true,
-                                                     &new_dir, &new_pos ) ) {
+          if ( interactives.get_portal_destination ( portal, &new_dir, &new_pos ) ) {
                Map::Coordinates dest_tile = Map::vector_to_coordinates ( new_pos );
                Auto& dest_interactive = interactives.get_from_tile ( dest_tile.x, dest_tile.y );
 
@@ -687,8 +715,7 @@ Void Interactive::projectile_enter ( Direction from, Interactives& interactives,
 Void Interactive::projectile_leave ( Direction to, Interactives& interactives, Projectile& projectile )
 {
      if ( portal.side == to ) {
-          interactives.get_portal_destination ( portal, true,
-                                                &projectile.facing, &projectile.position );
+          interactives.get_portal_destination ( portal, &projectile.facing, &projectile.position );
      }
 }
 
@@ -1071,8 +1098,7 @@ Bool Portal::activate ( )
      return true;
 }
 
-Bool Interactives::get_portal_destination ( const Portal& portal, Bool inside_tile,
-                                            Direction* result_dir, Vector* result_pos )
+Bool Interactives::get_portal_destination ( const Portal& portal, Direction* result_dir, Vector* result_pos )
 {
      Int32 dest_tile_x = portal.destination_x;
      Int32 dest_tile_y = portal.destination_y;
@@ -1083,13 +1109,7 @@ Bool Interactives::get_portal_destination ( const Portal& portal, Bool inside_ti
           return false;
      }
 
-     if ( inside_tile ) {
-          move_location ( dest_tile_x, dest_tile_y, interactive.portal.side );
-          *result_dir = interactive.portal.side;
-     } else {
-          *result_dir = opposite_direction ( interactive.portal.side );
-     }
-
+     *result_dir = opposite_direction ( interactive.portal.side );
      *result_pos = Map::coordinates_to_vector ( dest_tile_x, dest_tile_y );
 
      return true;

@@ -181,6 +181,26 @@ Vector vector_from_direction ( bryte::Direction dir )
      return Vector { 0.0f, 0.0f };
 }
 
+Bool vector_has_direction ( const Vector& vec, bryte::Direction dir )
+{
+     switch ( dir ) {
+     default:
+          ASSERT ( 0 );
+     case bryte::Direction::count:
+          break;
+     case bryte::Direction::left:
+          return vec.x ( ) < -0.001f;
+     case bryte::Direction::up:
+          return vec.y ( ) > 0.001f;
+     case bryte::Direction::right:
+          return vec.x ( ) > 0.001f;
+     case bryte::Direction::down:
+          return vec.y ( ) < -0.001f;
+     }
+
+     return false;
+}
+
 Void move_location ( Int32& tile_x, Int32& tile_y, bryte::Direction move_dir )
 {
      switch ( move_dir ) {

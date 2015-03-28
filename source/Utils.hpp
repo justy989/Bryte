@@ -107,6 +107,7 @@ bryte::Direction direction_between ( const Vector& a, const Vector& b, bryte::Ra
 Void render_rect_outline ( SDL_Surface* dest_surface, const SDL_Rect& rect, Uint32 color );
 
 Vector vector_from_direction ( bryte::Direction dir );
+Bool vector_has_direction ( const Vector& vec, bryte::Direction dir );
 
 Void move_location ( Int32& tile_x, Int32& tile_y, bryte::Direction move_dir );
 

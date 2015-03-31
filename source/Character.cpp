@@ -460,7 +460,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
                     if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
                          !map.get_coordinate_solid ( x, y ) ) {
-                         if ( interactives.is_walkable ( x, y, position, velocity, facing ) ) {
+                         if ( interactives.is_walkable ( x, y, facing ) ) {
                               Auto& interactive = interactives.get_from_tile ( x, y );
 
                               if ( interactive.type == Interactive::Type::exit ) {
@@ -495,7 +495,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          collided_last_frame = Direction::right;
 
                          if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
-                              !interactives.is_walkable ( x, y, position, velocity, facing ) ) {
+                              !interactives.is_walkable ( x, y, facing ) ) {
                               push_direction = Direction::right;
                          }
                     }
@@ -507,7 +507,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          collided_last_frame = Direction::left;
 
                          if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
-                              !interactives.is_walkable ( x, y, position, velocity, facing ) ) {
+                              !interactives.is_walkable ( x, y, facing ) ) {
                               push_direction = Direction::left;
                          }
                     }
@@ -519,7 +519,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          collided_last_frame = Direction::up;
 
                          if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
-                              !interactives.is_walkable ( x, y, position, velocity, facing ) ) {
+                              !interactives.is_walkable ( x, y, facing ) ) {
                               push_direction = Direction::up;
                          }
                     }
@@ -531,7 +531,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          collided_last_frame = Direction::down;
 
                          if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
-                              !interactives.is_walkable ( x, y, position, velocity, facing ) ) {
+                              !interactives.is_walkable ( x, y, facing ) ) {
                               push_direction = Direction::down;
                          }
                     }

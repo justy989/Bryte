@@ -49,8 +49,6 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
      }
 
      Int32 tile_index = map.coordinate_to_tile_index ( tile.x, tile.y );
-     Int32 prev_tile_x = map.tile_index_to_coordinate_x ( current_tile );
-     Int32 prev_tile_y = map.tile_index_to_coordinate_y ( current_tile );
 
      if ( tile_index == current_tile ) {
           return false;
@@ -60,7 +58,6 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
 
      Auto save_position = position;
 
-     interactives.projectile_leave ( prev_tile_x, prev_tile_y, *this );
      interactives.projectile_enter ( tile.x, tile.y, *this );
 
      // recalculate tile index in case we have teleported

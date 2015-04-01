@@ -1010,7 +1010,11 @@ Void Portal::reset ( )
 Direction Portal::push ( Direction direction, Interactives& interactives )
 {
      // just pass along the push to the target
-     Auto& interactive = interactives.get_from_tile ( destination_x, destination_y );
+     Int32 dest_tile_x = destination_x;
+     Int32 dest_tile_y = destination_y;
+     move_location ( dest_tile_x, dest_tile_y, direction );
+
+     Auto& interactive = interactives.get_from_tile ( dest_tile_x, dest_tile_y );
 
      if ( interactive.type ) {
           return interactive.push ( direction, interactives );

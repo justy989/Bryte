@@ -281,7 +281,7 @@ namespace bryte
           Void spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear = false );
 
           Void get_portal_destination ( Int32* tile_x, Int32* tile_y,
-                                        Direction dir );
+                                        Direction dir ) const;
 
           Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
           const Interactive& cget_from_tile ( Int32 tile_x, Int32 tile_y ) const;
@@ -293,7 +293,7 @@ namespace bryte
 
           Void get_portal_destination_impl ( Int32 start_tile_x, Int32 start_tile_y,
                                              Int32* dest_tile_x, Int32* dest_tile_y,
-                                             Direction dir );
+                                             Direction dir ) const;
 
      public:
 

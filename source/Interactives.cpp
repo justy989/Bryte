@@ -113,6 +113,12 @@ Void Interactives::contribute_light ( Map& map )
 
 Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
+     Interactive& i_portal = get_from_tile ( tile_x, tile_y );
+
+     if ( i_portal.type == Interactive::Type::portal ) {
+          get_portal_destination ( &tile_x, &tile_y, dir );
+     }
+
      Interactive& i = get_from_tile ( tile_x, tile_y );
 
      Direction result_dir = i.push ( dir, *this );
@@ -322,12 +328,9 @@ Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y, Direction dir ) con
           return interactive.interactive_exit.state == Exit::State::open;
      case Interactive::Type::portal:
      {
-          Int32 dest_tile_x = interactive.interactive_portal.destination_x;
-          Int32 dest_tile_y = interactive.interactive_portal.destination_y;
+          get_portal_destination ( &tile_x, &tile_y, dir );
 
-          get_portal_destination ( &dest_tile_x, &dest_tile_y, dir );
-
-          return is_walkable ( dest_tile_x, dest_tile_y, dir );
+          return is_walkable ( tile_x, tile_y, dir );
      } break;
      }
 

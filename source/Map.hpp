@@ -237,8 +237,8 @@ namespace bryte
 
           Uint8          m_base_light_value;
           Uint8          m_light [ c_max_light ];
-          Uint8          m_light_width;
-          Uint8          m_light_height;
+          Int32          m_light_width;
+          Int32          m_light_height;
           Int32          m_light_pixels;
 
           Fixture        m_decors [ c_max_decors ];

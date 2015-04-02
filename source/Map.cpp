@@ -417,49 +417,7 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
                Auto& interactive = interactives.get_from_tile ( x, y );
-#if 0
-               Interactive_V2 interactive_v2;
-
-               interactive_v2.type = interactive.type;
-
-               switch ( interactive.type ) {
-               case none:
-                    break;
-               case Interactive::lever:
-                    interactive_v2.interactive_lever = interactive.interactive_lever;
-                    break;
-               case Interactive::pushable_block:
-                    interactive_v2.interactive_pushable_block = interactive.interactive_pushable_block;
-                    break;
-               case Interactive::torch:
-                    interactive_v2.interactive_torch = interactive.interactive_torch;
-                    break;
-               case Interactive::pushable_torch:
-                    interactive_v2.interactive_pushable_torch = interactive.interactive_pushable_torch;
-                    break;
-               case Interactive::exit:
-                    interactive_v2.interactive_exit = interactive.interactive_exit;
-                    break;
-               case Interactive::bombable_block:
-                    break;
-               case Interactive::turret:
-                    interactive_v2.interactive_turret = interactive.interactive_turret;
-                    break;
-               case Interactive::count:
-                    break;
-               default:
-                    break;
-               }
-
-               interactive_v2.underneath = interactive.underneath;
-               interactive_v2.portal.side = Direction::count;
-               interactive_v2.portal.destination_x = 0;
-               interactive_v2.portal.destination_y = 0;
-
-               file.write ( reinterpret_cast<const Char8*>( &interactive_v2 ), sizeof ( interactive_v2 ) );
-#else
                file.write ( reinterpret_cast<const Char8*>( &interactive ), sizeof ( interactive ) );
-#endif
 
           }
      }

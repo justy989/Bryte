@@ -238,10 +238,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     if ( !interactives_display.load_surfaces  ( game_memory ) ) {
-          return false;
-     }
-
      if ( !pickup_display.load_surfaces ( game_memory ) ) {
           return false;
      }
@@ -1034,6 +1030,11 @@ Bool State::load_region ( GameMemory& game_memory )
                                        region.tilesheet_filepath,
                                        region.decorsheet_filepath,
                                        region.lampsheet_filepath ) ) {
+          return false;
+     }
+
+     interactives_display.unload_surfaces ( );
+     if ( !interactives_display.load_surfaces  ( game_memory, region.exitsheet_filepath ) ) {
           return false;
      }
 
@@ -2089,6 +2090,11 @@ Bool State::change_region ( GameMemory& game_memory, Int32 region_index )
                                        region.tilesheet_filepath,
                                        region.decorsheet_filepath,
                                        region.lampsheet_filepath ) ) {
+          return false;
+     }
+
+     interactives_display.unload_surfaces ( );
+     if ( !interactives_display.load_surfaces  ( game_memory, region.exitsheet_filepath ) ) {
           return false;
      }
 

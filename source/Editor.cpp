@@ -865,7 +865,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           return false;
      }
 
-     if ( !state->interactives_display.load_surfaces ( game_memory ) ) {
+     if ( !state->interactives_display.load_surfaces ( game_memory, "castle_exitsheet.bmp" ) ) {
           return false;
      }
 

@@ -5,7 +5,7 @@
 
 using namespace bryte;
 
-Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory )
+Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* exitsheet_filepath )
 {
      if ( !load_bitmap_with_game_memory ( interactive_sheet, game_memory, "castle_interactivesheet.bmp" ) ) {
           return false;
@@ -19,7 +19,7 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( exit_sheet, game_memory, "castle_exitsheet.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( exit_sheet, game_memory, exitsheet_filepath ) ) {
           return false;
      }
 

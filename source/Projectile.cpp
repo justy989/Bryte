@@ -59,7 +59,7 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
 
      Auto save_position = position;
 
-     interactives.projectile_enter ( tile.x, tile.y, *this );
+     interactives.projectile_enter ( tile, *this );
 
      // recalculate tile index in case we have teleported
      if ( save_position != position ) {
@@ -69,14 +69,14 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
           current_tile = map.location_to_tile_index ( tile );
      }
 
-     Auto& interactive = interactives.get_from_tile ( tile.x, tile.y );
+     Auto& interactive = interactives.get_from_tile ( tile );
      if ( interactive.type == Interactive::Type::exit ) {
           // otherwise arrows can escape when doors are open
           // TODO: is this ok?
           return true;
      }
 
-     if ( !interactives.is_flyable ( tile.x, tile.y ) ) {
+     if ( !interactives.is_flyable ( tile ) ) {
           return true;
      }
 

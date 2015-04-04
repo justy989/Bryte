@@ -1,1 +1,2 @@
+puzzle map/puzzle_map_list.txt castle_tilesheet.bmp castle_decorsheet.bmp castle_lampsheet.bmp castle_exitsheet.bmp
 overworld map/overworld_map_list.txt overworld_tilesheet.bmp overworld_decorsheet.bmp overworld_lampsheet.bmp overworld_exitsheet.bmp

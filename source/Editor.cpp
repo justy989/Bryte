@@ -129,7 +129,7 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::light_detector:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
                interactive.underneath.type = UnderneathInteractive::Type::light_detector;
@@ -146,7 +146,7 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::pressure_plate:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
           UnderneathInteractive& underneath = interactive.underneath;
 
           if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
@@ -161,7 +161,7 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::popup_block:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
           UnderneathInteractive& underneath = interactive.underneath;
 
           if ( underneath.type == UnderneathInteractive::Type::popup_block ) {
@@ -175,7 +175,7 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::all_killed:
      {
-          Map::Coordinates coords =  { static_cast<Uint8>( mouse_tile.x ), static_cast<Uint8>( mouse_tile.y ) };
+          Coordinates coords = { static_cast<Uint8>( mouse_tile.x ), static_cast<Uint8>( mouse_tile.y ) };
           map.set_activate_location_on_all_enemies_killed ( coords );
      } break;
      case Mode::bombable_block:
@@ -192,7 +192,7 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::ice:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
           UnderneathInteractive& underneath = interactive.underneath;
 
           if ( underneath.type == UnderneathInteractive::Type::ice ) {
@@ -205,7 +205,7 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::moving_walkway:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
           UnderneathInteractive& underneath = interactive.underneath;
 
           if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
@@ -219,7 +219,7 @@ Void State::mouse_button_left_clicked ( )
      } break;
      case Mode::ice_detector:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
                interactive.underneath.type = UnderneathInteractive::Type::ice_detector;
@@ -228,12 +228,12 @@ Void State::mouse_button_left_clicked ( )
           }
      } break;
      case Mode::secret:
-          map.set_secret_location ( Map::Coordinates { static_cast<Uint8>( mouse_tile.x ),
-                                                       static_cast<Uint8>( mouse_tile.y ) } );
+          map.set_secret_location ( Coordinates { static_cast<Uint8>( mouse_tile.x ),
+                                                  static_cast<Uint8>( mouse_tile.y ) } );
           break;
      case Mode::hole:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
                interactive.underneath.type = UnderneathInteractive::Type::hole;
@@ -253,8 +253,8 @@ Void State::mouse_button_left_clicked ( )
      {
           Auto& border_exit = map.get_border_exit ( static_cast<Direction>( current_border ) );
 
-          border_exit.bottom_left = Map::Coordinates { static_cast<Uint8>( mouse_tile.x ),
-                                                       static_cast<Uint8>( mouse_tile.y ) };
+          border_exit.bottom_left = Coordinates { static_cast<Uint8>( mouse_tile.x ),
+                                                  static_cast<Uint8>( mouse_tile.y ) };
      } break;
      case Mode::upgrade:
           map.upgrade ( ).set ( static_cast<Uint8> ( mouse_tile.x ), static_cast<Uint8> ( mouse_tile.y ),
@@ -289,7 +289,7 @@ Void State::mouse_button_right_clicked ( )
           break;
      case Mode::exit:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.type == Interactive::Type::exit ) {
                interactive.interactive_exit.state = static_cast<Exit::State>(
@@ -302,16 +302,15 @@ Void State::mouse_button_right_clicked ( )
      } break;
      case Mode::lever:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.type == Interactive::Type::lever ) {
-               current_interactive_x = mouse_tile.x;
-               current_interactive_y = mouse_tile.y;
+               current_interactive.x = mouse_tile.x;
+               current_interactive.y = mouse_tile.y;
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    Auto& lever = interactives.get_from_tile ( current_interactive_x,
-                                                               current_interactive_y );
+                    Auto& lever = interactives.get_from_tile ( current_interactive );
                     if ( lever.type == Interactive::Type::lever ) {
                          lever.interactive_lever.activate_coordinate_x = mouse_tile.x;
                          lever.interactive_lever.activate_coordinate_y = mouse_tile.y;
@@ -322,16 +321,15 @@ Void State::mouse_button_right_clicked ( )
      } break;
      case Mode::pushable_block:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.type == Interactive::Type::pushable_block ) {
-               current_interactive_x = mouse_tile.x;
-               current_interactive_y = mouse_tile.y;
+               current_interactive.x = mouse_tile.x;
+               current_interactive.y = mouse_tile.y;
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    Auto& pushable_block = interactives.get_from_tile ( current_interactive_x,
-                                                               current_interactive_y );
+                    Auto& pushable_block = interactives.get_from_tile ( current_interactive );
                     if ( pushable_block.type == Interactive::Type::pushable_block ) {
                          pushable_block.interactive_pushable_block.activate_coordinate_x = mouse_tile.x;
                          pushable_block.interactive_pushable_block.activate_coordinate_y = mouse_tile.y;
@@ -356,16 +354,15 @@ Void State::mouse_button_right_clicked ( )
           break;
      case Mode::light_detector:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::light_detector ) {
-               current_interactive_x = mouse_tile.x;
-               current_interactive_y = mouse_tile.y;
+               current_interactive.x = mouse_tile.x;
+               current_interactive.y = mouse_tile.y;
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    Auto& interactive = interactives.get_from_tile ( current_interactive_x,
-                                                                        current_interactive_y );
+                    Auto& interactive = interactives.get_from_tile ( current_interactive );
                     if ( interactive.underneath.type == UnderneathInteractive::Type::light_detector ) {
                          Auto& light_detector = interactive.underneath.underneath_light_detector;
                          light_detector.activate_coordinate_x = mouse_tile.x;
@@ -377,17 +374,16 @@ Void State::mouse_button_right_clicked ( )
      } break;
      case Mode::pressure_plate:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
           UnderneathInteractive underneath = interactive.underneath;
 
           if ( underneath.type == UnderneathInteractive::Type::pressure_plate ) {
-               current_interactive_x = mouse_tile.x;
-               current_interactive_y = mouse_tile.y;
+               current_interactive.x = mouse_tile.x;
+               current_interactive.y = mouse_tile.y;
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    Auto& interactive = interactives.get_from_tile ( current_interactive_x,
-                                                                        current_interactive_y );
+                    Auto& interactive = interactives.get_from_tile ( current_interactive );
                     if ( interactive.underneath.type == UnderneathInteractive::Type::pressure_plate ) {
                          Auto& pressure_plate = interactive.underneath.underneath_pressure_plate;
                          pressure_plate.activate_coordinate_x = mouse_tile.x;
@@ -399,7 +395,7 @@ Void State::mouse_button_right_clicked ( )
      } break;
      case Mode::popup_block:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
           UnderneathInteractive underneath = interactive.underneath;
 
           if ( underneath.type == UnderneathInteractive::Type::popup_block ) {
@@ -410,11 +406,11 @@ Void State::mouse_button_right_clicked ( )
      } break;
      case Mode::all_killed:
      {
-          map.set_activate_location_on_all_enemies_killed ( Map::Coordinates { 0, 0 } );
+          map.set_activate_location_on_all_enemies_killed ( Coordinates { 0, 0 } );
      } break;
      case Mode::bombable_block:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.type == Interactive::Type::bombable_block ) {
                interactive.type = Interactive::Type::none;
@@ -426,16 +422,15 @@ Void State::mouse_button_right_clicked ( )
           break;
      case Mode::ice_detector:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
-               current_interactive_x = mouse_tile.x;
-               current_interactive_y = mouse_tile.y;
+               current_interactive.x = mouse_tile.x;
+               current_interactive.y = mouse_tile.y;
                track_current_interactive = true;
           } else {
                if ( track_current_interactive ) {
-                    Auto& interactive = interactives.get_from_tile ( current_interactive_x,
-                                                                     current_interactive_y );
+                    Auto& interactive = interactives.get_from_tile ( current_interactive );
                     if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
                          Auto& detector = interactive.underneath.underneath_ice_detector;
                          detector.activate_coordinate_x = mouse_tile.x;
@@ -446,21 +441,20 @@ Void State::mouse_button_right_clicked ( )
           }
      } break;
      case Mode::secret:
-          map.set_secret_clear_tile ( Map::Coordinates { static_cast<Uint8>( mouse_tile.x ),
-                                                      static_cast<Uint8>( mouse_tile.y ) } );
+          map.set_secret_clear_tile ( Coordinates { static_cast<Uint8>( mouse_tile.x ),
+                                                    static_cast<Uint8>( mouse_tile.y ) } );
           break;
      case Mode::portal:
      {
-          Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( !track_current_interactive &&
                interactive.type == Interactive::Type::portal ) {
-               current_interactive_x = mouse_tile.x;
-               current_interactive_y = mouse_tile.y;
+               current_interactive.x = mouse_tile.x;
+               current_interactive.y = mouse_tile.y;
                track_current_interactive = true;
           } else {
-               Auto& interactive = interactives.get_from_tile ( current_interactive_x,
-                                                                current_interactive_y );
+               Auto& interactive = interactives.get_from_tile ( current_interactive );
                if ( interactive.type == Interactive::Type::portal ) {
                     interactive.interactive_portal.destination_x = mouse_tile.x;
                     interactive.interactive_portal.destination_y = mouse_tile.y;
@@ -473,8 +467,8 @@ Void State::mouse_button_right_clicked ( )
      {
           Auto& border_exit = map.get_border_exit ( static_cast<Direction>( current_border ) );
 
-          border_exit.map_bottom_left = Map::Coordinates { static_cast<Uint8>( mouse_tile.x ),
-                                                        static_cast<Uint8>( mouse_tile.y ) };
+          border_exit.map_bottom_left = Coordinates { static_cast<Uint8>( mouse_tile.x ),
+                                                      static_cast<Uint8>( mouse_tile.y ) };
      } break;
      }
 }
@@ -508,7 +502,7 @@ Void State::option_button_up_pressed ( )
                break;
           }
 
-          Auto& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Auto& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.type == Interactive::Type::exit ) {
                switch ( current_field ) {
@@ -591,7 +585,7 @@ Void State::option_button_down_pressed ( )
                break;
           }
 
-          Auto& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+          Auto& interactive = interactives.get_from_tile ( mouse_tile );
 
           if ( interactive.type == Interactive::Type::exit ) {
                switch ( current_field ) {
@@ -681,7 +675,7 @@ Void State::mouse_scrolled ( Int32 scroll )
           break;
      case Mode::ice_detector:
           if ( mouse_on_map ( ) ) {
-               Auto& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+               Auto& interactive = interactives.get_from_tile ( mouse_tile );
 
                if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector ) {
                     interactive.underneath.underneath_ice_detector.detected =
@@ -698,7 +692,7 @@ Void State::mouse_scrolled ( Int32 scroll )
 
 Interactive& State::place_or_clear_interactive ( Interactive::Type type )
 {
-     Interactive& interactive = interactives.get_from_tile ( mouse_tile.x, mouse_tile.y );
+     Interactive& interactive = interactives.get_from_tile ( mouse_tile );
 
      if ( interactive.type == type ) {
           interactive.type = Interactive::Type::none;
@@ -716,15 +710,15 @@ Void State::render_selected_interactive ( SDL_Surface* back_buffer )
      Location selected_tile = mouse_tile;
 
      if ( track_current_interactive ) {
-          selected_tile.x = current_interactive_x;
-          selected_tile.y = current_interactive_y;
+          selected_tile.x = current_interactive.x;
+          selected_tile.y = current_interactive.y;
      }
 
      if ( !map.tile_location_is_valid ( selected_tile ) ) {
           return;
      }
 
-     Auto& interactive = interactives.get_from_tile ( selected_tile.x, selected_tile.y );
+     Auto& interactive = interactives.get_from_tile ( selected_tile );
 
      if ( interactive.type == Interactive::Type::none &&
           interactive.underneath.type == UnderneathInteractive::Type::none ) {
@@ -912,8 +906,8 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
      state->current_field                = 0;
 
      state->track_current_interactive    = false;
-     state->current_interactive_x        = 0;
-     state->current_interactive_y        = 0;
+     state->current_interactive.x        = 0;
+     state->current_interactive.y        = 0;
 
      state->draw_solids                  = false;
      state->draw_light                   = false;
@@ -1140,7 +1134,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile.x, state->mouse_tile.y );
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile );
 
           if ( interactive.type == Interactive::Type::exit ) {
                Auto& exit = interactive.interactive_exit;
@@ -1154,7 +1148,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile.x, state->mouse_tile.y );
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile );
 
           if ( interactive.type == Interactive::Type::pushable_block ) {
                Auto& pushable_block = interactive.interactive_pushable_block;
@@ -1165,7 +1159,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      }
      case Mode::all_killed:
      {
-          Map::Coordinates loc = state->map.activate_on_all_enemies_killed ( );
+          Coordinates loc = state->map.activate_on_all_enemies_killed ( );
           sprintf ( state->message_buffer, "ACT %d %d", loc.x, loc.y );
      } break;
      case Mode::turret:
@@ -1174,7 +1168,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile.x, state->mouse_tile.y );
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile );
 
           if ( interactive.type == Interactive::Type::turret ) {
                Auto& turret = interactive.interactive_turret;
@@ -1185,7 +1179,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
      {
           if ( state->track_current_interactive ) {
                sprintf ( state->message_buffer, "S DST %d %d",
-                         state->current_interactive_x, state->current_interactive_y );
+                         state->current_interactive.x, state->current_interactive.y );
                break;
           }
 
@@ -1193,7 +1187,7 @@ extern "C" Void game_update ( GameMemory& game_memory, Real32 time_delta )
                break;
           }
 
-          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile.x, state->mouse_tile.y );
+          Auto& interactive = state->interactives.get_from_tile ( state->mouse_tile );
 
           if ( interactive.type == Interactive::Type::portal ) {
                sprintf ( state->message_buffer, "DST %d %d",

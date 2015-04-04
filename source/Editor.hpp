@@ -138,8 +138,7 @@ namespace editor
           Uint8 current_upgrade;
 
           Bool   track_current_interactive;
-          Uint32 current_interactive_x;
-          Uint32 current_interactive_y;
+          Location current_interactive;
 
           Bool draw_solids;
           Bool draw_light;

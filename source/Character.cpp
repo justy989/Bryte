@@ -460,8 +460,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                     }
 
                     if ( map.tile_location_is_valid ( tile ) && !map.get_tile_location_solid ( tile ) ) {
-                         if ( interactives.is_walkable ( x, y, facing ) ) {
-                              Auto& interactive = interactives.get_from_tile ( x, y );
+                         if ( interactives.is_walkable ( tile, facing ) ) {
+                              Auto& interactive = interactives.get_from_tile ( tile );
 
                               if ( interactive.type == Interactive::Type::exit ) {
                                    if ( !collides_with_exits ) {
@@ -495,7 +495,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          collided_last_frame = Direction::right;
 
                          if ( map.tile_location_is_valid ( tile ) &&
-                              !interactives.is_walkable ( x, y, facing ) ) {
+                              !interactives.is_walkable ( tile, facing ) ) {
                               push_direction = Direction::right;
                          }
                     }
@@ -507,7 +507,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          collided_last_frame = Direction::left;
 
                          if ( map.tile_location_is_valid ( tile ) &&
-                              !interactives.is_walkable ( x, y, facing ) ) {
+                              !interactives.is_walkable ( tile, facing ) ) {
                               push_direction = Direction::left;
                          }
                     }
@@ -519,7 +519,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          collided_last_frame = Direction::up;
 
                          if ( map.tile_location_is_valid ( tile ) &&
-                              !interactives.is_walkable ( x, y, facing ) ) {
+                              !interactives.is_walkable ( tile, facing ) ) {
                               push_direction = Direction::up;
                          }
                     }
@@ -531,7 +531,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          collided_last_frame = Direction::down;
 
                          if ( map.tile_location_is_valid ( tile ) &&
-                              !interactives.is_walkable ( x, y, facing ) ) {
+                              !interactives.is_walkable ( tile, facing ) ) {
                               push_direction = Direction::down;
                          }
                     }
@@ -557,8 +557,8 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      if ( new_tile != old_tile && !flies ) {
           // TODO: what about non-collides_with_interactives and portals?
           if ( map.tile_location_is_valid ( old_tile ) && map.tile_location_is_valid ( old_tile ) ) {
-               interactives.character_leave ( old_tile.x, old_tile.y, *this );
-               interactives.character_enter ( new_tile.x, new_tile.y, *this );
+               interactives.character_leave ( old_tile, *this );
+               interactives.character_enter ( new_tile, *this );
           }
      }
 

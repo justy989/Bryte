@@ -1051,7 +1051,9 @@ Void State::persist_map ( )
 
      for ( Uint8 y = 0; y < interactives.height ( ); ++y ) {
           for ( Uint8 x = 0; x < interactives.width ( ); ++x ) {
-               const Auto& exit = interactives.cget_from_tile ( x, y );
+               Location tile ( x, y );
+
+               const Auto& exit = interactives.cget_from_tile ( tile );
 
                if ( exit.type != Interactive::Type::exit ) {
                     continue;
@@ -1158,8 +1160,8 @@ Void State::enemy_death ( const Enemy& enemy )
 
      // if all the entities are dead, activate an the map's trigger
      if ( all_dead ) {
-          Auto loc = map.activate_on_all_enemies_killed ( );
-          interactives.activate ( loc.x, loc.y );
+          Location loc ( map.activate_on_all_enemies_killed ( ) );
+          interactives.activate ( loc );
           map.killed_all_enemies ( );
      }
 }
@@ -1311,7 +1313,7 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
      Location player_center_tile = Map::vector_to_location ( player.collision_center ( ) );
 
      if ( map.tile_location_is_valid ( player_center_tile ) ) {
-          Auto& interactive = interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
+          Auto& interactive = interactives.get_from_tile ( player_center_tile );
           Direction border_side = player_on_border ( );
 
           // check if player is trying to exit the map
@@ -1367,7 +1369,7 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
 
      if ( player.is_pushing ( ) ) {
           Location push_tile = character_adjacent_tile ( player );
-          push_interactive ( push_tile.x, push_tile.y, player.facing, map );
+          push_interactive ( push_tile, player.facing, map );
      } else {
           // check if player wants to activate any interactives
           if ( activate_key ) {
@@ -1376,14 +1378,13 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                Location activate_tile = character_adjacent_tile ( player );
 
                if ( map.tile_location_is_valid ( activate_tile ) ) {
-                    Auto& interactive = interactives.get_from_tile ( activate_tile.x,
-                                                                     activate_tile.y );
+                    Auto& interactive = interactives.get_from_tile ( activate_tile );
 
                     if ( interactive.type == Interactive::Type::exit ) {
                          if ( interactive.interactive_exit.state == Exit::State::locked &&
                               player.key_count > 0 ) {
                               LOG_DEBUG ( "Unlock Door: %d, %d\n", activate_tile.x, activate_tile.y );
-                              interactives.activate ( activate_tile.x, activate_tile.y );
+                              interactives.activate ( activate_tile );
                               player.key_count--;
                               sound.play_effect ( Sound::Effect::activate_interactive );
                          }
@@ -1394,7 +1395,7 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                     } else {
                          LOG_DEBUG ( "Activate: %d, %d\n", activate_tile.x, activate_tile.y );
 
-                         Bool success = interactives.activate ( activate_tile.x, activate_tile.y );
+                         Bool success = interactives.activate ( activate_tile );
 
                          if ( success ) {
                               sound.play_effect ( Sound::Effect::activate_interactive );
@@ -1522,11 +1523,8 @@ Void State::update_enemies ( float time_delta )
      }
 }
 
-Void State::push_interactive ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
+Void State::push_interactive ( const Location& tile, Direction dir, const Map& map )
 {
-     // TODO: Make this function take a location
-     Location tile ( tile_x, tile_y );
-
      if ( !map.tile_location_is_valid ( tile ) ) {
           return;
      }
@@ -1550,7 +1548,7 @@ Void State::push_interactive ( Int32 tile_x, Int32 tile_y, Direction dir, const 
           if ( character_touching_tile ( player, dest ) ) {
 
                // if the player is pushing the tile, stop it!
-               Auto& interactive = interactives.get_from_tile ( tile_x, tile_y );
+               Auto& interactive = interactives.get_from_tile ( tile );
 
                if ( interactive.type == Interactive::Type::pushable_block ) {
                     interactive.interactive_pushable_block.pushed_last_update = false;
@@ -1561,7 +1559,7 @@ Void State::push_interactive ( Int32 tile_x, Int32 tile_y, Direction dir, const 
                return;
           }
 
-          Bool pushed = interactives.push ( tile_x, tile_y, dir, map );
+          Bool pushed = interactives.push ( tile, dir, map );
 
           if ( pushed ) {
                sound.play_effect ( Sound::Effect::activate_interactive );
@@ -1580,7 +1578,7 @@ Void State::update_interactives ( float time_delta )
                if ( interactive.underneath.type == UnderneathInteractive::Type::ice &&
                     interactive.underneath.underneath_ice.force_dir != Direction::count ) {
                     Auto tile = map.tile_index_to_location ( i );
-                    push_interactive ( tile.x, tile.y,
+                    push_interactive ( tile,
                                        interactive.underneath.underneath_ice.force_dir,
                                        map );
                }
@@ -1589,14 +1587,14 @@ Void State::update_interactives ( float time_delta )
                     interactive.underneath.underneath_ice_detector.detected &&
                     interactive.underneath.underneath_ice_detector.force_dir != Direction::count ) {
                     Auto tile = map.tile_index_to_location ( i );
-                    push_interactive ( tile.x, tile.y,
+                    push_interactive ( tile,
                                        interactive.underneath.underneath_ice_detector.force_dir, map );
                }
 
                if ( interactive.underneath.type == UnderneathInteractive::Type::moving_walkway &&
                     interactive.underneath.underneath_moving_walkway.facing != Direction::count ) {
                     Auto tile = map.tile_index_to_location ( i );
-                    push_interactive ( tile.x, tile.y,
+                    push_interactive ( tile,
                                        interactive.underneath.underneath_moving_walkway.facing,
                                        map );
                }
@@ -1610,14 +1608,14 @@ Void State::update_interactives ( float time_delta )
           case Interactive::Type::torch:
                if ( interactive.interactive_torch.element == Element::ice ) {
                     Auto tile = map.tile_index_to_location ( i );
-                    interactives.spread_ice ( tile.x, tile.y, map, false );
+                    interactives.spread_ice ( tile, map, false );
                }
                break;
           case Interactive::Type::pushable_torch:
                if ( interactive.interactive_pushable_torch.torch.element == Element::ice ) {
                     Auto tile = map.tile_index_to_location ( i );
 
-                    interactives.spread_ice ( tile.x, tile.y, map, false );
+                    interactives.spread_ice ( tile, map, false );
                }
 
                interactive.update ( time_delta, interactives );
@@ -1659,13 +1657,13 @@ Void State::update_interactives ( float time_delta )
           case Interactive::Type::torch:
                if ( interactive.interactive_torch.element == Element::fire ) {
                     Auto tile = map.tile_index_to_location ( i );
-                    interactives.spread_ice ( tile.x, tile.y, map, true );
+                    interactives.spread_ice ( tile, map, true );
                }
                break;
           case Interactive::Type::pushable_torch:
                if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
                     Auto tile = map.tile_index_to_location ( i );
-                    interactives.spread_ice ( tile.x, tile.y, map, true );
+                    interactives.spread_ice ( tile, map, true );
                }
                break;
           }
@@ -1775,10 +1773,10 @@ Void State::update_bombs ( float time_delta )
 
           Vector bomb_center { bomb.position.x ( ) + Map::c_tile_dimension_in_meters * 0.5f,
                                bomb.position.y ( ) + Map::c_tile_dimension_in_meters * 0.5f };
-          Int32 bomb_tile_x = meters_to_pixels ( bomb_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
-          Int32 bomb_tile_y = meters_to_pixels ( bomb_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+          Location bomb_tile ( meters_to_pixels ( bomb_center.x ( ) ) / Map::c_tile_dimension_in_pixels,
+                               meters_to_pixels ( bomb_center.y ( ) ) / Map::c_tile_dimension_in_pixels );
 
-          Auto& current_interactive = interactives.get_from_tile ( bomb_tile_x, bomb_tile_y );
+          Auto& current_interactive = interactives.get_from_tile ( bomb_tile );
 
           if ( current_interactive.underneath.type == UnderneathInteractive::Type::moving_walkway ) {
                static const Real32 c_bomb_moving_walkway_speed = 0.05f;
@@ -1805,15 +1803,9 @@ Void State::update_bombs ( float time_delta )
                }
 
                // determine nearby objects
-               Vector bomb_center { bomb.position.x ( ) + Map::c_tile_dimension_in_meters * 0.5f,
-                                    bomb.position.y ( ) + Map::c_tile_dimension_in_meters * 0.5f };
                Int32 tile_radius = meters_to_pixels ( Bomb::c_explode_radius ) / Map::c_tile_dimension_in_pixels;
-               Int32 tile_min_x = meters_to_pixels ( bomb_center.x ( ) ) / Map::c_tile_dimension_in_pixels;
-               Int32 tile_min_y = meters_to_pixels ( bomb_center.y ( ) ) / Map::c_tile_dimension_in_pixels;
-
-               tile_min_x -= tile_radius;
-               tile_min_y -= tile_radius;
-
+               Int32 tile_min_x = bomb_tile.x - tile_radius;
+               Int32 tile_min_y = bomb_tile.y - tile_radius;
                Int32 tile_max_x = tile_min_x + tile_radius * 2;
                Int32 tile_max_y = tile_min_y + tile_radius * 2;
 
@@ -1825,7 +1817,8 @@ Void State::update_bombs ( float time_delta )
                // loop over nearby objects
                for ( Int32 y = tile_min_y; y <= tile_max_y; ++y ) {
                     for ( Int32 x = tile_min_x; x <= tile_max_x; ++x ) {
-                         interactives.explode ( x, y );
+                         Location current_tile ( x, y );
+                         interactives.explode ( current_tile );
                     }
                }
 
@@ -1964,7 +1957,7 @@ Void State::update_light ( )
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
                Location tile ( x, y );
-               interactives.light ( x, y, map.get_tile_location_light ( tile ) );
+               interactives.light ( tile, map.get_tile_location_light ( tile ) );
           }
      }
 }

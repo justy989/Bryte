@@ -85,12 +85,14 @@ Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& inter
      if ( invisible ) {
           for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
                for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-                    Int32 position_x = x * Map::c_tile_dimension_in_pixels;
-                    Int32 position_y = y * Map::c_tile_dimension_in_pixels;
+                    Location tile ( x, y );
+                    Location position ( tile );
 
-                    Auto& interactive = interactives.get_from_tile ( x, y );
+                    Map::convert_tiles_to_pixels ( &position );
 
-                    SDL_Rect dest_rect { position_x, position_y,
+                    Auto& interactive = interactives.get_from_tile ( tile );
+
+                    SDL_Rect dest_rect { position.x, position.y,
                                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
                     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
@@ -108,12 +110,13 @@ Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& inter
                          continue;
                     }
 
-                    Int32 position_x = x * Map::c_tile_dimension_in_pixels;
-                    Int32 position_y = y * Map::c_tile_dimension_in_pixels;
+                    Location position ( tile );
 
-                    Auto& interactive = interactives.get_from_tile ( x, y );
+                    Map::convert_tiles_to_pixels ( &position );
 
-                    SDL_Rect dest_rect { position_x, position_y,
+                    Auto& interactive = interactives.get_from_tile ( tile );
+
+                    SDL_Rect dest_rect { position.x, position.y,
                                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
                     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );

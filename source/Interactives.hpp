@@ -263,36 +263,35 @@ namespace bryte
 
           Void reset ( Int32 width, Int32 height );
 
-          Interactive& add ( Interactive::Type type, Int32 tile_x, Int32 tile_y );
+          Interactive& add ( Interactive::Type type, const Location& tile );
 
           Void contribute_light ( Map& map );
 
-          Bool push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
-          Bool activate ( Int32 tile_x, Int32 tile_y );
-          Void explode ( Int32 tile_x, Int32 tile_y );
-          Void light ( Int32 tile_x, Int32 tile_y, Uint8 light );
-          Void character_enter ( Int32 tile_x, Int32 tile_y, Character& character );
-          Void character_leave ( Int32 tile_x, Int32 tile_y, Character& character );
-          Void projectile_enter ( Int32 tile_x, Int32 tile_y, Projectile& projectile );
+          Bool push ( const Location& tile, Direction dir, const Map& map );
+          Bool activate ( const Location& tile );
+          Void explode ( const Location& tile );
+          Void light ( const Location& tile, Uint8 light );
+          Void character_enter ( const Location& tile, Character& character );
+          Void character_leave ( const Location& tile, Character& character );
+          Void projectile_enter ( const Location& tile, Projectile& projectile );
 
-          Bool is_walkable ( Int32 tile_x, Int32 tile_y, Direction dir ) const;
-          Bool is_flyable ( Int32 tile_x, Int32 tile_y ) const;
+          Bool is_walkable ( const Location& tile, Direction dir ) const;
+          Bool is_flyable ( const Location& tile ) const;
 
-          Void spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear = false );
+          Void spread_ice ( const Location& tile, const Map& map, bool clear = false );
 
-          Void get_portal_destination ( Int32* tile_x, Int32* tile_y,
-                                        Direction dir ) const;
+          Void get_portal_destination ( Location* dest_tile, Direction dir ) const;
 
-          Interactive& get_from_tile ( Int32 tile_x, Int32 tile_y );
-          const Interactive& cget_from_tile ( Int32 tile_x, Int32 tile_y ) const;
+          Interactive& get_from_tile ( const Location& tile );
+          const Interactive& cget_from_tile ( const Location& tile ) const;
 
           inline Int32 width ( ) const;
           inline Int32 height ( ) const;
 
      private:
 
-          Void get_portal_destination_impl ( Int32 start_tile_x, Int32 start_tile_y,
-                                             Int32* dest_tile_x, Int32* dest_tile_y,
+          Void get_portal_destination_impl ( const Location& start_tile,
+                                             Location* dest_tile,
                                              Direction dir ) const;
 
      public:

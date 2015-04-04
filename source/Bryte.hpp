@@ -134,7 +134,7 @@ namespace bryte
           Void update_enemies ( float time_delta );
           Void enemy_death ( const Enemy& enemy );
 
-          Void push_interactive ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map );
+          Void push_interactive ( const Location& tile, Direction dir, const Map& map );
 
           Void update_interactives ( float time_delta );
 

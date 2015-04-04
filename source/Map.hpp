@@ -45,11 +45,6 @@ namespace bryte
 
      public:
 
-          struct Coordinates {
-               Uint8 x;
-               Uint8 y;
-          };
-
           enum TileFlags {
                solid = 1,
                invisible = 2,
@@ -371,12 +366,12 @@ namespace bryte
           return m_current_map;
      }
 
-     inline Void Map::set_activate_location_on_all_enemies_killed ( Map::Coordinates loc )
+     inline Void Map::set_activate_location_on_all_enemies_killed ( Coordinates loc )
      {
           m_activate_on_kill_all = loc;
      }
 
-     inline Map::Coordinates Map::activate_on_all_enemies_killed ( ) const
+     inline Coordinates Map::activate_on_all_enemies_killed ( ) const
      {
           return m_activate_on_kill_all;
      }

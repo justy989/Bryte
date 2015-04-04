@@ -409,7 +409,8 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
 
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               Auto& interactive = interactives.get_from_tile ( x, y );
+               Location tile ( x, y );
+               Auto& interactive = interactives.get_from_tile ( tile );
                file.write ( reinterpret_cast<const Char8*>( &interactive ), sizeof ( interactive ) );
 
           }
@@ -491,7 +492,8 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
 
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               Auto& interactive = interactives.get_from_tile ( x, y );
+               Location tile ( x, y );
+               Auto& interactive = interactives.get_from_tile ( tile );
                file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
           }
      }
@@ -659,8 +661,8 @@ Void Map::restore_exits ( Interactives& interactives )
                PersistedExit::Map& map_info = m_persisted_exits [ i ].map [ m ];
 
                if ( map_info.index == m_current_map ) {
-                    Auto& exit = interactives.get_from_tile ( map_info.coordinates.x,
-                                                              map_info.coordinates.y );
+                    Auto& exit = interactives.get_from_tile ( Location ( map_info.coordinates.x,
+                                                                         map_info.coordinates.y ) );
 
                     if ( exit.type != Interactive::Type::exit ) {
                          LOG_ERROR ( "Failed to restore persisted exit at %d, %d on map %d, map has changed?\n",
@@ -720,11 +722,12 @@ Void Map::restore_activate_on_kill_all ( Interactives& interactives )
      m_killed_all_enemies = m_persisted_activate_on_kill_all [ m_current_map ];
 
      if ( m_killed_all_enemies ) {
-          Auto& interactive = interactives.get_from_tile (  m_activate_on_kill_all.x,
-                                                            m_activate_on_kill_all.y );
+          Location tile ( m_activate_on_kill_all.x, m_activate_on_kill_all.y );
+          Auto& interactive = interactives.get_from_tile ( tile );
+
           // NOTE: persist non-exit changes
           if ( interactive.type != Interactive::Type::exit ) {
-               interactives.activate ( m_activate_on_kill_all.x, m_activate_on_kill_all.y );
+               interactives.activate ( tile );
           }
      }
 }

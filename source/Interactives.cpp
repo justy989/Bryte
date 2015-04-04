@@ -44,20 +44,20 @@ Void UnderneathInteractive::reset ( )
      }
 }
 
-Interactive& Interactives::get_from_tile ( Int32 tile_x, Int32 tile_y )
+Interactive& Interactives::get_from_tile ( const Location& tile )
 {
-     ASSERT ( tile_x >= 0 && tile_x < m_width );
-     ASSERT ( tile_y >= 0 && tile_y < m_height );
+     ASSERT ( tile.x >= 0 && tile.x < m_width );
+     ASSERT ( tile.y >= 0 && tile.y < m_height );
 
-     return m_interactives [ ( tile_y * m_width ) + tile_x ];
+     return m_interactives [ ( tile.y * m_width ) + tile.x ];
 }
 
-const Interactive& Interactives::cget_from_tile ( Int32 tile_x, Int32 tile_y ) const
+const Interactive& Interactives::cget_from_tile ( const Location& tile ) const
 {
-     ASSERT ( tile_x >= 0 && tile_x < m_width );
-     ASSERT ( tile_y >= 0 && tile_y < m_height );
+     ASSERT ( tile.x >= 0 && tile.x < m_width );
+     ASSERT ( tile.y >= 0 && tile.y < m_height );
 
-     return m_interactives [ ( tile_y * m_width ) + tile_x ];
+     return m_interactives [ ( tile.y * m_width ) + tile.x ];
 }
 
 Void Interactives::reset ( Int32 width, Int32 height )
@@ -73,10 +73,11 @@ Void Interactives::reset ( Int32 width, Int32 height )
      }
 }
 
-Interactive& Interactives::add ( Interactive::Type type, Int32 tile_x, Int32 tile_y )
+Interactive& Interactives::add ( Interactive::Type type, const Location& tile )
 {
-     Auto& i = get_from_tile ( tile_x, tile_y );
+     Auto& i = get_from_tile ( tile );
 
+     // TODO: reset underneath as well
      i.type = type;
      i.reset ( );
 
@@ -87,14 +88,16 @@ Void Interactives::contribute_light ( Map& map )
 {
      for ( Int32 y = 0; y < height ( ); ++y ) {
           for ( Int32 x = 0; x < width ( ); ++x ) {
-               Auto& interactive = get_from_tile ( x, y );
+               Location tile ( x, y );
+
+               Auto& interactive = get_from_tile ( tile );
 
                switch ( interactive.type ) {
                default:
                     break;
                case Interactive::Type::torch:
                     if ( interactive.interactive_torch.element == Element::fire ) {
-                         Location center ( x, y );
+                         Location center ( tile );
                          Map::convert_tiles_to_pixels ( &center );
                          Map::move_half_tile_in_pixels ( &center );
                          map.illuminate ( center, interactive.interactive_torch.value );
@@ -102,7 +105,7 @@ Void Interactives::contribute_light ( Map& map )
                     break;
                case Interactive::Type::pushable_torch:
                     if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
-                         Location center ( x, y );
+                         Location center ( tile );
                          Map::convert_tiles_to_pixels ( &center );
                          Map::move_half_tile_in_pixels ( &center );
                          map.illuminate ( center, interactive.interactive_pushable_torch.torch.value );
@@ -113,54 +116,50 @@ Void Interactives::contribute_light ( Map& map )
      }
 }
 
-Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
+Bool Interactives::push ( const Location& tile, Direction dir, const Map& map )
 {
-     Interactive& i_portal = get_from_tile ( tile_x, tile_y );
+     Location push_tile ( tile );
+     Interactive& i_portal = get_from_tile ( tile );
 
      if ( i_portal.type == Interactive::Type::portal ) {
-          get_portal_destination ( &tile_x, &tile_y, dir );
+          get_portal_destination ( &push_tile, dir );
      }
 
-     Interactive& i = get_from_tile ( tile_x, tile_y );
-
+     Interactive& i = get_from_tile ( push_tile );
      Direction result_dir = i.push ( dir, *this );
-
-     Int32 dest_x = tile_x;
-     Int32 dest_y = tile_y;
+     Location dest_tile ( tile );
 
      switch ( result_dir ) {
      default:
           return false;
      case Direction::left:
-          dest_x--;
+          dest_tile.x--;
           break;
      case Direction::right:
-          dest_x++;
+          dest_tile.x++;
           break;
      case Direction::up:
-          dest_y++;
+          dest_tile.y++;
           break;
      case Direction::down:
-          dest_y--;
+          dest_tile.y--;
           break;
      }
 
-     Location dest_tile { dest_x, tile_y };
+     Interactive& dest_i = get_from_tile ( dest_tile );
 
-     Interactive& dest_i = get_from_tile ( dest_x, dest_y );
-
-     if ( ( !is_walkable ( dest_x, dest_y, dir ) &&
+     if ( ( !is_walkable ( dest_tile, dir ) &&
             dest_i.underneath.type != UnderneathInteractive::Type::hole ) ||
             map.get_tile_location_solid ( dest_tile ) ) {
           // pass
      } else if ( dest_i.type == Interactive::Type::portal ) {
-          Int32 dest_tile_x = dest_i.interactive_portal.destination_x;
-          Int32 dest_tile_y = dest_i.interactive_portal.destination_y;
+          Location portal_dest_tile ( dest_i.interactive_portal.destination_x,
+                                      dest_i.interactive_portal.destination_y );
 
-          move_location ( dest_tile_x, dest_tile_y, result_dir );
+          move_tile_location ( &portal_dest_tile, result_dir );
 
-          if ( is_walkable ( dest_tile_x, dest_tile_y, result_dir ) ) {
-               Interactive& portal_dest_i = get_from_tile ( dest_tile_x, dest_tile_y );
+          if ( is_walkable ( portal_dest_tile, result_dir ) ) {
+               Interactive& portal_dest_i = get_from_tile ( dest_tile );
                portal_dest_i = i;
                i.type = Interactive::Type::none;
                i.interactive_leave ( result_dir, *this );
@@ -200,56 +199,56 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
      return false;
 }
 
-Bool Interactives::activate ( Int32 tile_x, Int32 tile_y )
+Bool Interactives::activate ( const Location& tile )
 {
-     Interactive& i = get_from_tile ( tile_x, tile_y );
+     Interactive& i = get_from_tile ( tile );
 
      return i.activate ( *this );
 }
 
-Void Interactives::explode ( Int32 tile_x, Int32 tile_y )
+Void Interactives::explode ( const Location& tile )
 {
-     Interactive& i = get_from_tile ( tile_x, tile_y );
+     Interactive& i = get_from_tile ( tile );
 
      i.explode ( *this );
 }
 
-Void Interactives::light ( Int32 tile_x, Int32 tile_y, Uint8 light )
+Void Interactives::light ( const Location& tile, Uint8 light )
 {
-     Interactive& i = get_from_tile ( tile_x, tile_y );
+     Interactive& i = get_from_tile ( tile );
 
      i.light ( light, *this );
 }
 
-Void Interactives::character_enter ( Int32 tile_x, Int32 tile_y, Character& character )
+Void Interactives::character_enter ( const Location& tile, Character& character )
 {
-     Interactive& i = get_from_tile ( tile_x, tile_y );
+     Interactive& i = get_from_tile ( tile );
 
      i.character_enter ( character.facing, *this, character );
 }
 
-Void Interactives::character_leave ( Int32 tile_x, Int32 tile_y, Character& character )
+Void Interactives::character_leave ( const Location& tile, Character& character )
 {
-     Interactive& i = get_from_tile ( tile_x, tile_y );
+     Interactive& i = get_from_tile ( tile );
 
      i.character_leave ( character.facing, *this, character );
 }
 
-Void Interactives::projectile_enter ( Int32 tile_x, Int32 tile_y, Projectile& projectile )
+Void Interactives::projectile_enter ( const Location& tile, Projectile& projectile )
 {
-     Interactive& i = get_from_tile ( tile_x, tile_y );
+     Interactive& i = get_from_tile ( tile );
 
      i.projectile_enter ( projectile.facing, *this, projectile );
 }
 
-Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool clear )
+Void Interactives::spread_ice ( const Location& tile, const Map& map, bool clear )
 {
      const Int32 c_tile_radius = 1;
 
-     Int32 min_tile_x  = tile_x - c_tile_radius;
-     Int32 max_tile_x  = tile_x + c_tile_radius;
-     Int32 min_tile_y  = tile_y - c_tile_radius;
-     Int32 max_tile_y  = tile_y + c_tile_radius;
+     Int32 min_tile_x  = tile.x - c_tile_radius;
+     Int32 max_tile_x  = tile.x + c_tile_radius;
+     Int32 min_tile_y  = tile.y - c_tile_radius;
+     Int32 max_tile_y  = tile.y + c_tile_radius;
 
      CLAMP ( min_tile_x, 0, m_width - 1 );
      CLAMP ( max_tile_x, 0, m_width - 1 );
@@ -259,10 +258,10 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
      if ( clear ) {
           for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
                for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
-                    Location tile ( x, y );
-                    Auto& interactive = get_from_tile ( x, y );
+                    Location current_tile ( x, y );
+                    Auto& interactive = get_from_tile ( current_tile );
 
-                    if ( map.get_tile_location_solid ( tile ) ) {
+                    if ( map.get_tile_location_solid ( current_tile ) ) {
                          continue;
                     }
 
@@ -272,7 +271,8 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
                          Auto& detector = interactive.underneath.underneath_ice_detector;
                          if ( detector.detected ) {
                               detector.detected = !detector.detected;
-                              activate ( detector.activate_coordinate_x, detector.activate_coordinate_y );
+                              Location activate_tile ( detector.activate_coordinate_x, detector.activate_coordinate_y );
+                              activate ( activate_tile );
                          }
                     }
                }
@@ -280,10 +280,10 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
      } else {
           for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
                for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
-                    Location tile ( x, y );
-                    Auto& interactive = get_from_tile ( x, y );
+                    Location current_tile ( x, y );
+                    Auto& interactive = get_from_tile ( current_tile );
 
-                    if ( map.get_tile_location_solid ( tile ) ) {
+                    if ( map.get_tile_location_solid ( current_tile ) ) {
                          continue;
                     }
 
@@ -294,7 +294,8 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
                          Auto& detector = interactive.underneath.underneath_ice_detector;
                          if ( !detector.detected ) {
                               detector.detected = !detector.detected;
-                              activate ( detector.activate_coordinate_x, detector.activate_coordinate_y );
+                              Location activate_tile ( detector.activate_coordinate_x, detector.activate_coordinate_y );
+                              activate ( activate_tile );
                          }
                     }
                }
@@ -302,9 +303,9 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
      }
 }
 
-Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y, Direction dir ) const
+Bool Interactives::is_walkable ( const Location& tile, Direction dir ) const
 {
-     const Auto& interactive = cget_from_tile ( tile_x, tile_y );
+     const Auto& interactive = cget_from_tile ( tile );
 
      switch ( interactive.underneath.type ) {
      default:
@@ -334,18 +335,20 @@ Bool Interactives::is_walkable ( Int32 tile_x, Int32 tile_y, Direction dir ) con
           return interactive.interactive_exit.state == Exit::State::open;
      case Interactive::Type::portal:
      {
-          get_portal_destination ( &tile_x, &tile_y, dir );
+          Auto dest_tile = tile;
 
-          return is_walkable ( tile_x, tile_y, dir );
+          get_portal_destination ( &dest_tile, dir );
+
+          return is_walkable ( dest_tile, dir );
      } break;
      }
 
      return true;
 }
 
-Bool Interactives::is_flyable ( Int32 tile_x, Int32 tile_y ) const
+Bool Interactives::is_flyable ( const Location& tile ) const
 {
-     const Auto& interactive = cget_from_tile ( tile_x, tile_y );
+     const Auto& interactive = cget_from_tile ( tile );
 
      switch ( interactive.type ) {
      default:
@@ -387,6 +390,7 @@ Void Interactive::reset ( )
           interactive_turret.reset ( );
           break;
      case Type::portal:
+          interactive_portal.reset ( );
           break;
      }
 
@@ -475,8 +479,9 @@ Void Interactive::character_enter ( Direction from, Interactives& interactives, 
      {
           Auto& pressure_plate = underneath.underneath_pressure_plate;
           pressure_plate.entered = true;
-          Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
-                                                           pressure_plate.activate_coordinate_y );
+          Location activate_tile ( pressure_plate.activate_coordinate_x,
+                                   pressure_plate.activate_coordinate_y );
+          Auto& interactive = interactives.get_from_tile ( activate_tile );
           interactive.activate ( interactives );
      } break;
      case UnderneathInteractive::Type::ice:
@@ -524,8 +529,9 @@ Void Interactive::character_leave ( Direction to, Interactives& interactives, Ch
 
           pressure_plate.entered = false;
 
-          Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
-                                                           pressure_plate.activate_coordinate_y );
+          Location activate_tile ( pressure_plate.activate_coordinate_x,
+                                   pressure_plate.activate_coordinate_y );
+          Auto& interactive = interactives.get_from_tile ( activate_tile );
 
           interactive.activate ( interactives );
      } break;
@@ -552,8 +558,9 @@ Void Interactive::interactive_enter ( Direction from, Interactives& interactives
 
           pressure_plate.entered = true;
 
-          Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
-                                                           pressure_plate.activate_coordinate_y );
+          Location activate_tile ( pressure_plate.activate_coordinate_x,
+                                   pressure_plate.activate_coordinate_y );
+          Auto& interactive = interactives.get_from_tile ( activate_tile );
 
           interactive.activate ( interactives );
      } break;
@@ -590,8 +597,9 @@ Void Interactive::interactive_leave ( Direction to, Interactives& interactives )
 
           pressure_plate.entered = false;
 
-          Auto& interactive = interactives.get_from_tile ( pressure_plate.activate_coordinate_x,
-                                                           pressure_plate.activate_coordinate_y );
+          Location activate_tile ( pressure_plate.activate_coordinate_x,
+                                   pressure_plate.activate_coordinate_y );
+          Auto& interactive = interactives.get_from_tile ( activate_tile );
 
           interactive.activate ( interactives );
      } break;
@@ -702,7 +710,8 @@ Void Lever::update ( Real32 time_delta, Interactives& interactives )
           cooldown_watch.tick ( time_delta );
 
           if ( cooldown_watch.expired ( ) ) {
-               Auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+               Location activate_tile ( activate_coordinate_x, activate_coordinate_y );
+               Auto& interactive = interactives.get_from_tile ( activate_tile );
                interactive.activate ( interactives );
                state = State::on;
           }
@@ -712,7 +721,8 @@ Void Lever::update ( Real32 time_delta, Interactives& interactives )
           cooldown_watch.tick ( time_delta );
 
           if ( cooldown_watch.expired ( ) ) {
-               Auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+               Location activate_tile ( activate_coordinate_x, activate_coordinate_y );
+               Auto& interactive = interactives.get_from_tile ( activate_tile );
                interactive.activate ( interactives );
                state = State::off;
           }
@@ -790,7 +800,9 @@ Direction PushableBlock::push ( Direction direction, Interactives& interactives 
           }
 
           if ( activate_coordinate_x || activate_coordinate_y ) {
-               Auto& interactive = interactives.get_from_tile ( activate_coordinate_x, activate_coordinate_y );
+
+               Location activate_tile ( activate_coordinate_x, activate_coordinate_y );
+               Auto& interactive = interactives.get_from_tile ( activate_tile );
                interactive.activate ( interactives );
           }
 
@@ -941,22 +953,26 @@ Void LightDetector::light ( Uint8 value, Interactives& interactives )
           if ( value >= c_bryte_value && below_value ) {
                below_value = false;
 
-               interactives.activate ( activate_coordinate_x, activate_coordinate_y );
+               Location activate_tile ( activate_coordinate_x, activate_coordinate_y );
+               interactives.activate ( activate_tile );
           } else if ( value < c_bryte_value && !below_value ) {
                below_value = true;
 
-               interactives.activate ( activate_coordinate_x, activate_coordinate_y );
+               Location activate_tile ( activate_coordinate_x, activate_coordinate_y );
+               interactives.activate ( activate_tile );
           }
           break;
      case Type::dark:
           if ( value <= c_dark_value && !below_value ) {
                below_value = true;
 
-               interactives.activate ( activate_coordinate_x, activate_coordinate_y );
+               Location activate_tile ( activate_coordinate_x, activate_coordinate_y );
+               interactives.activate ( activate_tile );
           } else if ( value > c_dark_value && below_value ) {
                below_value = false;
 
-               interactives.activate ( activate_coordinate_x, activate_coordinate_y );
+               Location activate_tile ( activate_coordinate_x, activate_coordinate_y );
+               interactives.activate ( activate_tile );
           }
           break;
      }
@@ -1017,13 +1033,13 @@ Void Portal::reset ( )
 
 Direction Portal::push ( Direction direction, Interactives& interactives )
 {
+     Location dest_tile ( destination_x, destination_y );
+
+     move_tile_location ( &dest_tile, direction );
+
+     Auto& interactive = interactives.get_from_tile ( dest_tile );
+
      // just pass along the push to the target
-     Int32 dest_tile_x = destination_x;
-     Int32 dest_tile_y = destination_y;
-     move_location ( dest_tile_x, dest_tile_y, direction );
-
-     Auto& interactive = interactives.get_from_tile ( dest_tile_x, dest_tile_y );
-
      if ( interactive.type ) {
           return interactive.push ( direction, interactives );
      }
@@ -1036,38 +1052,39 @@ Bool Portal::activate ( )
      return true;
 }
 
-Void Interactives::get_portal_destination ( Int32* tile_x, Int32* tile_y,
-                                            Direction dir ) const
+Void Interactives::get_portal_destination ( Location* tile, Direction dir ) const
 {
-     get_portal_destination_impl ( *tile_x, *tile_y,
-                                   tile_x, tile_y, dir );
+     ASSERT ( tile );
+
+     get_portal_destination_impl ( *tile, tile, dir );
 }
 
-Void Interactives::get_portal_destination_impl ( Int32 start_tile_x, Int32 start_tile_y,
-                                                 Int32* dest_tile_x, Int32* dest_tile_y,
+Void Interactives::get_portal_destination_impl ( const Location& start_tile,
+                                                 Location* dest_tile,
                                                  Direction dir ) const
 {
-     const Interactive& interactive = cget_from_tile ( *dest_tile_x, *dest_tile_y );
+     ASSERT ( dest_tile );
+
+     const Interactive& interactive = cget_from_tile ( *dest_tile );
 
      if ( interactive.type != Interactive::Type::portal ) {
           return;
      }
 
-     *dest_tile_x = interactive.interactive_portal.destination_x;
-     *dest_tile_y = interactive.interactive_portal.destination_y;
+     dest_tile->x = interactive.interactive_portal.destination_x;
+     dest_tile->y = interactive.interactive_portal.destination_y;
 
-     move_location ( *dest_tile_x, *dest_tile_y, dir );
+     move_tile_location ( dest_tile, dir );
 
      // Note: To (try to) avoid infinite recursion, exit if we ever see the first portal again
-     if ( start_tile_x == *dest_tile_x && start_tile_y == *dest_tile_y ) {
+     if ( start_tile == *dest_tile ) {
           return;
      }
 
-     const Interactive& dest_interactive = cget_from_tile ( *dest_tile_x, *dest_tile_y );
+     const Interactive& dest_interactive = cget_from_tile ( *dest_tile );
 
      if ( dest_interactive.type == Interactive::Type::portal ) {
-          get_portal_destination_impl ( start_tile_x, start_tile_y,
-                                        dest_tile_x, dest_tile_y, dir );
+          get_portal_destination_impl ( start_tile, dest_tile, dir );
      }
 }
 

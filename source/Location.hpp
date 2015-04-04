@@ -2,11 +2,13 @@
 #define BRYTE_LOCATION_HPP
 
 #include "Types.hpp"
+#include "Coordinates.hpp"
 
 struct Location {
 public:
 
      inline Location ( );
+     inline Location ( const Coordinates& coords );
      inline Location ( Uint8 x, Uint8 y );
      inline Location ( Int32 x, Int32 y );
 
@@ -22,6 +24,13 @@ public:
 inline Location::Location ( ) :
      x ( 0 ),
      y ( 0 )
+{
+
+}
+
+inline Location::Location ( const Coordinates& coords ) :
+     x ( coords.x ),
+     y ( coords.y )
 {
 
 }

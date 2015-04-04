@@ -1,6 +1,7 @@
 #include "Utils.hpp"
 #include "GameMemory.hpp"
 #include "Vector.hpp"
+#include "Location.hpp"
 #include "Random.hpp"
 
 #include <fstream>
@@ -221,4 +222,23 @@ Void move_location ( Int32& tile_x, Int32& tile_y, bryte::Direction move_dir )
      }
 }
 
+Void move_tile_location ( Location* location, bryte::Direction move_dir )
+{
+     switch ( move_dir ) {
+     default:
+          break;
+     case bryte::Direction::left:
+          location->x--;
+          break;
+     case bryte::Direction::up:
+          location->y++;
+          break;
+     case bryte::Direction::right:
+          location->x++;
+          break;
+     case bryte::Direction::down:
+          location->y--;
+          break;
+     }
+}
 

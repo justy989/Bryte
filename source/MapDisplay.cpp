@@ -43,8 +43,8 @@ static Void render_map_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* 
      // TODO: optimize to only draw to the part of the back buffer we can see
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
-
-               Auto tile_value = map.get_coordinate_value ( x, y );
+               Location tile ( x, y );
+               Auto tile_value = map.get_tile_location_value ( tile );
 
                if ( !tile_value ) {
                     continue;
@@ -59,8 +59,8 @@ static Void render_map_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* 
 
                clip_rect.x = tile_value * Map::c_tile_dimension_in_pixels;
 
-               tile_rect.x = x * Map::c_tile_dimension_in_pixels;
-               tile_rect.y = y * Map::c_tile_dimension_in_pixels;
+               tile_rect.x = tile.x * Map::c_tile_dimension_in_pixels;
+               tile_rect.y = tile.y * Map::c_tile_dimension_in_pixels;
 
                world_to_sdl ( tile_rect, back_buffer, camera_x, camera_y );
 
@@ -75,10 +75,11 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
      // TODO: optimize to only draw to the part of the back buffer we can see
      for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
+               Location tile ( x, y );
 
-               Auto tile_value = map.get_coordinate_value ( x, y );
+               Auto tile_value = map.get_tile_location_value ( tile );
 
-               if ( !tile_value || map.get_coordinate_invisible ( x, y )  ) {
+               if ( !tile_value || map.get_tile_location_invisible ( tile )  ) {
                     continue;
                }
 
@@ -104,7 +105,9 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
 static Void render_fixture ( SDL_Surface* back_buffer, SDL_Surface* fixture_sheet, Map::Fixture* fixture,
                              Map& map, Real32 camera_x, Real32 camera_y )
 {
-     if ( map.get_coordinate_invisible ( fixture->location.x, fixture->location.y ) ) {
+     Location tile ( fixture->coordinates.x, fixture->coordinates.y );
+
+     if ( map.get_tile_location_invisible ( tile ) ) {
           return;
      }
 
@@ -112,8 +115,8 @@ static Void render_fixture ( SDL_Surface* back_buffer, SDL_Surface* fixture_shee
      SDL_Rect clip_rect { fixture->id * Map::c_tile_dimension_in_pixels, 0,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-     dest_rect.x = fixture->location.x * Map::c_tile_dimension_in_pixels;
-     dest_rect.y = fixture->location.y * Map::c_tile_dimension_in_pixels;
+     dest_rect.x = fixture->coordinates.x * Map::c_tile_dimension_in_pixels;
+     dest_rect.y = fixture->coordinates.y * Map::c_tile_dimension_in_pixels;
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
@@ -127,8 +130,8 @@ static Void render_fixture_with_invisibles ( SDL_Surface* back_buffer, SDL_Surfa
      SDL_Rect clip_rect { fixture->id * Map::c_tile_dimension_in_pixels, 0,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-     dest_rect.x = fixture->location.x * Map::c_tile_dimension_in_pixels;
-     dest_rect.y = fixture->location.y * Map::c_tile_dimension_in_pixels;
+     dest_rect.x = fixture->coordinates.x * Map::c_tile_dimension_in_pixels;
+     dest_rect.y = fixture->coordinates.y * Map::c_tile_dimension_in_pixels;
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
@@ -213,16 +216,16 @@ extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera
      // TODO: optimize to only draw to the part of the back buffer we can see
      for ( Int32 y = 0; y < static_cast<Int32>( map.light_height ( ) ); ++y ) {
           for ( Int32 x = 0; x < static_cast<Int32>( map.light_width ( ) ); ++x ) {
+               Location pixel ( x, y );
 
-               Int32 pixel_x = x;
-               Int32 pixel_y = y;
+               pixel.x += meters_to_pixels ( camera_x );
+               pixel.y += meters_to_pixels ( camera_y );
+               pixel.y = ( back_buffer->h - pixel.y );
 
-               pixel_x += meters_to_pixels ( camera_x );
-               pixel_y += meters_to_pixels ( camera_y );
-               pixel_y = ( back_buffer->h - pixel_y );
+               Int32 pixel_light = map.get_pixel_light ( Location ( x, y ) );
+               Real32 normalized_pixel_light = static_cast<Real32>( pixel_light ) / 255.0f;
 
-               blend_light ( back_buffer, pixel_x, pixel_y,
-                             static_cast<Real32>( map.get_pixel_light ( x, y ) ) / 255.0f );
+               blend_light ( back_buffer, pixel.x, pixel.y, normalized_pixel_light );
           }
      }
 

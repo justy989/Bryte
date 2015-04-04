@@ -400,29 +400,28 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      Vector center { collision_x ( ) + half_width,
                      collision_y ( ) + half_height };
 
-     Map::Coordinates old_coords = Map::vector_to_coordinates ( center );
+     Location old_tile = Map::vector_to_location ( center );
 
      Int32 center_tile_x = meters_to_pixels ( center.x ( ) ) / Map::c_tile_dimension_in_pixels;
      Int32 center_tile_y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 
      // Note: These ignore tiles try to solve the problem of a player being on top of a pop up block
-     Int32 ignore_tile_x = center_tile_x;
-     Int32 ignore_tile_y = center_tile_y;
+     Location ignore_tile ( center_tile_x, center_tile_y );
 
      switch ( facing ) {
      default:
           break;
      case Direction::left:
-          ignore_tile_x++;
+          ignore_tile.x++;
           break;
      case Direction::up:
-          ignore_tile_y--;
+          ignore_tile.y--;
           break;
      case Direction::right:
-          ignore_tile_x--;
+          ignore_tile.x--;
           break;
      case Direction::down:
-          ignore_tile_y++;
+          ignore_tile.y++;
           break;
      }
 
@@ -454,12 +453,13 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
                for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
 
-                    if ( x == ignore_tile_x && y == ignore_tile_y ) {
+                    Location tile ( x, y );
+
+                    if ( tile == ignore_tile ) {
                          continue;
                     }
 
-                    if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
-                         !map.get_coordinate_solid ( x, y ) ) {
+                    if ( map.tile_location_is_valid ( tile ) && !map.get_tile_location_solid ( tile ) ) {
                          if ( interactives.is_walkable ( x, y, facing ) ) {
                               Auto& interactive = interactives.get_from_tile ( x, y );
 
@@ -494,7 +494,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { -1.0f, 0.0f };
                          collided_last_frame = Direction::right;
 
-                         if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                         if ( map.tile_location_is_valid ( tile ) &&
                               !interactives.is_walkable ( x, y, facing ) ) {
                               push_direction = Direction::right;
                          }
@@ -506,7 +506,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { 1.0f, 0.0f };
                          collided_last_frame = Direction::left;
 
-                         if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                         if ( map.tile_location_is_valid ( tile ) &&
                               !interactives.is_walkable ( x, y, facing ) ) {
                               push_direction = Direction::left;
                          }
@@ -518,7 +518,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { 0.0f, -1.0f };
                          collided_last_frame = Direction::up;
 
-                         if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                         if ( map.tile_location_is_valid ( tile ) &&
                               !interactives.is_walkable ( x, y, facing ) ) {
                               push_direction = Direction::up;
                          }
@@ -530,7 +530,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          wall_normal = { 0.0f, 1.0f };
                          collided_last_frame = Direction::down;
 
-                         if ( map.coordinate_x_valid ( x ) && map.coordinate_y_valid ( y ) &&
+                         if ( map.tile_location_is_valid ( tile ) &&
                               !interactives.is_walkable ( x, y, facing ) ) {
                               push_direction = Direction::down;
                          }
@@ -543,6 +543,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                state = pushing;
           }
 
+          // update our physics quantities
           position += ( change_in_position * ( closest_time_intersection - 0.01f ) );
           center += ( change_in_position * ( closest_time_intersection - 0.01f ) );
           velocity -= ( wall_normal * velocity.inner_product ( wall_normal ) );
@@ -551,14 +552,13 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           time_remaining -= closest_time_intersection;
      }
 
-     Map::Coordinates new_coords = Map::vector_to_coordinates ( collision_center ( ) );
+     Location new_tile = Map::vector_to_location ( collision_center ( ) );
 
-     if ( ( old_coords.x != new_coords.x || old_coords.y != new_coords.y ) && !flies ) {
+     if ( new_tile != old_tile && !flies ) {
           // TODO: what about non-collides_with_interactives and portals?
-          if ( map.coordinate_x_valid ( old_coords.x ) && map.coordinate_y_valid ( old_coords.y ) &&
-               map.coordinate_x_valid ( new_coords.x ) && map.coordinate_y_valid ( new_coords.y )  ) {
-               interactives.character_leave ( old_coords.x, old_coords.y, *this );
-               interactives.character_enter ( new_coords.x, new_coords.y, *this );
+          if ( map.tile_location_is_valid ( old_tile ) && map.tile_location_is_valid ( old_tile ) ) {
+               interactives.character_leave ( old_tile.x, old_tile.y, *this );
+               interactives.character_enter ( new_tile.x, new_tile.y, *this );
           }
      }
 

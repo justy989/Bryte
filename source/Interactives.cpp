@@ -94,16 +94,18 @@ Void Interactives::contribute_light ( Map& map )
                     break;
                case Interactive::Type::torch:
                     if ( interactive.interactive_torch.element == Element::fire ) {
-                         map.illuminate ( x * Map::c_tile_dimension_in_pixels + Map::c_tile_dimension_in_pixels / 2,
-                                          y * Map::c_tile_dimension_in_pixels + Map::c_tile_dimension_in_pixels / 2,
-                                          interactive.interactive_torch.value );
+                         Location center ( x, y );
+                         Map::convert_tiles_to_pixels ( &center );
+                         Map::move_half_tile_in_pixels ( &center );
+                         map.illuminate ( center, interactive.interactive_torch.value );
                     }
                     break;
                case Interactive::Type::pushable_torch:
                     if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
-                         map.illuminate ( x * Map::c_tile_dimension_in_pixels + Map::c_tile_dimension_in_pixels / 2,
-                                          y * Map::c_tile_dimension_in_pixels + Map::c_tile_dimension_in_pixels / 2,
-                                          interactive.interactive_pushable_torch.torch.value );
+                         Location center ( x, y );
+                         Map::convert_tiles_to_pixels ( &center );
+                         Map::move_half_tile_in_pixels ( &center );
+                         map.illuminate ( center, interactive.interactive_pushable_torch.torch.value );
                     }
                     break;
                }
@@ -143,11 +145,13 @@ Bool Interactives::push ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& 
           break;
      }
 
+     Location dest_tile { dest_x, tile_y };
+
      Interactive& dest_i = get_from_tile ( dest_x, dest_y );
 
      if ( ( !is_walkable ( dest_x, dest_y, dir ) &&
             dest_i.underneath.type != UnderneathInteractive::Type::hole ) ||
-            map.get_coordinate_solid ( dest_x, dest_y ) ) {
+            map.get_tile_location_solid ( dest_tile ) ) {
           // pass
      } else if ( dest_i.type == Interactive::Type::portal ) {
           Int32 dest_tile_x = dest_i.interactive_portal.destination_x;
@@ -255,9 +259,10 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
      if ( clear ) {
           for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
                for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
+                    Location tile ( x, y );
                     Auto& interactive = get_from_tile ( x, y );
 
-                    if ( map.get_coordinate_solid ( x, y ) ) {
+                    if ( map.get_tile_location_solid ( tile ) ) {
                          continue;
                     }
 
@@ -275,9 +280,10 @@ Void Interactives::spread_ice ( Int32 tile_x, Int32 tile_y, const Map& map, bool
      } else {
           for ( Int32 y = min_tile_y; y <= max_tile_y; ++y ) {
                for ( Int32 x = min_tile_x; x <= max_tile_x; ++x ) {
+                    Location tile ( x, y );
                     Auto& interactive = get_from_tile ( x, y );
 
-                    if ( map.get_coordinate_solid ( x, y ) ) {
+                    if ( map.get_tile_location_solid ( tile ) ) {
                          continue;
                     }
 
@@ -491,13 +497,13 @@ Void Interactive::character_enter ( Direction from, Interactives& interactives, 
           break;
      case Interactive::Type::portal:
      {
-          Int32 dest_tile_x = interactive_portal.destination_x;
-          Int32 dest_tile_y = interactive_portal.destination_y;
+          // TODO: compress with projectile_leave portal handling
+          Location dest_tile ( interactive_portal.destination_x,
+                               interactive_portal.destination_y );
 
-          move_location ( dest_tile_x, dest_tile_y, from );
+          move_tile_location ( &dest_tile, from );
 
-          Auto dest_position = Map::coordinates_to_vector ( dest_tile_x,
-                                                            dest_tile_y );
+          Auto dest_position = Map::location_to_vector ( dest_tile );
 
           dest_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
                                     Map::c_tile_dimension_in_meters * 0.5f );
@@ -637,13 +643,12 @@ Void Interactive::projectile_enter ( Direction from, Interactives& interactives,
           break;
      case Interactive::Type::portal:
      {
-          Int32 dest_tile_x = interactive_portal.destination_x;
-          Int32 dest_tile_y = interactive_portal.destination_y;
+          Location dest_tile ( interactive_portal.destination_x,
+                               interactive_portal.destination_y );
 
-          move_location ( dest_tile_x, dest_tile_y, from );
+          move_tile_location ( &dest_tile, from );
 
-          projectile.position = Map::coordinates_to_vector ( dest_tile_x,
-                                                             dest_tile_y );
+          projectile.position = Map::location_to_vector ( dest_tile );
      } break;
      }
 }

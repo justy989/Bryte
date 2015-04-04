@@ -102,12 +102,14 @@ Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& inter
      } else {
           for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
                for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-                    Int32 position_x = x * Map::c_tile_dimension_in_pixels;
-                    Int32 position_y = y * Map::c_tile_dimension_in_pixels;
+                    Location tile ( x, y );
 
-                    if ( map.get_coordinate_invisible ( x, y ) ) {
+                    if ( map.get_tile_location_invisible ( tile ) ) {
                          continue;
                     }
+
+                    Int32 position_x = x * Map::c_tile_dimension_in_pixels;
+                    Int32 position_y = y * Map::c_tile_dimension_in_pixels;
 
                     Auto& interactive = interactives.get_from_tile ( x, y );
 

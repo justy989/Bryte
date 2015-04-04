@@ -9,8 +9,8 @@ using namespace bryte;
 
 Void Map::Fixture::set ( Uint8 x, Uint8 y, Uint8 id )
 {
-     location.x = x;
-     location.y = y;
+     coordinates.x = x;
+     coordinates.y = y;
      this->id = id;
 }
 
@@ -69,41 +69,23 @@ Void Map::initialize ( Uint8 width, Uint8 height )
      for ( Int32 i = 0; i < Direction::count; ++i ) {
           Auto& border_exit = m_border_exits [ i ];
 
-          border_exit.bottom_left = Location { 0, 0 };
+          border_exit.bottom_left = Coordinates { 0, 0 };
           border_exit.map_index = 0;
-          border_exit.map_bottom_left = Location { 0, 0 };
+          border_exit.map_bottom_left = Coordinates { 0, 0 };
      }
 
      m_base_light_value = 128;
      reset_light ( );
 
-     m_upgrade.location.x = 0;
-     m_upgrade.location.y = 0;
+     m_upgrade.coordinates.x = 0;
+     m_upgrade.coordinates.y = 0;
      m_upgrade.id = 0;
 }
 
-Map::Coordinates Map::position_to_coordinates ( Real32 x, Real32 y )
+Location Map::vector_to_location ( const Vector& v )
 {
-     return Coordinates { meters_to_pixels ( x ) / Map::c_tile_dimension_in_pixels,
-                          meters_to_pixels ( y ) / Map::c_tile_dimension_in_pixels };
-}
-
-Map::Coordinates Map::vector_to_coordinates ( const Vector& v )
-{
-     return Coordinates { meters_to_pixels ( v.x ( ) ) / Map::c_tile_dimension_in_pixels,
-                          meters_to_pixels ( v.y ( ) ) / Map::c_tile_dimension_in_pixels};
-}
-
-Vector Map::coordinates_to_vector ( Int32 tile_x, Int32 tile_y )
-{
-     return Vector { pixels_to_meters ( tile_x * Map::c_tile_dimension_in_pixels ),
-                     pixels_to_meters ( tile_y * Map::c_tile_dimension_in_pixels ) };
-}
-
-Vector Map::coordinates_to_vector ( const Coordinates& coords )
-{
-     return Vector { pixels_to_meters ( coords.x * Map::c_tile_dimension_in_pixels ),
-                     pixels_to_meters ( coords.y * Map::c_tile_dimension_in_pixels ) };
+     return Location { meters_to_pixels ( v.x ( ) ) / Map::c_tile_dimension_in_pixels,
+                       meters_to_pixels ( v.y ( ) ) / Map::c_tile_dimension_in_pixels };
 }
 
 Vector Map::location_to_vector ( const Location& loc )
@@ -112,66 +94,74 @@ Vector Map::location_to_vector ( const Location& loc )
                      pixels_to_meters ( loc.y * Map::c_tile_dimension_in_pixels ) };
 }
 
-Int32 Map::coordinate_to_tile_index ( Int32 tile_x, Int32 tile_y ) const
+Void Map::convert_tiles_to_pixels ( Location* loc )
 {
-     ASSERT ( tile_x >= 0 && tile_x < m_width );
-     ASSERT ( tile_y >= 0 && tile_y < m_height );
-
-     return tile_y * static_cast<Int32>( m_width ) + tile_x;
+     loc->x *= Map::c_tile_dimension_in_pixels;
+     loc->y *= Map::c_tile_dimension_in_pixels;
 }
 
-Int32 Map::tile_index_to_coordinate_x ( Int32 tile_index ) const
+Void Map::move_half_tile_in_pixels ( Location* loc )
 {
-     return tile_index % static_cast<Int32>( m_width );
+     loc->x += ( Map::c_tile_dimension_in_pixels / 2 );
+     loc->y += ( Map::c_tile_dimension_in_pixels / 2 );
 }
 
-Int32 Map::tile_index_to_coordinate_y ( Int32 tile_index ) const
+Int32 Map::location_to_tile_index ( const Location& loc ) const
 {
-     return tile_index / static_cast<Int32>( m_width );
+     ASSERT ( loc.x >= 0 && loc.x < m_width );
+     ASSERT ( loc.y >= 0 && loc.y < m_height );
+
+     return loc.y * static_cast<Int32>( m_width ) + loc.x;
 }
 
-Uint8 Map::get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const
+Location Map::tile_index_to_location ( Int32 tile_index ) const
 {
-     return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].value;
+     return Location { tile_index % static_cast<Int32>( m_width ),
+                       tile_index / static_cast<Int32>( m_width ) };
 }
 
-Bool Map::get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const
+Uint8 Map::get_tile_location_value ( const Location& loc ) const
 {
-     return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].flags & TileFlags::solid;
+     return m_tiles [ location_to_tile_index ( loc ) ].value;
 }
 
-Bool Map::get_coordinate_invisible ( Int32 tile_x, Int32 tile_y ) const
+Bool Map::get_tile_location_solid ( const Location& loc ) const
 {
-     return m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].flags & TileFlags::invisible;
+     return m_tiles [ location_to_tile_index ( loc ) ].flags & TileFlags::solid;
 }
 
-Uint8 Map::get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const
+Bool Map::get_tile_location_invisible ( const Location& loc ) const
 {
-     ASSERT ( tile_x >= 0 && tile_x < m_width );
-     ASSERT ( tile_y >= 0 && tile_y < m_height );
+     return m_tiles [ location_to_tile_index ( loc ) ].flags & TileFlags::invisible;
+}
 
-     Int32 pixel_x = tile_x * c_tile_dimension_in_pixels;
-     Int32 pixel_y = tile_y * c_tile_dimension_in_pixels;
+Uint8 Map::get_tile_location_light ( const Location& loc ) const
+{
+     ASSERT ( loc.x >= 0 && loc.x < m_width );
+     ASSERT ( loc.y >= 0 && loc.y < m_height );
+
+     Int32 pixel_x = loc.x * c_tile_dimension_in_pixels;
+     Int32 pixel_y = loc.y * c_tile_dimension_in_pixels;
 
      return m_light [ pixel_y * m_light_width + pixel_x ];
 }
 
-Uint8 Map::get_pixel_light ( Int32 x, Int32 y ) const
+Uint8 Map::get_pixel_light ( const Location& loc ) const
 {
-     ASSERT ( x >= 0 && x < m_light_width );
-     ASSERT ( y >= 0 && y < m_light_height );
+     ASSERT ( loc.x >= 0 && loc.x < m_light_width );
+     ASSERT ( loc.y >= 0 && loc.y < m_light_height );
 
-     return m_light [ y * m_light_width + x ];
+     return m_light [ loc.y * m_light_width + loc.x ];
 }
 
-Void Map::set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value )
+Void Map::set_tile_location_value ( const Location& loc, Uint8 value )
 {
-     m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].value = value;
+     m_tiles [ location_to_tile_index ( loc ) ].value = value;
 }
 
-Void Map::set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid )
+Void Map::set_tile_location_solid ( const Location& loc, Bool solid )
 {
-     Auto& flags = m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].flags;
+     Auto& flags = m_tiles [ location_to_tile_index ( loc ) ].flags;
 
      if ( solid ) {
           flags |= TileFlags::solid;
@@ -180,9 +170,9 @@ Void Map::set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid )
      }
 }
 
-Void Map::set_coordinate_invisible ( Int32 tile_x, Int32 tile_y, Bool invisible )
+Void Map::set_tile_location_invisible ( const Location& loc, Bool invisible )
 {
-     Auto& flags = m_tiles [ coordinate_to_tile_index ( tile_x, tile_y ) ].flags;
+     Auto& flags = m_tiles [ location_to_tile_index ( loc ) ].flags;
 
      if ( invisible ) {
           flags |= TileFlags::invisible;
@@ -191,19 +181,19 @@ Void Map::set_coordinate_invisible ( Int32 tile_x, Int32 tile_y, Bool invisible 
      }
 }
 
-Map::Fixture* Map::check_coordinates_for_decor ( Int32 x, Int32 y )
+Map::Fixture* Map::check_location_for_decor ( const Location& loc )
 {
-     return check_coordinates_for_fixture<Fixture> ( m_decors, m_decor_count, x, y );
+     return check_coordinates_for_fixture<Fixture> ( m_decors, m_decor_count, loc.x, loc.y );
 }
 
-Map::Fixture* Map::check_coordinates_for_lamp ( Int32 x, Int32 y )
+Map::Fixture* Map::check_location_for_lamp ( const Location& loc )
 {
-     return check_coordinates_for_fixture<Fixture> ( m_lamps, m_lamp_count, x, y );
+     return check_coordinates_for_fixture<Fixture> ( m_lamps, m_lamp_count, loc.x, loc.y );
 }
 
-Map::EnemySpawn* Map::check_coordinates_for_enemy_spawn ( Int32 x, Int32 y )
+Map::EnemySpawn* Map::check_location_for_enemy_spawn ( const Location& loc )
 {
-     return check_coordinates_for_fixture<EnemySpawn> ( m_enemy_spawns, m_enemy_spawn_count, x, y );
+     return check_coordinates_for_fixture<EnemySpawn> ( m_enemy_spawns, m_enemy_spawn_count, loc.x, loc.y );
 }
 
 Uint8 Map::base_light_value ( ) const
@@ -221,7 +211,7 @@ Void Map::subtract_from_base_light ( Uint8 delta )
      m_base_light_value -= delta;
 }
 
-Void Map::illuminate ( Int32 x, Int32 y, Uint8 value )
+Void Map::illuminate ( const Location& loc, Uint8 value )
 {
      Real32 radius = ( static_cast<Real32>( value ) - static_cast<Real32>( m_base_light_value ) ) / 2;
 
@@ -229,10 +219,10 @@ Void Map::illuminate ( Int32 x, Int32 y, Uint8 value )
           return;
      }
 
-     Int32 min_x  = x - static_cast<Int32>( radius );
-     Int32 max_x  = x + static_cast<Int32>( radius );
-     Int32 min_y  = y - static_cast<Int32>( radius );
-     Int32 max_y  = y + static_cast<Int32>( radius );
+     Int32 min_x  = loc.x - static_cast<Int32>( radius );
+     Int32 max_x  = loc.x + static_cast<Int32>( radius );
+     Int32 min_y  = loc.y - static_cast<Int32>( radius );
+     Int32 max_y  = loc.y + static_cast<Int32>( radius );
 
      CLAMP ( min_x, 0, m_light_width - 1 );
      CLAMP ( max_x, 0, m_light_width - 1 );
@@ -241,8 +231,8 @@ Void Map::illuminate ( Int32 x, Int32 y, Uint8 value )
 
      for ( Int32 j = min_y; j <= max_y; ++j ) {
           for ( Int32 i = min_x; i <= max_x; ++i ) {
-               Real32 diff_x = static_cast<Real32>( x - i );
-               Real32 diff_y = static_cast<Real32>( y - j );
+               Real32 diff_x = static_cast<Real32>( loc.x - i );
+               Real32 diff_y = static_cast<Real32>( loc.y - j );
                Real32 distance = sqrt ( diff_x * diff_x + diff_y * diff_y );
 
                if ( distance > radius ) {
@@ -267,19 +257,22 @@ Void Map::reset_light ( )
 
      for ( Uint8 i = 0; i < m_lamp_count; ++i ) {
           Auto& lamp = m_lamps [ i ];
-          illuminate ( lamp.location.x * c_tile_dimension_in_pixels + c_tile_dimension_in_pixels / 2,
-                       lamp.location.y * c_tile_dimension_in_pixels + c_tile_dimension_in_pixels / 2,
-                       c_lamp_light );
+          Location center { lamp.coordinates.x, lamp.coordinates.y };
+
+          convert_tiles_to_pixels ( &center );
+          move_half_tile_in_pixels ( &center );
+
+          illuminate ( center, c_lamp_light );
      }
 }
 
-Bool Map::add_decor ( Int32 location_x, Int32 location_y, Uint8 id )
+Bool Map::add_decor ( const Location& loc, Uint8 id )
 {
      if ( !add_element<Fixture> ( m_decors, &m_decor_count, c_max_decors ) ) {
           return false;
      }
 
-     m_decors [ m_decor_count - 1 ].set ( location_x, location_y, id );
+     m_decors [ m_decor_count - 1 ].set ( loc.x, loc.y, id );
 
      return true;
 }
@@ -289,13 +282,13 @@ Void Map::remove_decor ( Fixture* decor )
      remove_element<Fixture> ( m_decors, &m_decor_count, c_max_decors, decor );
 }
 
-Bool Map::add_lamp ( Int32 location_x, Int32 location_y, Uint8 id )
+Bool Map::add_lamp ( const Location& loc, Uint8 id )
 {
      if ( !add_element<Fixture> ( m_lamps, &m_lamp_count, c_max_lamps ) ) {
           return false;
      }
 
-     m_lamps [ m_lamp_count - 1 ].set ( location_x, location_y, id );
+     m_lamps [ m_lamp_count - 1 ].set ( loc.x, loc.y, id );
 
      return true;
 }
@@ -305,7 +298,7 @@ Void Map::remove_lamp ( Fixture* lamp )
      remove_element<Fixture> ( m_lamps, &m_lamp_count, c_max_lamps, lamp );
 }
 
-Bool Map::add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id,
+Bool Map::add_enemy_spawn ( const Location& loc, Uint8 id,
                             Direction facing, Pickup::Type drop )
 {
      if ( !add_element<EnemySpawn> ( m_enemy_spawns, &m_enemy_spawn_count, c_max_enemy_spawns ) ) {
@@ -314,7 +307,7 @@ Bool Map::add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id,
 
      Auto& enemy_spawn = m_enemy_spawns [ m_enemy_spawn_count - 1 ];
 
-     enemy_spawn.set ( location_x, location_y, id );
+     enemy_spawn.set ( loc.x, loc.y, id );
      enemy_spawn.facing = facing;
      enemy_spawn.drop   = drop;
 
@@ -429,7 +422,7 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
      file.write ( reinterpret_cast<const Char8*> ( &m_activate_on_kill_all ),
                   sizeof ( m_activate_on_kill_all ) );
 
-     file.write ( reinterpret_cast<const Char8*> ( &m_secret.location ), sizeof ( m_secret.location ) );
+     file.write ( reinterpret_cast<const Char8*> ( &m_secret.coordinates ), sizeof ( m_secret.coordinates ) );
      file.write ( reinterpret_cast<const Char8*> ( &m_secret.clear_tile ), sizeof ( m_secret.clear_tile ) );
 
      file.write ( reinterpret_cast<const Char8*> ( &m_upgrade ), sizeof ( m_upgrade ) );
@@ -510,7 +503,7 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
      file.read ( reinterpret_cast<Char8*> ( &m_activate_on_kill_all ),
                  sizeof ( m_activate_on_kill_all ) );
 
-     file.read ( reinterpret_cast<Char8*> ( &m_secret.location ), sizeof ( m_secret.location ) );
+     file.read ( reinterpret_cast<Char8*> ( &m_secret.coordinates ), sizeof ( m_secret.coordinates ) );
      file.read ( reinterpret_cast<Char8*> ( &m_secret.clear_tile ), sizeof ( m_secret.clear_tile ) );
 
      file.read ( reinterpret_cast<Char8*> ( &m_upgrade ), sizeof ( m_upgrade ) );
@@ -582,8 +575,8 @@ void Map::clear_persistence ( )
      for ( Uint32 i = 0; i < c_max_exits; ++i ) {
           m_persisted_exits [ i ].map [ 0 ].index = 0;
           m_persisted_exits [ i ].map [ 1 ].index = 0;
-          m_persisted_exits [ i ].map [ 0 ].location = Location { 0, 0 };
-          m_persisted_exits [ i ].map [ 1 ].location = Location { 0, 0 };
+          m_persisted_exits [ i ].map [ 0 ].coordinates = Coordinates { 0, 0 };
+          m_persisted_exits [ i ].map [ 1 ].coordinates = Coordinates { 0, 0 };
           m_persisted_exits [ i ].state = 0;
      }
 
@@ -592,8 +585,8 @@ void Map::clear_persistence ( )
                Auto& persisted_enemy = m_persisted_enemies [ i ].enemies [ j ];
 
                persisted_enemy.alive = true;
-               persisted_enemy.location.x = 0;
-               persisted_enemy.location.y = 0;
+               persisted_enemy.coordinates.x = 0;
+               persisted_enemy.coordinates.y = 0;
           }
 
           m_persisted_secrets [ i ] = false;
@@ -607,7 +600,7 @@ Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
      for ( Uint32 i = 0; i < m_persisted_exit_count; ++i ) {
           for ( Uint32 m = 0; m < 2; ++m ) {
                PersistedExit::Map& map_info = m_persisted_exits [ i ].map [ m ];
-               Location& map_location = map_info.location;
+               Auto& map_location = map_info.coordinates;
 
                if ( map_info.index == m_current_map &&
                     map_location.x == x && map_location.y == y ) {
@@ -627,10 +620,10 @@ Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
      PersistedExit& new_exit = m_persisted_exits [ m_persisted_exit_count ];
 
      new_exit.state = exit.interactive_exit.state;
-     new_exit.map [ 0 ].location = Location { x, y };
+     new_exit.map [ 0 ].coordinates = Coordinates { x, y };
      new_exit.map [ 0 ].index = m_current_map;
-     new_exit.map [ 1 ].location = Location { exit.interactive_exit.exit_index_x,
-                                              exit.interactive_exit.exit_index_y };
+     new_exit.map [ 1 ].coordinates = Coordinates { exit.interactive_exit.exit_index_x,
+                                                    exit.interactive_exit.exit_index_y };
      new_exit.map [ 1 ].index = exit.interactive_exit.map_index;
 
      m_persisted_exit_count++;
@@ -644,8 +637,8 @@ Void Map::persist_enemy ( const Enemy& enemy, Uint8 index )
      Auto center = enemy.collision_center ( );
 
      persisted_enemy.alive = enemy.is_alive ( );
-     persisted_enemy.location.x = meters_to_pixels ( center.x ( ) ) / Map::c_tile_dimension_in_pixels;
-     persisted_enemy.location.y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
+     persisted_enemy.coordinates.x = meters_to_pixels ( center.x ( ) ) / Map::c_tile_dimension_in_pixels;
+     persisted_enemy.coordinates.y = meters_to_pixels ( center.y ( ) ) / Map::c_tile_dimension_in_pixels;
 }
 
 Void Map::persist_secret ( )
@@ -666,12 +659,12 @@ Void Map::restore_exits ( Interactives& interactives )
                PersistedExit::Map& map_info = m_persisted_exits [ i ].map [ m ];
 
                if ( map_info.index == m_current_map ) {
-                    Auto& exit = interactives.get_from_tile ( map_info.location.x,
-                                                              map_info.location.y );
+                    Auto& exit = interactives.get_from_tile ( map_info.coordinates.x,
+                                                              map_info.coordinates.y );
 
                     if ( exit.type != Interactive::Type::exit ) {
                          LOG_ERROR ( "Failed to restore persisted exit at %d, %d on map %d, map has changed?\n",
-                                     map_info.location.x, map_info.location.y,
+                                     map_info.coordinates.x, map_info.coordinates.y,
                                      m_current_map );
                          continue;
                     }
@@ -695,8 +688,8 @@ Void Map::restore_enemy_spawns ( )
 
           if ( persisted_enemy.alive ) {
                // persist non-zero locations
-               if ( persisted_enemy.location.x && persisted_enemy.location.y ) {
-                    m_enemy_spawns [ i ].location = persisted_enemy.location;
+               if ( persisted_enemy.coordinates.x && persisted_enemy.coordinates.y ) {
+                    m_enemy_spawns [ i ].coordinates = persisted_enemy.coordinates;
                }
 
                delete_enemy_spawns [ i ] = false;
@@ -744,7 +737,9 @@ Void Map::find_secret ( )
 
      m_secret.found = true;
 
-     set_coordinate_value ( m_secret.clear_tile.x, m_secret.clear_tile.y, 1 );
-     set_coordinate_solid ( m_secret.clear_tile.x, m_secret.clear_tile.y, false );
+     Location loc ( m_secret.clear_tile.x, m_secret.clear_tile.y );
+
+     set_tile_location_value ( loc, 1 );
+     set_tile_location_solid ( loc, false );
 }
 

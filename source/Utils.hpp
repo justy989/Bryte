@@ -3,6 +3,7 @@
 
 #include "Log.hpp"
 #include "Types.hpp"
+#include "Location.hpp"
 #include "Direction.hpp"
 
 #include <SDL2/SDL.h>
@@ -110,6 +111,7 @@ Vector vector_from_direction ( bryte::Direction dir );
 Bool vector_has_direction ( const Vector& vec, bryte::Direction dir );
 
 Void move_location ( Int32& tile_x, Int32& tile_y, bryte::Direction move_dir );
+Void move_tile_location ( Location* location, bryte::Direction move_dir );
 
 #endif
 

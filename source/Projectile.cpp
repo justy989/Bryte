@@ -41,14 +41,15 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
      //       makes lighting arrows on fire against a torch more user friendly
      Vector arrow_center = position + Vector { Map::c_tile_dimension_in_meters * 0.5f,
                                                Map::c_tile_dimension_in_meters * 0.5f };
-     Map::Coordinates tile = Map::vector_to_coordinates ( arrow_center );
+     Location tile = Map::vector_to_location ( arrow_center );
 
-     if ( !map.coordinates_valid ( tile ) ) {
+     // Kill projectiles that get outside the map
+     if ( !map.tile_location_is_valid ( tile ) ) {
           life_state = Entity::LifeState::dead;
           return false;
      }
 
-     Int32 tile_index = map.coordinate_to_tile_index ( tile.x, tile.y );
+     Int32 tile_index = map.location_to_tile_index ( tile );
 
      if ( tile_index == current_tile ) {
           return false;
@@ -64,10 +65,8 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
      if ( save_position != position ) {
           arrow_center = position + Vector { Map::c_tile_dimension_in_meters * 0.5f,
                                              Map::c_tile_dimension_in_meters * 0.5f };
-          tile = Map::vector_to_coordinates ( arrow_center );
-          tile_index = map.coordinate_to_tile_index ( tile.x, tile.y );
-
-          current_tile = tile_index;
+          tile = Map::vector_to_location ( arrow_center );
+          current_tile = map.location_to_tile_index ( tile );
      }
 
      Auto& interactive = interactives.get_from_tile ( tile.x, tile.y );
@@ -81,7 +80,7 @@ Bool Projectile::check_for_solids ( const Map& map, Interactives& interactives )
           return true;
      }
 
-     if ( map.get_coordinate_solid ( tile.x, tile.y ) ) {
+     if ( map.get_tile_location_solid ( tile ) ) {
           return true;
      }
 

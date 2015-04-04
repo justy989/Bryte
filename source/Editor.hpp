@@ -77,8 +77,7 @@ namespace editor
 
           Bool mouse_on_map ( );
 
-          bryte::Interactive& place_or_clear_interactive ( bryte::Interactive::Type type,
-                                                           Int32 mouse_tile_x, Int32 mouse_tile_y );
+          bryte::Interactive& place_or_clear_interactive ( bryte::Interactive::Type type );
 
           Void render_upgrade ( SDL_Surface* back_buffer );
 
@@ -105,12 +104,9 @@ namespace editor
 
           Mode mode;
 
-          Int32 mouse_x;
-          Int32 mouse_y;
-          Int32 mouse_screen_x;
-          Int32 mouse_screen_y;
-          Int32 mouse_tile_x;
-          Int32 mouse_tile_y;
+          Location mouse;
+          Location mouse_tile;
+          Location mouse_screen;
 
           Bool  camera_direction_keys [ 4 ];
           Bool  left_button_down;

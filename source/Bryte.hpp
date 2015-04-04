@@ -227,8 +227,7 @@ namespace bryte
 
           Int32 current_region;
 
-          Int32 player_spawn_tile_x;
-          Int32 player_spawn_tile_y;
+          Location player_spawn_tile;
 
           Pickup::Type pickup_queue [ c_pickup_queue_size ];
 

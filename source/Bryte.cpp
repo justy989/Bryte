@@ -31,32 +31,32 @@ static State* get_state ( GameMemory& game_memory )
      return reinterpret_cast<MemoryLocations*>( game_memory.location ( ) )->state;
 }
 
-Void character_adjacent_tile ( const Character& character, Int32* adjacent_tile_x, Int32* adjacent_tile_y )
+static Location character_adjacent_tile ( const Character& character )
 {
-     Map::Coordinates character_center_tile = Map::vector_to_coordinates ( character.collision_center ( ) );
+     Location center_tile = Map::vector_to_location ( character.collision_center ( ) );
 
      switch ( character.facing ) {
-          default:
-               break;
-          case Direction::left:
-               character_center_tile.x--;
-               break;
-          case Direction::right:
-               character_center_tile.x++;
-               break;
-          case Direction::up:
-               character_center_tile.y++;
-               break;
-          case Direction::down:
-               character_center_tile.y--;
-               break;
+     default:
+          ASSERT ( 0 );
+          break;
+     case Direction::left:
+          center_tile.x--;
+          break;
+     case Direction::right:
+          center_tile.x++;
+          break;
+     case Direction::up:
+          center_tile.y++;
+          break;
+     case Direction::down:
+          center_tile.y--;
+          break;
      }
 
-     *adjacent_tile_x = character_center_tile.x;
-     *adjacent_tile_y = character_center_tile.y;
+     return center_tile;
 }
 
-static Bool character_touching_tile ( const Character& character, const Map::Coordinates& tile )
+static Bool character_touching_tile ( const Character& character, const Location& tile )
 {
      static const Int32 corner_count = 4;
 
@@ -73,9 +73,9 @@ static Bool character_touching_tile ( const Character& character, const Map::Coo
      };
 
      for ( Int32 i = 0; i < corner_count; ++i ) {
-          Auto coords = Map::vector_to_coordinates ( corners [ i ] );
+          Auto corner_tile = Map::vector_to_location ( corners [ i ] );
 
-          if ( coords.x == tile.x && coords.y == tile.y ) {
+          if ( corner_tile == tile ) {
                return true;
           }
      }
@@ -83,26 +83,26 @@ static Bool character_touching_tile ( const Character& character, const Map::Coo
      return false;
 }
 
-static Map::Coordinates adjacent_tile ( Map::Coordinates coords, Direction dir )
+static Location adjacent_tile ( Location loc, Direction dir )
 {
      switch ( dir ) {
           default:
                break;
           case Direction::left:
-               coords.x--;
+               loc.x--;
                break;
           case Direction::right:
-               coords.x++;
+               loc.x++;
                break;
           case Direction::up:
-               coords.y++;
+               loc.y++;
                break;
           case Direction::down:
-               coords.y--;
+               loc.y--;
                break;
      }
 
-     return coords;
+     return loc;
 }
 
 Void UITextMenu::init ( Int32 x, Int32 y )
@@ -173,12 +173,12 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
 
      current_region = settings->region_index;
 
-     player_spawn_tile_x = settings->player_spawn_tile_x;
-     player_spawn_tile_y = settings->player_spawn_tile_y;
+     player_spawn_tile.x = settings->player_spawn_tile_x;
+     player_spawn_tile.y = settings->player_spawn_tile_y;
 
      player.clear ( );
 
-     player.position = Map::coordinates_to_vector ( player_spawn_tile_x, player_spawn_tile_y );
+     player.position = Map::location_to_vector ( player_spawn_tile );
 
      player.life_state = Entity::LifeState::alive;
 
@@ -846,11 +846,11 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
 
 #ifdef DEBUG
      if ( debug_text ) {
-          Auto player_coord = Map::vector_to_coordinates ( player.position );
+          Auto player_loc = Map::vector_to_location ( player.position );
 
           sprintf ( buffer, "P %.2f %.2f  T %d %d  M %d  AI %s  INV %s",
                     player.position.x ( ), player.position.y ( ),
-                    player_coord.x, player_coord.y,
+                    player_loc.x, player_loc.y,
                     map.current_master_map ( ),
                     enemy_think ? "ON" : "OFF",
                     invincible ? "ON" : "OFF" );
@@ -1009,8 +1009,8 @@ Void State::start_game ( GameMemory& game_memory )
      player.save_slot = static_cast<Uint8>( slot_menu.selected );
      player_load ( );
 
-     player.position = Map::coordinates_to_vector ( player_spawn_tile_x,
-                                                    player_spawn_tile_y );
+     player.position = Map::location_to_vector ( player_spawn_tile );
+
      player.life_state = Entity::LifeState::alive;
 
      change_map ( settings->map_index, false );
@@ -1077,7 +1077,8 @@ Void State::spawn_map_enemies ( )
      for ( Int32 i = 0; i < map.enemy_spawn_count ( ); ++i ) {
           Auto& enemy_spawn = map.enemy_spawn ( i );
 
-          Vector position = Map::coordinates_to_vector ( enemy_spawn.location.x, enemy_spawn.location.y );
+          Vector position = Map::location_to_vector ( Location ( enemy_spawn.coordinates.x,
+                                                                 enemy_spawn.coordinates.y ) );
 
           spawn_enemy ( position, enemy_spawn.id, enemy_spawn.facing, enemy_spawn.drop );
      }
@@ -1089,7 +1090,7 @@ Void State::player_death ( )
 
      player.health = 6;
      player.life_state = Entity::LifeState::alive;
-     player.position = Map::coordinates_to_vector ( player_spawn_tile_x, player_spawn_tile_y );
+     player.position = Map::location_to_vector ( player_spawn_tile );
 
      pickups.clear ( );
      projectiles.clear ( );
@@ -1157,7 +1158,7 @@ Void State::enemy_death ( const Enemy& enemy )
 
      // if all the entities are dead, activate an the map's trigger
      if ( all_dead ) {
-          Map::Location loc = map.activate_on_all_enemies_killed ( );
+          Auto loc = map.activate_on_all_enemies_killed ( );
           interactives.activate ( loc.x, loc.y );
           map.killed_all_enemies ( );
      }
@@ -1168,7 +1169,8 @@ Void State::setup_emitters_from_map_lamps ( )
      for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
           Auto& lamp = map.lamp ( i );
 
-          Vector position = map.location_to_vector ( lamp.location );
+          Vector position = map.location_to_vector ( Location ( lamp.coordinates.x,
+                                                                lamp.coordinates.y ) );
 
           Vector offset { Map::c_tile_dimension_in_meters * 0.4f,
                           Map::c_tile_dimension_in_meters * 0.7f };
@@ -1306,9 +1308,9 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
           }
      }
 
-     Map::Coordinates player_center_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
+     Location player_center_tile = Map::vector_to_location ( player.collision_center ( ) );
 
-     if ( map.coordinates_valid ( player_center_tile ) ) {
+     if ( map.tile_location_is_valid ( player_center_tile ) ) {
           Auto& interactive = interactives.get_from_tile ( player_center_tile.x, player_center_tile.y );
           Direction border_side = player_on_border ( );
 
@@ -1318,8 +1320,9 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                interactive.interactive_exit.direction == opposite_direction ( player.facing ) ) {
                Int32 map_index = interactive.interactive_exit.map_index;
                Int32 region_index = interactive.interactive_exit.region_index;
-               Vector new_position = Map::coordinates_to_vector ( interactive.interactive_exit.exit_index_x,
-                                                                  interactive.interactive_exit.exit_index_y );
+               Location exit_index ( interactive.interactive_exit.exit_index_x,
+                                     interactive.interactive_exit.exit_index_y );
+               Vector new_position = Map::location_to_vector ( exit_index );
 
                new_position += Vector ( Map::c_tile_dimension_in_meters * 0.5f,
                                         Map::c_tile_dimension_in_meters * 0.5f );
@@ -1343,10 +1346,11 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                       border_side == player.facing ) {
                Auto& border_exit = map.get_border_exit ( border_side );
                Int32 map_index = border_exit.map_index;
-
+               Location border_exit_bottom_left ( border_exit.bottom_left.x,
+                                                  border_exit.bottom_left.y );
                Auto player_offset = player.collision_center ( ) -
-                                    Map::location_to_vector ( border_exit.bottom_left );
-               Auto new_player_pos = Map::location_to_vector ( border_exit.map_bottom_left ) + player_offset;
+                                    Map::location_to_vector ( border_exit_bottom_left );
+               Auto new_player_pos = Map::location_to_vector ( border_exit_bottom_left ) + player_offset;
 
                change_map ( map_index );
 
@@ -1362,29 +1366,24 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
      }
 
      if ( player.is_pushing ( ) ) {
-          Map::Coordinates push_location { 0, 0 };
-          character_adjacent_tile ( player, &push_location.x, &push_location.y );
-          push_interactive ( push_location.x, push_location.y, player.facing, map );
+          Location push_tile = character_adjacent_tile ( player );
+          push_interactive ( push_tile.x, push_tile.y, player.facing, map );
      } else {
           // check if player wants to activate any interactives
           if ( activate_key ) {
                activate_key = false;
 
-               Int32 player_activate_tile_x = 0;
-               Int32 player_activate_tile_y = 0;
+               Location activate_tile = character_adjacent_tile ( player );
 
-               character_adjacent_tile ( player, &player_activate_tile_x, &player_activate_tile_y );
-
-               if ( map.coordinates_valid ( Map::Coordinates { player_activate_tile_x,
-                                                               player_activate_tile_y } ) ) {
-                    Auto& interactive = interactives.get_from_tile ( player_activate_tile_x,
-                                                                     player_activate_tile_y );
+               if ( map.tile_location_is_valid ( activate_tile ) ) {
+                    Auto& interactive = interactives.get_from_tile ( activate_tile.x,
+                                                                     activate_tile.y );
 
                     if ( interactive.type == Interactive::Type::exit ) {
                          if ( interactive.interactive_exit.state == Exit::State::locked &&
                               player.key_count > 0 ) {
-                              LOG_DEBUG ( "Unlock Door: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
-                              interactives.activate ( player_activate_tile_x, player_activate_tile_y );
+                              LOG_DEBUG ( "Unlock Door: %d, %d\n", activate_tile.x, activate_tile.y );
+                              interactives.activate ( activate_tile.x, activate_tile.y );
                               player.key_count--;
                               sound.play_effect ( Sound::Effect::activate_interactive );
                          }
@@ -1393,19 +1392,19 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                                 interactive.underneath.type == UnderneathInteractive::Type::popup_block ) {
                          // pass
                     } else {
-                         LOG_DEBUG ( "Activate: %d, %d\n", player_activate_tile_x, player_activate_tile_y );
+                         LOG_DEBUG ( "Activate: %d, %d\n", activate_tile.x, activate_tile.y );
 
-                         Bool success = interactives.activate ( player_activate_tile_x, player_activate_tile_y );
+                         Bool success = interactives.activate ( activate_tile.x, activate_tile.y );
 
                          if ( success ) {
                               sound.play_effect ( Sound::Effect::activate_interactive );
                          }
                     }
 
-                    Auto& secret_location = map.secret ( ).location;
+                    Auto& secret_location = map.secret ( ).coordinates;
 
-                    if ( player_activate_tile_x == secret_location.x &&
-                         player_activate_tile_y == secret_location.y ) {
+                    if ( activate_tile.x == secret_location.x &&
+                         activate_tile.y == secret_location.y ) {
                          sound.play_effect ( Sound::Effect::activate_interactive );
                          map.find_secret ( );
                          LOG_DEBUG ( "Found secret!\n" );
@@ -1417,8 +1416,8 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
      Auto& upgrade = map.upgrade ( );
 
      if ( upgrade.id ) {
-          Real32 upgrade_x = pixels_to_meters ( upgrade.location.x * Map::c_tile_dimension_in_pixels );
-          Real32 upgrade_y = pixels_to_meters ( upgrade.location.y * Map::c_tile_dimension_in_pixels );
+          Real32 upgrade_x = pixels_to_meters ( upgrade.coordinates.x * Map::c_tile_dimension_in_pixels );
+          Real32 upgrade_y = pixels_to_meters ( upgrade.coordinates.y * Map::c_tile_dimension_in_pixels );
 
           if ( rect_collides_with_rect ( player.collision_x ( ), player.collision_y ( ),
                                          player.collision_width ( ), player.collision_width ( ),
@@ -1525,12 +1524,15 @@ Void State::update_enemies ( float time_delta )
 
 Void State::push_interactive ( Int32 tile_x, Int32 tile_y, Direction dir, const Map& map )
 {
-     if ( !map.coordinate_x_valid ( tile_x ) || !map.coordinate_y_valid ( tile_y ) ) {
+     // TODO: Make this function take a location
+     Location tile ( tile_x, tile_y );
+
+     if ( !map.tile_location_is_valid ( tile ) ) {
           return;
      }
 
      Bool enemy_on_tile = false;
-     Auto dest = adjacent_tile ( Map::Coordinates { tile_x, tile_y }, dir );
+     Auto dest = adjacent_tile ( tile, dir );
 
      for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
           if ( enemies [ i ].is_dead ( ) ) {
@@ -1577,26 +1579,24 @@ Void State::update_interactives ( float time_delta )
           if ( interactive.type ) {
                if ( interactive.underneath.type == UnderneathInteractive::Type::ice &&
                     interactive.underneath.underneath_ice.force_dir != Direction::count ) {
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    push_interactive ( tile_x, tile_y, interactive.underneath.underneath_ice.force_dir,
+                    Auto tile = map.tile_index_to_location ( i );
+                    push_interactive ( tile.x, tile.y,
+                                       interactive.underneath.underneath_ice.force_dir,
                                        map );
                }
 
                if ( interactive.underneath.type == UnderneathInteractive::Type::ice_detector &&
                     interactive.underneath.underneath_ice_detector.detected &&
                     interactive.underneath.underneath_ice_detector.force_dir != Direction::count ) {
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    push_interactive ( tile_x, tile_y,
+                    Auto tile = map.tile_index_to_location ( i );
+                    push_interactive ( tile.x, tile.y,
                                        interactive.underneath.underneath_ice_detector.force_dir, map );
                }
 
                if ( interactive.underneath.type == UnderneathInteractive::Type::moving_walkway &&
                     interactive.underneath.underneath_moving_walkway.facing != Direction::count ) {
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    push_interactive ( tile_x, tile_y,
+                    Auto tile = map.tile_index_to_location ( i );
+                    push_interactive ( tile.x, tile.y,
                                        interactive.underneath.underneath_moving_walkway.facing,
                                        map );
                }
@@ -1609,17 +1609,15 @@ Void State::update_interactives ( float time_delta )
                break;
           case Interactive::Type::torch:
                if ( interactive.interactive_torch.element == Element::ice ) {
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    interactives.spread_ice ( tile_x, tile_y, map, false );
+                    Auto tile = map.tile_index_to_location ( i );
+                    interactives.spread_ice ( tile.x, tile.y, map, false );
                }
                break;
           case Interactive::Type::pushable_torch:
                if ( interactive.interactive_pushable_torch.torch.element == Element::ice ) {
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
+                    Auto tile = map.tile_index_to_location ( i );
 
-                    interactives.spread_ice ( tile_x, tile_y, map, false );
+                    interactives.spread_ice ( tile.x, tile.y, map, false );
                }
 
                interactive.update ( time_delta, interactives );
@@ -1635,9 +1633,8 @@ Void State::update_interactives ( float time_delta )
                break;
           case Interactive::Type::turret:
                if ( interactive.interactive_turret.wants_to_shoot ) {
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    Vector interactive_pos = Map::coordinates_to_vector ( tile_x, tile_y );
+                    Auto tile = map.tile_index_to_location ( i );
+                    Vector interactive_pos = Map::location_to_vector ( tile );
 
                     spawn_projectile ( Projectile::Type::arrow,
                                        interactive_pos,
@@ -1661,16 +1658,14 @@ Void State::update_interactives ( float time_delta )
                break;
           case Interactive::Type::torch:
                if ( interactive.interactive_torch.element == Element::fire ) {
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    interactives.spread_ice ( tile_x, tile_y, map, true );
+                    Auto tile = map.tile_index_to_location ( i );
+                    interactives.spread_ice ( tile.x, tile.y, map, true );
                }
                break;
           case Interactive::Type::pushable_torch:
                if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
-                    Int32 tile_x = map.tile_index_to_coordinate_x ( i );
-                    Int32 tile_y = map.tile_index_to_coordinate_y ( i );
-                    interactives.spread_ice ( tile_x, tile_y, map, true );
+                    Auto tile = map.tile_index_to_location ( i );
+                    interactives.spread_ice ( tile.x, tile.y, map, true );
                }
                break;
           }
@@ -1955,18 +1950,21 @@ Void State::update_light ( )
           }
 
           if ( projectile.effected_by_element == Element::fire ) {
-               map.illuminate ( meters_to_pixels ( projectile.position.x ( ) ) +
-                                                   meters_to_pixels ( Projectile::collision_points [ projectile.facing ].x ( ) ),
-                                meters_to_pixels ( projectile.position.y ( ) ) +
-                                                   meters_to_pixels ( Projectile::collision_points [ projectile.facing ].y ( ) ),
-                                LightDetector::c_bryte_value - 1 );
+               Vector collision_position ( projectile.position.x ( ) +
+                                           Projectile::collision_points [ projectile.facing ].x ( ),
+                                           projectile.position.y ( ) +
+                                           Projectile::collision_points [ projectile.facing ].y ( ) );
+               Location collision_loc ( meters_to_pixels ( collision_position.x ( ) ),
+                                        meters_to_pixels ( collision_position.y ( ) ) );
+               map.illuminate ( collision_loc, LightDetector::c_bryte_value - 1 );
           }
      }
 
      // give interactives the light values on their respective tiles
      for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
           for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               interactives.light ( x, y, map.get_coordinate_light ( x, y ) );
+               Location tile ( x, y );
+               interactives.light ( x, y, map.get_tile_location_light ( tile ) );
           }
      }
 }
@@ -2030,7 +2028,7 @@ Void State::change_map ( Int32 map_index, Bool persist )
 
 Direction State::player_on_border ( )
 {
-     Auto player_tile = Map::vector_to_coordinates ( player.collision_center ( ) );
+     Auto player_tile = Map::vector_to_location ( player.collision_center ( ) );
 
      Auto border = map.get_border_exit ( Direction::left );
      if ( border.bottom_left.x || border.bottom_left.y ) {
@@ -2124,8 +2122,8 @@ Void State::render_upgrade ( SDL_Surface* back_buffer )
 
      SDL_Rect src { ( upgrade.id - 1 ) * Map::c_tile_dimension_in_pixels, 0,
                     Map::c_tile_dimension_in_pixels, 14 };
-     SDL_Rect dst { upgrade.location.x * Map::c_tile_dimension_in_pixels,
-                    upgrade.location.y * Map::c_tile_dimension_in_pixels,
+     SDL_Rect dst { upgrade.coordinates.x * Map::c_tile_dimension_in_pixels,
+                    upgrade.coordinates.y * Map::c_tile_dimension_in_pixels,
                     Map::c_tile_dimension_in_pixels, 14 };
 
      world_to_sdl ( dst, back_buffer, camera.x ( ), camera.y ( ) );

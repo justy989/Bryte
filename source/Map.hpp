@@ -7,6 +7,7 @@
 #include "Direction.hpp"
 #include "Pickup.hpp"
 #include "Vector.hpp"
+#include "Location.hpp"
 
 // Note: Max map dimensions without scroll: 16 x 14
 
@@ -45,11 +46,6 @@ namespace bryte
      public:
 
           struct Coordinates {
-               Int32 x;
-               Int32 y;
-          };
-
-          struct Location {
                Uint8 x;
                Uint8 y;
           };
@@ -67,7 +63,7 @@ namespace bryte
           struct Fixture {
                Void set ( Uint8 x, Uint8 y, Uint8 id );
 
-               Location location;
+               Coordinates coordinates;
                Uint8 id;
           };
 
@@ -78,14 +74,14 @@ namespace bryte
 
           struct Secret {
                Bool found;
-               Location clear_tile;
-               Location location;
+               Coordinates clear_tile;
+               Coordinates coordinates;
           };
 
           struct PersistedExit {
                struct Map {
                     Uint8 index;
-                    Location location;
+                    Coordinates coordinates;
                };
 
                PersistedExit::Map map [ 2 ];
@@ -94,7 +90,7 @@ namespace bryte
 
           struct PersistEnemy {
                Uint8 alive;
-               Location location;
+               Coordinates coordinates;
           };
 
           struct PersistedEnemies {
@@ -102,10 +98,10 @@ namespace bryte
           };
 
           struct BorderExit {
-               Location bottom_left;
+               Coordinates bottom_left;
 
                Uint8 map_index;
-               Location map_bottom_left;
+               Coordinates map_bottom_left;
           };
 
      public:
@@ -123,34 +119,33 @@ namespace bryte
           Bool save_persistence ( const Char8* region_name, Uint8 save_slot );
           Bool load_persistence ( const Char8* region_name, Uint8 save_slot );
 
-          Int32 coordinate_to_tile_index   ( Int32 tile_x, Int32 tile_y ) const;
-          Int32 tile_index_to_coordinate_x ( Int32 tile_index ) const;
-          Int32 tile_index_to_coordinate_y ( Int32 tile_index ) const;
+          Int32 location_to_tile_index   ( const Location& loc ) const;
+          Location tile_index_to_location ( Int32 tile_index ) const;
 
-          Uint8 get_coordinate_value ( Int32 tile_x, Int32 tile_y ) const;
-          Bool  get_coordinate_solid ( Int32 tile_x, Int32 tile_y ) const;
-          Bool  get_coordinate_invisible ( Int32 tile_x, Int32 tile_y ) const;
-          Uint8 get_coordinate_light ( Int32 tile_x, Int32 tile_y ) const;
-          Uint8 get_pixel_light ( Int32 tile_x, Int32 tile_y ) const;
+          Uint8 get_tile_location_value ( const Location& loc ) const;
+          Bool  get_tile_location_solid ( const Location& loc ) const;
+          Bool  get_tile_location_invisible ( const Location& loc ) const;
+          Uint8 get_tile_location_light ( const Location& loc ) const;
+          Uint8 get_pixel_light ( const Location& loc ) const;
 
-          Void  set_coordinate_value ( Int32 tile_x, Int32 tile_y, Uint8 value );
-          Void  set_coordinate_solid ( Int32 tile_x, Int32 tile_y, Bool solid );
-          Void  set_coordinate_invisible ( Int32 tile_x, Int32 tile_y, Bool invisible );
+          Void  set_tile_location_value ( const Location& loc, Uint8 value );
+          Void  set_tile_location_solid ( const Location& loc, Bool solid );
+          Void  set_tile_location_invisible ( const Location& loc, Bool invisible );
 
-          Fixture*    check_coordinates_for_decor       ( Int32 x, Int32 y );
-          Fixture*    check_coordinates_for_lamp        ( Int32 x, Int32 y );
-          EnemySpawn* check_coordinates_for_enemy_spawn ( Int32 x, Int32 y );
+          Fixture*    check_location_for_decor       ( const Location& loc );
+          Fixture*    check_location_for_lamp        ( const Location& loc );
+          EnemySpawn* check_location_for_enemy_spawn ( const Location& loc );
 
           Uint8 base_light_value         ( ) const;
           Void  add_to_base_light        ( Uint8 delta );
           Void  subtract_from_base_light ( Uint8 delta );
 
-          Void illuminate  ( Int32 x, Int32 y, Uint8 value );
+          Void illuminate  ( const Location& loc, Uint8 value );
           Void reset_light ( );
 
-          Bool add_decor       ( Int32 location_x, Int32 location_y, Uint8 id );
-          Bool add_lamp        ( Int32 location_x, Int32 location_y, Uint8 id );
-          Bool add_enemy_spawn ( Int32 location_x, Int32 location_y, Uint8 id,
+          Bool add_decor       ( const Location& loc, Uint8 id );
+          Bool add_lamp        ( const Location& loc, Uint8 id );
+          Bool add_enemy_spawn ( const Location& loc, Uint8 id,
                                  Direction facing, Pickup::Type drop );
 
           Void remove_decor       ( Fixture* decor );
@@ -183,13 +178,11 @@ namespace bryte
           inline Fixture&    lamp        ( Uint8 index );
           inline EnemySpawn& enemy_spawn ( Uint8 index );
 
-          inline Bool coordinate_x_valid ( Int32 x ) const;
-          inline Bool coordinate_y_valid ( Int32 y ) const;
-          inline Bool coordinates_valid ( const Coordinates& coords ) const;
+          inline Bool tile_location_is_valid ( const Location& loc ) const;
 
           inline Int32 current_master_map ( ) const;
-          inline Void set_activate_location_on_all_enemies_killed ( Location loc );
-          inline Location activate_on_all_enemies_killed ( ) const;
+          inline Void set_activate_location_on_all_enemies_killed ( Coordinates loc );
+          inline Coordinates activate_on_all_enemies_killed ( ) const;
           inline Void killed_all_enemies ( );
 
           inline Bool found_secret ( ) const;
@@ -197,16 +190,15 @@ namespace bryte
 
           inline Fixture& upgrade ( );
 
-          inline Void set_secret_location ( Location loc );
-          inline Void set_secret_clear_tile ( Location loc );
+          inline Void set_secret_location ( Coordinates loc );
+          inline Void set_secret_clear_tile ( Coordinates loc );
 
      public:
 
-          static Coordinates position_to_coordinates ( Real32 x, Real32 y );
-          static Coordinates vector_to_coordinates ( const Vector& v );
-          static Vector coordinates_to_vector ( Int32 tile_x, Int32 tile_y );
-          static Vector coordinates_to_vector ( const Coordinates& coords );
+          static Location vector_to_location ( const Vector& v );
           static Vector location_to_vector ( const Location& loc );
+          static Void convert_tiles_to_pixels ( Location* loc );
+          static Void move_half_tile_in_pixels ( Location* loc );
 
      private:
 
@@ -252,7 +244,7 @@ namespace bryte
 
           BorderExit     m_border_exits [ Direction::count ];
 
-          Location       m_activate_on_kill_all;
+          Coordinates       m_activate_on_kill_all;
 
           Secret         m_secret;
 
@@ -360,7 +352,7 @@ namespace bryte
           for ( Uint8 d = 0; d < fixture_count; ++d ) {
                Auto& fixture = fixture_array [ d ];
 
-               if ( fixture.location.x == x && fixture.location.y == y ) {
+               if ( fixture.coordinates.x == x && fixture.coordinates.y == y ) {
                     return &fixture;
                }
           }
@@ -368,19 +360,10 @@ namespace bryte
           return nullptr;
      }
 
-     inline Bool Map::coordinate_x_valid ( Int32 x ) const
+     inline Bool Map::tile_location_is_valid ( const Location& loc ) const
      {
-          return x >= 0 && x < width ( );
-     }
-
-     inline Bool Map::coordinate_y_valid ( Int32 y ) const
-     {
-          return y >= 0 && y < height ( );
-     }
-
-     inline Bool Map::coordinates_valid ( const Coordinates& coords ) const
-     {
-          return coordinate_x_valid ( coords.x ) && coordinate_y_valid ( coords.y );
+          return loc.x >= 0 && loc.x < width ( ) &&
+                 loc.y >= 0 && loc.y < height ( );
      }
 
      inline Int32 Map::current_master_map ( ) const
@@ -388,12 +371,12 @@ namespace bryte
           return m_current_map;
      }
 
-     inline Void Map::set_activate_location_on_all_enemies_killed ( Map::Location loc )
+     inline Void Map::set_activate_location_on_all_enemies_killed ( Map::Coordinates loc )
      {
           m_activate_on_kill_all = loc;
      }
 
-     inline Map::Location Map::activate_on_all_enemies_killed ( ) const
+     inline Map::Coordinates Map::activate_on_all_enemies_killed ( ) const
      {
           return m_activate_on_kill_all;
      }
@@ -418,14 +401,14 @@ namespace bryte
           m_killed_all_enemies = true;
      }
 
-     inline Void Map::set_secret_location ( Location loc )
+     inline Void Map::set_secret_location ( Coordinates coords )
      {
-          m_secret.location = loc;
+          m_secret.coordinates = coords;
      }
 
-     inline Void Map::set_secret_clear_tile ( Location loc )
+     inline Void Map::set_secret_clear_tile ( Coordinates coords )
      {
-          m_secret.clear_tile = loc;
+          m_secret.clear_tile = coords;
      }
 }
 

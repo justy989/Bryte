@@ -1169,7 +1169,6 @@ Void State::enemy_death ( const Enemy& enemy )
 
 Void State::setup_emitters_from_map_lamps ( )
 {
-#if 0
      for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
           Auto& lamp = map.lamp ( i );
 
@@ -1185,10 +1184,35 @@ Void State::setup_emitters_from_map_lamps ( )
                break;
           }
 
+          Real32 min_angle = 0.78f;
+          Real32 max_angle = 2.35f;
+
+          switch ( lamp.id ) {
+          default:
+               break;
+          case 1:
+               offset.set_x ( Map::c_tile_dimension_in_meters * 0.3f );
+               offset.set_y ( Map::c_tile_dimension_in_meters * 0.5f );
+               min_angle = 2.35f;
+               max_angle = 3.92f;
+               break;
+          case 3:
+               offset.set_x ( Map::c_tile_dimension_in_meters * 0.7f );
+               offset.set_y ( Map::c_tile_dimension_in_meters * 0.5f );
+               min_angle = 5.49f;
+               max_angle = 7.06f;
+               break;
+          case 4:
+               offset.set_x ( Map::c_tile_dimension_in_meters * 0.5f );
+               offset.set_y ( Map::c_tile_dimension_in_meters * 0.3f );
+               min_angle = 3.92f;
+               max_angle = 5.49f;
+               break;
+          }
+
           emitter->setup_immortal ( position + offset, SDL_MapRGB ( &back_buffer_format, 255, 187, 0 ),
-                                    0.78f, 2.35f, 0.5f, 0.75f, 0.5f, 1.0f, 1, 10 );
+                                    min_angle, max_angle, 0.5f, 0.75f, 0.5f, 1.0f, 1, 10 );
      }
-#endif
 }
 
 Void State::tick_character_element ( Character& character )

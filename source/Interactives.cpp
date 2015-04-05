@@ -86,10 +86,8 @@ Interactive& Interactives::add ( Interactive::Type type, const Location& tile )
 
 Void Interactives::contribute_light ( Map& map )
 {
-     for ( Int32 y = 0; y < height ( ); ++y ) {
-          for ( Int32 x = 0; x < width ( ); ++x ) {
-               Location tile ( x, y );
-
+     for ( Location tile; tile.y < height ( ); ++tile.y ) {
+          for ( tile.x = 0; tile.x < width ( ); ++tile.x ) {
                Auto& interactive = get_from_tile ( tile );
 
                switch ( interactive.type ) {

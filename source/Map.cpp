@@ -408,7 +408,7 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
      }
 
      for ( Location tile; tile.y < interactives.height ( ); ++tile.y ) {
-          for ( ; tile.x < interactives.width ( ); ++tile.x ) {
+          for ( tile.x = 0; tile.x < interactives.width ( ); ++tile.x ) {
                Auto& interactive = interactives.get_from_tile ( tile );
                file.write ( reinterpret_cast<const Char8*>( &interactive ), sizeof ( interactive ) );
           }
@@ -488,7 +488,7 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
      interactives.reset ( m_width, m_height );
 
      for ( Location tile; tile.y < interactives.height ( ); ++tile.y ) {
-          for ( ; tile.x < interactives.width ( ); ++tile.x ) {
+          for ( tile.x = 0; tile.x < interactives.width ( ); ++tile.x ) {
                Auto& interactive = interactives.get_from_tile ( tile );
                file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
           }

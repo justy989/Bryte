@@ -1954,9 +1954,8 @@ Void State::update_light ( )
      }
 
      // give interactives the light values on their respective tiles
-     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
-          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               Location tile ( x, y );
+     for ( Location tile; tile.y < interactives.height ( ); ++tile.y ) {
+          for ( tile.x = 0; tile.x < interactives.width ( ); ++tile.x ) {
                interactives.light ( tile, map.get_tile_location_light ( tile ) );
           }
      }

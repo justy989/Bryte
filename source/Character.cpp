@@ -448,12 +448,11 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           Vector wall_normal;
           Real32 closest_time_intersection = time_remaining;
           Direction push_direction = Direction::count;
+          Location tile;
 
           // loop over tile area
-          for ( Int32 y = min_check_tile_y; y <= max_check_tile_y; ++y ) {
-               for ( Int32 x = min_check_tile_x; x <= max_check_tile_x; ++x ) {
-
-                    Location tile ( x, y );
+          for ( tile.y = min_check_tile_y; tile.y <= max_check_tile_y; ++tile.y ) {
+               for ( tile.x = min_check_tile_x; tile.x <= max_check_tile_x; ++tile.x ) {
 
                     if ( tile == ignore_tile ) {
                          continue;
@@ -477,9 +476,9 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
                          }
                     }
 
-                    Real32 left   = pixels_to_meters ( x * Map::c_tile_dimension_in_pixels );
+                    Real32 left   = pixels_to_meters ( tile.x * Map::c_tile_dimension_in_pixels );
                     Real32 right  = left + Map::c_tile_dimension_in_meters;
-                    Real32 bottom = pixels_to_meters ( y * Map::c_tile_dimension_in_pixels );
+                    Real32 bottom = pixels_to_meters ( tile.y * Map::c_tile_dimension_in_pixels );
                     Real32 top    = bottom + Map::c_tile_dimension_in_meters;
 
                     // minkowski sum extruding

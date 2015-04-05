@@ -41,9 +41,8 @@ static Void render_map_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* 
                                          Real32 camera_x, Real32 camera_y )
 {
      // TODO: optimize to only draw to the part of the back buffer we can see
-     for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
-          for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
-               Location tile ( x, y );
+     for ( Location tile; tile.y < static_cast<Int32>( map.height ( ) ); ++tile.y ) {
+          for ( tile.x = 0; tile.x < static_cast<Int32>( map.width ( ) ); ++tile.x ) {
                Auto tile_value = map.get_tile_location_value ( tile );
 
                if ( !tile_value ) {
@@ -73,10 +72,8 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
                          Real32 camera_x, Real32 camera_y )
 {
      // TODO: optimize to only draw to the part of the back buffer we can see
-     for ( Int32 y = 0; y < static_cast<Int32>( map.height ( ) ); ++y ) {
-          for ( Int32 x = 0; x < static_cast<Int32>( map.width ( ) ); ++x ) {
-               Location tile ( x, y );
-
+     for ( Location tile; tile.y < static_cast<Int32>( map.height ( ) ); ++tile.y ) {
+          for ( tile.x = 0; tile.x < static_cast<Int32>( map.width ( ) ); ++tile.x ) {
                Auto tile_value = map.get_tile_location_value ( tile );
 
                if ( !tile_value || map.get_tile_location_invisible ( tile )  ) {
@@ -92,8 +89,8 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
 
                clip_rect.x = tile_value * Map::c_tile_dimension_in_pixels;
 
-               tile_rect.x = x * Map::c_tile_dimension_in_pixels;
-               tile_rect.y = y * Map::c_tile_dimension_in_pixels;
+               tile_rect.x = tile.x * Map::c_tile_dimension_in_pixels;
+               tile_rect.y = tile.y * Map::c_tile_dimension_in_pixels;
 
                world_to_sdl ( tile_rect, back_buffer, camera_x, camera_y );
 
@@ -214,18 +211,18 @@ extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera
      }
 
      // TODO: optimize to only draw to the part of the back buffer we can see
-     for ( Int32 y = 0; y < static_cast<Int32>( map.light_height ( ) ); ++y ) {
-          for ( Int32 x = 0; x < static_cast<Int32>( map.light_width ( ) ); ++x ) {
-               Location pixel ( x, y );
+     for ( Location pixel; pixel.y < static_cast<Int32>( map.light_height ( ) ); ++pixel.y ) {
+          for ( pixel.x = 0; pixel.x < static_cast<Int32>( map.light_width ( ) ); ++pixel.x ) {
+               Location pixel_dest = pixel;
 
-               pixel.x += meters_to_pixels ( camera_x );
-               pixel.y += meters_to_pixels ( camera_y );
-               pixel.y = ( back_buffer->h - pixel.y );
+               pixel_dest.x += meters_to_pixels ( camera_x );
+               pixel_dest.y += meters_to_pixels ( camera_y );
+               pixel_dest.y = ( back_buffer->h - pixel.y );
 
-               Int32 pixel_light = map.get_pixel_light ( Location ( x, y ) );
+               Int32 pixel_light = map.get_pixel_light ( pixel );
                Real32 normalized_pixel_light = static_cast<Real32>( pixel_light ) / 255.0f;
 
-               blend_light ( back_buffer, pixel.x, pixel.y, normalized_pixel_light );
+               blend_light ( back_buffer, pixel_dest.x, pixel_dest.y, normalized_pixel_light );
           }
      }
 

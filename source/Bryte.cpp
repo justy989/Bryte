@@ -1059,7 +1059,7 @@ Void State::persist_map ( )
                     continue;
                }
 
-               map.persist_exit ( exit, x, y );
+               map.persist_exit ( exit, Coordinates ( x, y ) );
           }
      }
 

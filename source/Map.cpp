@@ -257,7 +257,7 @@ Void Map::reset_light ( )
 
      for ( Uint8 i = 0; i < m_lamp_count; ++i ) {
           Auto& lamp = m_lamps [ i ];
-          Location center { lamp.coordinates.x, lamp.coordinates.y };
+          Location center ( lamp.coordinates );
 
           convert_tiles_to_pixels ( &center );
           move_half_tile_in_pixels ( &center );
@@ -407,12 +407,10 @@ Void Map::save ( const Char8* filepath, Interactives& interactives )
           file.write ( reinterpret_cast<const Char8*>( &enemy_spawn ), sizeof ( enemy_spawn ) );
      }
 
-     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
-          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               Location tile ( x, y );
+     for ( Location tile; tile.y < interactives.height ( ); ++tile.y ) {
+          for ( ; tile.x < interactives.width ( ); ++tile.x ) {
                Auto& interactive = interactives.get_from_tile ( tile );
                file.write ( reinterpret_cast<const Char8*>( &interactive ), sizeof ( interactive ) );
-
           }
      }
 
@@ -458,7 +456,6 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
      for ( Int32 y = 0; y < m_height; ++y ) {
           for ( Int32 x = 0; x < m_width; ++x ) {
                Auto& tile = m_tiles [ y * m_width + x ];
-
                file.read ( reinterpret_cast<Char8*> ( &tile ), sizeof ( tile ) );
           }
      }
@@ -490,9 +487,8 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
 
      interactives.reset ( m_width, m_height );
 
-     for ( Int32 y = 0; y < interactives.height ( ); ++y ) {
-          for ( Int32 x = 0; x < interactives.width ( ); ++x ) {
-               Location tile ( x, y );
+     for ( Location tile; tile.y < interactives.height ( ); ++tile.y ) {
+          for ( ; tile.x < interactives.width ( ); ++tile.x ) {
                Auto& interactive = interactives.get_from_tile ( tile );
                file.read ( reinterpret_cast<Char8*> ( &interactive ), sizeof ( interactive ) );
           }
@@ -596,7 +592,7 @@ void Map::clear_persistence ( )
      }
 }
 
-Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
+Void Map::persist_exit ( const Interactive& exit, const Coordinates& coords )
 {
      // try to find the exit
      for ( Uint32 i = 0; i < m_persisted_exit_count; ++i ) {
@@ -605,7 +601,7 @@ Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
                Auto& map_location = map_info.coordinates;
 
                if ( map_info.index == m_current_map &&
-                    map_location.x == x && map_location.y == y ) {
+                    map_location == coords ) {
                     m_persisted_exits [ i ].state = exit.interactive_exit.state;
                     return;
                }
@@ -615,14 +611,14 @@ Void Map::persist_exit ( const Interactive& exit, Uint8 x, Uint8 y )
      // if we didn't find the exit, create one
      if ( m_persisted_exit_count >= c_max_exits ) {
           LOG_INFO ( "Error persisting exit at %d, %d, on map %d, hit max persisted exits %d\n",
-                      x, y, m_current_map, c_max_exits );
+                      coords.x, coords.y, m_current_map, c_max_exits );
           return;
      }
 
      PersistedExit& new_exit = m_persisted_exits [ m_persisted_exit_count ];
 
      new_exit.state = exit.interactive_exit.state;
-     new_exit.map [ 0 ].coordinates = Coordinates { x, y };
+     new_exit.map [ 0 ].coordinates = coords;
      new_exit.map [ 0 ].index = m_current_map;
      new_exit.map [ 1 ].coordinates = Coordinates { exit.interactive_exit.exit_index_x,
                                                     exit.interactive_exit.exit_index_y };
@@ -661,8 +657,7 @@ Void Map::restore_exits ( Interactives& interactives )
                PersistedExit::Map& map_info = m_persisted_exits [ i ].map [ m ];
 
                if ( map_info.index == m_current_map ) {
-                    Auto& exit = interactives.get_from_tile ( Location ( map_info.coordinates.x,
-                                                                         map_info.coordinates.y ) );
+                    Auto& exit = interactives.get_from_tile ( Location ( map_info.coordinates ) );
 
                     if ( exit.type != Interactive::Type::exit ) {
                          LOG_ERROR ( "Failed to restore persisted exit at %d, %d on map %d, map has changed?\n",
@@ -722,12 +717,12 @@ Void Map::restore_activate_on_kill_all ( Interactives& interactives )
      m_killed_all_enemies = m_persisted_activate_on_kill_all [ m_current_map ];
 
      if ( m_killed_all_enemies ) {
-          Location tile ( m_activate_on_kill_all.x, m_activate_on_kill_all.y );
-          Auto& interactive = interactives.get_from_tile ( tile );
+          Location activate_tile ( m_activate_on_kill_all );
+          Auto& interactive = interactives.get_from_tile ( activate_tile );
 
           // NOTE: persist non-exit changes
           if ( interactive.type != Interactive::Type::exit ) {
-               interactives.activate ( tile );
+               interactives.activate ( activate_tile );
           }
      }
 }
@@ -740,7 +735,7 @@ Void Map::find_secret ( )
 
      m_secret.found = true;
 
-     Location loc ( m_secret.clear_tile.x, m_secret.clear_tile.y );
+     Location loc ( m_secret.clear_tile );
 
      set_tile_location_value ( loc, 1 );
      set_tile_location_solid ( loc, false );

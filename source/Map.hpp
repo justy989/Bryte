@@ -150,7 +150,7 @@ namespace bryte
           Void set_border_exit ( Direction side, const BorderExit& border_exit );
           BorderExit& get_border_exit ( Direction side );
 
-          Void persist_exit ( const Interactive& exit, Uint8 x, Uint8 y );
+          Void persist_exit ( const Interactive& exit, const Coordinates& coords );
           Void persist_enemy ( const Enemy& enemy, Uint8 index );
           Void persist_secret ( );
           Void persist_killed_all_enemies ( );
@@ -239,7 +239,7 @@ namespace bryte
 
           BorderExit     m_border_exits [ Direction::count ];
 
-          Coordinates       m_activate_on_kill_all;
+          Coordinates    m_activate_on_kill_all;
 
           Secret         m_secret;
 

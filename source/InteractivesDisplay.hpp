@@ -45,10 +45,19 @@ namespace bryte
 
      public:
 
-          SDL_Surface* interactive_sheet;
+          SDL_Surface* lever_sheet;
+          SDL_Surface* pushable_block_sheet;
+          SDL_Surface* torch_sheet;
+          SDL_Surface* pushable_torch_sheet;
+          SDL_Surface* bombable_block_sheet;
+          SDL_Surface* turret_sheet;
+          SDL_Surface* pressure_plate_sheet;
           SDL_Surface* moving_walkway_sheet;
+          SDL_Surface* popup_block_sheet;
+          SDL_Surface* ice_sheet;
           SDL_Surface* torch_element_sheet;
           SDL_Surface* exit_sheet;
+          SDL_Surface* hole_sheet;
           SDL_Surface* light_detector_sheet;
           SDL_Surface* ice_detector_sheet;
           SDL_Surface* portal_sheet;

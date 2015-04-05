@@ -7,11 +7,43 @@ using namespace bryte;
 
 Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* exitsheet_filepath )
 {
-     if ( !load_bitmap_with_game_memory ( interactive_sheet, game_memory, "castle_interactivesheet.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( lever_sheet, game_memory, "test_lever.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( pushable_block_sheet, game_memory, "test_pushable_block.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( torch_sheet, game_memory, "test_torch.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( pushable_torch_sheet, game_memory, "test_pushable_torch.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( bombable_block_sheet, game_memory, "test_bombable_block.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( turret_sheet, game_memory, "test_turret.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( pressure_plate_sheet, game_memory, "test_pressure_plate.bmp" ) ) {
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( moving_walkway_sheet, game_memory, "test_moving_walkway.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( popup_block_sheet, game_memory, "test_popup_block.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( ice_sheet, game_memory, "test_ice.bmp" ) ) {
           return false;
      }
 
@@ -20,6 +52,10 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* 
      }
 
      if ( !load_bitmap_with_game_memory ( exit_sheet, game_memory, exitsheet_filepath ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( hole_sheet, game_memory, "test_hole.bmp" ) ) {
           return false;
      }
 
@@ -40,11 +76,20 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* 
 
 Void InteractivesDisplay::unload_surfaces ( )
 {
-     FREE_SURFACE ( interactive_sheet );
+     FREE_SURFACE ( lever_sheet );
+     FREE_SURFACE ( pushable_block_sheet );
+     FREE_SURFACE ( torch_sheet );
+     FREE_SURFACE ( pushable_torch_sheet );
+     FREE_SURFACE ( bombable_block_sheet );
+     FREE_SURFACE ( turret_sheet );
+     FREE_SURFACE ( pressure_plate_sheet );
      FREE_SURFACE ( moving_walkway_sheet );
+     FREE_SURFACE ( popup_block_sheet );
+     FREE_SURFACE ( ice_sheet );
      FREE_SURFACE ( light_detector_sheet );
      FREE_SURFACE ( ice_detector_sheet );
      FREE_SURFACE ( exit_sheet );
+     FREE_SURFACE ( hole_sheet );
      FREE_SURFACE ( torch_element_sheet );
      FREE_SURFACE ( portal_sheet );
 }
@@ -131,10 +176,10 @@ Void InteractivesDisplay::render ( SDL_Surface* back_buffer, Interactives& inter
 Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, UnderneathInteractive& underneath,
                                               SDL_Rect* dest_rect )
 {
-     SDL_Rect clip_rect { 0, ( ( Interactive::Type::count - 2 ) + underneath.type ) * Map::c_tile_dimension_in_pixels,
+     SDL_Rect clip_rect { 0, 0,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-     SDL_Surface* underneath_sheet = interactive_sheet;
+     SDL_Surface* underneath_sheet = nullptr;
 
      switch ( underneath.type ) {
      default:
@@ -143,16 +188,20 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
      case UnderneathInteractive::Type::none:
           return;
      case UnderneathInteractive::Type::pressure_plate:
+          underneath_sheet = pressure_plate_sheet;
           if ( underneath.underneath_pressure_plate.entered ) {
                clip_rect.x += Map::c_tile_dimension_in_pixels;
           }
           break;
      case UnderneathInteractive::Type::popup_block:
+          underneath_sheet = popup_block_sheet;
+
           if ( underneath.underneath_popup_block.up ) {
-               clip_rect.y = ( Interactive::Type::pushable_block - 1 ) * Map::c_tile_dimension_in_pixels;
+               clip_rect.x += Map::c_tile_dimension_in_pixels;
           }
           break;
      case UnderneathInteractive::Type::ice:
+          underneath_sheet = ice_sheet;
           clip_rect.x = ice_animation.frame * Map::c_tile_dimension_in_pixels;
           break;
      case UnderneathInteractive::Type::moving_walkway:
@@ -162,7 +211,6 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           break;
      case UnderneathInteractive::Type::light_detector:
           underneath_sheet = light_detector_sheet;
-          clip_rect.y = 0;
 
           if ( underneath.underneath_light_detector.type == LightDetector::Type::bryte ) {
                if ( !underneath.underneath_light_detector.below_value ) {
@@ -184,9 +232,12 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
           clip_rect.y = underneath.underneath_ice_detector.detected * Map::c_tile_dimension_in_pixels;
           break;
      case UnderneathInteractive::Type::hole:
+          underneath_sheet = hole_sheet;
           clip_rect.x = underneath.underneath_hole.filled * Map::c_tile_dimension_in_pixels;
           break;
      }
+
+     ASSERT ( underneath_sheet );
 
      SDL_BlitSurface ( underneath_sheet, &clip_rect, back_buffer, dest_rect );
 }
@@ -194,10 +245,10 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
 Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interactive& interactive,
                                                SDL_Rect* dest_rect )
 {
-     SDL_Rect clip_rect { 0, ( interactive.type - 1 ) * Map::c_tile_dimension_in_pixels,
+     SDL_Rect clip_rect { 0, 0,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-     SDL_Surface* sheet = interactive_sheet;
+     SDL_Surface* sheet = nullptr;
 
      switch ( interactive.type ) {
      default:
@@ -206,6 +257,7 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
      case Interactive::Type::none:
           return;
      case Interactive::Type::lever:
+          sheet = lever_sheet;
           if ( interactive.interactive_lever.state == Lever::State::on ) {
                clip_rect.x = Map::c_tile_dimension_in_pixels * 2;
           } else if ( interactive.interactive_lever.state == Lever::State::changing_on ||
@@ -214,14 +266,16 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           }
           break;
      case Interactive::Type::pushable_block:
+          sheet = pushable_block_sheet;
           break;
      case Interactive::Type::torch:
+          sheet = torch_sheet;
           break;
      case Interactive::Type::pushable_torch:
+          sheet = pushable_torch_sheet;
           break;
      case Interactive::Type::exit:
           sheet = exit_sheet;
-          clip_rect.y = 0;
           clip_rect.x = interactive.interactive_exit.direction * Map::c_tile_dimension_in_pixels;
 
           switch ( interactive.interactive_exit.state ) {
@@ -247,16 +301,18 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
 
           break;
      case Interactive::Type::bombable_block:
+          sheet = bombable_block_sheet;
           break;
      case Interactive::Type::turret:
+          sheet = turret_sheet;
           clip_rect.x = interactive.interactive_turret.facing * Map::c_tile_dimension_in_pixels;
           break;
      case Interactive::Type::portal:
           sheet = portal_sheet;
-          clip_rect.y = 0;
-          clip_rect.x = 0;
           break;
      }
+
+     ASSERT ( sheet );
 
      SDL_BlitSurface ( sheet, &clip_rect, back_buffer, dest_rect );
 
@@ -292,6 +348,5 @@ Void InteractivesDisplay::render_interactive ( SDL_Surface* back_buffer, Interac
           }
           break;
      }
-
 }
 

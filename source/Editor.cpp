@@ -931,7 +931,7 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
           SDL_FreeSurface ( state->character_display.enemy_sheets [ i ] );
      }
 
-     SDL_FreeSurface ( state->interactives_display.interactive_sheet );
+     state->interactives_display.unload_surfaces ( );
 }
 
 extern "C" Void game_user_input ( GameMemory& game_memory, const GameInput& game_input )
@@ -1408,34 +1408,34 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::lever:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.lever_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0, Interactive::Type::lever - 1 );
+                                0, 0 );
           break;
      case Mode::pushable_block:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.pushable_block_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0, Interactive::Type::pushable_block - 1 );
+                                0, 0 );
           break;
      case Mode::torch:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.torch_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0, Interactive::Type::torch - 1 );
+                                0, 0 );
           break;
      case Mode::pushable_torch:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.pushable_torch_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0, Interactive::Type::pushable_torch - 1 );
+                                0, 0 );
           break;
      case Mode::light_detector:
           render_current_icon ( back_buffer,
                                 state->interactives_display.light_detector_sheet,
                                 state->mouse.x, state->mouse.y,
-                                2 * state->current_light_detector_bryte,
-                                0 );
+                                0,
+                                state->current_light_detector_bryte );
           break;
      case Mode::exit:
           render_current_icon ( back_buffer,
@@ -1446,38 +1446,34 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::pressure_plate:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.pressure_plate_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0,
-                                ( Interactive::Type::count - 2 ) + UnderneathInteractive::Type::pressure_plate );
+                                0, 0 );
           break;
      case Mode::popup_block:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.popup_block_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0,
-                                Interactive::Type::pushable_block - 1 );
+                                0, 0 );
           break;
      case Mode::bombable_block:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.bombable_block_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0,
-                                Interactive::Type::bombable_block - 1);
+                                0, 0 );
           break;
      case Mode::turret:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.turret_sheet,
                                 state->mouse.x, state->mouse.y,
                                 state->current_turret_direction,
-                                Interactive::Type::turret - 1 );
+                                0 );
           break;
      case Mode::ice:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.ice_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0,
-                                ( Interactive::Type::count - 2 ) + UnderneathInteractive::Type::ice );
+                                0, 0 );
           break;
      case Mode::moving_walkway:
           render_current_icon ( back_buffer,
@@ -1488,10 +1484,9 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
           break;
      case Mode::ice_detector:
           render_current_icon ( back_buffer,
-                                state->interactives_display.interactive_sheet,
+                                state->interactives_display.ice_detector_sheet,
                                 state->mouse.x, state->mouse.y,
-                                0,
-                                ( Interactive::Type::count - 2 ) + UnderneathInteractive::Type::ice_detector );
+                                0, 0 );
           break;
      case Mode::upgrade:
           if ( state->current_upgrade ) {

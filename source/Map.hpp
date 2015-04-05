@@ -37,8 +37,7 @@ namespace bryte
           static const Uint32 c_max_decors = 64;
 
           static const Uint32 c_max_lamps = 32;
-          static const Uint32 c_unique_lamp_count = 4;
-          static const Uint8  c_unique_lamps_light [ c_unique_lamp_count ];
+          static const Uint8  c_unique_lamp_count = 5;
           static const Uint8  c_lamp_light = 255;
 
           static const Uint32 c_max_enemy_spawns = 32;

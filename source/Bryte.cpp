@@ -696,8 +696,9 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
                                                        player.position.y ( ), player.height ( ) ) );
 
      // map
+     map_display.tick ( );
      map_display.render ( back_buffer, map, camera.x ( ), camera.y ( ),
-                                 map.found_secret ( ) );
+                          map.found_secret ( ) );
 
      // interactives
      interactives_display.tick ( );
@@ -1168,6 +1169,7 @@ Void State::enemy_death ( const Enemy& enemy )
 
 Void State::setup_emitters_from_map_lamps ( )
 {
+#if 0
      for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
           Auto& lamp = map.lamp ( i );
 
@@ -1183,9 +1185,10 @@ Void State::setup_emitters_from_map_lamps ( )
                break;
           }
 
-          emitter->setup_immortal ( position + offset, SDL_MapRGB ( &back_buffer_format, 255, 255, 0 ),
+          emitter->setup_immortal ( position + offset, SDL_MapRGB ( &back_buffer_format, 255, 187, 0 ),
                                     0.78f, 2.35f, 0.5f, 0.75f, 0.5f, 1.0f, 1, 10 );
      }
+#endif
 }
 
 Void State::tick_character_element ( Character& character )

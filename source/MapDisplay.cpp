@@ -10,6 +10,8 @@ Void MapDisplay::clear ( )
      tilesheet = nullptr;
      decorsheet = nullptr;
      lampsheet = nullptr;
+
+     lamp_animation.clear ( );
 }
 
 Bool MapDisplay::load_surfaces ( GameMemory& game_memory, const Char8* tilesheet_filepath,
@@ -35,6 +37,11 @@ Void MapDisplay::unload_surfaces ( )
      FREE_SURFACE ( tilesheet );
      FREE_SURFACE ( decorsheet );
      FREE_SURFACE ( lampsheet );
+}
+
+Void MapDisplay::tick ( )
+{
+     lamp_animation.update_increment ( c_lamp_frame_delay, c_lamp_frame_count );
 }
 
 static Void render_map_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& map,
@@ -99,10 +106,10 @@ static Void render_map ( SDL_Surface* back_buffer, SDL_Surface* tilesheet, Map& 
      }
 }
 
-static Void render_fixture ( SDL_Surface* back_buffer, SDL_Surface* fixture_sheet, Map::Fixture* fixture,
-                             Map& map, Real32 camera_x, Real32 camera_y )
+static Void render_decor ( SDL_Surface* back_buffer, SDL_Surface* fixture_sheet, Map::Fixture* fixture,
+                           Map& map, Real32 camera_x, Real32 camera_y )
 {
-     Location tile ( fixture->coordinates.x, fixture->coordinates.y );
+     Location tile ( fixture->coordinates );
 
      if ( map.get_tile_location_invisible ( tile ) ) {
           return;
@@ -112,16 +119,16 @@ static Void render_fixture ( SDL_Surface* back_buffer, SDL_Surface* fixture_shee
      SDL_Rect clip_rect { fixture->id * Map::c_tile_dimension_in_pixels, 0,
                           Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
 
-     dest_rect.x = fixture->coordinates.x * Map::c_tile_dimension_in_pixels;
-     dest_rect.y = fixture->coordinates.y * Map::c_tile_dimension_in_pixels;
+     dest_rect.x = tile.x * Map::c_tile_dimension_in_pixels;
+     dest_rect.y = tile.y * Map::c_tile_dimension_in_pixels;
 
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      SDL_BlitSurface ( fixture_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
-static Void render_fixture_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* fixture_sheet,
-                                             Map::Fixture* fixture, Map& map, Real32 camera_x, Real32 camera_y )
+static Void render_decor_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* fixture_sheet,
+                                           Map::Fixture* fixture, Map& map, Real32 camera_x, Real32 camera_y )
 {
      SDL_Rect dest_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
      SDL_Rect clip_rect { fixture->id * Map::c_tile_dimension_in_pixels, 0,
@@ -140,27 +147,69 @@ static Void render_map_decor ( SDL_Surface* back_buffer, SDL_Surface* decor_shee
 {
      if ( invisibles ) {
           for ( Uint8 i = 0; i < map.decor_count ( ); ++i ) {
-               render_fixture_with_invisibles ( back_buffer, decor_sheet, &map.decor ( i ), map,
-                                                camera_x, camera_y );
+               render_decor_with_invisibles ( back_buffer, decor_sheet, &map.decor ( i ), map,
+                                              camera_x, camera_y );
           }
      } else {
           for ( Uint8 i = 0; i < map.decor_count ( ); ++i ) {
-               render_fixture ( back_buffer, decor_sheet, &map.decor ( i ), map, camera_x, camera_y );
+               render_decor ( back_buffer, decor_sheet, &map.decor ( i ), map, camera_x, camera_y );
           }
      }
 }
 
+static Void render_lamp ( SDL_Surface* back_buffer, SDL_Surface* fixture_sheet, Map::Fixture* fixture,
+                          Map& map, Real32 camera_x, Real32 camera_y, Int32 lamp_frame )
+{
+     Location tile ( fixture->coordinates );
+
+     if ( map.get_tile_location_invisible ( tile ) ) {
+          return;
+     }
+
+     SDL_Rect dest_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+     SDL_Rect clip_rect { lamp_frame * Map::c_tile_dimension_in_pixels,
+                          fixture->id * Map::c_tile_dimension_in_pixels,
+                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     dest_rect.x = tile.x * Map::c_tile_dimension_in_pixels;
+     dest_rect.y = tile.y * Map::c_tile_dimension_in_pixels;
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( fixture_sheet, &clip_rect, back_buffer, &dest_rect );
+}
+
+static Void render_lamp_with_invisibles ( SDL_Surface* back_buffer, SDL_Surface* fixture_sheet,
+                                          Map::Fixture* fixture, Map& map, Real32 camera_x, Real32 camera_y,
+                                          Int32 lamp_frame )
+{
+     SDL_Rect dest_rect { 0, 0, Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+     SDL_Rect clip_rect { lamp_frame * Map::c_tile_dimension_in_pixels,
+                          fixture->id * Map::c_tile_dimension_in_pixels,
+                          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels };
+
+     dest_rect.x = fixture->coordinates.x * Map::c_tile_dimension_in_pixels;
+     dest_rect.y = fixture->coordinates.y * Map::c_tile_dimension_in_pixels;
+
+     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+
+     SDL_BlitSurface ( fixture_sheet, &clip_rect, back_buffer, &dest_rect );
+}
+
+
 static Void render_map_lamps ( SDL_Surface* back_buffer, SDL_Surface* lamp_sheet, Map& map,
-                               Real32 camera_x, Real32 camera_y, Bool invisibles )
+                               Real32 camera_x, Real32 camera_y, Bool invisibles,
+                               Int32 lamp_frame )
 {
      if ( invisibles ) {
           for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
-               render_fixture_with_invisibles ( back_buffer, lamp_sheet, &map.lamp ( i ), map,
-                                                camera_x, camera_y );
+               render_lamp_with_invisibles ( back_buffer, lamp_sheet, &map.lamp ( i ), map,
+                                             camera_x, camera_y, lamp_frame );
           }
      } else {
           for ( Uint8 i = 0; i < map.lamp_count ( ); ++i ) {
-               render_fixture ( back_buffer, lamp_sheet, &map.lamp ( i ), map, camera_x, camera_y );
+               render_lamp ( back_buffer, lamp_sheet, &map.lamp ( i ), map, camera_x, camera_y,
+                             lamp_frame );
           }
      }
 }
@@ -175,7 +224,8 @@ Void MapDisplay::render ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, R
      }
 
      render_map_decor ( back_buffer, decorsheet, map, camera_x, camera_y, invisibles );
-     render_map_lamps ( back_buffer, lampsheet, map, camera_x, camera_y, invisibles );
+     render_map_lamps ( back_buffer, lampsheet, map, camera_x, camera_y, invisibles,
+                        lamp_animation.frame );
 }
 
 static Void blend_light ( SDL_Surface* back_buffer, Int32 pixel_x, Int32 pixel_y, Real32 light )

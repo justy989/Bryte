@@ -7,7 +7,11 @@
 
 Bool Text::load_surfaces ( GameMemory& game_memory )
 {
-     if ( !load_bitmap_with_game_memory ( fontsheet, game_memory, "text.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( font_sheet, game_memory, "text.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( shadow_sheet, game_memory, "text_shadow.bmp" ) ) {
           return false;
      }
 
@@ -20,10 +24,24 @@ Bool Text::load_surfaces ( GameMemory& game_memory )
 
 Void Text::unload ( )
 {
-     FREE_SURFACE ( fontsheet );
+     FREE_SURFACE ( font_sheet );
+     FREE_SURFACE ( shadow_sheet );
 }
 
 Void Text::render ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y )
+{
+     render_impl ( back_buffer, font_sheet, message, position_x, position_y );
+}
+
+Void Text::render_with_shadow ( SDL_Surface* back_buffer, const Char8* message,
+                                Int32 position_x, Int32 position_y )
+{
+     render_impl ( back_buffer, shadow_sheet, message, position_x + 1, position_y + 1 );
+     render_impl ( back_buffer, font_sheet, message, position_x, position_y );
+}
+
+Void Text::render_impl ( SDL_Surface* back_buffer, SDL_Surface* font_surface,
+                         const Char8* message, Int32 position_x, Int32 position_y )
 {
      Char8 c;
      SDL_Rect dest { position_x, position_y, character_width, character_height };
@@ -45,7 +63,7 @@ Void Text::render ( SDL_Surface* back_buffer, const Char8* message, Int32 positi
                continue;
           }
 
-          SDL_BlitSurface ( fontsheet, &clip, back_buffer, &dest );
+          SDL_BlitSurface ( font_surface, &clip, back_buffer, &dest );
 
           message++;
           dest.x += ( character_width + character_spacing );

@@ -14,6 +14,12 @@ public:
      Void unload ( );
 
      Void render ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y );
+     Void render_with_shadow ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y );
+
+private:
+
+     Void render_impl ( SDL_Surface* back_buffer, SDL_Surface* font_surface,
+                        const Char8* message, Int32 position_x, Int32 position_y );
 
 public:
 
@@ -22,7 +28,8 @@ public:
 
      Int32 character_spacing;
 
-     SDL_Surface* fontsheet;
+     SDL_Surface* font_sheet;
+     SDL_Surface* shadow_sheet;
 
 };
 

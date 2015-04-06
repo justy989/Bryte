@@ -834,12 +834,12 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
      }
 
      if ( !load_bitmap_with_game_memory ( state->mode_icons_surface, game_memory,
-                                          "editor_mode_icons.bmp" ) ) {
+                                          "content/images/editor_mode_icons.bmp" ) ) {
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( state->upgrade_surface, game_memory,
-                                          "player_upgrade.bmp" ) ) {
+                                          "content/images/player_upgrade.bmp" ) ) {
           return false;
      }
 
@@ -854,7 +854,7 @@ extern "C" Bool game_init ( GameMemory& game_memory, Void* settings )
           return false;
      }
 
-     if ( !state->interactives_display.load_surfaces ( game_memory, "castle_exitsheet.bmp" ) ) {
+     if ( !state->interactives_display.load_surfaces ( game_memory, "content/images/castle_exitsheet.bmp" ) ) {
           return false;
      }
 

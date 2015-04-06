@@ -7,11 +7,11 @@
 
 Bool Text::load_surfaces ( GameMemory& game_memory )
 {
-     if ( !load_bitmap_with_game_memory ( font_sheet, game_memory, "text.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( font_sheet, game_memory, "content/images/text.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( shadow_sheet, game_memory, "text_shadow.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( shadow_sheet, game_memory, "content/images/text_shadow.bmp" ) ) {
           return false;
      }
 

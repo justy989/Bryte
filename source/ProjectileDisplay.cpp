@@ -7,11 +7,11 @@ using namespace bryte;
 
 Bool ProjectileDisplay::load_surfaces ( GameMemory& game_memory )
 {
-     if ( !load_bitmap_with_game_memory ( arrow_sheet, game_memory, "test_arrow.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( arrow_sheet, game_memory, "content/images/test_arrow.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( goo_sheet, game_memory, "test_goo_proj.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( goo_sheet, game_memory, "content/images/test_goo_proj.bmp" ) ) {
           return false;
      }
 

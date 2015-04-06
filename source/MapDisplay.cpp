@@ -267,7 +267,7 @@ extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera
 
                pixel_dest.x += meters_to_pixels ( camera_x );
                pixel_dest.y += meters_to_pixels ( camera_y );
-               pixel_dest.y = ( back_buffer->h - pixel.y );
+               pixel_dest.y = ( back_buffer->h - pixel_dest.y );
 
                Int32 pixel_light = map.get_pixel_light ( pixel );
                Real32 normalized_pixel_light = static_cast<Real32>( pixel_light ) / 255.0f;

@@ -7,7 +7,7 @@
 
 using namespace bryte;
 
-const Char8* Region::c_region_list_filepath = "region_list.txt";
+const Char8* Region::c_region_list_filepath = "content/region_list.txt";
 
 Bool Region::load_info ( Int32 index )
 {

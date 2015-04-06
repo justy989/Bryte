@@ -1,1 +1,0 @@
-overworld_start.brm

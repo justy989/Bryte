@@ -44,9 +44,9 @@ Int32 main ( Int32 argc, Char8** argv )
      editor_settings.map_width  = 8;
      editor_settings.map_height = 8;
 
-     editor_settings.map_tilesheet_filename  = "castle_tilesheet.bmp";
-     editor_settings.map_decorsheet_filename = "castle_decorsheet.bmp";
-     editor_settings.map_lampsheet_filename  = "castle_lampsheet.bmp";
+     editor_settings.map_tilesheet_filename  = "content/images/castle_tilesheet.bmp";
+     editor_settings.map_decorsheet_filename = "content/images/castle_decorsheet.bmp";
+     editor_settings.map_lampsheet_filename  = "content/images/castle_lampsheet.bmp";
      editor_settings.map_rat_filename        = "test_rat.bmp";
      editor_settings.map_save_filename       = "map.brm";
      editor_settings.map_load_filename       = nullptr;

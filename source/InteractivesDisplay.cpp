@@ -7,47 +7,55 @@ using namespace bryte;
 
 Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* exitsheet_filepath )
 {
-     if ( !load_bitmap_with_game_memory ( lever_sheet, game_memory, "test_lever.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( lever_sheet, game_memory, "content/images/test_lever.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( pushable_block_sheet, game_memory, "test_pushable_block.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( pushable_block_sheet, game_memory,
+                                          "content/images/test_pushable_block.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( torch_sheet, game_memory, "test_torch.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( torch_sheet, game_memory, "content/images/test_torch.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( pushable_torch_sheet, game_memory, "test_pushable_torch.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( pushable_torch_sheet, game_memory,
+                                          "content/images/test_pushable_torch.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( bombable_block_sheet, game_memory, "test_bombable_block.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( bombable_block_sheet, game_memory,
+                                          "content/images/test_bombable_block.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( turret_sheet, game_memory, "test_turret.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( turret_sheet, game_memory, "content/images/test_turret.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( pressure_plate_sheet, game_memory, "test_pressure_plate.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( pressure_plate_sheet, game_memory,
+                                          "content/images/test_pressure_plate.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( moving_walkway_sheet, game_memory, "test_moving_walkway.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( moving_walkway_sheet, game_memory,
+                                          "content/images/test_moving_walkway.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( popup_block_sheet, game_memory, "test_popup_block.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( popup_block_sheet, game_memory,
+                                          "content/images/test_popup_block.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( ice_sheet, game_memory, "test_ice.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( ice_sheet, game_memory,
+                                          "content/images/test_ice.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( light_detector_sheet, game_memory, "test_light_detector.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( light_detector_sheet, game_memory,
+                                          "content/images/test_light_detector.bmp" ) ) {
           return false;
      }
 
@@ -55,19 +63,22 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* 
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( hole_sheet, game_memory, "test_hole.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( hole_sheet, game_memory,
+                                          "content/images/test_hole.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( torch_element_sheet, game_memory, "torch_fire.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( torch_element_sheet, game_memory,
+                                          "content/images/torch_fire.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( ice_detector_sheet, game_memory, "test_ice_detector.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( ice_detector_sheet, game_memory,
+                                          "content/images/test_ice_detector.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( portal_sheet, game_memory, "test_portal.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( portal_sheet, game_memory, "content/images/test_portal.bmp" ) ) {
           return false;
      }
 

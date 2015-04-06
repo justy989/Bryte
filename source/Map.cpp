@@ -401,7 +401,7 @@ Bool Map::load_from_master_list ( Uint8 map_index, Interactives& interactives )
 
      char filepath [ c_max_map_name_size ];
 
-     sprintf ( filepath, "map/%s", m_master_list [ map_index ] );
+     sprintf ( filepath, "content/maps/%s", m_master_list [ map_index ] );
 
      Bool success = load ( filepath, interactives );
 
@@ -493,7 +493,7 @@ Bool Map::load ( const Char8* filepath, Interactives& interactives )
      std::ifstream file ( filepath, std::ios::binary );
 
      if ( !file.is_open ( ) ) {
-          LOG_ERROR ( "Unable to save room: %s\n", filepath );
+          LOG_ERROR ( "Unable to load room: %s\n", filepath );
           return false;
      }
 

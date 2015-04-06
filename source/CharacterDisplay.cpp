@@ -9,49 +9,56 @@ using namespace bryte;
 Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
 {
      if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::rat ], game_memory,
-                                          "test_rat.bmp" ) ) {
+                                          "content/images/test_rat.bmp" ) ) {
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::bat ], game_memory,
-                                          "test_bat.bmp" ) ) {
+                                          "content/images/test_bat.bmp" ) ) {
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::goo ], game_memory,
-                                          "test_goo.bmp" ) ) {
+                                          "content/images/test_goo.bmp" ) ) {
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::skeleton ], game_memory,
-                                          "test_skeleton.bmp" ) ) {
+                                          "content/images/test_skeleton.bmp" ) ) {
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::fairy ], game_memory,
-                                          "test_fairy.bmp" ) ) {
+                                          "content/images/test_fairy.bmp" ) ) {
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::knight ], game_memory,
-                                          "test_knight.bmp" ) ) {
+                                          "content/images/test_knight.bmp" ) ) {
           return false;
      }
 
      if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::spike ], game_memory,
-                                          "test_spike.bmp" ) ) {
+                                          "content/images/test_spike.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( player_sheet, game_memory, "test_hero.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( player_sheet, game_memory, "content/images/test_hero.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( vertical_sword_sheet, game_memory, "test_vertical_sword.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( vertical_sword_sheet, game_memory,
+                                          "content/images/test_vertical_sword.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( fire_surface, game_memory, "test_effect_fire.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( fire_surface, game_memory,
+                                          "content/images/test_effect_fire.bmp" ) ) {
+          return false;
+     }
+
+     if ( !load_bitmap_with_game_memory ( horizontal_sword_sheet, game_memory,
+                                          "content/images/test_horizontal_sword.bmp" ) ) {
           return false;
      }
 
@@ -67,11 +74,6 @@ Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
                             SDL_MapRGB ( effect_surface->format, 255, 0, 255 ) ) ) {
           LOG_ERROR ( "Failed to set color key for character display blink surface SDL_SetColorKey() failed: %s\n",
                       SDL_GetError ( ) );
-          return false;
-     }
-
-     if ( !load_bitmap_with_game_memory ( horizontal_sword_sheet, game_memory,
-                                          "test_horizontal_sword.bmp" ) ) {
           return false;
      }
 

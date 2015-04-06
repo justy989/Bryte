@@ -220,7 +220,7 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      pickup_stopwatch.reset ( c_pickup_show_time );
 
      // load title sheet
-     if ( !load_bitmap_with_game_memory ( title_surface, game_memory, "title_screen.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( title_surface, game_memory, "content/images/title_screen.bmp" ) ) {
           return false;
      }
 
@@ -247,19 +247,23 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      }
 
      // load misc surfaces
-     if ( !load_bitmap_with_game_memory ( bomb_sheet, game_memory, "test_bomb.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( bomb_sheet, game_memory,
+                                          "content/images/test_bomb.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory, "test_attack_icon.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory,
+                                          "content/images/test_attack_icon.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( player_heart_sheet, game_memory, "player_heart.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( player_heart_sheet, game_memory,
+                                          "content/images/player_heart.bmp" ) ) {
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( upgrade_sheet, game_memory, "player_upgrade.bmp" ) ) {
+     if ( !load_bitmap_with_game_memory ( upgrade_sheet, game_memory,
+                                          "content/images/player_upgrade.bmp" ) ) {
           return false;
      }
 

@@ -17,9 +17,32 @@ Void Map::Fixture::set ( Uint8 x, Uint8 y, Uint8 id )
 const Real32 Map::c_tile_dimension_in_meters = static_cast<Real32>( c_tile_dimension_in_pixels /
                                                                     pixels_per_meter );
 
+static Int32 find_char_in_string ( const char* str, char c, Int32 instance = 1 )
+{
+     Int32 index = 0;
+
+     while ( *str ) {
+          if ( *str == c ) {
+               instance--;
+
+               if ( instance == 0) {
+                    return index;
+               }
+          }
+
+          str++;
+          index++;
+     }
+
+     return -1;
+}
+
 Bool Map::load_master_list ( const Char8* filepath )
 {
      std::ifstream file ( filepath );
+     char file_line [ c_max_map_name_size + c_max_dialogue_size ];
+
+     LOG_INFO ( "Loading Master List: '%s'\n", filepath );
 
      if ( !file.is_open ( ) ) {
           LOG_ERROR ( "Failed to load master map list '%s'\n", filepath );
@@ -28,10 +51,46 @@ Bool Map::load_master_list ( const Char8* filepath )
 
      m_master_count = 0;
 
+     // format:
+     // puzzle_map.brm "I HOPE THIS IS NOT TOO EASY"
      while ( !file.eof ( ) ) {
           ASSERT ( m_master_count < c_max_maps );
 
-          file.getline ( m_master_list [ m_master_count ], c_max_map_name_size );
+          file.getline ( file_line, c_max_map_name_size + c_max_dialogue_size );
+
+          Int32 map_name_len = find_char_in_string ( file_line, ' ' );
+          Int32 first_quote = find_char_in_string ( file_line, '"' );
+          Int32 last_quote = find_char_in_string ( file_line, '"', 2 );
+
+          // handle known error possibilities
+          if ( map_name_len < 0 ) {
+               if ( first_quote >= 0 ) {
+                    LOG_ERROR ( "Incorrect map format in %s on line %d\n",
+                                filepath, m_master_count );
+                    return false;
+               }
+
+               map_name_len = strlen ( file_line );
+          }
+
+          // set master list map name
+          strncpy ( m_master_list [ m_master_count ], file_line, map_name_len );
+
+          LOG_DEBUG ( "Map: %d is '%s'\n", m_master_count, m_master_list [ m_master_count ] );
+
+          // set dialogue if it is available
+          if ( first_quote >= 0 ) {
+               if ( last_quote < 0 ) {
+                    LOG_ERROR ( "Missing matching quote in %s on line %d\n",
+                                filepath, m_master_count );
+                    return false;
+               }
+
+               strncpy ( m_map_dialogue [ m_master_count ],
+                         file_line + first_quote + 1,
+                         ( last_quote - first_quote ) - 1);
+               LOG_DEBUG ( "  Dialogue is: '%s'\n", m_map_dialogue [ m_master_count ] );
+          }
 
           m_master_count++;
      }

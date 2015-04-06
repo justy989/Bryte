@@ -1357,7 +1357,11 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                                         Map::c_tile_dimension_in_meters * 0.5f );
 
                if ( region_index != region.current_index ) {
-                    change_region ( game_memory, region_index );
+                    if ( !change_region ( game_memory, region_index ) ) {
+                         quit_game ( );
+                         return;
+                    }
+
                     change_map ( map_index, false );
                } else {
                     change_map ( map_index );
@@ -2033,7 +2037,10 @@ Void State::change_map ( Int32 map_index, Bool persist )
           persist_map ( );
      }
 
-     map.load_from_master_list ( map_index, interactives );
+     if ( !map.load_from_master_list ( map_index, interactives ) ) {
+          quit_game ( );
+          return;
+     }
 
      pickups.clear ( );
      projectiles.clear ( );
@@ -2098,7 +2105,10 @@ Bool State::change_region ( GameMemory& game_memory, Int32 region_index )
      }
 
      // load the new master list and it's corresponding persistence if it exists
-     map.load_master_list ( region.map_list_filepath );
+     if ( !map.load_master_list ( region.map_list_filepath ) ) {
+          return false;
+     }
+
      map.load_persistence ( region.name, player.save_slot );
 
      // unload and re-load surfaces

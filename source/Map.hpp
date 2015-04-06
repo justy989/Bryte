@@ -22,6 +22,7 @@ namespace bryte
 
           static const Uint32 c_max_map_name_size = 64;
           static const Uint32 c_max_maps = 64;
+          static const Uint32 c_max_dialogue_size = 64;
 
           static const Uint32 c_max_exits = 128;
 
@@ -212,6 +213,7 @@ namespace bryte
      private:
 
           Char8          m_master_list [ c_max_maps ][ c_max_map_name_size ];
+          Char8          m_map_dialogue [ c_max_maps ][ c_max_dialogue_size ];
           Uint8          m_master_count;
 
           Int32          m_current_map;

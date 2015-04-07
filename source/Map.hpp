@@ -33,13 +33,13 @@ namespace bryte
 
           static const Uint32 c_max_tiles = 1024;
 
-          static const Uint32 c_max_light = c_max_tiles * c_tile_dimension_in_pixels * c_tile_dimension_in_pixels;
+          static const Uint8  c_light_decay = 48;
 
           static const Uint32 c_max_decors = 64;
 
           static const Uint32 c_max_lamps = 32;
           static const Uint8  c_unique_lamp_count = 5;
-          static const Uint8  c_lamp_light = 255;
+          static const Uint8  c_lamp_light = 224;
 
           static const Uint32 c_max_enemy_spawns = 32;
 
@@ -121,7 +121,6 @@ namespace bryte
           Bool  get_tile_location_solid ( const Location& loc ) const;
           Bool  get_tile_location_invisible ( const Location& loc ) const;
           Uint8 get_tile_location_light ( const Location& loc ) const;
-          Uint8 get_pixel_light ( const Location& loc ) const;
 
           Void  set_tile_location_value ( const Location& loc, Uint8 value );
           Void  set_tile_location_solid ( const Location& loc, Bool solid );
@@ -224,10 +223,7 @@ namespace bryte
           Uint8          m_height;
 
           Uint8          m_base_light_value;
-          Uint8          m_light [ c_max_light ];
-          Int32          m_light_width;
-          Int32          m_light_height;
-          Int32          m_light_pixels;
+          Uint8          m_light [ c_max_tiles ];
 
           Fixture        m_decors [ c_max_decors ];
           Uint8          m_decor_count;
@@ -265,16 +261,6 @@ namespace bryte
      inline Int32 Map::height ( ) const
      {
           return m_height;
-     }
-
-     inline Int32 Map::light_width ( ) const
-     {
-          return m_light_width;
-     }
-
-     inline Int32 Map::light_height ( ) const
-     {
-          return m_light_height;
      }
 
      inline Uint8 Map::lamp_count ( ) const

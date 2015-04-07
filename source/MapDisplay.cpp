@@ -228,29 +228,44 @@ Void MapDisplay::render ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, R
                         lamp_animation.frame );
 }
 
-static Void blend_light ( SDL_Surface* back_buffer, Int32 pixel_x, Int32 pixel_y, Real32 light )
+static Void blend_tile_light ( SDL_Surface* back_buffer, const Location& tile_bottom_left_pixel, Real32 light )
 {
-     if ( pixel_x > back_buffer->w || pixel_y > back_buffer->h ) {
-          return;
+     Int32 max_x = tile_bottom_left_pixel.x + Map::c_tile_dimension_in_pixels;
+     Int32 max_y = tile_bottom_left_pixel.y + Map::c_tile_dimension_in_pixels;
+
+     Uint32* p_pixel = reinterpret_cast<Uint32*>( back_buffer->pixels );
+     p_pixel += tile_bottom_left_pixel.x + ( tile_bottom_left_pixel.y * back_buffer->w );
+
+     for ( Location pixel = tile_bottom_left_pixel; pixel.y < max_y; ++pixel.y ) {
+          for ( pixel.x = tile_bottom_left_pixel.x; pixel.x < max_x; ++pixel.x ) {
+               if ( pixel.x < 0 || pixel.x > back_buffer->w ||
+                    pixel.y < 0 || pixel.y > back_buffer->h ) {
+                    ++p_pixel;
+                    continue;
+               }
+
+               // get the current pixel location
+               // read pixels
+               Uint8 red   = *( reinterpret_cast<Uint8*>( p_pixel ) );
+               Uint8 green = *( reinterpret_cast<Uint8*>( p_pixel ) + 1 );
+               Uint8 blue  = *( reinterpret_cast<Uint8*>( p_pixel ) + 2 );
+
+               // blend
+               Real32 blended_red   = static_cast<Real32>( red ) * light;
+               Real32 blended_green = static_cast<Real32>( green ) * light;
+               Real32 blended_blue  = static_cast<Real32>( blue ) * light;
+
+               // write pixel
+               *( reinterpret_cast<Uint8*>( p_pixel ) )     = static_cast<Uint8>( blended_red );
+               *( reinterpret_cast<Uint8*>( p_pixel ) + 1 ) = static_cast<Uint8>( blended_green );
+               *( reinterpret_cast<Uint8*>( p_pixel ) + 2 ) = static_cast<Uint8>( blended_blue );
+
+               ++p_pixel;
+          }
+
+          p_pixel += back_buffer->w;
+          p_pixel -= Map::c_tile_dimension_in_pixels;
      }
-
-     // get the current pixel location
-     Uint32* p_pixel = reinterpret_cast<Uint32*>( back_buffer->pixels ) + pixel_x + ( pixel_y * back_buffer->w );
-
-     // read pixels
-     Uint8 red   = *( reinterpret_cast<Uint8*>( p_pixel ) );
-     Uint8 green = *( reinterpret_cast<Uint8*>( p_pixel ) + 1 );
-     Uint8 blue  = *( reinterpret_cast<Uint8*>( p_pixel ) + 2 );
-
-     // blend
-     Real32 blended_red   = static_cast<Real32>( red ) * light;
-     Real32 blended_green = static_cast<Real32>( green ) * light;
-     Real32 blended_blue  = static_cast<Real32>( blue ) * light;
-
-     // write pixels
-     *( reinterpret_cast<Uint8*>( p_pixel ) )     = static_cast<Uint8>( blended_red );
-     *( reinterpret_cast<Uint8*>( p_pixel ) + 1 ) = static_cast<Uint8>( blended_green );
-     *( reinterpret_cast<Uint8*>( p_pixel ) + 2 ) = static_cast<Uint8>( blended_blue );
 }
 
 extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera_x, Real32 camera_y )
@@ -260,19 +275,28 @@ extern "C" Void render_light ( SDL_Surface* back_buffer, Map& map, Real32 camera
           return;
      }
 
-     // TODO: optimize to only draw to the part of the back buffer we can see
-     for ( Location pixel; pixel.y < static_cast<Int32>( map.light_height ( ) ); ++pixel.y ) {
-          for ( pixel.x = 0; pixel.x < static_cast<Int32>( map.light_width ( ) ); ++pixel.x ) {
-               Location pixel_dest = pixel;
+     for ( Location tile; tile.y < static_cast<Int32>( map.height ( ) ); ++tile.y ) {
+          for ( tile.x = 0; tile.x < static_cast<Int32>( map.width ( ) ); ++tile.x ) {
+               Location tile_dest = tile;
 
-               pixel_dest.x += meters_to_pixels ( camera_x );
-               pixel_dest.y += meters_to_pixels ( camera_y );
-               pixel_dest.y = ( back_buffer->h - pixel_dest.y );
+               Map::convert_tiles_to_pixels ( &tile_dest );
 
-               Int32 pixel_light = map.get_pixel_light ( pixel );
+               tile_dest.x += meters_to_pixels ( camera_x );
+               tile_dest.y += meters_to_pixels ( camera_y );
+               tile_dest.y = ( back_buffer->h - tile_dest.y ) - Map::c_tile_dimension_in_pixels;
+
+               // ignore off-screen light
+               if ( tile_dest.x < -Map::c_tile_dimension_in_pixels ||
+                    tile_dest.x > back_buffer->w ||
+                    tile_dest.y < -Map::c_tile_dimension_in_pixels ||
+                    tile_dest.y > back_buffer->h ) {
+                    continue;
+               }
+
+               Uint8 pixel_light = map.get_tile_location_light ( tile );
                Real32 normalized_pixel_light = static_cast<Real32>( pixel_light ) / 255.0f;
 
-               blend_light ( back_buffer, pixel_dest.x, pixel_dest.y, normalized_pixel_light );
+               blend_tile_light ( back_buffer, tile_dest, normalized_pixel_light );
           }
      }
 

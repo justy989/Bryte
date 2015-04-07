@@ -95,18 +95,12 @@ Void Interactives::contribute_light ( Map& map )
                     break;
                case Interactive::Type::torch:
                     if ( interactive.interactive_torch.element == Element::fire ) {
-                         Location center ( tile );
-                         Map::convert_tiles_to_pixels ( &center );
-                         Map::move_half_tile_in_pixels ( &center );
-                         map.illuminate ( center, interactive.interactive_torch.value );
+                         map.illuminate ( tile, interactive.interactive_torch.value );
                     }
                     break;
                case Interactive::Type::pushable_torch:
                     if ( interactive.interactive_pushable_torch.torch.element == Element::fire ) {
-                         Location center ( tile );
-                         Map::convert_tiles_to_pixels ( &center );
-                         Map::move_half_tile_in_pixels ( &center );
-                         map.illuminate ( center, interactive.interactive_pushable_torch.torch.value );
+                         map.illuminate ( tile, interactive.interactive_pushable_torch.torch.value );
                     }
                     break;
                }

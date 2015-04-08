@@ -61,6 +61,7 @@ namespace editor
           portal,
           border,
           upgrade,
+          destructable,
           count
      };
 

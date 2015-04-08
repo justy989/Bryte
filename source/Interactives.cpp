@@ -212,6 +212,13 @@ Void Interactives::light ( const Location& tile, Uint8 light )
      i.light ( light, *this );
 }
 
+Void Interactives::attack ( const Location& tile )
+{
+     Interactive& i = get_from_tile ( tile );
+
+     i.attack ( *this );
+}
+
 Void Interactives::character_enter ( const Location& tile, Character& character )
 {
      Interactive& i = get_from_tile ( tile );
@@ -312,6 +319,11 @@ Bool Interactives::is_walkable ( const Location& tile, Direction dir ) const
                return false;
           }
           break;
+     case UnderneathInteractive::Type::destructable:
+          if ( !interactive.underneath.underneath_destructable.destroyed ) {
+               return false;
+          }
+          break;
      }
 
      switch ( interactive.type ) {
@@ -345,7 +357,6 @@ Bool Interactives::is_flyable ( const Location& tile ) const
      switch ( interactive.type ) {
      default:
           break;
-     case Interactive::Type::lever:
      case Interactive::Type::exit:
           return false;
      }
@@ -459,6 +470,17 @@ Void Interactive::light ( Uint8 light, Interactives& interactives )
      if ( type == Interactive::Type::none &&
           underneath.type == UnderneathInteractive::Type::light_detector ) {
           underneath.underneath_light_detector.light ( light, interactives );
+     }
+}
+
+Void Interactive::attack ( Interactives& interactives )
+{
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::destructable:
+          underneath.underneath_destructable.destroyed = true;
+          break;
      }
 }
 

@@ -82,6 +82,11 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* 
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( destructable_sheet, game_memory,
+                                          "content/images/test_destructable.bmp" ) ) {
+          return false;
+     }
+
      return true;
 }
 
@@ -103,6 +108,7 @@ Void InteractivesDisplay::unload_surfaces ( )
      FREE_SURFACE ( hole_sheet );
      FREE_SURFACE ( torch_element_sheet );
      FREE_SURFACE ( portal_sheet );
+     FREE_SURFACE ( destructable_sheet );
 }
 
 Void InteractivesDisplay::clear ( )
@@ -245,6 +251,10 @@ Void InteractivesDisplay::render_underneath ( SDL_Surface* back_buffer, Undernea
      case UnderneathInteractive::Type::hole:
           underneath_sheet = hole_sheet;
           clip_rect.x = underneath.underneath_hole.filled * Map::c_tile_dimension_in_pixels;
+          break;
+     case UnderneathInteractive::Type::destructable:
+          underneath_sheet = destructable_sheet;
+          clip_rect.x = underneath.underneath_destructable.destroyed * Map::c_tile_dimension_in_pixels;
           break;
      }
 

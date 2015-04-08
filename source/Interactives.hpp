@@ -187,6 +187,10 @@ namespace bryte
           Bool filled;
      };
 
+     struct Destructable {
+          Bool destroyed;
+     };
+
      struct UnderneathInteractive {
           enum Type {
                none,
@@ -197,6 +201,7 @@ namespace bryte
                light_detector,
                ice_detector,
                hole,
+               destructable,
                count
           };
 
@@ -212,6 +217,7 @@ namespace bryte
                LightDetector underneath_light_detector;
                IceDetector   underneath_ice_detector;
                Hole          underneath_hole;
+               Destructable  underneath_destructable;
           };
      };
 
@@ -237,6 +243,7 @@ namespace bryte
           Void      explode  ( Interactives& interactives );
           Direction push     ( Direction direction, Interactives& interactives );
           Void      light    ( Uint8 light, Interactives& interactives );
+          Void      attack   ( Interactives& interactives );
           Void      character_enter   ( Direction from, Interactives& interactives, Character& character );
           Void      character_leave   ( Direction to, Interactives& interactives, Character& character );
           Void      interactive_enter ( Direction from, Interactives& interactives );
@@ -271,6 +278,7 @@ namespace bryte
           Bool activate ( const Location& tile );
           Void explode ( const Location& tile );
           Void light ( const Location& tile, Uint8 light );
+          Void attack ( const Location& tile );
           Void character_enter ( const Location& tile, Character& character );
           Void character_leave ( const Location& tile, Character& character );
           Void projectile_enter ( const Location& tile, Projectile& projectile );

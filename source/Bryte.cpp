@@ -385,10 +385,11 @@ Void State::update_game ( GameMemory& game_memory, Real32 time_delta )
           update_pickups ( time_delta );
           update_emitters ( time_delta );
           update_damage_numbers ( time_delta );
-          update_light ( );
      } else {
           dialogue.tick ( map.dialogue ( ) );
      }
+
+     update_light ( );
 }
 
 Void State::update_pause ( GameMemory& game_memory, Real32 time_delta )
@@ -1335,6 +1336,10 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
           if ( player.attack ( ) ) {
                sound.play_effect ( Sound::Effect::player_sword_attack );
           }
+
+          Location adjacent_tile = character_adjacent_tile ( player );
+
+          interactives.attack ( adjacent_tile );
      }
 
      player.update ( time_delta, map, interactives );
@@ -1445,25 +1450,27 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                if ( map.tile_location_is_valid ( activate_tile ) ) {
                     Auto& interactive = interactives.get_from_tile ( activate_tile );
 
-                    if ( interactive.type == Interactive::Type::exit ) {
-                         if ( interactive.interactive_exit.state == Exit::State::locked &&
-                              player.key_count > 0 ) {
-                              LOG_DEBUG ( "Unlock Door: %d, %d\n", activate_tile.x, activate_tile.y );
-                              interactives.activate ( activate_tile );
-                              player.key_count--;
-                              sound.play_effect ( Sound::Effect::activate_interactive );
-                         }
-                    } else if ( interactive.type == Interactive::Type::torch ||
-                                interactive.type == Interactive::Type::pushable_torch ||
-                                interactive.underneath.type == UnderneathInteractive::Type::popup_block ) {
-                         // pass
-                    } else {
-                         LOG_DEBUG ( "Activate: %d, %d\n", activate_tile.x, activate_tile.y );
+                    if ( interactive.underneath.type != UnderneathInteractive::Type::popup_block ) {
+                         switch ( interactive.type ) {
+                         default:
+                              LOG_DEBUG ( "Activate: %d, %d\n", activate_tile.x, activate_tile.y );
 
-                         Bool success = interactives.activate ( activate_tile );
-
-                         if ( success ) {
-                              sound.play_effect ( Sound::Effect::activate_interactive );
+                              if ( interactives.activate ( activate_tile ) ) {
+                                   sound.play_effect ( Sound::Effect::activate_interactive );
+                              }
+                              break;
+                         case Interactive::Type::exit:
+                              if ( interactive.interactive_exit.state == Exit::State::locked &&
+                                   player.key_count > 0 ) {
+                                   LOG_DEBUG ( "Unlock Door: %d, %d\n", activate_tile.x, activate_tile.y );
+                                   interactives.activate ( activate_tile );
+                                   player.key_count--;
+                                   sound.play_effect ( Sound::Effect::activate_interactive );
+                              }
+                              break;
+                         case Interactive::Type::torch:
+                         case Interactive::Type::pushable_torch:
+                              break;
                          }
                     }
 

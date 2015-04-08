@@ -260,6 +260,16 @@ Void State::mouse_button_left_clicked ( )
           map.upgrade ( ).set ( static_cast<Uint8> ( mouse_tile.x ), static_cast<Uint8> ( mouse_tile.y ),
                                 current_upgrade );
           break;
+     case Mode::destructable:
+     {
+          Interactive& interactive = interactives.get_from_tile ( mouse_tile );
+
+          if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
+               interactive.underneath.type = UnderneathInteractive::Type::destructable;
+          } else {
+               interactive.underneath.type = UnderneathInteractive::Type::none;
+          }
+     } break;
      }
 }
 

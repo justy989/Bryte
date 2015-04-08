@@ -187,6 +187,8 @@ namespace bryte
           inline Void set_secret_location ( Coordinates loc );
           inline Void set_secret_clear_tile ( Coordinates loc );
 
+          inline const Char8* dialogue ( );
+
      public:
 
           static Location vector_to_location ( const Vector& v );
@@ -391,6 +393,11 @@ namespace bryte
      inline Void Map::set_secret_clear_tile ( Coordinates coords )
      {
           m_secret.clear_tile = coords;
+     }
+
+     inline const Char8* Map::dialogue ( )
+     {
+          return m_map_dialogue [ m_current_map ];
      }
 }
 

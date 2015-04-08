@@ -56,6 +56,11 @@ Bool Map::load_master_list ( const Char8* filepath )
      while ( !file.eof ( ) ) {
           ASSERT ( m_master_count < c_max_maps );
 
+          // clear master map and dialogue before we load it
+          m_master_list [ m_master_count ][ 0 ] = '\0';
+          m_map_dialogue [ m_master_count ][ 0 ] = '\0';
+
+          // get the next line
           file.getline ( file_line, c_max_map_name_size + c_max_dialogue_size );
 
           Int32 map_name_len = find_char_in_string ( file_line, ' ' );

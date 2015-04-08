@@ -13,13 +13,16 @@ public:
      Bool load_surfaces ( GameMemory& game_memory );
      Void unload ( );
 
-     Void render ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y );
-     Void render_with_shadow ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y );
+     Void render ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y,
+                   Int32 character_count = -1 );
+     Void render_with_shadow ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y,
+                               Int32 character_count = -1 );
 
 private:
 
      Void render_impl ( SDL_Surface* back_buffer, SDL_Surface* font_surface,
-                        const Char8* message, Int32 position_x, Int32 position_y );
+                        const Char8* message, Int32 position_x, Int32 position_y,
+                        Int32 character_count = -1 );
 
 public:
 

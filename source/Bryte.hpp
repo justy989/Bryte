@@ -17,6 +17,7 @@
 #include "Projectile.hpp"
 #include "Bomb.hpp"
 #include "DamageNumber.hpp"
+#include "Dialogue.hpp"
 
 #include "EntityManager.hpp"
 
@@ -194,6 +195,8 @@ namespace bryte
           Map          map;
           Interactives interactives;
           Upgrade      upgrade;
+
+          Dialogue dialogue;
 
           Vector       camera;
 

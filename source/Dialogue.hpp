@@ -10,15 +10,19 @@ public:
           none,
           printing,
           done,
-          gone
      };
 
+public:
 
      inline Void reset ( );
 
-     inline Void tick ( );
+     inline Void begin ( );
+     inline Void force_done ( const char* dialogue );
 
-     inline State get_state ( const char* dialogue );
+     inline Void tick ( const char* dialogue );
+
+     inline State get_state ( );
+     inline Int32 get_visible_characters ( );
 
 public:
 
@@ -39,21 +43,44 @@ inline Void Dialogue::reset ( )
      frame_count = 0;
 }
 
-inline Void Dialogue::tick ( )
+inline Void Dialogue::begin ( )
+{
+     ASSERT ( state == State::none );
+
+     state = State::printing;
+}
+
+inline Void Dialogue::force_done ( const char* dialogue )
+{
+     visible_characters = strlen ( dialogue );
+
+     state = State::done;
+}
+
+inline Void Dialogue::tick ( const char* dialogue )
 {
      if ( state == State::printing ) {
           frame_count++;
 
           if ( frame_count > c_character_delay ) {
                frame_count = 0;
-               visible_characters += 0;
+               visible_characters++;
+
+               if ( visible_characters == static_cast<Int32>( strlen ( dialogue ) ) ) {
+                    state = State::done;
+               }
           }
      }
 }
 
-inline State Dialogue::get_state ( )
+inline Dialogue::State Dialogue::get_state ( )
 {
      return state;
+}
+
+inline Int32 Dialogue::get_visible_characters ( )
+{
+     return visible_characters;
 }
 
 #endif

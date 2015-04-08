@@ -28,26 +28,32 @@ Void Text::unload ( )
      FREE_SURFACE ( shadow_sheet );
 }
 
-Void Text::render ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y )
+Void Text::render ( SDL_Surface* back_buffer, const Char8* message, Int32 position_x, Int32 position_y,
+                    Int32 character_count )
 {
-     render_impl ( back_buffer, font_sheet, message, position_x, position_y );
+     render_impl ( back_buffer, font_sheet, message, position_x, position_y,
+                   character_count );
 }
 
 Void Text::render_with_shadow ( SDL_Surface* back_buffer, const Char8* message,
-                                Int32 position_x, Int32 position_y )
+                                Int32 position_x, Int32 position_y,
+                                Int32 character_count )
 {
-     render_impl ( back_buffer, shadow_sheet, message, position_x + 1, position_y + 1 );
-     render_impl ( back_buffer, font_sheet, message, position_x, position_y );
+     render_impl ( back_buffer, shadow_sheet, message, position_x + 1, position_y + 1,
+                   character_count );
+     render_impl ( back_buffer, font_sheet, message, position_x, position_y,
+                   character_count );
 }
 
 Void Text::render_impl ( SDL_Surface* back_buffer, SDL_Surface* font_surface,
-                         const Char8* message, Int32 position_x, Int32 position_y )
+                         const Char8* message, Int32 position_x, Int32 position_y,
+                         Int32 character_count )
 {
      Char8 c;
      SDL_Rect dest { position_x, position_y, character_width, character_height };
      SDL_Rect clip { 0, 0, character_width, character_height };
 
-     while ( ( c = *message ) ) {
+     while ( ( c = *message ) && character_count != 0 ) {
 
           if ( isalpha ( c ) ) {
                clip.x = ( c - 'A' ) * character_width;
@@ -66,6 +72,7 @@ Void Text::render_impl ( SDL_Surface* back_buffer, SDL_Surface* font_surface,
           SDL_BlitSurface ( font_surface, &clip, back_buffer, &dest );
 
           message++;
+          character_count--;
           dest.x += ( character_width + character_spacing );
      }
 }

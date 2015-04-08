@@ -385,6 +385,8 @@ Void State::update_game ( GameMemory& game_memory, Real32 time_delta )
      update_emitters ( time_delta );
      update_damage_numbers ( time_delta );
      update_light ( );
+
+     dialogue.tick ( map.dialogue ( ) );
 }
 
 Void State::update_pause ( GameMemory& game_memory, Real32 time_delta )
@@ -808,6 +810,12 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
 
           render_damage_number ( text, back_buffer, damage_number,
                                  camera.x ( ), camera.y ( ) );
+     }
+
+     if ( dialogue.get_state ( ) == Dialogue::State::printing ||
+          dialogue.get_state ( ) == Dialogue::State::done  ) {
+          text.render ( back_buffer, map.dialogue ( ), 50, 230,
+                        dialogue.get_visible_characters ( ) );
      }
 
      // ui
@@ -2054,6 +2062,10 @@ Void State::change_map ( Int32 map_index, Bool persist )
      spawn_map_enemies ( );
 
      setup_emitters_from_map_lamps ( );
+
+     if ( strlen ( map.dialogue ( ) ) ) {
+          dialogue.begin ( );
+     }
 }
 
 Direction State::player_on_border ( )
@@ -2315,4 +2327,3 @@ extern "C" Void game_render ( GameMemory& game_memory, SDL_Surface* back_buffer 
 
      state->render ( game_memory, back_buffer );
 }
-

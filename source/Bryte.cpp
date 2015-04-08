@@ -376,17 +376,19 @@ Void State::update_intro ( GameMemory& game_memory, Real32 time_delta )
 
 Void State::update_game ( GameMemory& game_memory, Real32 time_delta )
 {
-     update_player ( game_memory, time_delta );
-     update_enemies ( time_delta );
-     update_interactives ( time_delta );
-     update_projectiles ( time_delta );
-     update_bombs ( time_delta );
-     update_pickups ( time_delta );
-     update_emitters ( time_delta );
-     update_damage_numbers ( time_delta );
-     update_light ( );
-
-     dialogue.tick ( map.dialogue ( ) );
+     if ( dialogue.get_state ( ) == Dialogue::State::none ) {
+          update_player ( game_memory, time_delta );
+          update_enemies ( time_delta );
+          update_interactives ( time_delta );
+          update_projectiles ( time_delta );
+          update_bombs ( time_delta );
+          update_pickups ( time_delta );
+          update_emitters ( time_delta );
+          update_damage_numbers ( time_delta );
+          update_light ( );
+     } else {
+          dialogue.tick ( map.dialogue ( ) );
+     }
 }
 
 Void State::update_pause ( GameMemory& game_memory, Real32 time_delta )

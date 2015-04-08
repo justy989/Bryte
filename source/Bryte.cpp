@@ -474,7 +474,17 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
                switch_item_key = key_change.down;
                break;
           case SDL_SCANCODE_SPACE:
-               attack_key = key_change.down;
+               if ( dialogue.get_state ( ) == Dialogue::State::printing ) {
+                    if ( key_change.down ) {
+                         dialogue.force_done ( map.dialogue ( ) );
+                    }
+               } else if ( dialogue.get_state ( ) == Dialogue::State::done ) {
+                    if ( key_change.down ) {
+                         dialogue.reset ( );
+                    }
+               } else {
+                    attack_key = key_change.down;
+               }
                break;
           case SDL_SCANCODE_LCTRL:
                item_key = key_change.down;
@@ -558,7 +568,17 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
                     direction_keys [ Direction::down ] = btn_change.down;
                     break;
                case SDL_CONTROLLER_BUTTON_A:
-                    attack_key = btn_change.down;
+                    if ( dialogue.get_state ( ) == Dialogue::State::printing ) {
+                         if ( btn_change.down ) {
+                              dialogue.force_done ( map.dialogue ( ) );
+                         }
+                    } else if ( dialogue.get_state ( ) == Dialogue::State::done ) {
+                         if ( btn_change.down ) {
+                              dialogue.reset ( );
+                         }
+                    } else {
+                         attack_key = btn_change.down;
+                    }
                     break;
                case SDL_CONTROLLER_BUTTON_B:
                     item_key = btn_change.down;

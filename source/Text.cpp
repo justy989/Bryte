@@ -45,6 +45,23 @@ Void Text::render_with_shadow ( SDL_Surface* back_buffer, const Char8* message,
                    character_count );
 }
 
+Void Text::render_centered_with_shadow ( SDL_Surface* back_buffer, const Char8* message, Int32 position_y,
+                                         Int32 character_count )
+{
+     Int32 message_length = character_count;
+
+     if ( message_length < 0 ) {
+          message_length = strlen ( message );
+     }
+
+     Int32 position_x = ( back_buffer->w / 2 ) - ( ( message_length / 2 ) * character_width );
+
+     render_impl ( back_buffer, shadow_sheet, message, position_x + 1, position_y + 1,
+                   character_count );
+     render_impl ( back_buffer, font_sheet, message, position_x + 1, position_y + 1,
+                   character_count );
+}
+
 Void Text::render_impl ( SDL_Surface* back_buffer, SDL_Surface* font_surface,
                          const Char8* message, Int32 position_x, Int32 position_y,
                          Int32 character_count )

@@ -558,7 +558,7 @@ Void State::option_button_up_pressed ( )
      } break;
      case Mode::upgrade:
           if ( current_upgrade == 0 ) {
-               current_upgrade = static_cast<Uint8>( Player::Upgrade::bow );
+               current_upgrade = static_cast<Uint8>( Player::Upgrade::bomb_bag );
           } else {
                current_upgrade--;
           }

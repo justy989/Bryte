@@ -20,7 +20,9 @@ static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const D
 static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
                                   Character& player, Pickup::Type pickup_type,
                                   Real32 camera_x, Real32 camera_y );
+#if 0
 static Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 frame, Int32 x, Int32 y );
+#endif
 static Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 health, Int32 max_health,
                             Int32 x, Int32 y );
 
@@ -252,11 +254,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
           return false;
      }
 
-     if ( !load_bitmap_with_game_memory ( attack_icon_sheet, game_memory,
-                                          "content/images/test_attack_icon.bmp" ) ) {
-          return false;
-     }
-
      if ( !load_bitmap_with_game_memory ( player_heart_sheet, game_memory,
                                           "content/images/player_heart.bmp" ) ) {
           return false;
@@ -305,8 +302,8 @@ Void State::destroy ( )
      projectile_display.unload_surfaces ( );
 
      SDL_FreeSurface ( bomb_sheet );
-     SDL_FreeSurface ( attack_icon_sheet );
      SDL_FreeSurface ( player_heart_sheet );
+     SDL_FreeSurface ( upgrade_sheet );
 }
 
 Void State::update ( GameMemory& game_memory, Real32 time_delta )
@@ -488,6 +485,9 @@ Void State::handle_game_input ( GameMemory& game_memory, const GameInput& game_i
                } else {
                     attack_key = key_change.down;
                }
+               break;
+          case SDL_SCANCODE_LALT:
+               block_key = key_change.down;
                break;
           case SDL_SCANCODE_LCTRL:
                item_key = key_change.down;
@@ -847,12 +847,6 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
 
      render_hearts ( back_buffer, player_heart_sheet, player.health, player.max_health,
                      2, 2 );
-
-     render_icon ( back_buffer, attack_icon_sheet, 0,
-                   ( back_buffer->w / 2 ) - Map::c_tile_dimension_in_pixels, 1 );
-
-     render_icon ( back_buffer, attack_icon_sheet, player.item_mode + 1,
-                   ( back_buffer->w / 2 ) + 3, 1 );
 
      char buffer [ 64 ];
 
@@ -1311,7 +1305,7 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                new_item_mode %= Player::ItemMode::count;
 
                switch ( new_item_mode ) {
-                    case Player::ItemMode::shield:
+                    case Player::ItemMode::no_item:
                          done = true;
                          break;
                     case Player::ItemMode::arrow:
@@ -1333,8 +1327,10 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
      if ( attack_key ) {
           attack_key = false;
 
-          if ( player.attack ( ) ) {
-               sound.play_effect ( Sound::Effect::player_sword_attack );
+          if ( player.can_attack ( ) ) {
+               if ( player.attack ( ) ) {
+                    sound.play_effect ( Sound::Effect::player_sword_attack );
+               }
           }
 
           Location adjacent_tile = character_adjacent_tile ( player );
@@ -1352,13 +1348,16 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
 
      player.item_cooldown.tick ( time_delta );
 
+     if ( block_key ) {
+          player.block ( );
+     }
+
      if ( item_key ) {
           switch ( player.item_mode ) {
           default:
                ASSERT ( 0 );
                break;
-          case Player::ItemMode::shield:
-               player.block ( );
+          case Player::ItemMode::no_item:
                break;
           case Player::ItemMode::arrow:
                if ( player.use_bow ( ) ) {
@@ -2094,6 +2093,8 @@ Void State::change_map ( Int32 map_index, Bool persist )
 
      if ( strlen ( map.dialogue ( ) ) ) {
           dialogue.begin ( );
+     } else {
+          dialogue.reset ( );
      }
 }
 
@@ -2308,6 +2309,7 @@ static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_
      SDL_BlitSurface ( pickup_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
+#if 0
 static Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 frame, Int32 x, Int32 y )
 {
      Uint32 white  = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
@@ -2324,6 +2326,7 @@ static Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int
 
      render_rect_outline ( back_buffer, attack_outline, white );
 }
+#endif
 
 static Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 health, Int32 max_health,
                             Int32 x, Int32 y )

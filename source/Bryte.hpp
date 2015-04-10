@@ -215,7 +215,6 @@ namespace bryte
           SDL_Surface* title_surface;
 
           SDL_Surface* bomb_sheet;
-          SDL_Surface* attack_icon_sheet;
           SDL_Surface* player_heart_sheet;
           SDL_Surface* upgrade_sheet;
 
@@ -224,6 +223,7 @@ namespace bryte
 
           Bool  direction_keys [ Direction::count ];
           Bool  attack_key;
+          Bool  block_key;
           Bool  item_key;
           Bool  switch_item_key;
           Bool  activate_key;

@@ -9,7 +9,7 @@ namespace bryte
      public:
 
           enum ItemMode {
-               shield,
+               no_item,
                arrow,
                bomb,
                count
@@ -17,10 +17,25 @@ namespace bryte
 
           enum Upgrade {
                none,
-               heart,
-               quiver,
-               bomb_bag,
+               wooden_sword,
+               magic_sword,
+               iron_shield,
+               mirror_shield,
                bow,
+               bomb_bag,
+               heart,
+          };
+
+          enum Sword {
+               no_sword,
+               wooden,
+               magic,
+          };
+
+          enum Shield {
+               no_shield,
+               iron,
+               mirror,
           };
 
           Void clear ( );
@@ -35,6 +50,8 @@ namespace bryte
 
           Bool use_bow ( );
           Bool use_bomb ( );
+
+          Bool can_attack ( );
 
      public:
 
@@ -61,6 +78,8 @@ namespace bryte
           Uint8 bomb_count;
           Uint8 max_bombs;
 
+          Sword sword;
+          Shield shield;
           Bool has_bow;
 
           Uint8 save_slot;

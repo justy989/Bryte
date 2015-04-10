@@ -61,19 +61,20 @@ Void Player::clear ( )
      knockbackable = true;
      collides_with_exits = false;
 
-     item_mode = ItemMode::shield;
+     item_mode = ItemMode::no_item;
      item_cooldown.reset ( 0.0f );
 
      key_count   = 0;
 
      arrow_count = 0;
-     max_arrows = 10;
+     max_arrows = 15;
 
      bomb_count = 0;
-     max_bombs = 4;
+     max_bombs = 0;
 
-     // TODO: init to false
-     has_bow = true;
+     sword = Sword::no_sword;
+     shield = Shield::iron;
+     has_bow = false;
 
      save_slot = 0;
 }
@@ -171,20 +172,30 @@ Void Player::give_upgrade ( Upgrade upgrade )
      switch ( upgrade ) {
      default:
           break;
+     case Upgrade::wooden_sword:
+          if ( sword == Sword::no_sword ) {
+               sword = Sword::wooden;
+          }
+          break;
+     case Upgrade::magic_sword:
+          sword = Sword::magic;
+          break;
+     case Upgrade::iron_shield:
+          shield = Shield::iron;
+          break;
+     case Upgrade::mirror_shield:
+          shield = Shield::mirror;
+          break;
+     case Upgrade::bow:
+          has_bow = true;
+          break;
      case Upgrade::heart:
           max_health += c_max_health_increment;
           health = max_health; // NOTE: do we want to do this?
           break;
-     case Upgrade::quiver:
-          max_arrows += c_max_arrow_increment;
-          arrow_count = max_arrows;
-          break;
      case Upgrade::bomb_bag:
           max_bombs += c_max_bomb_increment;
           bomb_count = max_bombs;
-          break;
-     case Upgrade::bow:
-          has_bow = true;
           break;
      }
 }
@@ -208,5 +219,10 @@ Bool Player::use_bomb ( )
      }
 
      return false;
+}
+
+Bool Player::can_attack ( )
+{
+     return sword != Sword::no_sword;
 }
 

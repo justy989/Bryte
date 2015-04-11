@@ -26,6 +26,7 @@ namespace bryte {
           Char8 decorsheet_filepath [ c_max_filepath_length ];
           Char8 lampsheet_filepath [ c_max_filepath_length ];
           Char8 exitsheet_filepath [ c_max_filepath_length ];
+          Char8 destructablesheet_filepath [ c_max_filepath_length ];
      };
 }
 

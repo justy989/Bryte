@@ -15,14 +15,14 @@ static Void render_bomb ( SDL_Surface* back_buffer, SDL_Surface* bomb_sheet, con
                            Real32 camera_x, Real32 camera_y );
 static Void render_particle ( SDL_Surface* back_buffer, const Particle& particle, Uint32 color,
                               Real32 camera_x, Real32 camera_y );
+#if 0
 static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const DamageNumber& damage_number,
                                    Real32 camera_x, Real32 camera_y );
+#endif
 static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
                                   Character& player, Pickup::Type pickup_type,
                                   Real32 camera_x, Real32 camera_y );
-#if 0
 static Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 frame, Int32 x, Int32 y );
-#endif
 static Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 health, Int32 max_health,
                             Int32 x, Int32 y );
 
@@ -720,9 +720,9 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
 
      // calculate camera
      camera.set_x ( calculate_camera_position ( back_buffer->w, map.width ( ),
-                                                       player.position.x ( ), player.width ( ) ) );
+                                                player.position.x ( ), player.width ( ) ) );
      camera.set_y ( calculate_camera_position ( back_buffer->h - Map::c_tile_dimension_in_pixels, map.height ( ),
-                                                       player.position.y ( ), player.height ( ) ) );
+                                                player.position.y ( ), player.height ( ) ) );
 
      // map
      map_display.tick ( );
@@ -732,7 +732,7 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
      // interactives
      interactives_display.tick ( );
      interactives_display.render ( back_buffer, interactives, map,
-                                          camera.x ( ), camera.y ( ), map.found_secret ( ) );
+                                   camera.x ( ), camera.y ( ), map.found_secret ( ) );
 
      character_display.tick ( );
 
@@ -744,12 +744,12 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
           }
 
           character_display.render_enemy ( back_buffer, enemy,
-                                                  camera.x ( ), camera.y ( ) );
+                                           camera.x ( ), camera.y ( ) );
      }
 
      // player
      character_display.render_player ( back_buffer, player,
-                                              camera.x ( ), camera.y ( ) );
+                                       camera.x ( ), camera.y ( ) );
 
      for ( Uint32 i = 0; i < enemies.max ( ); ++i ) {
           Auto& enemy = enemies [ i ];
@@ -758,7 +758,7 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
           }
 
           character_display.render_enemy ( back_buffer, enemy,
-                                                  camera.x ( ), camera.y ( ) );
+                                           camera.x ( ), camera.y ( ) );
      }
 
      // pickups
@@ -784,7 +784,7 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
           }
 
           projectile_display.render ( back_buffer, projectile,
-                                             camera.x ( ), camera.y ( ) );
+                                      camera.x ( ), camera.y ( ) );
      }
 
      // bombs
@@ -824,6 +824,7 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
      render_light ( back_buffer, map, camera.x ( ), camera.y ( ) );
 
      // damage numbers
+#if 0
      for ( Uint32 i = 0; i < damage_numbers.max ( ); ++i ) {
           Auto& damage_number = damage_numbers [ i ];
 
@@ -834,6 +835,7 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
           render_damage_number ( text, back_buffer, damage_number,
                                  camera.x ( ), camera.y ( ) );
      }
+#endif
 
      if ( dialogue.get_state ( ) == Dialogue::State::printing ||
           dialogue.get_state ( ) == Dialogue::State::done  ) {
@@ -848,6 +850,32 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
      render_hearts ( back_buffer, player_heart_sheet, player.health, player.max_health,
                      2, 2 );
 
+     // sword, shield, and item
+     if ( player.sword != Player::Sword::no_sword ) {
+          Int32 sword_frame = 0;
+
+          switch ( player.sword ) {
+          default:
+               ASSERT ( 0 );
+               break;
+          case Player::Sword::wooden:
+               sword_frame = 0;
+               break;
+          case Player::Sword::magic:
+               sword_frame = 1;
+               break;
+          }
+
+          render_icon ( back_buffer, upgrade_sheet, sword_frame, 90, 1 );
+     }
+
+#if 0
+     if ( player.shield != Player::Shield::no_shield ) {
+     render_icon ( back_buffer, upgrade_sheet, equipment_frame, 120, 0 );
+     render_icon ( back_buffer, upgrade_sheet, equipment_frame, 120, 0 );
+     }
+#endif
+
      char buffer [ 64 ];
 
      sprintf ( buffer, "%d", player.key_count );
@@ -861,17 +889,14 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
 
      SDL_Rect pickup_dest_rect { 225, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
      SDL_Rect pickup_clip_rect { 0, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-
      SDL_BlitSurface ( pickup_display.pickup_sheet, &pickup_clip_rect, back_buffer, &pickup_dest_rect );
 
      SDL_Rect bomb_dest_rect { 200, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
      SDL_Rect bomb_clip_rect { 0, Pickup::c_dimension_in_pixels * 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-
      SDL_BlitSurface ( pickup_display.pickup_sheet, &bomb_clip_rect, back_buffer, &bomb_dest_rect );
 
      SDL_Rect arrow_dest_rect { 175, 3, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
      SDL_Rect arrow_clip_rect { 0, Pickup::c_dimension_in_pixels * 2, Pickup::c_dimension_in_pixels, Pickup::c_dimension_in_pixels };
-
      SDL_BlitSurface ( pickup_display.pickup_sheet, &arrow_clip_rect, back_buffer, &arrow_dest_rect );
 
 #ifdef DEBUG
@@ -1064,7 +1089,8 @@ Bool State::load_region ( GameMemory& game_memory )
      }
 
      interactives_display.unload_surfaces ( );
-     if ( !interactives_display.load_surfaces  ( game_memory, region.exitsheet_filepath ) ) {
+     if ( !interactives_display.load_surfaces  ( game_memory, region.exitsheet_filepath,
+                                                 region.destructablesheet_filepath ) ) {
           return false;
      }
 
@@ -1331,11 +1357,11 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                if ( player.attack ( ) ) {
                     sound.play_effect ( Sound::Effect::player_sword_attack );
                }
+
+               Location adjacent_tile = character_adjacent_tile ( player );
+
+               interactives.attack ( adjacent_tile );
           }
-
-          Location adjacent_tile = character_adjacent_tile ( player );
-
-          interactives.attack ( adjacent_tile );
      }
 
      player.update ( time_delta, map, interactives );
@@ -2167,7 +2193,8 @@ Bool State::change_region ( GameMemory& game_memory, Int32 region_index )
      }
 
      interactives_display.unload_surfaces ( );
-     if ( !interactives_display.load_surfaces  ( game_memory, region.exitsheet_filepath ) ) {
+     if ( !interactives_display.load_surfaces  ( game_memory, region.exitsheet_filepath,
+                                                 region.destructablesheet_filepath ) ) {
           return false;
      }
 
@@ -2269,6 +2296,7 @@ static Void render_particle ( SDL_Surface* back_buffer, const Particle& particle
      SDL_FillRect ( back_buffer, &dest_rect, color );
 }
 
+#if 0
 static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const DamageNumber& damage_number,
                                    Real32 camera_x, Real32 camera_y )
 {
@@ -2291,6 +2319,7 @@ static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const D
 
      text.render ( back_buffer, buffer, dest_rect.x, dest_rect.y);
 }
+#endif
 
 static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
                                   Character& player, Pickup::Type pickup_type,
@@ -2309,7 +2338,6 @@ static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_
      SDL_BlitSurface ( pickup_sheet, &clip_rect, back_buffer, &dest_rect );
 }
 
-#if 0
 static Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int32 frame, Int32 x, Int32 y )
 {
      Uint32 white  = SDL_MapRGB ( back_buffer->format, 255, 255, 255 );
@@ -2320,13 +2348,12 @@ static Void render_icon ( SDL_Surface* back_buffer, SDL_Surface* icon_sheet, Int
 
      SDL_BlitSurface ( icon_sheet, &attack_clip, back_buffer, &attack_dest );
 
-     SDL_Rect attack_outline { attack_dest.x - 1, attack_dest.y - 1,
-                               Map::c_tile_dimension_in_pixels + 2,
-                               Map::c_tile_dimension_in_pixels + 2 };
+     SDL_Rect attack_outline { attack_dest.x, attack_dest.y - 1,
+                               Map::c_tile_dimension_in_pixels,
+                               Map::c_tile_dimension_in_pixels };
 
      render_rect_outline ( back_buffer, attack_outline, white );
 }
-#endif
 
 static Void render_hearts ( SDL_Surface* back_buffer, SDL_Surface* heart_sheet, Int32 health, Int32 max_health,
                             Int32 x, Int32 y )

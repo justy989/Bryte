@@ -64,6 +64,9 @@ Bool Region::load_info ( Int32 index )
      ss >> tmp_string;
      strncpy ( exitsheet_filepath, tmp_string.c_str ( ), c_max_filepath_length );
 
+     ss >> tmp_string;
+     strncpy ( destructablesheet_filepath, tmp_string.c_str ( ), c_max_filepath_length );
+
      // do a bit of error checking
      if ( !strlen ( name ) ) {
           LOG_ERROR ( "Empty name\n" );
@@ -95,12 +98,18 @@ Bool Region::load_info ( Int32 index )
           return false;
      }
 
+     if ( !strlen ( destructablesheet_filepath ) ) {
+          LOG_ERROR ( "Empty destructablesheet\n" );
+          return false;
+     }
+
      LOG_INFO ( " name: '%s'\n", name );
      LOG_INFO ( " map list: '%s'\n", map_list_filepath );
      LOG_INFO ( " tilesheet: '%s'\n", tilesheet_filepath );
      LOG_INFO ( " decorsheet: '%s'\n", decorsheet_filepath );
      LOG_INFO ( " lampsheet: '%s'\n", lampsheet_filepath );
      LOG_INFO ( " exitsheet: '%s'\n", exitsheet_filepath );
+     LOG_INFO ( " destructablesheet: '%s'\n", exitsheet_filepath );
 
      current_index = index;
 

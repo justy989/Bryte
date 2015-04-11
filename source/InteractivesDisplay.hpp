@@ -13,7 +13,8 @@ namespace bryte
      struct InteractivesDisplay {
      public:
 
-          Bool load_surfaces ( GameMemory& game_memory, const Char8* exitsheet_filepath );
+          Bool load_surfaces ( GameMemory& game_memory, const Char8* exitsheet_filepath,
+                               const Char8* destructable_sheet_filepath );
           Void unload_surfaces ( );
 
           Void clear ( );

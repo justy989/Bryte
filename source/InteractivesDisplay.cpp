@@ -5,7 +5,8 @@
 
 using namespace bryte;
 
-Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* exitsheet_filepath )
+Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* exitsheet_filepath,
+                                          const Char8* destructable_sheet_filepath )
 {
      if ( !load_bitmap_with_game_memory ( lever_sheet, game_memory, "content/images/test_lever.bmp" ) ) {
           return false;
@@ -83,7 +84,7 @@ Bool InteractivesDisplay::load_surfaces ( GameMemory& game_memory, const Char8* 
      }
 
      if ( !load_bitmap_with_game_memory ( destructable_sheet, game_memory,
-                                          "content/images/test_destructable.bmp" ) ) {
+                                          destructable_sheet_filepath ) ) {
           return false;
      }
 

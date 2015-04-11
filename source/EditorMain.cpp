@@ -17,6 +17,7 @@ Void print_help ( )
      printf ( "  -r region to default exits to using\n" );
      printf ( "  -w starting map tiles wide\n" );
      printf ( "  -t starting map tiles tall\n" );
+     printf ( "  -l map base light\n" );
      printf ( "  -h displays this helpful information\n\n" );
 }
 
@@ -43,6 +44,8 @@ Int32 main ( Int32 argc, Char8** argv )
 
      editor_settings.map_width  = 8;
      editor_settings.map_height = 8;
+
+     editor_settings.base_light = 128;
 
      editor_settings.map_tilesheet_filename  = "content/images/castle_tilesheet.bmp";
      editor_settings.map_decorsheet_filename = "content/images/castle_decorsheet.bmp";
@@ -81,6 +84,11 @@ Int32 main ( Int32 argc, Char8** argv )
                     ++i;
                }
           } else if ( strcmp ( argv [ i ], "-i" ) == 0 ) {
+               if ( argc >= i + 1 ) {
+                    editor_settings.map_load_filename = argv [ i + 1 ];
+                    ++i;
+               }
+          } else if ( strcmp ( argv [ i ], "-l" ) == 0 ) {
                if ( argc >= i + 1 ) {
                     editor_settings.map_load_filename = argv [ i + 1 ];
                     ++i;

@@ -555,7 +555,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
 
      if ( new_tile != old_tile && !flies ) {
           // TODO: what about non-collides_with_interactives and portals?
-          if ( map.tile_location_is_valid ( old_tile ) && map.tile_location_is_valid ( old_tile ) ) {
+          if ( map.tile_location_is_valid ( new_tile ) && map.tile_location_is_valid ( old_tile ) ) {
                interactives.character_leave ( old_tile, *this );
                interactives.character_enter ( new_tile, *this );
           }

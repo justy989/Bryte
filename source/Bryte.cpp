@@ -1442,9 +1442,11 @@ Void State::update_player ( GameMemory& game_memory, float time_delta )
                Int32 map_index = border_exit.map_index;
                Location border_exit_bottom_left ( border_exit.bottom_left.x,
                                                   border_exit.bottom_left.y );
+               Location map_bottom_left ( border_exit.map_bottom_left.x,
+                                          border_exit.map_bottom_left.y );
                Auto player_offset = player.collision_center ( ) -
                                     Map::location_to_vector ( border_exit_bottom_left );
-               Auto new_player_pos = Map::location_to_vector ( border_exit_bottom_left ) + player_offset;
+               Auto new_player_pos = Map::location_to_vector ( map_bottom_left ) + player_offset;
 
                change_map ( map_index );
 
@@ -1597,6 +1599,7 @@ Void State::update_enemies ( float time_delta )
                }
 #endif
 
+               // transfer element to player
                player.effect_with_element ( enemy.effected_by_element );
           }
 

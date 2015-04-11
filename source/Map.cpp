@@ -247,6 +247,11 @@ Uint8 Map::base_light_value ( ) const
      return m_base_light_value;
 }
 
+Void Map::set_base_light ( Uint8 base )
+{
+     m_base_light_value = base;
+}
+
 Void Map::add_to_base_light ( Uint8 delta )
 {
      m_base_light_value += delta;

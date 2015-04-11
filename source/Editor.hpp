@@ -28,6 +28,8 @@ namespace editor
           Int32 map_width;
           Int32 map_height;
 
+          Uint8 base_light;
+
           const Char8* map_tilesheet_filename;
           const Char8* map_decorsheet_filename;
           const Char8* map_lampsheet_filename;

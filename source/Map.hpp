@@ -131,6 +131,7 @@ namespace bryte
           EnemySpawn* check_location_for_enemy_spawn ( const Location& loc );
 
           Uint8 base_light_value         ( ) const;
+          Void  set_base_light           ( Uint8 base );
           Void  add_to_base_light        ( Uint8 delta );
           Void  subtract_from_base_light ( Uint8 delta );
 

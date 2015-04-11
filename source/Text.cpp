@@ -58,7 +58,7 @@ Void Text::render_centered_with_shadow ( SDL_Surface* back_buffer, const Char8* 
 
      render_impl ( back_buffer, shadow_sheet, message, position_x + 1, position_y + 1,
                    character_count );
-     render_impl ( back_buffer, font_sheet, message, position_x + 1, position_y + 1,
+     render_impl ( back_buffer, font_sheet, message, position_x, position_y,
                    character_count );
 }
 

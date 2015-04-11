@@ -837,11 +837,8 @@ Void State::render_game ( GameMemory& game_memory, SDL_Surface* back_buffer )
      }
 #endif
 
-     if ( dialogue.get_state ( ) == Dialogue::State::printing ||
-          dialogue.get_state ( ) == Dialogue::State::done  ) {
-          text.render_centered_with_shadow ( back_buffer, map.dialogue ( ), 200,
-                                             dialogue.get_visible_characters ( ) );
-     }
+     // dialogue
+     dialogue.render ( back_buffer, &text, map.dialogue ( ) );
 
      // ui
      SDL_Rect hud_rect { 0, 0, back_buffer->w, Map::c_tile_dimension_in_pixels };

@@ -1,7 +1,11 @@
 #ifndef BRYTE_DIALOGUE_HPP
 #define BRYTE_DIALOGUE_HPP
 
+#include <SDL2/SDL.h>
+
+#include "Utils.hpp"
 #include "Types.hpp"
+#include "Text.hpp"
 
 struct Dialogue {
 public:
@@ -21,12 +25,16 @@ public:
 
      inline Void tick ( const char* dialogue );
 
+     Void render ( SDL_Surface* back_buffer, Text* text,
+                   const Char8* message );
+
      inline State get_state ( );
      inline Int32 get_visible_characters ( );
 
 public:
 
-     static const Int32 c_character_delay = 10;
+     static const Int32 c_character_delay = 4;
+     static const Int32 c_dialogue_height = 200;
 
 public:
 

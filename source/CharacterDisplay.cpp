@@ -93,11 +93,16 @@ Void CharacterDisplay::unload_surfaces ( )
      FREE_SURFACE ( fire_surface );
 }
 
-static Void set_surface_color ( SDL_Surface* surface, Uint8 red, Uint8 green, Uint8 blue )
+static Void blend_surface_color ( SDL_Surface* surface, Real32 red, Real32 green, Real32 blue,
+                                  Real32 blend_factor )
 {
      if ( SDL_LockSurface ( surface ) ) {
           return;
      }
+
+     ASSERT ( blend_factor >= 0.0f && blend_factor <= 1.0f );
+
+     Real32 inv_blend_factor = 1.0 - blend_factor;
 
      for ( Int32 y = 0; y < surface->h; ++y ) {
           for ( Int32 x = 0; x < surface->w; ++x ) {
@@ -112,10 +117,17 @@ static Void set_surface_color ( SDL_Surface* surface, Uint8 red, Uint8 green, Ui
                     continue;
                }
 
-               // make it white
-               *surface_red = red;
-               *surface_blue = blue;
-               *surface_green = green;
+               Real32 src_red = static_cast<Real32>( *surface_red ) / 255.0f;
+               Real32 src_green = static_cast<Real32>( *surface_green ) / 255.0f;
+               Real32 src_blue = static_cast<Real32>( *surface_blue ) / 255.0f;
+
+               Real32 dst_red = src_red * inv_blend_factor + red * blend_factor;
+               Real32 dst_green = src_green * inv_blend_factor + green * blend_factor;
+               Real32 dst_blue = src_blue * inv_blend_factor + blue * blend_factor;
+
+               *surface_red = static_cast<Uint8>( dst_red * 255.0f );
+               *surface_blue = static_cast<Uint8>( dst_blue * 255.0f );
+               *surface_green = static_cast<Uint8>( dst_green * 255.0f );
           }
      }
 
@@ -123,8 +135,8 @@ static Void set_surface_color ( SDL_Surface* surface, Uint8 red, Uint8 green, Ui
 }
 
 static void render_effect ( SDL_Surface* back_buffer, SDL_Surface* character_sheet, SDL_Surface* effect_surface,
-                           SDL_Rect* dest_rect, SDL_Rect* clip_rect, Uint8 red, Uint8 green, Uint8 blue,
-                           Real32 camera_x, Real32 camera_y )
+                           SDL_Rect* dest_rect, SDL_Rect* clip_rect, Real32 red, Real32 green, Real32 blue,
+                           Real32 blend_factor, Real32 camera_x, Real32 camera_y )
 {
      // clear the blink surface
      SDL_Rect clear_rect { 0, 0, effect_surface->w, effect_surface->h };
@@ -136,7 +148,7 @@ static void render_effect ( SDL_Surface* back_buffer, SDL_Surface* character_she
      SDL_Rect blink_dest_rect { 0, 0, clip_rect->w, clip_rect->h };
      SDL_BlitSurface ( character_sheet, clip_rect, effect_surface, &blink_dest_rect );
 
-     set_surface_color ( effect_surface, red, green, blue );
+     blend_surface_color ( effect_surface, red, green, blue, blend_factor );
 
      // draw the blink surface to the back buffer
      SDL_BlitSurface ( effect_surface, &blink_dest_rect, back_buffer, dest_rect );
@@ -248,15 +260,18 @@ static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_
      if ( blink_on && character.is_blinking ( ) ) {
           if ( character.is_dying ( ) ) {
                render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
-                              255, 255, 255, camera_x, camera_y );
+                              1.0f, 1.0f, 1.0f, 0.5f, camera_x, camera_y );
           } else {
                render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
-                               255, 0, 0, camera_x, camera_y );
+                               1.0f, 0.0f, 0.0f, 0.5f, camera_x, camera_y );
           }
      } else if ( character.effected_by_element == Element::ice ) {
           render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
-                          0, 0, 255, camera_x, camera_y );
-     } else {
+                          0.0f, 0.0f, 1.0, 0.5f, camera_x, camera_y );
+     } else if ( !character.healed_watch.expired ( ) ) {
+          render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
+                          0.0f, 1.0, 0.0f, 0.5f, camera_x, camera_y );
+     }else {
           SDL_BlitSurface ( character_sheet, &clip_rect, back_buffer, &dest_rect );
      }
 }

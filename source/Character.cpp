@@ -20,6 +20,7 @@ const Real32 Character::c_fire_tick_rate          = 2.0f;
 const Real32 Character::c_ice_time                = 6.0f;
 const Real32 Character::c_ice_decel               = 0.5f;
 const Real32 Character::c_moving_walkway_accel    = 4.0f;
+const Real32 Character::c_healed_time               = 0.75f;
 
 Bool Character::collides_with ( const Character& character )
 {
@@ -156,8 +157,6 @@ Void Character::damage ( Int32 amount, Direction push )
           return;
      }
 
-     // TODO: If amount is positive, add a healing effect
-
      health -= amount;
 
      damage_pushed = push;
@@ -173,6 +172,8 @@ Void Character::damage ( Int32 amount, Direction push )
 Void Character::heal ( Int32 amount )
 {
      health += amount;
+
+     healed_watch.reset ( c_healed_time );
 
      process_health ( );
 }
@@ -259,6 +260,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      // tick stopwatches
      state_watch.tick ( time_delta );
      cooldown_watch.tick ( time_delta );
+     healed_watch.tick ( time_delta );
 
      acceleration.normalize ( );
      acceleration *= walk_acceleration;

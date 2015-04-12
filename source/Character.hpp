@@ -81,6 +81,7 @@ namespace bryte
           static const Real32 c_attack_time;
           static const Real32 c_cooldown_time;
           static const Real32 c_dying_time;
+          static const Real32 c_healed_time;
           static const Real32 c_accel;
 
           static const Int32  c_fire_tick_max;
@@ -126,6 +127,7 @@ namespace bryte
           Stopwatch damage_watch;
           Stopwatch cooldown_watch;
           Stopwatch element_watch;
+          Stopwatch healed_watch;
 
           Uint8 fire_tick_count;
 

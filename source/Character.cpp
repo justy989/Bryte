@@ -412,6 +412,25 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
      // Note: These ignore tiles try to solve the problem of a player being on top of a pop up block
      Location ignore_tile ( center_tile_x, center_tile_y );
 
+     if ( velocity.x ( ) == 0.0f ) {
+          if ( velocity.y ( ) > 0.0f ) {
+               ignore_tile.y--;
+          } else if ( velocity.y ( ) < 0.0f ) {
+               ignore_tile.y++;
+          }
+     }
+
+     if ( velocity.y ( ) == 0.0f ) {
+          if ( velocity.x ( ) > 0.0f ) {
+               ignore_tile.y--;
+          } else if ( velocity.x ( ) < 0.0f ) {
+               ignore_tile.x++;
+          }
+     }
+
+#if 0
+     // Note: This has the problem where you can face up with some left over down acceleration and
+     //       get through down walls
      switch ( facing ) {
      default:
           break;
@@ -428,6 +447,7 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           ignore_tile.y++;
           break;
      }
+#endif
 
      // TODO: move tiles based on width
      Int32 min_check_tile_x = center_tile_x - 1;

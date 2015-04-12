@@ -8,12 +8,15 @@ using namespace bryte;
 
 const Real32 Player::c_item_cooldown = 1.0f;
 
-const Char8* Player::c_upgrade_names [ Player::Upgrade::bow + 1 ] = {
+const Char8* Player::c_upgrade_names [ Player::Upgrade::heart + 1 ] = {
      "NONE",
-     "HEART",
-     "QUIVER",
-     "BOMBBAG",
+     "WOODENSWORD",
+     "MAGICSWORD",
+     "IRONSHIELD",
+     "MIRRORSHIELD",
      "BOW",
+     "BOMBBAG",
+     "HEART"
 };
 
 Void Player::clear ( )

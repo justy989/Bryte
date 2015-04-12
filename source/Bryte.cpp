@@ -15,10 +15,6 @@ static Void render_bomb ( SDL_Surface* back_buffer, SDL_Surface* bomb_sheet, con
                            Real32 camera_x, Real32 camera_y );
 static Void render_particle ( SDL_Surface* back_buffer, const Particle& particle, Uint32 color,
                               Real32 camera_x, Real32 camera_y );
-#if 0
-static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const DamageNumber& damage_number,
-                                   Real32 camera_x, Real32 camera_y );
-#endif
 static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
                                   Character& player, Pickup::Type pickup_type,
                                   Real32 camera_x, Real32 camera_y );
@@ -199,7 +195,6 @@ Bool State::initialize ( GameMemory& game_memory, Settings* settings )
      bombs.clear ( );
      emitters.clear ( );
      enemies.clear ( );
-     damage_numbers.clear ( );
 
      // projectile collision for various directions
      Projectile::collision_points [ Direction::left ].set ( pixels_to_meters ( 1 ), pixels_to_meters ( 7 ) );
@@ -381,7 +376,6 @@ Void State::update_game ( GameMemory& game_memory, Real32 time_delta )
           update_bombs ( time_delta );
           update_pickups ( time_delta );
           update_emitters ( time_delta );
-          update_damage_numbers ( time_delta );
      } else {
           dialogue.tick ( map.dialogue ( ) );
      }
@@ -1009,40 +1003,6 @@ Bool State::spawn_bomb ( const Vector& position )
      return true;
 }
 
-Bool State::spawn_damage_number ( const Vector& position, Int32 value )
-{
-     Auto* damage_number = damage_numbers.spawn ( position );
-
-     if ( !damage_number ) {
-          return false;
-     }
-
-     damage_number->value = -value;
-     damage_number->starting_y = position.y ( );
-
-     // NOTE: seriously?
-     LOG_DEBUG ( "spawning damage number at %f, %f\n", position.x ( ), position.y ( ) );
-
-     return true;
-}
-
-Bool State::spawn_healing_number ( const Vector& position, Int32 value )
-{
-     Auto* damage_number = damage_numbers.spawn ( position );
-
-     if ( !damage_number ) {
-          return false;
-     }
-
-     damage_number->value = value;
-     damage_number->starting_y = position.y ( );
-
-     // NOTE: seriously?
-     LOG_DEBUG ( "spawning damage number at %f, %f\n", position.x ( ), position.y ( ) );
-
-     return true;
-}
-
 Void State::start_game ( GameMemory& game_memory )
 {
      if ( slot_menu.selected == 3 ) {
@@ -1151,7 +1111,6 @@ Void State::player_death ( )
      projectiles.clear ( );
      emitters.clear ( );
      enemies.clear ( );
-     damage_numbers.clear ( );
 
      map.load_from_master_list ( 0, interactives );
 
@@ -1185,7 +1144,23 @@ Bool State::check_player_block_projectile ( Projectile& projectile )
 
 Void State::enemy_death ( const Enemy& enemy )
 {
-     if ( enemy.drop ) {
+     if ( enemy.drop == Pickup::Type::random ) {
+          Auto roll = random.generate ( 0, 100 );
+
+          if ( roll < 30 ) {
+               spawn_pickup ( enemy.position, Pickup::Type::health );
+          } else if ( roll < 50 ) {
+               if ( player.has_bow ) {
+                    spawn_pickup ( enemy.position, Pickup::Type::arrow );
+               }
+          } else if ( roll < 70 ) {
+               if ( player.max_bombs ) {
+                    spawn_pickup ( enemy.position, Pickup::Type::bomb );
+               }
+          } else {
+               // no drop
+          }
+     } else {
           spawn_pickup ( enemy.position, enemy.drop );
      }
 
@@ -1296,7 +1271,6 @@ Void State::tick_character_element ( Character& character )
 Void State::damage_character ( Character& character, Int32 amount, Direction direction )
 {
      character.damage ( amount, direction );
-     spawn_damage_number ( character.collision_center ( ), amount );
 }
 
 Void State::update_player ( GameMemory& game_memory, float time_delta )
@@ -1800,8 +1774,7 @@ Void State::update_projectiles ( float time_delta )
                                              enemy.collision_x ( ), enemy.collision_y ( ),
                                              enemy.collision_x ( ) + enemy.collision_width ( ),
                                              enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
-                         Int32 damage = projectile.hit_character ( enemy );
-                         spawn_damage_number ( projectile_collision_point, damage );
+                         projectile.hit_character ( enemy );
                          break;
                     }
                }
@@ -1814,8 +1787,7 @@ Void State::update_projectiles ( float time_delta )
                                         player.collision_x ( ) + player.collision_width ( ),
                                         player.collision_y ( ) + player.collision_height ( ) ) ) {
                     if ( !check_player_block_projectile ( projectile ) ) {
-                         Int32 damage = projectile.hit_character ( player );
-                         spawn_damage_number ( projectile_collision_point, damage );
+                         projectile.hit_character ( player );
                          sound.play_effect ( Sound::Effect::player_damaged );
                     }
                }
@@ -1833,8 +1805,7 @@ Void State::update_projectiles ( float time_delta )
                                              enemy.collision_x ( ), enemy.collision_y ( ),
                                              enemy.collision_x ( ) + enemy.collision_width ( ),
                                              enemy.collision_y ( ) + enemy.collision_height ( ) ) ) {
-                         Int32 damage = projectile.hit_character ( enemy );
-                         spawn_damage_number ( projectile_collision_point, damage );
+                         projectile.hit_character ( enemy );
                          break;
                     }
                }
@@ -1846,8 +1817,7 @@ Void State::update_projectiles ( float time_delta )
                                         player.collision_x ( ) + player.collision_width ( ),
                                         player.collision_y ( ) + player.collision_height ( ) ) ) {
                     if ( !check_player_block_projectile ( projectile ) ) {
-                         Int32 damage = projectile.hit_character ( player );
-                         spawn_damage_number ( projectile_collision_point, damage );
+                         projectile.hit_character ( player );
                          sound.play_effect ( Sound::Effect::player_damaged );
                     }
                }
@@ -2011,19 +1981,6 @@ Void State::update_emitters ( float time_delta )
      }
 }
 
-Void State::update_damage_numbers ( float time_delta )
-{
-     for ( Uint32 i = 0; i < damage_numbers.max ( ); ++i ) {
-          Auto& damage_number = damage_numbers [ i ];
-
-          if ( damage_number.is_dead ( ) ) {
-               continue;
-          }
-
-          damage_number.update ( time_delta );
-     }
-}
-
 
 Void State::update_light ( )
 {
@@ -2090,7 +2047,6 @@ Void State::heal_enemies_in_range_of_fairy ( const Vector& position )
 
           if ( enemy.position.distance_to ( position ) < Enemy::FairyState::c_heal_radius ) {
                enemy.heal ( 1 );
-               spawn_healing_number ( enemy.collision_center ( ), 1 );
           }
      }
 }
@@ -2295,31 +2251,6 @@ static Void render_particle ( SDL_Surface* back_buffer, const Particle& particle
 
      SDL_FillRect ( back_buffer, &dest_rect, color );
 }
-
-#if 0
-static void render_damage_number ( Text& text, SDL_Surface* back_buffer, const DamageNumber& damage_number,
-                                   Real32 camera_x, Real32 camera_y )
-{
-     char buffer [ 64 ];
-     Int32 value = abs ( damage_number.value );
-     const char* positive_format = "+%d";
-     const char* negative_format = "%d";
-     const char* format = damage_number.value > 0 ? positive_format : negative_format;
-
-     sprintf ( buffer, format, value );
-
-     SDL_Rect dest_rect = build_world_sdl_rect ( damage_number.position.x ( ), damage_number.position.y ( ),
-                                                 pixels_to_meters ( text.character_width ),
-                                                 pixels_to_meters ( text.character_height ) );
-
-     dest_rect.x -= ( text.character_width / 2 );
-     dest_rect.y -= ( text.character_height / 2 );
-
-     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
-
-     text.render ( back_buffer, buffer, dest_rect.x, dest_rect.y);
-}
-#endif
 
 static Void render_shown_pickup ( SDL_Surface* back_buffer, SDL_Surface* pickup_sheet,
                                   Character& player, Pickup::Type pickup_type,

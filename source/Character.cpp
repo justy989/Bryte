@@ -156,6 +156,8 @@ Void Character::damage ( Int32 amount, Direction push )
           return;
      }
 
+     // TODO: If amount is positive, add a healing effect
+
      health -= amount;
 
      damage_pushed = push;

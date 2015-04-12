@@ -16,7 +16,6 @@
 #include "Pickup.hpp"
 #include "Projectile.hpp"
 #include "Bomb.hpp"
-#include "DamageNumber.hpp"
 #include "Dialogue.hpp"
 
 #include "EntityManager.hpp"
@@ -116,8 +115,6 @@ namespace bryte
           Bool spawn_projectile ( Projectile::Type type, const Vector& position, Direction facing,
                                   Projectile::Alliance alliance );
           Bool spawn_bomb ( const Vector& position );
-          Bool spawn_damage_number ( const Vector& position, Int32 value );
-          Bool spawn_healing_number ( const Vector& position, Int32 value );
 
           Void start_game ( GameMemory& game_memory );
           Bool load_region ( GameMemory& game_memory );
@@ -143,7 +140,6 @@ namespace bryte
           Void update_bombs ( float time_delta );
           Void update_pickups ( float time_delta );
           Void update_emitters ( float time_delta );
-          Void update_damage_numbers ( float time_delta );
           Void update_light ( );
 
           Void setup_emitters_from_map_lamps ( );
@@ -189,7 +185,6 @@ namespace bryte
           EntityManager<Projectile,   64> projectiles;
           EntityManager<Bomb,          8> bombs;
           EntityManager<Emitter,      32> emitters;
-          EntityManager<DamageNumber, 16> damage_numbers;
 
           Region       region;
           Map          map;

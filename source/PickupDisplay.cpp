@@ -26,8 +26,7 @@ Void PickupDisplay::tick ( )
 
 Void PickupDisplay::render ( SDL_Surface* back_buffer, const Pickup& pickup, Real32 camera_x, Real32 camera_y )
 {
-     if ( pickup.type == Pickup::Type::none ||
-          pickup.type == Pickup::Type::ingredient ) {
+     if ( pickup.type == Pickup::Type::none ) {
           return;
      }
 

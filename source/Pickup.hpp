@@ -13,8 +13,8 @@ namespace bryte {
                key,
                arrow,
                bomb,
-               ingredient,
-               count
+               count,
+               random = none,
           };
 
           inline Pickup ( );

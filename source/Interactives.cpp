@@ -1,6 +1,5 @@
 #include "Interactives.hpp"
 #include "Projectile.hpp"
-#include "Enemy.hpp"
 #include "Log.hpp"
 
 using namespace bryte;

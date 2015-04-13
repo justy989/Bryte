@@ -1618,7 +1618,8 @@ Void State::push_interactive ( const Location& tile, Direction dir, const Map& m
                continue;
           }
 
-          if ( character_touching_tile ( enemies [ i ], dest ) ) {
+          if ( character_touching_tile ( enemies [ i ], dest ) &&
+               !enemies [ i ].flies ) {
                enemy_on_tile = true;
                break;
           }
@@ -1695,7 +1696,6 @@ Void State::update_interactives ( float time_delta )
           case Interactive::Type::pushable_torch:
                if ( interactive.interactive_pushable_torch.torch.element == Element::ice ) {
                     Auto tile = map.tile_index_to_location ( i );
-
                     interactives.spread_ice ( tile, map, false );
                }
 

@@ -361,6 +361,13 @@ Bool Interactives::is_flyable ( const Location& tile ) const
           return false;
      }
 
+     switch ( interactive.underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::destructable:
+          return false;;
+     }
+
      return true;
 }
 

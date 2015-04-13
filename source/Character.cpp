@@ -428,27 +428,6 @@ Void Character::update ( Real32 time_delta, const Map& map, Interactives& intera
           }
      }
 
-#if 0
-     // Note: This has the problem where you can face up with some left over down acceleration and
-     //       get through down walls
-     switch ( facing ) {
-     default:
-          break;
-     case Direction::left:
-          ignore_tile.x++;
-          break;
-     case Direction::up:
-          ignore_tile.y--;
-          break;
-     case Direction::right:
-          ignore_tile.x--;
-          break;
-     case Direction::down:
-          ignore_tile.y++;
-          break;
-     }
-#endif
-
      // TODO: move tiles based on width
      Int32 min_check_tile_x = center_tile_x - 1;
      Int32 min_check_tile_y = center_tile_y - 1;

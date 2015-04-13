@@ -97,6 +97,7 @@ namespace bryte
 
           struct IceWizardState {
                enum State {
+                    idle,
                     wandering,
                     warm_up,
                     attack,
@@ -130,6 +131,7 @@ namespace bryte
           Void knight_think ( const Character& player, Random& random, float time_delta );
           Void spike_think ( const Character& player, Random& random, float time_delta );
           Void ice_wizard_think ( const Character& player, Random& random, float time_delta );
+          Void wizard_decide_whether_to_attack ( const Character& player );
 
      public:
 

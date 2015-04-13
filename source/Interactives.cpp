@@ -142,6 +142,7 @@ Bool Interactives::push ( const Location& tile, Direction dir, const Map& map )
 
      if ( ( !is_walkable ( dest_tile, dir ) &&
             dest_i.underneath.type != UnderneathInteractive::Type::hole ) ||
+            dest_i.type == Interactive::Type::exit ||
             map.get_tile_location_solid ( dest_tile ) ) {
           // pass
      } else if ( dest_i.type == Interactive::Type::portal ) {

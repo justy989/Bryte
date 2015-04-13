@@ -7,6 +7,7 @@ using namespace bryte;
 
 const Real32 Projectile::c_arrow_speed = 20.0f;
 const Real32 Projectile::c_goo_speed = 5.0f;
+const Real32 Projectile::c_ice_speed = 8.0f;
 const Real32 Projectile::c_stuck_time = 1.5f;
 
 Vector Projectile::collision_points [ Direction::count ];
@@ -29,6 +30,11 @@ Int32 Projectile::hit_character ( Character& character )
      case Type::goo:
           life_state = LifeState::dead;
           clear ( );
+          break;
+     case Type::ice:
+          life_state = LifeState::dead;
+          clear ( );
+          character.effect_with_element ( Element::ice );
           break;
      }
 
@@ -99,6 +105,9 @@ Void Projectile::update ( float time_delta, const Map& map, Interactives& intera
      case Type::goo:
           update_goo ( time_delta, map, interactives );
           break;
+     case Type::ice:
+          update_ice ( time_delta, map, interactives );
+          break;
      }
 }
 
@@ -151,6 +160,30 @@ Void Projectile::update_goo ( float time_delta, const Map& map, Interactives& in
           break;
      case LifeState::alive:
           position += vector_from_direction ( facing ) * c_goo_speed * time_delta;
+
+          if ( check_for_solids ( map, interactives ) ) {
+               stuck_watch.reset ( c_stuck_time );
+               life_state = dead;
+               clear ( );
+          }
+          break;
+     }
+}
+
+Void Projectile::update_ice ( float time_delta, const Map& map, Interactives& interactives )
+{
+     switch ( life_state ) {
+     default:
+          ASSERT ( 0 );
+          break;
+     case LifeState::dead:
+          break;
+     case LifeState::spawning:
+          // nop for now ** pre-mature planning wooo **
+          life_state = LifeState::alive;
+          break;
+     case LifeState::alive:
+          position += vector_from_direction ( facing ) * c_ice_speed * time_delta;
 
           if ( check_for_solids ( map, interactives ) ) {
                stuck_watch.reset ( c_stuck_time );

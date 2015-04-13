@@ -33,6 +33,7 @@ namespace bryte
 
           SDL_Surface* arrow_sheet;
           SDL_Surface* goo_sheet;
+          SDL_Surface* ice_sheet;
 
           Animation animation;
      };

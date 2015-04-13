@@ -1546,6 +1546,16 @@ Void State::update_enemies ( float time_delta )
                enemy.goo_state.state == Enemy::GooState::State::shooting ) {
                spawn_projectile ( Projectile::Type::goo, enemy.position, enemy.facing,
                                   Projectile::Alliance::evil );
+          } else if ( enemy.type == Enemy::Type::ice_wizard &&
+                      enemy.ice_wizard_state.state == Enemy::IceWizardState::State::attack ) {
+               spawn_projectile ( Projectile::Type::ice, enemy.position, Direction::left,
+                                  Projectile::Alliance::evil );
+               spawn_projectile ( Projectile::Type::ice, enemy.position, Direction::up,
+                                  Projectile::Alliance::evil );
+               spawn_projectile ( Projectile::Type::ice, enemy.position, Direction::right,
+                                  Projectile::Alliance::evil );
+               spawn_projectile ( Projectile::Type::ice, enemy.position, Direction::down,
+                                  Projectile::Alliance::evil );
           }
 
           tick_character_element ( enemy );

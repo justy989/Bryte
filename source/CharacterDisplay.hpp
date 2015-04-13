@@ -23,6 +23,13 @@ namespace bryte {
           Void render_enemy ( SDL_Surface* back_buffer, const Enemy& enemy,
                               Real32 camera_x, Real32 camera_y );
 
+     private:
+
+          Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_Sheet,
+                                  const Character& character,
+                                  SDL_Rect* dest_rect, SDL_Rect* clip_rect,
+                                  Real32 camera_x, Real32 camera_y );
+
      public:
 
           static const Int32 fire_animation_delay = 5;

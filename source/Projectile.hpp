@@ -14,7 +14,8 @@ namespace bryte
 
           enum Type {
                arrow,
-               goo
+               goo,
+               ice
           };
 
           enum Alliance {
@@ -34,6 +35,7 @@ namespace bryte
 
           Void update_arrow ( float dt, const Map& map, Interactives& interactives );
           Void update_goo ( float dt, const Map& map, Interactives& interactives );
+          Void update_ice ( float dt, const Map& map, Interactives& interactives );
 
      public:
 
@@ -41,6 +43,7 @@ namespace bryte
 
           static const Real32 c_arrow_speed;
           static const Real32 c_goo_speed;
+          static const Real32 c_ice_speed;
           static const Real32 c_stuck_time;
 
      public:

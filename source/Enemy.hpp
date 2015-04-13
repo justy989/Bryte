@@ -18,6 +18,7 @@ namespace bryte
                fairy,
                knight,
                spike,
+               ice_wizard,
                count
           };
 
@@ -94,6 +95,21 @@ namespace bryte
                Direction move_direction;
           };
 
+          struct IceWizardState {
+               enum State {
+                    wandering,
+                    warm_up,
+                    attack,
+                    cool_down
+               };
+
+               static const Real32 c_warm_up_time;
+               static const Real32 c_cool_down_time;
+
+               State state;
+               Stopwatch state_timer;
+          };
+
      public:
 
           Void init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop );
@@ -113,6 +129,7 @@ namespace bryte
                              const Character& player, Random& random, float time_delta );
           Void knight_think ( const Character& player, Random& random, float time_delta );
           Void spike_think ( const Character& player, Random& random, float time_delta );
+          Void ice_wizard_think ( const Character& player, Random& random, float time_delta );
 
      public:
 
@@ -130,6 +147,7 @@ namespace bryte
                FairyState fairy_state;
                KnightState knight_state;
                SpikeState spike_state;
+               IceWizardState ice_wizard_state;
           };
 
           Pickup::Type drop;

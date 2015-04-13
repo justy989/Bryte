@@ -15,6 +15,10 @@ Bool ProjectileDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( ice_sheet, game_memory, "content/images/test_ice_proj.bmp" ) ) {
+          return false;
+     }
+
      return true;
 }
 
@@ -22,6 +26,7 @@ Void ProjectileDisplay::unload_surfaces ( )
 {
      FREE_SURFACE ( arrow_sheet );
      FREE_SURFACE ( goo_sheet );
+     FREE_SURFACE ( ice_sheet );
 }
 
 Void ProjectileDisplay::tick ( )
@@ -55,6 +60,9 @@ Void ProjectileDisplay::render ( SDL_Surface* back_buffer, const Projectile& pro
      case Projectile::Type::goo:
           projectile_sheet = goo_sheet;
           break;
+     case Projectile::Type::ice:
+          projectile_sheet = ice_sheet;
+          break;
      }
 
      if ( projectile.effected_by_element == Element::ice ) {
@@ -68,6 +76,5 @@ Void ProjectileDisplay::render ( SDL_Surface* back_buffer, const Projectile& pro
      world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
 
      SDL_BlitSurface ( projectile_sheet, &clip_rect, back_buffer, &dest_rect );
-
 }
 

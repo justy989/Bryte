@@ -6,21 +6,27 @@
 
 using namespace bryte;
 
-const Real32 Enemy::GooState::c_shoot_time        = 2.0f;
-const Real32 Enemy::SkeletonState::c_attack_range = 6.0f;
-const Real32 Enemy::SkeletonState::c_walk_speed   = 4.0f;
-const Real32 Enemy::SkeletonState::c_attack_speed = 6.0f;
-const Real32 Enemy::SkeletonState::c_attack_delay = 1.0f;
-const Real32 Enemy::BatState::c_walk_speed        = 5.0f;
-const Real32 Enemy::BatState::c_dash_speed        = 10.0f;
-const Real32 Enemy::FairyState::c_heal_radius     = 4.0f;
-const Real32 Enemy::FairyState::c_heal_delay      = 1.0f;
+const Real32 Enemy::GooState::c_shoot_time           = 2.0f;
+const Real32 Enemy::SkeletonState::c_attack_range    = 6.0f;
+const Real32 Enemy::SkeletonState::c_walk_speed      = 4.0f;
+const Real32 Enemy::SkeletonState::c_attack_speed    = 6.0f;
+const Real32 Enemy::SkeletonState::c_attack_delay    = 1.0f;
+const Real32 Enemy::BatState::c_walk_speed           = 5.0f;
+const Real32 Enemy::BatState::c_dash_speed           = 10.0f;
+const Real32 Enemy::FairyState::c_heal_radius        = 4.0f;
+const Real32 Enemy::FairyState::c_heal_delay         = 1.0f;
+const Real32 Enemy::IceWizardState::c_warm_up_time   = 0.75f;
+const Real32 Enemy::IceWizardState::c_cool_down_time = 2.25f;
+
 const Char8* Enemy::c_names [ Enemy::Type::count ] = {
-     "rat",
-     "bat",
-     "goo",
-     "skeleton",
-     "fairy"
+     "RAT",
+     "BAT",
+     "GOO",
+     "SKELETON",
+     "FAIRY",
+     "KNIGHT",
+     "SPIKE",
+     "ICEWIZARD"
 };
 
 Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
@@ -220,6 +226,30 @@ Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type
 
           spike_state.move_direction = SpikeState::Direction::count;
           break;
+     case Enemy::Type::ice_wizard:
+          health     = 3;
+          max_health = 3;
+
+          dimension.set ( pixels_to_meters ( 16 ), pixels_to_meters ( 16 ) );
+          collision_offset.set ( pixels_to_meters ( 2 ), pixels_to_meters ( 3 ) );
+          collision_dimension.set ( pixels_to_meters ( 14 ), pixels_to_meters ( 12 ) );
+
+          flies = false;
+          knockbackable = false;
+
+          walk_acceleration = 6.0f;
+          deceleration_scale = 3.0f;
+
+          walk_frame_change = 1;
+          walk_frame_count = 3;
+          walk_frame_rate = 15.0f;
+          constant_animation = false;
+
+          draw_facing = true;
+
+          ice_wizard_state.state = IceWizardState::wandering;
+          ice_wizard_state.state_timer.reset ( 0.0f );
+          break;
      }
 }
 
@@ -250,6 +280,9 @@ Void Enemy::think ( Enemy* enemies, Int32 max_enemies,
           break;
      case Type::spike:
           spike_think ( player, random, time_delta );
+          break;
+     case Type::ice_wizard:
+          ice_wizard_think ( player, random, time_delta );
           break;
      }
 
@@ -597,6 +630,55 @@ Void Enemy::spike_think ( const Character& player, Random& random, float time_de
      case SpikeState::Direction::down_right:
           walk ( Direction::down );
           walk ( Direction::right );
+          break;
+     }
+}
+
+Void Enemy::ice_wizard_think ( const Character& player, Random& random, float time_delta )
+{
+     static const Real32 c_half_tile = Map::c_tile_dimension_in_meters * 0.5f;
+
+     Auto& state = ice_wizard_state.state;
+     Auto& state_timer = ice_wizard_state.state_timer;
+
+     Vector new_player_diff = collision_center ( ) - player.collision_center ( );
+
+     switch ( state ) {
+     default:
+          break;
+     case IceWizardState::wandering:
+          // check for player passing along each axis
+          if ( fabs ( new_player_diff.x ( ) ) < c_half_tile ) {
+               if ( player.effected_by_element != Element::ice ) {
+                    facing = Direction::down;
+                    state = IceWizardState::warm_up;
+                    state_timer.reset ( IceWizardState::c_warm_up_time );
+               }
+          } else if ( fabs ( new_player_diff.y ( ) ) < c_half_tile ) {
+               if ( player.effected_by_element != Element::ice ) {
+                    facing = Direction::down;
+                    state = IceWizardState::warm_up;
+                    state_timer.reset ( IceWizardState::c_warm_up_time );
+               }
+          }
+          break;
+     case IceWizardState::warm_up:
+          state_timer.tick ( time_delta );
+
+          if ( state_timer.expired ( ) ) {
+               state = IceWizardState::attack;
+          }
+          break;
+     case IceWizardState::attack:
+          state = IceWizardState::cool_down;
+          state_timer.reset ( IceWizardState::c_cool_down_time );
+          break;
+     case IceWizardState::cool_down:
+          state_timer.tick ( time_delta );
+
+          if ( state_timer.expired ( ) ) {
+               state = IceWizardState::wandering;
+          }
           break;
      }
 }

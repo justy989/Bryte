@@ -43,6 +43,11 @@ Bool CharacterDisplay::load_surfaces ( GameMemory& game_memory )
           return false;
      }
 
+     if ( !load_bitmap_with_game_memory ( enemy_sheets [ Enemy::Type::ice_wizard ], game_memory,
+                                          "content/images/test_ice_wizard.bmp" ) ) {
+          return false;
+     }
+
      if ( !load_bitmap_with_game_memory ( player_sheet, game_memory, "content/images/test_hero.bmp" ) ) {
           return false;
      }
@@ -223,56 +228,38 @@ static Void render_on_fire ( SDL_Surface* back_buffer, SDL_Surface* fire_surface
 
 }
 
-static Void render_character ( SDL_Surface* back_buffer, SDL_Surface* character_sheet,
-                               SDL_Surface* effect_surface,
-                               const Character& character,
-                               Real32 camera_x, Real32 camera_y,
-                               Bool blink_on )
+Void CharacterDisplay::render_character ( SDL_Surface* back_buffer, SDL_Surface* character_sheet,
+                                          const Character& character,
+                                          SDL_Rect* dest_rect, SDL_Rect* clip_rect,
+                                          Real32 camera_x, Real32 camera_y )
 {
-     // do not draw
      if ( character.is_dead ( ) ) {
           return;
      }
 
-     SDL_Rect dest_rect = build_world_sdl_rect ( character.position.x ( ), character.position.y ( ),
-                                                 character.width ( ), character.height ( ) );
-
-     SDL_Rect clip_rect = {
-          character.walk_frame * Map::c_tile_dimension_in_pixels,
-          0,
-          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
-     };
-
-     if ( character.draw_facing ) {
-          clip_rect.y = static_cast<Int32>( character.facing ) * Map::c_tile_dimension_in_pixels;
-     }
-
-     if ( character.state == Character::State::attacking ) {
-          clip_rect.y += Direction::count * Map::c_tile_dimension_in_pixels;
-          clip_rect.x = 0;
-     } else if ( character.state == Character::State::blocking ) {
-          clip_rect.y += Direction::count * Map::c_tile_dimension_in_pixels;
-          clip_rect.x = Map::c_tile_dimension_in_pixels;
-     }
-
-     world_to_sdl ( dest_rect, back_buffer, camera_x, camera_y );
+     world_to_sdl ( *dest_rect, back_buffer, camera_x, camera_y );
 
      if ( blink_on && character.is_blinking ( ) ) {
           if ( character.is_dying ( ) ) {
-               render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
+               render_effect ( back_buffer, character_sheet, effect_surface, dest_rect, clip_rect,
                               1.0f, 1.0f, 1.0f, 0.5f, camera_x, camera_y );
           } else {
-               render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
+               render_effect ( back_buffer, character_sheet, effect_surface, dest_rect, clip_rect,
                                1.0f, 0.0f, 0.0f, 0.5f, camera_x, camera_y );
           }
      } else if ( character.effected_by_element == Element::ice ) {
-          render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
+          render_effect ( back_buffer, character_sheet, effect_surface, dest_rect, clip_rect,
                           0.0f, 0.0f, 1.0, 0.5f, camera_x, camera_y );
      } else if ( !character.healed_watch.expired ( ) ) {
-          render_effect ( back_buffer, character_sheet, effect_surface, &dest_rect, &clip_rect,
+          render_effect ( back_buffer, character_sheet, effect_surface, dest_rect, clip_rect,
                           0.0f, 1.0, 0.0f, 0.5f, camera_x, camera_y );
      }else {
-          SDL_BlitSurface ( character_sheet, &clip_rect, back_buffer, &dest_rect );
+          SDL_BlitSurface ( character_sheet, clip_rect, back_buffer, dest_rect );
+     }
+
+     if ( character.effected_by_element == Element::fire ) {
+          render_on_fire ( back_buffer, fire_surface, character.position, fire_animation.frame,
+                           camera_x, camera_y );
      }
 }
 
@@ -298,24 +285,57 @@ Void CharacterDisplay::render_player ( SDL_Surface* back_buffer, const Character
                                     player, camera_x, camera_y );
      }
 
-     render_character ( back_buffer, player_sheet, effect_surface,
-                        player, camera_x, camera_y, blink_on );
+     SDL_Rect dest_rect = build_world_sdl_rect ( player.position.x ( ), player.position.y ( ),
+                                                 player.width ( ), player.height ( ) );
 
-     if ( player.effected_by_element == Element::fire ) {
-          render_on_fire ( back_buffer, fire_surface, player.position, fire_animation.frame,
-                           camera_x, camera_y );
+     SDL_Rect clip_rect = {
+          player.walk_frame * Map::c_tile_dimension_in_pixels,
+          static_cast<Int32>( player.facing ) * Map::c_tile_dimension_in_pixels,
+          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
+     };
+
+     if ( player.state == Character::State::attacking ) {
+          clip_rect.y += Direction::count * Map::c_tile_dimension_in_pixels;
+          clip_rect.x = 0;
+     } else if ( player.state == Character::State::blocking ) {
+          clip_rect.y += Direction::count * Map::c_tile_dimension_in_pixels;
+          clip_rect.x = Map::c_tile_dimension_in_pixels;
      }
+
+     render_character ( back_buffer, player_sheet,
+                        player, &dest_rect, &clip_rect,
+                        camera_x, camera_y );
 }
 
 Void CharacterDisplay::render_enemy ( SDL_Surface* back_buffer, const Enemy& enemy,
                                       Real32 camera_x, Real32 camera_y )
 {
-     render_character ( back_buffer, enemy_sheets [ enemy.type ], effect_surface,
-                        enemy, camera_x, camera_y, blink_on );
+     SDL_Rect dest_rect = build_world_sdl_rect ( enemy.position.x ( ), enemy.position.y ( ),
+                                                 enemy.width ( ), enemy.height ( ) );
 
-     if ( enemy.effected_by_element == Element::fire ) {
-          render_on_fire ( back_buffer, fire_surface, enemy.position, fire_animation.frame,
-                           camera_x, camera_y );
+     SDL_Rect clip_rect = {
+          enemy.walk_frame * Map::c_tile_dimension_in_pixels,
+          0,
+          Map::c_tile_dimension_in_pixels, Map::c_tile_dimension_in_pixels
+     };
+
+     if ( enemy.draw_facing ) {
+          clip_rect.y = static_cast<Int32>( enemy.facing ) * Map::c_tile_dimension_in_pixels;
      }
+
+     // Note: Special ice wizard frames
+     if ( enemy.type == Enemy::Type::ice_wizard ) {
+          if ( enemy.ice_wizard_state.state == Enemy::IceWizardState::warm_up ) {
+               clip_rect.y = 0;
+               clip_rect.x = 3 * Map::c_tile_dimension_in_pixels;
+          } else if ( enemy.ice_wizard_state.state == Enemy::IceWizardState::cool_down ) {
+               clip_rect.y = Map::c_tile_dimension_in_pixels;
+               clip_rect.x = 3 * Map::c_tile_dimension_in_pixels;
+          }
+     }
+
+     render_character ( back_buffer, enemy_sheets [ enemy.type ],
+                        enemy, &dest_rect, &clip_rect,
+                        camera_x, camera_y );
 }
 

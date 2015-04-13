@@ -29,7 +29,7 @@ const Char8* Enemy::c_names [ Enemy::Type::count ] = {
      "ICEWIZARD"
 };
 
-Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop  )
+Void Enemy::init ( Type type, Real32 x, Real32 y, Direction facing, Pickup::Type drop )
 {
      life_state   = LifeState::alive;
      state        = State::idle;
@@ -634,7 +634,7 @@ Void Enemy::spike_think ( const Character& player, Random& random, float time_de
      }
 }
 
-Void Enemy::wizard_decide_whether_to_attack ( const Character& player )
+Bool Enemy::wizard_decide_whether_to_attack ( const Character& player )
 {
      static const Real32 c_half_tile = Map::c_tile_dimension_in_meters * 0.5f;
 
@@ -648,13 +648,17 @@ Void Enemy::wizard_decide_whether_to_attack ( const Character& player )
           if ( player.effected_by_element != Element::ice ) {
                state = IceWizardState::warm_up;
                state_timer.reset ( IceWizardState::c_warm_up_time );
+               return true;
           }
      } else if ( fabs ( new_player_diff.y ( ) ) < c_half_tile ) {
           if ( player.effected_by_element != Element::ice ) {
                state = IceWizardState::warm_up;
                state_timer.reset ( IceWizardState::c_warm_up_time );
+               return true;
           }
      }
+
+     return false;
 }
 
 Void Enemy::ice_wizard_think ( const Character& player, Random& random, float time_delta )
@@ -666,25 +670,26 @@ Void Enemy::ice_wizard_think ( const Character& player, Random& random, float ti
      default:
           break;
      case IceWizardState::idle:
-          state_timer.tick ( time_delta );
+          if ( !wizard_decide_whether_to_attack ( player ) ) {
+               state_timer.tick ( time_delta );
 
-          if ( state_timer.expired ( ) ) {
-               state = IceWizardState::wandering;
-               facing = static_cast<Direction>( random.generate ( 0, BatState::Direction::count + 1 ) );
-               state_timer.reset ( static_cast<Real32>( random.generate ( 1, 2 ) ) );
+               if ( state_timer.expired ( ) ) {
+                    state = IceWizardState::wandering;
+                    facing = static_cast<Direction>( random.generate ( 0, Direction::count ) );
+                    state_timer.reset ( static_cast<Real32>( random.generate ( 1, 2 ) ) );
+               }
           }
-
-          wizard_decide_whether_to_attack ( player );
           break;
      case IceWizardState::wandering:
-          state_timer.tick ( time_delta );
-          if ( state_timer.expired ( ) ) {
-               state = IceWizardState::idle;
-               state_timer.reset ( static_cast<Real32>( random.generate ( 1, 4 ) ) );
-          } else {
-               walk ( facing );
+          if ( !wizard_decide_whether_to_attack ( player ) ) {
+               state_timer.tick ( time_delta );
+               if ( state_timer.expired ( ) ) {
+                    state = IceWizardState::idle;
+                    state_timer.reset ( static_cast<Real32>( random.generate ( 1, 4 ) ) );
+               } else {
+                    walk ( facing );
+               }
           }
-          wizard_decide_whether_to_attack ( player );
           break;
      case IceWizardState::warm_up:
           state_timer.tick ( time_delta );

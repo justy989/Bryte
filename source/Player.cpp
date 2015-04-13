@@ -75,7 +75,8 @@ Void Player::clear ( )
      bomb_count = 0;
      max_bombs = 0;
 
-     sword = Sword::no_sword;
+     //sword = Sword::no_sword;
+     sword = Sword::wooden;
      shield = Shield::iron;
      has_bow = false;
 

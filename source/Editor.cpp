@@ -934,16 +934,11 @@ extern "C" Void game_destroy ( GameMemory& game_memory )
 {
      State* state = get_state ( game_memory );
 
+     SDL_FreeSurface ( state->upgrade_surface );
      SDL_FreeSurface ( state->mode_icons_surface );
 
-     SDL_FreeSurface ( state->map_display.tilesheet );
-     SDL_FreeSurface ( state->map_display.decorsheet );
-     SDL_FreeSurface ( state->map_display.lampsheet );
-
-     for ( int i = 0; i < Enemy::Type::count; ++i ) {
-          SDL_FreeSurface ( state->character_display.enemy_sheets [ i ] );
-     }
-
+     state->map_display.unload_surfaces ( );
+     state->character_display.unload_surfaces ( );
      state->interactives_display.unload_surfaces ( );
 }
 

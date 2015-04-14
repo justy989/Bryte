@@ -592,7 +592,7 @@ Void Enemy::spike_think ( const Character& player, Random& random, float time_de
           if ( collided_last_frame == Direction::right ) {
                move_direction = SpikeState::Direction::up_left;
           } else if ( collided_last_frame == Direction::up ) {
-               move_direction = SpikeState::Direction::down_left;
+               move_direction = SpikeState::Direction::down_right;
           }
           break;
      case SpikeState::Direction::down_left:

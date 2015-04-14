@@ -1180,7 +1180,7 @@ Void State::enemy_death ( const Enemy& enemy )
      bool all_dead = true;
 
      for ( Uint8 i = 0; i < enemies.max ( ); ++i ) {
-          if ( enemies [ i ].is_alive ( ) ) {
+          if ( enemies [ i ].is_alive ( ) && enemies [ i ].type != Enemy::Type::spike ) {
                all_dead = false;
                break;
           }
@@ -1595,6 +1595,10 @@ Void State::update_enemies ( float time_delta )
                     player.facing == opposite_direction ( enemy.facing ) ) {
                     Direction damage_dir = direction_between ( player_center, enemy_center, random );
                     damage_character ( enemy, 0, damage_dir );
+                    // TODO: No damage sound effect
+               } else if ( enemy.type == Enemy::Type::spike ) {
+                    // pass, this dude's invincible
+                    // TODO: No damage sound effect
                } else {
                     Direction damage_dir = direction_between ( player_center, enemy_center, random );
                     damage_character ( enemy, c_attack_damage, damage_dir );
@@ -2056,6 +2060,7 @@ Void State::heal_enemies_in_range_of_fairy ( const Vector& position )
 
           if ( enemy.position.distance_to ( position ) < Enemy::FairyState::c_heal_radius ) {
                enemy.heal ( 1 );
+               // TODO: single heal sound
           }
      }
 }

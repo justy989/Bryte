@@ -414,16 +414,26 @@ Void Interactive::reset ( )
 
 Bool Interactive::activate ( Interactives& interactives )
 {
+     switch ( underneath.type ) {
+     default:
+          break;
+     case UnderneathInteractive::Type::popup_block:
+          // NOTE: Only pop up if nothing is on top, consume the activate
+          if ( type == Interactive::Type::none ) {
+               underneath.underneath_popup_block.up = !underneath.underneath_popup_block.up;
+               return true;
+          }
+          return false;
+     case UnderneathInteractive::Type::moving_walkway:
+          underneath.underneath_moving_walkway.facing =
+               opposite_direction ( underneath.underneath_moving_walkway.facing );
+          return true;
+     }
+
      switch ( type ) {
      default:
           break;
      case Type::none:
-          if ( underneath.type == UnderneathInteractive::Type::popup_block ) {
-               underneath.underneath_popup_block.up = !underneath.underneath_popup_block.up;
-          } else if ( underneath.type == UnderneathInteractive::Type::moving_walkway ) {
-               underneath.underneath_moving_walkway.facing =
-                    opposite_direction ( underneath.underneath_moving_walkway.facing );
-          }
           break;
      case Type::exit:
           return interactive_exit.activate ( );

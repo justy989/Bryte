@@ -2011,9 +2011,8 @@ Void State::update_light ( )
                                            Projectile::collision_points [ projectile.facing ].x ( ),
                                            projectile.position.y ( ) +
                                            Projectile::collision_points [ projectile.facing ].y ( ) );
-               Location collision_loc ( meters_to_pixels ( collision_position.x ( ) ),
-                                        meters_to_pixels ( collision_position.y ( ) ) );
-               map.illuminate ( collision_loc, LightDetector::c_bryte_value - 1 );
+               Location collision_tile = Map::vector_to_location ( collision_position );
+               map.illuminate ( collision_tile, LightDetector::c_bryte_value - 1 );
           }
      }
 

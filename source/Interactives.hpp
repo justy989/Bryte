@@ -184,10 +184,14 @@ namespace bryte
      };
 
      struct Hole {
+          Void reset ( );
+
           Bool filled;
      };
 
      struct Destructable {
+          Void reset ( );
+
           Bool destroyed;
      };
 

@@ -237,6 +237,7 @@ Void State::mouse_button_left_clicked ( )
 
           if ( interactive.underneath.type == UnderneathInteractive::Type::none ) {
                interactive.underneath.type = UnderneathInteractive::Type::hole;
+               interactive.underneath.underneath_hole.filled = false;
           } else {
                interactive.underneath.type = UnderneathInteractive::Type::none;
           }

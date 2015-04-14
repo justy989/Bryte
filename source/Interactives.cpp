@@ -38,7 +38,10 @@ Void UnderneathInteractive::reset ( )
           underneath_ice_detector.reset ( );
           break;
      case hole:
-          underneath_hole.filled = false;
+          underneath_hole.reset ( );
+          break;
+     case destructable:
+          underneath_destructable.reset ( );
           break;
      }
 }
@@ -139,8 +142,10 @@ Bool Interactives::push ( const Location& tile, Direction dir, const Map& map )
 
      Interactive& dest_i = get_from_tile ( dest_tile );
 
+     // TODO: can we figure out how to simplify this condition?
      if ( ( !is_walkable ( dest_tile, dir ) &&
-            dest_i.underneath.type != UnderneathInteractive::Type::hole ) ||
+            !( dest_i.underneath.type == UnderneathInteractive::Type::hole &&
+               !dest_i.underneath.underneath_hole.filled ) ) ||
             dest_i.type == Interactive::Type::exit ||
             map.get_tile_location_solid ( dest_tile ) ) {
           // pass
@@ -1107,5 +1112,15 @@ Void Interactives::get_portal_destination_impl ( const Location& start_tile,
      if ( dest_interactive.type == Interactive::Type::portal ) {
           get_portal_destination_impl ( start_tile, dest_tile, dir );
      }
+}
+
+Void Hole::reset ( )
+{
+     filled = false;
+}
+
+Void Destructable::reset ( )
+{
+     destroyed = false;
 }
 
